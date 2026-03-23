@@ -23,7 +23,7 @@
 | `@ion/platform` | Device ID, install referrer, OS info | Planned |
 | `@ion/storage` | MMKV, SQLite, secure keychain | Planned |
 | `@ion/network` | HTTP, WebSocket, SSE clients | Planned |
-| `@ion/diagnostics` | Sentry, on-device logs | Planned |
+| `@ion/diagnostics` | Sentry, on-device logs | Implemented |
 | `@ion/permissions` | Camera, photos, notifications permissions | Planned |
 | `@ion/config` | Remote config, env, feature flags | Planned |
 | `@ion/localization` | i18n, plurals, fallback | Planned |
