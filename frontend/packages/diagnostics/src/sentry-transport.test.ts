@@ -1,12 +1,11 @@
 import {
-  initializeSentryTransport,
+  setSentryModule,
   sendToSentry,
 } from './sentry-transport';
 import { createLogEntry } from './log-entry';
 import { LogLevel } from './types';
 
 const mockSentry = {
-  init: jest.fn(),
   captureException: jest.fn(),
   captureMessage: jest.fn(),
   addBreadcrumb: jest.fn(),
@@ -14,10 +13,7 @@ const mockSentry = {
 };
 
 beforeAll(() => {
-  initializeSentryTransport(
-    { dsn: 'test', environment: 'test', release: '1.0' },
-    mockSentry,
-  );
+  setSentryModule(mockSentry);
 });
 
 beforeEach(() => jest.clearAllMocks());

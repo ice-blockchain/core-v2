@@ -31,24 +31,11 @@ interface Breadcrumb {
   data?: Record<string, unknown>;
 }
 
-interface SentryTransportConfig {
-  dsn: string;
-  environment: string;
-  release: string;
-  tracesSampleRate?: number;
-  enablePerformanceTracing?: boolean;
-}
-
-interface SentryConfig {
-  transport: SentryTransportConfig;
-  module: Record<string, unknown>;
-}
-
 interface DiagnosticsConfig {
   consoleLevel?: LogLevel;
   sentryLevel?: LogLevel;
   bufferCapacity?: number;
-  sentry?: SentryConfig;
+  sentry?: Record<string, unknown>;
   captureGlobalErrors?: boolean;
 }
 
@@ -58,7 +45,5 @@ export type {
   LogOptions,
   ErrorLogOptions,
   Breadcrumb,
-  SentryTransportConfig,
-  SentryConfig,
   DiagnosticsConfig,
 };

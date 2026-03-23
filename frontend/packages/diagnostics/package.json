@@ -11,15 +11,6 @@
     "type-check": "tsc --noEmit",
     "test": "jest"
   },
-  "peerDependencies": {
-    "@sentry/react-native": ">=6",
-    "react-native": ">=0.76"
-  },
-  "peerDependenciesMeta": {
-    "@sentry/react-native": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^22.0.0",

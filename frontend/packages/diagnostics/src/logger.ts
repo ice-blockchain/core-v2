@@ -10,7 +10,7 @@ import { LogBuffer } from './log-buffer';
 import { sendToConsole } from './console-transport';
 import type { SentryModule } from './sentry-transport';
 import {
-  initializeSentryTransport,
+  setSentryModule,
   sendToSentry,
   setSentryUserScope,
   clearSentryUserScope,
@@ -19,16 +19,25 @@ import {
 import { installGlobalErrorHandler } from './global-error-handler';
 
 declare const __DEV__: boolean | undefined;
+declare const process: { env?: { NODE_ENV?: string } };
 
 let buffer: LogBuffer | undefined;
 let consoleLevel: LogLevel = LogLevel.Debug;
 let sentryLevel: LogLevel = LogLevel.Error;
 let isInitialized = false;
 
+function isDevelopment(): boolean {
+  if (typeof __DEV__ !== 'undefined') return __DEV__;
+  if (typeof process !== 'undefined') {
+    return process.env?.NODE_ENV === 'development';
+  }
+  return false;
+}
+
 function resolveDefaultConsoleLevel(): LogLevel {
-  const isDev =
-    typeof __DEV__ !== 'undefined' && __DEV__;
-  return isDev ? LogLevel.Debug : LogLevel.Warning;
+  return isDevelopment()
+    ? LogLevel.Debug
+    : LogLevel.Warning;
 }
 
 function initialize(config: DiagnosticsConfig): void {
@@ -40,9 +49,8 @@ function initialize(config: DiagnosticsConfig): void {
   buffer = new LogBuffer(config.bufferCapacity);
 
   if (config.sentry) {
-    initializeSentryTransport(
-      config.sentry.transport,
-      config.sentry.module as unknown as SentryModule,
+    setSentryModule(
+      config.sentry as unknown as SentryModule,
     );
   }
 

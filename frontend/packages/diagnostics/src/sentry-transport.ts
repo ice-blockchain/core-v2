@@ -1,10 +1,9 @@
-import type { LogEntry, SentryTransportConfig } from './types';
+import type { LogEntry } from './types';
 import { LogLevel } from './types';
 import { isLevelEnabled } from './log-level';
 import { shouldSendToSentry } from './event-filter';
 
 interface SentryModule {
-  init: (options: Record<string, unknown>) => void;
   captureException: (
     error: Error,
     context?: Record<string, unknown>,
@@ -24,20 +23,8 @@ interface SentryModule {
 
 let sentryModule: SentryModule | undefined;
 
-function initializeSentryTransport(
-  config: SentryTransportConfig,
-  sentry: SentryModule,
-): void {
+function setSentryModule(sentry: SentryModule): void {
   sentryModule = sentry;
-
-  sentry.init({
-    dsn: config.dsn,
-    environment: config.environment,
-    release: config.release,
-    tracesSampleRate: config.tracesSampleRate ?? 1.0,
-    enableAutoPerformanceTracing:
-      config.enablePerformanceTracing ?? false,
-  });
 }
 
 const LEVEL_TO_SENTRY_SEVERITY: Record<
@@ -110,7 +97,7 @@ function addSentryBreadcrumb(
 
 export type { SentryModule };
 export {
-  initializeSentryTransport,
+  setSentryModule,
   sendToSentry,
   setSentryUserScope,
   clearSentryUserScope,

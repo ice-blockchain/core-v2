@@ -4,7 +4,5 @@ export { LogLevel } from './types';
 export type {
   LogEntry,
   DiagnosticsConfig,
-  SentryTransportConfig,
-  SentryConfig,
   Breadcrumb,
 } from './types';
