@@ -21,7 +21,7 @@
 | Package | Purpose | Status |
 |---|---|---|
 | `@ion/platform` | Device ID, install referrer, OS info | Planned |
-| `@ion/storage` | MMKV, SQLite, secure keychain | Planned |
+| `@ion/storage` | MMKV, SQLite, secure keychain | Implemented |
 | `@ion/network` | HTTP, WebSocket, SSE clients | Planned |
 | `@ion/diagnostics` | Sentry, on-device logs | Implemented |
 | `@ion/permissions` | Camera, photos, notifications permissions | Planned |
@@ -42,7 +42,7 @@
 | Package | Purpose | Status |
 |---|---|---|
 | `@ion/identity-client` | Auth, users API | Planned |
-| `@ion/ion-connect-client` | Relays, events, NIPs, DVM | Planned |
+| `@ion/ion-connect-client` | Relays, events, NIPs, DVM | In Progress |
 | `@ion/token-analytics-client` | Trades, holders, stats API | Planned |
 | `@ion/wallet-client` | Coins, NFT sync, DFNS | Planned |
 

@@ -4,6 +4,8 @@
     { "path": "apps/mobile" },
     { "path": "packages/ui" },
     { "path": "packages/media-acquisition" },
-    { "path": "packages/diagnostics" }
+    { "path": "packages/diagnostics" },
+    { "path": "packages/storage" },
+    { "path": "packages/ion-connect-client" }
   ]
 }
