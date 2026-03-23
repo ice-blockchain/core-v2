@@ -1,5 +1,5 @@
 {
-  "name": "ice-frontend",
+  "name": "ion-app",
   "private": true,
   "scripts": {
     "build": "turbo build",

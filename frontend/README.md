@@ -1,6 +1,6 @@
-# ICE Frontend
+# ion-app
 
-pnpm monorepo — web app, mobile app, and shared packages.
+ION mobile app — pnpm monorepo for the React Native app and shared packages.
 
 ## Structure
 

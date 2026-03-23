@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install*)",
+      "Bash(pnpm dev*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm type-check*)",
+      "Bash(pnpm format*)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm start*)",
+      "Bash(pnpm ios*)",
+      "Bash(pnpm android*)",
+      "Bash(npx react-native*)",
+      "Bash(bundle exec*)",
+      "Bash(bundle install*)",
+      "Bash(pod install*)",
+      "Bash(pod --version)",
+      "Bash(gem install*)",
+      "Bash(asdf install*)",
+      "Bash(asdf local*)",
+      "Bash(asdf set*)",
+      "Bash(asdf list*)",
+      "Bash(npx tsc*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git submodule*)",
+      "Bash(ls*)"
+    ]
+  }
+}
