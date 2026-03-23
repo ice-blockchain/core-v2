@@ -1,0 +1,21 @@
+{
+  "name": "@ice/ui",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-native": ">=0.76"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.9.3"
+  }
+}

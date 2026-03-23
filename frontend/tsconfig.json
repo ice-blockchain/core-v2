@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "apps/mobile" },
+    { "path": "packages/ui" },
+    { "path": "packages/media-acquisition" }
+  ]
+}

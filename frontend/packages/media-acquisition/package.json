@@ -1,0 +1,24 @@
+{
+  "name": "@ice/media-acquisition",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "expo-camera": ">=15",
+    "expo-image-picker": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "expo-camera": { "optional": true },
+    "expo-image-picker": { "optional": true }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
