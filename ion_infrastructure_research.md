@@ -1,6 +1,4 @@
-# Architecture blueprint for a Greenfield-TON-NOSTR-DFNS integrated system
-
-A system forking and integrating these eight technologies creates a **decentralized storage and communication platform** where BNB Greenfield handles file storage with on-chain permissions, TON's network stack (Proxy, Storage, DNS) provides an encrypted overlay network and peer-to-peer file distribution, NOSTR supplies a censorship-resistant event/messaging layer, and DFNS with FIDO2/WebAuthn delivers seedless wallet authentication. This report maps every component's internals, protocols, and interconnection points to inform a complete architecture diagram.
+# Architecture blueprint for ION Connect infrastructure
 
 ---
 
@@ -32,9 +30,9 @@ For an architecture diagram, the **Tendermint WebSocket** is the primary real-ti
 
 ---
 
-## TON Proxy and ADNL: the encrypted overlay network layer
+## ION Proxy and ADNL: the encrypted overlay network layer
 
-TON Proxy is the gateway between conventional internet and The Open Network's overlay. It operates via **RLDP-HTTP Proxy** in two modes: a **client/entry proxy** (accepts HTTP on `localhost:8080`, translates to RLDP/ADNL over UDP) and a **server/reverse proxy** (accepts RLDP/ADNL from the TON network, forwards as HTTP to a local web server on port 80). All encryption is handled by ADNL, making HTTPS/TLS unnecessary when the entry proxy runs locally.
+ION Proxy is the gateway between conventional internet and ION's overlay. It operates via **RLDP-HTTP Proxy** in two modes: a **client/entry proxy** (accepts HTTP on `localhost:8080`, translates to RLDP/ADNL over UDP) and a **server/reverse proxy** (accepts RLDP/ADNL from the ION network, forwards as HTTP to a local web server on port 80). All encryption is handled by ADNL, making HTTPS/TLS unnecessary when the entry proxy runs locally.
 
 **ADNL (Abstract Datagram Network Layer)** is the foundational protocol. Each participant has a **256-bit ADNL address** derived as `SHA-256(type_id || ed25519_public_key)`. Key exchange uses **x25519 ECDH**, session encryption uses **AES-256-CTR** with 128-bit counters, and integrity verification uses **SHA-256**. Each datagram includes a 32-byte random nonce to prevent bit-flipping attacks on CTR mode.
 
@@ -42,12 +40,12 @@ The **TCP handshake** (used for liteserver connections) is a 256-byte exchange: 
 
 Three higher-level protocols build on ADNL. The **DHT** is Kademlia-like, using XOR distance metrics with a search width of 6-10, bootstrapped from nodes listed in `global.config.json`. It stores ADNL-address-to-IP mappings. **RLDP** (Reliable Large Datagram Protocol) adds reliability via **RaptorQ forward error correction** (fountain codes) instead of TCP-style acknowledgments — data is split into 768-byte symbols, encoded with RaptorQ, and streamed as `rldp.messagePart` messages. **Overlay subnetworks** partition the ADNL network by function, with peers discovered through DHT lookups.
 
-### Client-to-TON-Site data flow
+### Client-to-ION-Site data flow
 
-The complete path for accessing a `.ton` website:
+The complete path for accessing a `.ion` website:
 
 1. Browser sends HTTP request to local proxy at `localhost:8080`
-2. Proxy resolves `.ton` domain via TON DNS (on-chain smart contract `dnsresolve` call) → returns ADNL address
+2. Proxy resolves `.ion` domain via ION DNS (on-chain smart contract `dnsresolve` call) → returns ADNL address
 3. Proxy queries DHT to find the IP:port behind that ADNL address
 4. Proxy establishes ADNL UDP connection to the server's entry point
 5. HTTP request serialized into TL `http.request` schema, wrapped in `rldp.query`, encoded with RaptorQ
@@ -57,44 +55,44 @@ The complete path for accessing a `.ton` website:
 
 **Privacy model (current v1.0)**: Connections are essentially **direct** between client and server via ADNL. IP addresses are visible to direct peers. The planned **v2.0** will introduce **garlic routing** (I2P-inspired) with unidirectional tunnels, layered encryption, and incentivized relay nodes.
 
-For an architecture diagram, TON Proxy creates a **parallel communication channel** alongside the public internet. Components communicating through this channel use ADNL/RLDP over UDP instead of HTTP/TCP. The entry proxy and reverse proxy are the boundary points between the two networks.
+For an architecture diagram, ION Proxy creates a **parallel communication channel** alongside the public internet. Components communicating through this channel use ADNL/RLDP over UDP instead of HTTP/TCP. The entry proxy and reverse proxy are the boundary points between the two networks.
 
 ---
 
-## TON Storage: torrent-based decentralized file distribution
+## ION Storage: torrent-based decentralized file distribution
 
-TON Storage is a BitTorrent-like system running on TON's overlay protocols rather than TCP/IP. Files are organized into **Bags** (analogous to torrents) — each bag has a torrent header (file names and sizes), data split into **128 KB chunks**, and a **Merkle tree** built from TVM cells over SHA-256 hashes of those chunks. The hash of the serialized torrent info cell is the **BagID** — the 256-bit identifier used to locate and verify the bag.
+ION Storage is a BitTorrent-like system running on ION's overlay protocols rather than TCP/IP. Files are organized into **Bags** (analogous to torrents) — each bag has a torrent header (file names and sizes), data split into **128 KB chunks**, and a **Merkle tree** built from TVM cells over SHA-256 hashes of those chunks. The hash of the serialized torrent info cell is the **BagID** — the 256-bit identifier used to locate and verify the bag.
 
-**Storage flow**: A user runs `storage-daemon` (connecting to TON's ADNL network on a configured UDP port), creates a bag from local files via CLI (`create <path>`), and immediately begins seeding. Retrieval uses `add-by-hash <BagID>` or `add-by-meta <metafile>`. Peer discovery happens through **TON DHT**, and data transfers use **RLDP** over ADNL. Partial downloads are supported with per-file priority settings (0-255).
+**Storage flow**: A user runs `storage-daemon` (connecting to ION's ADNL network on a configured UDP port), creates a bag from local files via CLI (`create <path>`), and immediately begins seeding. Retrieval uses `add-by-hash <BagID>` or `add-by-meta <metafile>`. Peer discovery happens through **ION DHT**, and data transfers use **RLDP** over ADNL. Partial downloads are supported with per-file priority settings (0-255).
 
-**On-chain storage guarantees** come through smart contracts. A storage provider deploys a main contract specifying rates (in nanoTON/MB/day), min/max bag sizes, and proof intervals. When a client requests storage, a per-bag **storage contract** is created. The provider must periodically submit **Merkle proofs** proving data possession — if a proof fails, the contract is destroyed and the provider receives no payment. This creates an economic incentive for reliable storage.
+**On-chain storage guarantees** come through smart contracts. A storage provider deploys a main contract specifying rates (in ion/MB/day), min/max bag sizes, and proof intervals. When a client requests storage, a per-bag **storage contract** is created. The provider must periodically submit **Merkle proofs** proving data possession — if a proof fails, the contract is destroyed and the provider receives no payment. This creates an economic incentive for reliable storage.
 
-TON Storage integrates with TON DNS through the `dns_storage_address#7473 bag_id:uint256` record type. A `.ton` domain can point directly to a storage bag, enabling **fully decentralized static websites** — no web server needed. NFT contracts also support `tonstorage://<BagID>/` URLs for on-chain content references.
+ION Storage integrates with ION DNS through the `dns_storage_address#7473 bag_id:uint256` record type. A `.ion` domain can point directly to a storage bag, enabling **fully decentralized static websites** — no web server needed. NFT contracts also support `ionstorage://<BagID>/` URLs for on-chain content references.
 
 ---
 
-## TON DNS: on-chain domain resolution via smart contracts
+## ION DNS: on-chain domain resolution via smart contracts
 
-TON DNS resolves `.ton` domains entirely through **on-chain smart contracts** — no centralized DNS servers. The **root DNS contract** address is stored in masterchain configuration parameter #4. Each `.ton` domain is an **NFT** (the resolver is an NFT collection contract, each domain is an NFT item contract).
+ION DNS resolves `.ion` domains entirely through **on-chain smart contracts** — no centralized DNS servers. The **root DNS contract** address is stored in masterchain configuration parameter #4. Each `.ion` domain is an **NFT** (the resolver is an NFT collection contract, each domain is an NFT item contract).
 
-**Resolution algorithm**: Domain names are converted to internal representation by reversing components and null-separating them (`test.ton` → `ton\0test\0`). The `dnsresolve` get-method (method_id 123660) is called on the root contract with the serialized domain and a category key. If the contract fully resolves (`m = n`), it returns the DNS record. If partial (`0 < m < n`), it returns a `dns_next_resolver` pointing to the next resolver contract, and resolution continues recursively.
+**Resolution algorithm**: Domain names are converted to internal representation by reversing components and null-separating them (`test.ion` → `ion\0test\0`). The `dnsresolve` get-method (method_id 123660) is called on the root contract with the serialized domain and a category key. If the contract fully resolves (`m = n`), it returns the DNS record. If partial (`0 < m < n`), it returns a `dns_next_resolver` pointing to the next resolver contract, and resolution continues recursively.
 
 **Four record types** matter for the architecture:
 
-- `sha256("wallet")` → `dns_smc_address` — maps to a TON wallet address
-- `sha256("site")` → `dns_adnl_address` — maps to an ADNL address for TON Sites (accessed via TON Proxy)
-- `sha256("storage")` → `dns_storage_address` — maps to a TON Storage BagID
+- `sha256("wallet")` → `dns_smc_address` — maps to a ION wallet address
+- `sha256("site")` → `dns_adnl_address` — maps to an ADNL address for ION Sites (accessed via ION Proxy)
+- `sha256("storage")` → `dns_storage_address` — maps to a ION Storage BagID
 - `sha256("dns_next_resolver")` → `dns_next_resolver` — points to subdomain resolver contracts
 
-Domains are registered via **auction** (1-hour for new domains, 1-week for expired ones, minimum 5% bid increment, minimum price varies by length). Annual renewal costs **0.015 TON**. Subdomain management requires deploying a custom resolver contract that implements the `dnsresolve` interface.
+Domains are registered via **auction** (1-hour for new domains, 1-week for expired ones, minimum 5% bid increment, minimum price varies by length). Annual renewal costs **0.015 ION**. Subdomain management requires deploying a custom resolver contract that implements the `dnsresolve` interface.
 
-For the architecture diagram, **TON DNS is the naming layer** that maps human-readable `.ton` domains to ADNL addresses (for services behind TON Proxy) and BagIDs (for content in TON Storage). It's queried on-chain by the client-side RLDP-HTTP proxy during domain resolution.
+For the architecture diagram, **ION DNS is the naming layer** that maps human-readable `.ion` domains to ADNL addresses (for services behind ION Proxy) and BagIDs (for content in ION Storage). It's queried on-chain by the client-side RLDP-HTTP proxy during domain resolution.
 
 ---
 
-## NOSTR: event-driven messaging through relays
+## ION Connect: event-driven messaging through relays
 
-NOSTR ("Notes and Other Stuff Transmitted by Relays") is a client-relay protocol built on a single data type — the **event**. Every event is a JSON object with seven fields: `id` (SHA-256 hash), `pubkey` (32-byte hex), `created_at` (unix timestamp), `kind` (integer 0-65535), `tags` (array of arrays), `content` (string), and `sig` (64-byte Schnorr signature over secp256k1). The event ID is computed by hashing `[0, pubkey, created_at, kind, tags, content]`.
+ION Connect is an extension of NOSTR ("Notes and Other Stuff Transmitted by Relays") which is a client-relay protocol built on a single data type — the **event**. Every event is a JSON object with seven fields: `id` (SHA-256 hash), `pubkey` (32-byte hex), `created_at` (unix timestamp), `kind` (integer 0-65535), `tags` (array of arrays), `content` (string), and `sig` (64-byte Schnorr signature over secp256k1). The event ID is computed by hashing `[0, pubkey, created_at, kind, tags, content]`.
 
 **Kind ranges** define storage behavior: regular events (1000-9999) are stored permanently, replaceable events (10000-19999) keep only the latest per pubkey+kind, ephemeral events (20000-29999) are not stored, and parameterized replaceable events (30000-39999) keep the latest per pubkey+kind+d-tag. Key kinds include **0** (profile metadata), **1** (text note), **3** (contact list), **4** (encrypted DM, deprecated), **7** (reaction), **30023** (long-form articles), and **9734/9735** (Lightning zap request/receipt).
 
@@ -102,11 +100,11 @@ NOSTR ("Notes and Other Stuff Transmitted by Relays") is a client-relay protocol
 
 **Client-relay communication** uses WebSocket with three client message types (`EVENT`, `REQ`, `CLOSE`) and four relay message types (`EVENT`, `OK`, `EOSE`, `NOTICE`). Subscription filters support `ids`, `authors`, `kinds`, tag filters (`#e`, `#p`, `#t`), `since`, `until`, and `limit`. Multiple filters in one `REQ` are OR'd; conditions within a filter are AND'd. After sending all matching stored events, relays send `EOSE` (End of Stored Events), then stream live matches.
 
-### Building custom extensions on NOSTR
+### Building custom extensions on ION Connect
 
-Creating a custom NOSTR extension means choosing an appropriate kind number, defining what goes in `content` and `tags`, and optionally proposing a NIP. **NIP-78** (kind 30078) reserves a parameterized replaceable kind for arbitrary application data. **NIP-90** (Data Vending Machines) demonstrates the pattern for marketplace-style extensions — job request kinds (5000-7000) with result kinds at request+1000. Real-world extensions include marketplaces (NIP-15, kinds 30017/30018), file metadata (NIP-94), blob storage (Blossom/NIP-B7), calendar events (NIP-52), and live streaming (NIP-53).
+Creating a custom ION Connect extension means choosing an appropriate kind number, defining what goes in `content` and `tags`, and optionally proposing a NIP. **NIP-78** (kind 30078) reserves a parameterized replaceable kind for arbitrary application data. **NIP-90** (Data Vending Machines) demonstrates the pattern for marketplace-style extensions — job request kinds (5000-7000) with result kinds at request+1000. Real-world extensions include marketplaces (NIP-15, kinds 30017/30018), file metadata (NIP-94), blob storage (Blossom/NIP-B7), calendar events (NIP-52), and live streaming (NIP-53).
 
-For the architecture diagram, NOSTR provides an **event bus** that operates over **public internet WebSocket connections**. Clients publish signed events to multiple relays and subscribe to filtered event streams. Custom event kinds can signal file uploads, permission changes, or any application-specific action.
+For the architecture diagram, ION Connect provides an **event bus** that operates over **public internet WebSocket connections**. Clients publish signed events to multiple relays and subscribe to filtered event streams. Custom event kinds can signal file uploads, permission changes, or any application-specific action.
 
 ---
 
@@ -138,14 +136,14 @@ FIDO2 combines **WebAuthn** (W3C browser API) and **CTAP2** (FIDO Alliance devic
 
 ## How all components interconnect: the architecture diagram guide
 
-The system has two distinct network planes. The **public internet plane** carries NOSTR WebSocket connections (clients ↔ relays), DFNS API calls (clients ↔ `api.dfns.io`), BNB Greenfield SP REST API calls (clients ↔ SP endpoints), and Greenfield blockchain RPC. The **TON overlay plane** carries all ADNL/RLDP traffic — TON Proxy tunneled HTTP, TON Storage file transfers, and TON DNS resolution queries.
+The system has two distinct network planes. The **public internet plane** carries ION Connect WebSocket connections (clients ↔ relays), DFNS API calls (clients ↔ `api.dfns.io`), BNB Greenfield SP REST API calls (clients ↔ SP endpoints), and Greenfield blockchain RPC. The **ION overlay plane** carries all ADNL/RLDP traffic — ION Proxy tunneled HTTP, ION Storage file transfers, and ION DNS resolution queries.
 
 ### Client application connections
 
 A client app maintains these simultaneous connections:
 
-- **TON Proxy entry** (local `localhost:8080` HTTP → ADNL/RLDP over UDP port 3333): All `.ton` domain access, TON Storage gateway browsing, and any services hosted behind TON Proxy
-- **NOSTR relays** (WebSocket `wss://relay.example.com`, public internet): Publishing and subscribing to events — file upload notifications, permission change signals, messaging
+- **ION Proxy entry** (local `localhost:8080` HTTP → ADNL/RLDP over UDP port 3333): All `.ion` domain access, ION Storage gateway browsing, and any services hosted behind ION Proxy
+- **ION Connect relays** (WebSocket `wss://relay.example.com`, public internet): Publishing and subscribing to events — file upload notifications, permission change signals, messaging
 - **DFNS API** (HTTPS `api.dfns.io`, public internet): Wallet creation, transaction signing, user management — authenticated via WebAuthn passkeys
 - **BNB Greenfield SPs** (HTTPS, public internet): Direct file upload (`PutObject`) and download (`GetObject`) via SP REST API
 - **BNB Greenfield blockchain** (gRPC/Tendermint RPC, public internet): On-chain transactions (`MsgCreateBucket`, `MsgCreateObject`, `MsgPutPolicy`)
@@ -154,42 +152,22 @@ A client app maintains these simultaneous connections:
 ### Service-to-service interactions
 
 - **Greenfield event listener** → subscribes to Tendermint WebSocket (`wss://{greenfield-rpc}/websocket`) for `EventSealObject` events, or polls BlockSyncer Metadata API, or monitors BSC contract events after resource mirroring
-- **Event listener → NOSTR relay**: On detecting a new sealed object, publishes a custom NOSTR event (e.g., kind 30078 with `["d", "greenfield-upload"]` tag containing bucket, object name, BagID metadata) — this bridges Greenfield storage events into the NOSTR event bus
-- **TON DNS → TON Storage**: `.ton` domains can point to TON Storage BagIDs via `dns_storage_address` records, enabling decentralized content hosting
-- **TON Proxy → TON DNS → ADNL network**: The entry proxy automatically resolves `.ton` domains on-chain before routing traffic through ADNL
+- **Event listener → ION Connect relay**: On detecting a new sealed object, publishes a custom ION Connect event (e.g., kind 30078 with `["d", "greenfield-upload"]` tag containing bucket, object name, BagID metadata) — this bridges Greenfield storage events into the ION Connect event bus
+- **ION DNS → ION Storage**: `.ion` domains can point to ION Storage BagIDs via `dns_storage_address` records, enabling decentralized content hosting
+- **ION Proxy → ION DNS → ADNL network**: The entry proxy automatically resolves `.ion` domains on-chain before routing traffic through ADNL
 - **DFNS → BNB Smart Chain**: DFNS signs BSC transactions (EVM-compatible) for Greenfield cross-chain operations — mirroring resources, managing permissions via `GroupHub`/`ObjectHub`
 
-### What goes through TON Proxy vs public internet
+### What goes through ION Proxy vs public internet
 
-**Through TON Proxy overlay** (ADNL/RLDP/UDP):
-- Access to `.ton`-addressed services and websites
-- TON Storage file retrieval (peer-to-peer via `storage-daemon`)
-- TON DNS resolution (on-chain queries through the overlay)
+**Through ION Proxy overlay** (ADNL/RLDP/UDP):
+- Access to `.ion`-addressed services and websites
+- ION Storage file retrieval (peer-to-peer via `storage-daemon`)
+- ION DNS resolution (on-chain queries through the overlay)
 - Any service explicitly addressed by ADNL address rather than IP
 
 **Direct public internet** (HTTPS/WSS/TCP):
 - BNB Greenfield SP file uploads and downloads (SP REST APIs are standard HTTPS)
 - BNB Greenfield blockchain transactions (Tendermint RPC/gRPC)
-- NOSTR relay connections (standard WebSocket)
+- ION Connect relay connections (standard WebSocket)
 - DFNS API calls (standard HTTPS REST)
 - BSC/EVM RPC calls (standard JSON-RPC over HTTPS)
-
-### Putting it together as a diagram
-
-The architecture has five major service clusters and two network planes:
-
-1. **Client Layer**: Browser/app with local TON Proxy entry, WebAuthn authenticator, NOSTR client library, DFNS SDK, Greenfield JS SDK
-2. **NOSTR Relay Cluster** (public internet): Multiple relays storing custom event kinds for file notifications, permissions, messaging
-3. **BNB Greenfield Cluster** (public internet): Blockchain validators, Storage Providers, cross-chain relayers, BSC bridge contracts
-4. **DFNS Cluster** (public internet): API gateway, MPC signer nodes (5 distributed), policy engine, WebAuthn verification
-5. **TON Network Cluster** (overlay): DHT nodes, TON DNS contracts (masterchain), TON Storage peers, TON Proxy reverse proxies, ADNL transport
-
-The Greenfield event listener service sits between clusters 2 and 3 — it monitors Greenfield events and publishes NOSTR notifications. DFNS sits between the client and any blockchain requiring signed transactions (Greenfield on-chain ops, BSC cross-chain management). TON Proxy wraps all TON-native communications in an encrypted overlay, while everything else travels over standard public internet protocols.
-
----
-
-## Conclusion
-
-The eight technologies form three functional layers for the architecture diagram. The **identity and signing layer** (DFNS + FIDO2/WebAuthn) handles all wallet operations and transaction authorization through MPC with passkey gating — the user never manages keys. The **storage and state layer** (BNB Greenfield + TON Storage) provides dual storage paths: Greenfield for permission-controlled enterprise storage with on-chain metadata and BSC interoperability, TON Storage for censorship-resistant peer-to-peer distribution with economic guarantees via smart contracts. The **communication and naming layer** (TON Proxy + TON DNS + NOSTR) provides encrypted overlay networking (ADNL/RLDP), decentralized domain resolution (on-chain DNS contracts), and a flexible event bus (NOSTR relays with custom kinds).
-
-The most architecturally significant decision is the **network boundary**: TON Proxy's overlay is the privacy/censorship-resistance channel, while public internet carries all high-throughput storage operations (Greenfield SP uploads average 16 MB segments with erasure coding) and real-time event streams (NOSTR WebSocket subscriptions). Greenfield event listening bridges these worlds — monitoring on-chain `EventSealObject` events via Tendermint WebSocket and broadcasting notifications as signed NOSTR events, making storage activity discoverable across the decentralized communication layer without requiring clients to run full blockchain nodes.
