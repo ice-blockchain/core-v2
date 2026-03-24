@@ -6,6 +6,7 @@
     { "path": "packages/media-acquisition" },
     { "path": "packages/diagnostics" },
     { "path": "packages/storage" },
-    { "path": "packages/ion-connect-client" }
+    { "path": "packages/ion-connect-client" },
+    { "path": "packages/permissions" }
   ]
 }
