@@ -5,12 +5,12 @@ apply plugin: "com.facebook.react"
 // env setup step places the correct .env at apps/mobile/.env before build.
 // All variants read the same file — env selection is done by scripts/setup-env.sh.
 project.ext.envConfigFiles = [
-    stagingDebug:        "../../.env",
-    stagingRelease:      "../../.env",
-    ionTestnetDebug:     "../../.env",
-    ionTestnetRelease:   "../../.env",
-    productionDebug:     "../../.env",
-    productionRelease:   "../../.env",
+    stagingDebug:        ".env",
+    stagingRelease:      ".env",
+    ionTestnetDebug:     ".env",
+    ionTestnetRelease:   ".env",
+    productionDebug:     ".env",
+    productionRelease:   ".env",
 ]
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
@@ -51,6 +51,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        resValue "string", "build_config_package", "io.ion.app"
     }
 
     flavorDimensions "environment"

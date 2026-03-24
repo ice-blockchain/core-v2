@@ -8,9 +8,9 @@
     "ios:staging": "../../scripts/setup-env.sh staging && react-native run-ios --scheme Ion-Staging",
     "ios:testnet": "../../scripts/setup-env.sh testnet && react-native run-ios --scheme Ion-Testnet",
     "ios:production": "../../scripts/setup-env.sh production && react-native run-ios --scheme Ion-Production",
-    "android:staging": "../../scripts/setup-env.sh staging && react-native run-android --mode stagingDebug",
-    "android:testnet": "../../scripts/setup-env.sh testnet && react-native run-android --mode ionTestnetDebug",
-    "android:production": "../../scripts/setup-env.sh production && react-native run-android --mode productionDebug",
+    "android:staging": "../../scripts/setup-env.sh staging && react-native run-android --mode stagingDebug --appId io.ion.app.staging",
+    "android:testnet": "../../scripts/setup-env.sh testnet && react-native run-android --mode ionTestnetDebug --appId io.ion.app.testnet",
+    "android:production": "../../scripts/setup-env.sh production && react-native run-android --mode productionDebug --appId io.ion.app",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
