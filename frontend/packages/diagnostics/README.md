@@ -1,6 +1,6 @@
 # @ion/diagnostics
 
-Foundation layer package providing unified logging and crash reporting. Platform-agnostic — works in both React Native (mobile) and React/Next.js (web).
+Foundation layer package providing unified logging and crash reporting. Platform-agnostic — works in both React Native (mobile) and React (web).
 
 ## Setup
 
@@ -27,19 +27,19 @@ Logger.initialize({
 });
 ```
 
-### Next.js (web)
+### Web (Vite + React)
 
 ```typescript
-// instrumentation.ts — Next.js initializes Sentry here
-import * as Sentry from "@sentry/nextjs";
+// main.tsx — initialize Sentry at app entry
+import * as Sentry from "@sentry/react";
 
 Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
   tracesSampleRate: 1.0,
 });
 
-// app entry — pass the same module to Logger
+// Pass the same module to Logger
 import { Logger } from "@ion/diagnostics";
 
 Logger.initialize({ sentry: Sentry });
@@ -115,7 +115,7 @@ Logger.getBuffer().clear();
 | `sentry` | Sentry module | `undefined` | Pre-initialized Sentry SDK instance |
 | `captureGlobalErrors` | `boolean` | `true` | Install global error + rejection handlers |
 
-Dev detection: uses `__DEV__` (React Native) or `process.env.NODE_ENV` (Next.js).
+Dev detection: uses `__DEV__` (React Native) or `import.meta.env.MODE` (Vite).
 
 ## Log levels
 

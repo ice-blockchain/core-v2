@@ -1,6 +1,6 @@
 import { environmentConfig } from '@ion/config/web';
 
-export default function HomePage() {
+export function App() {
   return (
     <main>
       <h1>ION ({environmentConfig.appEnvironment})</h1>
