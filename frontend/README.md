@@ -94,7 +94,7 @@ pnpm dev
 
 # Individual
 pnpm web                         # http://localhost:3000
-cd apps/mobile && pnpm start     # Metro bundler
+pnpm metro                       # Metro bundler
 ```
 
 ## Other commands

@@ -13,7 +13,8 @@
     "android:staging": "pnpm --filter @ion/mobile android:staging",
     "android:testnet": "pnpm --filter @ion/mobile android:testnet",
     "android:production": "pnpm --filter @ion/mobile android:production",
-    "web": "pnpm --filter @ion/web dev"
+    "web": "pnpm --filter @ion/web dev",
+    "metro": "pnpm --filter @ion/mobile start"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
