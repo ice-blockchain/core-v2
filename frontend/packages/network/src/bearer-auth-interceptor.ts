@@ -42,12 +42,36 @@ async function handleAuthError(
   context: RefreshContext,
 ): Promise<NetworkError> {
   if (error.code !== 'AUTH_EXPIRED') return error;
+  if (isRefreshEndpoint(error, context.config.refreshEndpoint)) {
+    return emitExpiredAndReturn(error, context.config);
+  }
   try {
     await executeOrAwaitRefresh(context);
-    return error;
+    return new NetworkError({
+      code: 'AUTH_EXPIRED',
+      message: error.message,
+      status: error.status,
+      shouldRetry: true,
+    });
   } catch {
     return error;
   }
+}
+
+function isRefreshEndpoint(
+  error: NetworkError,
+  endpoint: string,
+): boolean {
+  return error.requestUrl?.includes(endpoint) ?? false;
+}
+
+function emitExpiredAndReturn(
+  error: NetworkError,
+  config: BearerAuthInterceptorConfig,
+): NetworkError {
+  config.tokenStorage.clearTokens();
+  config.eventEmitter.emit({ type: 'auth-expired' });
+  return error;
 }
 
 async function executeOrAwaitRefresh(

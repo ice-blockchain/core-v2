@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createRequestQueue } from './request-queue';
+import { NetworkError } from './network-error';
 import type { QueuedRequest, QueueStorage } from './queue-types';
 
 function createMockStorage(): QueueStorage {
@@ -106,5 +107,34 @@ describe('RequestQueue replay mutex', () => {
     const [r1, r2, r3] = await Promise.all([queue.replay(), queue.replay(), queue.replay()]);
     expect(r1).toBe(r2);
     expect(r2).toBe(r3);
+  });
+});
+
+describe('RequestQueue replayFn', () => {
+  it('uses replayFn instead of raw fetch', async () => {
+    const storage = createMockStorage();
+    const replayFn = vi.fn().mockResolvedValue(undefined);
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn });
+    await queue.enqueue(createRequest());
+    const result = await queue.replay();
+    expect(replayFn).toHaveBeenCalledTimes(1);
+    expect(result.succeeded).toBe(1);
+  });
+});
+
+describe('RequestQueue replay network failure exit', () => {
+  it('stops replay on network failure and keeps item in queue', async () => {
+    const storage = createMockStorage();
+    const replayFn = vi.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new NetworkError({ code: 'NETWORK_OFFLINE', message: 'offline' }));
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn });
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/1' }));
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/2' }));
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/3' }));
+    const result = await queue.replay();
+    expect(result.succeeded).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(await queue.getSize()).toBe(2);
   });
 });

@@ -17,7 +17,10 @@ export type {
 export type { Interceptor, InterceptedRequest, InterceptedResponse } from './interceptor-types';
 
 // Types — auth
-export type { TokenStorage } from './auth-types';
+export type { TokenStorage, BearerAuthInterceptorConfig, RefreshResult } from './auth-types';
+
+// Types — upload transport
+export type { UploadTransport, UploadTransportOptions } from './platform/upload-transport';
 
 // Types — retry
 export type { RetryConfig } from './retry-types';

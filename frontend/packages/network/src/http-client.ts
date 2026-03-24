@@ -1,6 +1,8 @@
 import { Logger } from '@ion/diagnostics';
 import type { HttpClient, HttpClientConfig, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
 import type { InterceptedRequest, InterceptedResponse } from './interceptor-types';
+import type { UploadTransport } from './platform/upload-transport';
+import type { RequestQueue } from './queue-types';
 import { buildRequestUrl } from './url-builder';
 import { createHttpsValidator } from './https-validator';
 import { followRedirects } from './redirect-handler';
@@ -20,6 +22,8 @@ interface ClientInternals {
   validateHttps: (url: string) => void;
   interceptors: HttpClientConfig['interceptors'];
   retryConfig: HttpClientConfig['retryConfig'];
+  uploadTransport?: UploadTransport | undefined;
+  requestQueue?: RequestQueue | undefined;
 }
 
 interface RequestContext {
@@ -27,6 +31,7 @@ interface RequestContext {
   method: string;
   url: string;
   options?: RequestOptionsWithBody | undefined;
+  authRetried?: boolean | undefined;
 }
 
 export function createHttpClient(config: HttpClientConfig): HttpClient {
@@ -37,7 +42,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
     put: <T>(url: string, opts?: RequestOptionsWithBody) => executeRequest<T>({ internals, method: 'PUT', url, options: opts }),
     patch: <T>(url: string, opts?: RequestOptionsWithBody) => executeRequest<T>({ internals, method: 'PATCH', url, options: opts }),
     delete: <T>(url: string, opts?: RequestOptions) => executeRequest<T>({ internals, method: 'DELETE', url, options: opts }),
-    upload: <T>(url: string, formData: FormData, opts?: UploadOptions) => executeRequest<T>({ internals, method: 'POST', url, options: { ...opts, body: formData } }),
+    upload: <T>(url: string, formData: FormData, opts?: UploadOptions) => executeUploadRequest<T>({ internals, url, formData, options: opts }),
   };
 }
 
@@ -54,6 +59,8 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
     validateHttps: createHttpsValidator({ allowlist: config.httpsAllowlist ?? [], isProduction }),
     interceptors: config.interceptors,
     retryConfig: config.retryConfig,
+    uploadTransport: config.uploadTransport,
+    requestQueue: config.requestQueue,
   };
 }
 
@@ -64,12 +71,43 @@ async function executeRequest<T>(context: RequestContext): Promise<T> {
   if (options?.body && !(options.body instanceof FormData)) {
     validateRequestBodySize(options.body, internals.config.maxRequestBodySizeBytes);
   }
-  return executeWithRetry({
-    executeFn: () => executeSingleRequest<T>({ ...context, url }),
-    retryConfig: internals.retryConfig ?? DEFAULT_RETRY_CONFIG,
-    method,
+  try {
+    return await executeWithRetry({
+      executeFn: () => executeSingleRequest<T>({ ...context, url }),
+      retryConfig: internals.retryConfig ?? DEFAULT_RETRY_CONFIG,
+      method,
+      signal: options?.signal,
+      retryable: options?.retryable,
+    });
+  } catch (error) {
+    if (shouldEnqueue(internals, error, options)) {
+      await enqueueFailedRequest(internals, context, url);
+    }
+    throw error;
+  }
+}
+
+interface UploadContext {
+  internals: ClientInternals;
+  url: string;
+  formData: FormData;
+  options?: UploadOptions | undefined;
+}
+
+async function executeUploadRequest<T>(context: UploadContext): Promise<T> {
+  const { internals, url, formData, options } = context;
+  if (!internals.uploadTransport) {
+    return executeRequest<T>({ internals, method: 'POST', url, options: { ...options, body: formData } });
+  }
+  const fullUrl = buildRequestUrl({ baseUrl: internals.config.baseUrl, path: url, params: options?.params, query: options?.query });
+  internals.validateHttps(fullUrl);
+  const interceptedReq = await buildInterceptedRequest({ internals, method: 'POST', url: fullUrl, options });
+  return internals.uploadTransport.upload<T>({
+    url: interceptedReq.url,
+    formData,
+    headers: interceptedReq.headers,
+    onProgress: options?.onProgress,
     signal: options?.signal,
-    retryable: options?.retryable,
   });
 }
 
@@ -88,10 +126,38 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
     throwOnErrorStatus(response.status, interceptedResp);
     return interceptedResp.body as T;
   } catch (error) {
-    throw await handleRequestError(internals, error, abortController);
+    const handled = await handleRequestError(internals, error, abortController);
+    if (handled.shouldRetry && !context.authRetried) {
+      return executeSingleRequest<T>({ ...context, authRetried: true });
+    }
+    throw handled;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function shouldEnqueue(
+  internals: ClientInternals,
+  error: unknown,
+  options?: RequestOptionsWithBody,
+): boolean {
+  if (!internals.requestQueue || !options?.offlineQueue) return false;
+  return error instanceof NetworkError && error.code === 'NETWORK_OFFLINE';
+}
+
+async function enqueueFailedRequest(
+  internals: ClientInternals,
+  context: RequestContext,
+  url: string,
+): Promise<void> {
+  await internals.requestQueue!.enqueue({
+    method: context.method,
+    url,
+    body: (context.options as RequestOptionsWithBody | undefined)?.body,
+    headers: context.options?.headers,
+    enqueuedAt: Date.now(),
+    timeToLiveMs: 3_600_000,
+  });
 }
 
 async function buildInterceptedRequest(context: RequestContext): Promise<InterceptedRequest> {
@@ -152,7 +218,7 @@ function throwOnErrorStatus(
   response: InterceptedResponse,
 ): void {
   if (status >= 200 && status < 300) return;
-  if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body });
+  if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body, requestUrl: response.url });
   if (status === 403) throw new NetworkError({ code: 'FORBIDDEN', message: 'Forbidden', status, responseBody: response.body });
   if (status === 429) throw buildRateLimitError(status, response);
   if (status >= 400 && status < 500) throw new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: response.body });

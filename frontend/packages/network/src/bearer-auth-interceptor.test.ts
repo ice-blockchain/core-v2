@@ -106,3 +106,35 @@ describe('BearerAuthInterceptor refresh failure', () => {
     expect(handler).toHaveBeenCalled();
   });
 });
+
+describe('BearerAuthInterceptor shouldRetry signal', () => {
+  it('returns error with shouldRetry after successful refresh', async () => {
+    const config = createMockConfig();
+    const interceptor = createBearerAuthInterceptor(config);
+    const error = new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status: 401 });
+    const result = await interceptor.onError!(error);
+    expect(result.shouldRetry).toBe(true);
+  });
+
+  it('does not set shouldRetry when refresh fails', async () => {
+    const config = createMockConfig();
+    (config.refreshFn as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('fail'));
+    const interceptor = createBearerAuthInterceptor(config);
+    const error = new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status: 401 });
+    const result = await interceptor.onError!(error);
+    expect(result.shouldRetry).toBeUndefined();
+  });
+});
+
+describe('BearerAuthInterceptor refreshEndpoint skip', () => {
+  it('skips refresh when error URL matches refresh endpoint', async () => {
+    const config = createMockConfig();
+    const handler = vi.fn();
+    config.eventEmitter.on('auth-expired', handler);
+    const interceptor = createBearerAuthInterceptor(config);
+    const error = new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status: 401, requestUrl: 'https://api.example.com/auth/refresh' });
+    await interceptor.onError!(error);
+    expect(config.refreshFn).not.toHaveBeenCalled();
+    expect(handler).toHaveBeenCalled();
+  });
+});

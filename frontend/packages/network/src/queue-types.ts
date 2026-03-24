@@ -14,6 +14,7 @@ export interface RequestQueueConfig {
   defaultTimeToLiveMs: number;
   replayDelayMs: number;
   storage: QueueStorage;
+  replayFn?: ((request: QueuedRequest) => Promise<void>) | undefined;
 }
 
 export interface QueueStorage {

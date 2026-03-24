@@ -103,7 +103,8 @@ async function executeReplay(
   const items = await config.storage.load();
   const result: ReplayResult = { total: items.length, succeeded: 0, failed: 0, expired: 0 };
   for (const item of items) {
-    await processReplayItem({ config, handlers, item }, result);
+    const shouldContinue = await processReplayItem({ config, handlers, item }, result);
+    if (!shouldContinue) break;
   }
   for (const handler of handlers.replayCompleted) handler(result);
   return result;
@@ -118,30 +119,55 @@ interface ReplayItemContext {
 async function processReplayItem(
   context: ReplayItemContext,
   result: ReplayResult,
-): Promise<void> {
+): Promise<boolean> {
   if (isExpired(context.item)) {
     result.expired++;
     await removeItem(context.config.storage, context.item);
-    return;
+    return true;
   }
-  await sendOrFail(context, result);
-  if (context.config.replayDelayMs > 0) await delay(context.config.replayDelayMs);
+  const shouldContinue = await sendOrFail(context, result);
+  if (shouldContinue && context.config.replayDelayMs > 0) await delay(context.config.replayDelayMs);
+  return shouldContinue;
 }
 
 async function sendOrFail(
   context: ReplayItemContext,
   result: ReplayResult,
-): Promise<void> {
+): Promise<boolean> {
   try {
-    const body = context.item.body ? JSON.stringify(context.item.body) : null;
-    await fetch(context.item.url, { method: context.item.method, body });
+    await executeReplayRequest(context);
     result.succeeded++;
     await removeItem(context.config.storage, context.item);
+    return true;
   } catch (error) {
-    result.failed++;
-    const networkError = error instanceof NetworkError ? error : new NetworkError({ code: 'NETWORK_OFFLINE', message: 'Replay failed' });
-    for (const handler of context.handlers.replayItemFailed) handler(context.item, networkError);
+    return handleReplayError(context, result, error);
   }
+}
+
+async function executeReplayRequest(context: ReplayItemContext): Promise<void> {
+  if (context.config.replayFn) {
+    await context.config.replayFn(context.item);
+    return;
+  }
+  const body = context.item.body ? JSON.stringify(context.item.body) : null;
+  await fetch(context.item.url, { method: context.item.method, body });
+}
+
+function isNetworkFailure(error: unknown): boolean {
+  if (!(error instanceof NetworkError)) return true;
+  return error.code === 'NETWORK_OFFLINE' || error.code === 'NETWORK_TIMEOUT';
+}
+
+function handleReplayError(
+  context: ReplayItemContext,
+  result: ReplayResult,
+  error: unknown,
+): boolean {
+  if (isNetworkFailure(error)) return false;
+  result.failed++;
+  const networkError = error instanceof NetworkError ? error : new NetworkError({ code: 'NETWORK_OFFLINE', message: 'Replay failed' });
+  for (const handler of context.handlers.replayItemFailed) handler(context.item, networkError);
+  return true;
 }
 
 function isExpired(request: QueuedRequest): boolean {
