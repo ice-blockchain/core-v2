@@ -8,7 +8,9 @@
   },
   "scripts": {
     "lint": "eslint src/",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "expo-camera": ">=15",
@@ -19,6 +21,8 @@
     "expo-image-picker": { "optional": true }
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
   }
 }
