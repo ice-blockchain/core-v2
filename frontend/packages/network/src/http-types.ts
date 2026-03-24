@@ -14,13 +14,13 @@ export interface HttpClientConfig {
 }
 
 export interface RequestOptions {
-  params?: Record<string, string>;
-  query?: Record<string, string>;
-  headers?: Record<string, string>;
-  timeoutMs?: number;
-  signal?: AbortSignal;
-  offlineQueue?: boolean;
-  retryable?: boolean;
+  params?: Record<string, string> | undefined;
+  query?: Record<string, string> | undefined;
+  headers?: Record<string, string> | undefined;
+  timeoutMs?: number | undefined;
+  signal?: AbortSignal | undefined;
+  offlineQueue?: boolean | undefined;
+  retryable?: boolean | undefined;
 }
 
 export interface RequestOptionsWithBody extends RequestOptions {
