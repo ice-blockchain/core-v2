@@ -1,6 +1,6 @@
 # ion-app
 
-ION mobile-first social + crypto platform — pnpm monorepo for the React Native app, React + Vite web app, and shared packages.
+Online+ mobile-first social + crypto platform — pnpm monorepo for the React Native app, React + Vite web app, and shared packages.
 
 ## Structure
 
@@ -38,9 +38,9 @@ All environment-specific values (bundle IDs, API URLs, signing keys, Google Serv
 
 | Environment | Mobile Bundle ID     | App Name     |
 |-------------|---------------------|--------------|
-| staging     | io.ion.app.staging  | ION Staging  |
-| testnet     | io.ion.app.testnet  | ION Testnet  |
-| production  | io.ion.app          | ION          |
+| staging     | io.ion.app.staging  | Online+ Staging  |
+| testnet     | io.ion.app.testnet  | Online+ Testnet  |
+| production  | io.ion.app          | Online+          |
 
 ### Setting up an environment
 
