@@ -4,27 +4,22 @@
   "private": true,
   "main": "./index.ts",
   "exports": {
-    ".": "./index.ts",
-    "./web": "./index.web.ts"
-  },
-  "typesVersions": {
-    "*": {
-      "web": ["./index.web.ts"]
-    }
+    ".": "./index.ts"
   },
   "scripts": {
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
     "test": "jest"
   },
-  "dependencies": {
-    "react-native-config": "^1.6.1"
-  },
   "peerDependencies": {
-    "react-native": ">=0.84"
+    "react-native": ">=0.84",
+    "react-native-config": ">=1.6.0"
   },
   "peerDependenciesMeta": {
     "react-native": {
+      "optional": true
+    },
+    "react-native-config": {
       "optional": true
     }
   },
