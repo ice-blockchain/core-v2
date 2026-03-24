@@ -4,7 +4,7 @@ export interface QueuedRequest {
   method: string;
   url: string;
   body?: unknown;
-  headers?: Record<string, string>;
+  headers?: Record<string, string> | undefined;
   enqueuedAt: number;
   timeToLiveMs: number;
 }
