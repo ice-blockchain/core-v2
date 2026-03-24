@@ -75,4 +75,16 @@ describe('LogBuffer filtering and clearing', () => {
     expect(buffer.getCount()).toBe(0);
     expect(buffer.getEntries()).toEqual([]);
   });
+
+  it('falls back to default capacity for zero', () => {
+    const buffer = new LogBuffer(0);
+    buffer.add(makeEntry(LogLevel.Info, 'entry'));
+    expect(buffer.getEntries()).toHaveLength(1);
+  });
+
+  it('falls back to default capacity for negative', () => {
+    const buffer = new LogBuffer(-5);
+    buffer.add(makeEntry(LogLevel.Info, 'entry'));
+    expect(buffer.getEntries()).toHaveLength(1);
+  });
 });

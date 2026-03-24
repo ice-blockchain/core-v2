@@ -11,8 +11,11 @@ class LogBuffer {
   private count = 0;
 
   constructor(capacity = DEFAULT_BUFFER_CAPACITY) {
-    this.capacity = capacity;
-    this.buffer = new Array<LogEntry | undefined>(capacity);
+    this.capacity =
+      capacity > 0 ? capacity : DEFAULT_BUFFER_CAPACITY;
+    this.buffer = new Array<LogEntry | undefined>(
+      this.capacity,
+    );
   }
 
   add(entry: LogEntry): void {

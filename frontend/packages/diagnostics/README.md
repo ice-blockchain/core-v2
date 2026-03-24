@@ -155,6 +155,18 @@ async function sendMessage(input: SendMessageInput) {
 }
 ```
 
+## Security: PII and sensitive data
+
+Never pass sensitive data (passwords, tokens, private keys, seeds) in `data` or `message` fields. Everything logged is sent to console in dev and potentially to Sentry in production. The package does not sanitize or redact — this is the caller's responsibility.
+
+```typescript
+// WRONG — leaks credentials
+Logger.error("Auth failed", { data: { password: userPassword, token: authToken } });
+
+// CORRECT — log context without secrets
+Logger.error("Auth failed", { tag: "auth", data: { userId, reason: "invalid_credentials" } });
+```
+
 ## Running checks
 
 ```bash
