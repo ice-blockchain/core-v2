@@ -12,7 +12,8 @@ export { Button } from "./components/Button";
 export type { ButtonProps, ButtonColor, ButtonIconPosition } from "./components/Button";
 
 // Icons
-export { ManageIcon } from "./icons/ManageIcon";
+export { Icon } from "./icons/Icon";
+export type { IconProps, IconName } from "./icons/Icon";
 
 // Catalog
 export { CatalogScreen } from "./catalog/CatalogScreen";

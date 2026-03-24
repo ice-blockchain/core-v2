@@ -3,7 +3,7 @@ import { Text } from "../components/Text";
 import { Button } from "../components/Button";
 import type { ButtonColor } from "../components/Button";
 import { useTheme } from "../theme/ThemeProvider";
-import { ManageIcon } from "../icons/ManageIcon";
+import { Icon } from "../icons/Icon";
 import { CatalogSection } from "./CatalogSection";
 
 const COLORS: ButtonColor[] = ["primary", "secondary", "secondaryB", "tertiary", "text"];
@@ -28,15 +28,15 @@ function LargeColorRow({ color }: { color: ButtonColor }) {
   return (
     <ButtonRow label={color}>
       <View style={{ width: "100%", marginBottom: 4 }}>
-        <Button height={56} color={color} label="Action" icon={<ManageIcon color={iconColor} size={20} />} iconPosition="left" />
+        <Button height={56} color={color} label="Action" icon={<Icon name="manage" color={iconColor} size={20} />} iconPosition="left" />
       </View>
       <View style={{ width: "100%", marginBottom: 4 }}>
-        <Button height={56} color={color} label="Action" icon={<ManageIcon color={iconColor} size={20} />} iconPosition="right" />
+        <Button height={56} color={color} label="Action" icon={<Icon name="manage" color={iconColor} size={20} />} iconPosition="right" />
       </View>
       <View style={{ width: "100%", marginBottom: 4 }}>
         <Button height={56} color={color} label="Action" />
       </View>
-      <Button height={56} color={color} icon={<ManageIcon color={iconColor} size={20} />} iconPosition="center" />
+      <Button height={56} color={color} icon={<Icon name="manage" color={iconColor} size={20} />} iconPosition="center" />
     </ButtonRow>
   );
 }
@@ -75,7 +75,7 @@ function SmallButtonVariants() {
       </Text>
       {COLORS.map((color) => (
         <ButtonRow key={color} label={color}>
-          <Button height={44} color={color} label="Action" icon={<ManageIcon color={getIconColor(color, theme)} size={20} />} iconPosition="left" />
+          <Button height={44} color={color} label="Action" icon={<Icon name="send" color={getIconColor(color, theme)} size={20} />} iconPosition="left" />
           <Button height={44} color={color} label="Action" />
         </ButtonRow>
       ))}

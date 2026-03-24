@@ -10,6 +10,7 @@ import { useTheme } from "../theme/ThemeProvider";
 import type { ColorMode } from "../theme/theme-types";
 import { ColorCatalogSection } from "./ColorCatalogSection";
 import { TypographyCatalogSection } from "./TypographyCatalogSection";
+import { IconCatalogSection } from "./IconCatalogSection";
 import { ButtonCatalogSection } from "./ButtonCatalogSection";
 
 function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
@@ -32,6 +33,7 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
         </View>
         <ColorCatalogSection />
         <TypographyCatalogSection />
+        <IconCatalogSection />
         <ButtonCatalogSection />
       </View>
     </ScrollView>
