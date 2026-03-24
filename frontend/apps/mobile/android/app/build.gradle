@@ -58,17 +58,17 @@ android {
         staging {
             dimension "environment"
             applicationId "io.ion.app.staging"
-            resValue "string", "app_name", "ION Staging"
+            resValue "string", "app_name", "Online+ Staging"
         }
         ionTestnet {
             dimension "environment"
             applicationId "io.ion.app.testnet"
-            resValue "string", "app_name", "ION Testnet"
+            resValue "string", "app_name", "Online+ Testnet"
         }
         production {
             dimension "environment"
             applicationId "io.ion.app"
-            resValue "string", "app_name", "ION"
+            resValue "string", "app_name", "Online+"
         }
     }
 
