@@ -35,7 +35,7 @@
 		AA0000050000000000000000 /* Ion-Production-Debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Ion-Production-Debug.xcconfig"; path = "Ion-Production-Debug.xcconfig"; sourceTree = "<group>"; };
 		AA0000060000000000000000 /* Ion-Production-Release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Ion-Production-Release.xcconfig"; path = "Ion-Production-Release.xcconfig"; sourceTree = "<group>"; };
 		B234A5BA2E8624A5B00C828E /* Pods-mobile.debug-staging.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-staging.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-staging.xcconfig"; sourceTree = "<group>"; };
-		DD0000010000000000000000 /* mobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = mobile.entitlements; path = mobile/mobile.entitlements; sourceTree = "<group>"; };
+		DD0000020000000000000000 /* mobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = mobile.entitlements; path = mobile/mobile.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FE6691CF0321E7EA8B117F2F /* Pods-mobile.release-testnet.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-testnet.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-testnet.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -59,7 +59,7 @@
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
-				DD0000010000000000000000 /* mobile.entitlements */,
+				DD0000020000000000000000 /* mobile.entitlements */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 			);
 			name = mobile;

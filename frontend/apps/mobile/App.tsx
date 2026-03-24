@@ -5,6 +5,7 @@
  * @format
  */
 
+import { environmentConfig } from '@ion/config';
 import { NewAppScreen } from '@react-native/new-app-screen';
 import { StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import {
@@ -28,7 +29,7 @@ function AppContent() {
 
   return (
     <View style={styles.container}>
-      <Text>ION</Text>
+      <Text>ION ({environmentConfig.appEnvironment})</Text>
       <NewAppScreen
         templateFileName="App.tsx"
         safeAreaInsets={safeAreaInsets}

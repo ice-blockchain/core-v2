@@ -4,7 +4,13 @@
   "private": true,
   "main": "./index.ts",
   "exports": {
-    ".": "./index.ts"
+    ".": "./index.ts",
+    "./web": "./index.web.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "web": ["./index.web.ts"]
+    }
   },
   "scripts": {
     "lint": "eslint src/",
@@ -17,7 +23,14 @@
   "peerDependencies": {
     "react-native": ">=0.84"
   },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.0.0",
     "typescript": "^5.8.3"
   }
 }
