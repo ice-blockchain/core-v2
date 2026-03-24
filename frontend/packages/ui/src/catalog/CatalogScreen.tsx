@@ -12,6 +12,7 @@ import { ColorCatalogSection } from "./ColorCatalogSection";
 import { TypographyCatalogSection } from "./TypographyCatalogSection";
 import { IconCatalogSection } from "./IconCatalogSection";
 import { ButtonCatalogSection } from "./ButtonCatalogSection";
+import { SmallButtonCatalogSection } from "./SmallButtonCatalogSection";
 
 function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
@@ -35,6 +36,7 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
         <TypographyCatalogSection />
         <IconCatalogSection />
         <ButtonCatalogSection />
+        <SmallButtonCatalogSection />
       </View>
     </ScrollView>
     </SafeAreaView>

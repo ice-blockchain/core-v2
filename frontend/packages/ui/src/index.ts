@@ -11,6 +11,9 @@ export type { TextProps } from "./components/Text";
 export { Button } from "./components/Button";
 export type { ButtonProps, ButtonColor, ButtonIconPosition } from "./components/Button";
 
+export { SmallButton } from "./components/SmallButton";
+export type { SmallButtonProps, SmallButtonColor, SmallButtonIconPosition } from "./components/SmallButton";
+
 // Icons
 export { Icon } from "./icons/Icon";
 export type { IconProps, IconName } from "./icons/Icon";
