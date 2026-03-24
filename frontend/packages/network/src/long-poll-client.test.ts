@@ -145,3 +145,31 @@ describe('LongPollClient adaptive polling', () => {
     expect(http.post).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('LongPollClient NetworkStateProvider', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('triggers immediate re-poll on network interface change', async () => {
+    const http = createMockHttpClient();
+    (http.post as ReturnType<typeof vi.fn>).mockResolvedValue(syncResponse([], 'c0'));
+    let interfaceHandler: (() => void) | undefined;
+    const provider = {
+      isOnline: () => true,
+      onStateChange: () => () => {},
+      onNetworkInterfaceChange: (h: () => void) => { interfaceHandler = h; return () => {}; },
+      dispose: () => {},
+    };
+    const client = createLongPollClient({
+      url: '/poll', httpClient: http, networkStateProvider: provider,
+      adaptivePolling: { minIntervalMs: 5000, maxIntervalMs: 30000, idleIncrementMs: 2000, backgroundIntervalMs: 60000 },
+    });
+    client.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    const callsBefore = (http.post as ReturnType<typeof vi.fn>).mock.calls.length;
+    interfaceHandler!();
+    await vi.advanceTimersByTimeAsync(0);
+    expect((http.post as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(callsBefore);
+    client.disconnect();
+  });
+});

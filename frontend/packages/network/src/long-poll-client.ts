@@ -36,6 +36,7 @@ interface PollContext<TReceive> {
   isPolling: boolean;
   messageHandlers: Set<(messages: TReceive[]) => void>;
   reconnectHandlers: Set<() => void>;
+  cleanups: Array<() => void>;
 }
 
 export function createLongPollClient<TReceive = unknown>(
@@ -52,7 +53,7 @@ export function createLongPollClient<TReceive = unknown>(
     cursor: '', currentIntervalMs: adaptive.minIntervalMs,
     isBackground: false, errorCount: 0,
     abortController: null, pollTimerId: null, isPolling: false,
-    messageHandlers: new Set(), reconnectHandlers: new Set(),
+    messageHandlers: new Set(), reconnectHandlers: new Set(), cleanups: [],
   };
 
   return {
@@ -73,6 +74,7 @@ function startPolling<T>(ctx: PollContext<T>): void {
   const state = ctx.machine.getState();
   if (state !== 'idle' && state !== 'disconnected') return;
   ctx.machine.transition('connecting');
+  subscribeToNetworkState(ctx);
   schedulePoll(ctx, 0);
 }
 
@@ -81,6 +83,8 @@ function stopPolling<T>(ctx: PollContext<T>): void {
   ctx.abortController = null;
   if (ctx.pollTimerId) { clearTimeout(ctx.pollTimerId); ctx.pollTimerId = null; }
   ctx.isPolling = false;
+  for (const cleanup of ctx.cleanups) cleanup();
+  ctx.cleanups.length = 0;
   const current = ctx.machine.getState();
   if (current !== 'idle' && current !== 'disconnected') ctx.machine.transition('disconnected');
 }
@@ -167,4 +171,33 @@ function computeNextInterval<T>(
   if (ctx.isBackground) return ctx.adaptive.backgroundIntervalMs;
   if (hasData) return ctx.adaptive.minIntervalMs;
   return Math.min(ctx.currentIntervalMs + ctx.adaptive.idleIncrementMs, ctx.adaptive.maxIntervalMs);
+}
+
+function subscribeToNetworkState<T>(ctx: PollContext<T>): void {
+  const provider = ctx.config.networkStateProvider;
+  if (!provider) return;
+  ctx.cleanups.push(provider.onStateChange((isOnline) => {
+    if (isOnline) resumePolling(ctx);
+    else pausePolling(ctx);
+  }));
+  ctx.cleanups.push(provider.onNetworkInterfaceChange(() => {
+    triggerImmediateRepoll(ctx);
+  }));
+}
+
+function pausePolling<T>(ctx: PollContext<T>): void {
+  if (ctx.pollTimerId) { clearTimeout(ctx.pollTimerId); ctx.pollTimerId = null; }
+  ctx.abortController?.abort();
+}
+
+function resumePolling<T>(ctx: PollContext<T>): void {
+  const state = ctx.machine.getState();
+  if (state === 'idle' || state === 'disconnected') return;
+  schedulePoll(ctx, 0);
+}
+
+function triggerImmediateRepoll<T>(ctx: PollContext<T>): void {
+  if (ctx.isPolling) return;
+  if (ctx.pollTimerId) { clearTimeout(ctx.pollTimerId); ctx.pollTimerId = null; }
+  schedulePoll(ctx, 0);
 }

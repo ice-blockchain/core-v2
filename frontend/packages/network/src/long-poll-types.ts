@@ -1,6 +1,7 @@
 import type { HttpClient } from './http-types';
 import type { RetryConfig } from './retry-types';
 import type { ConnectionState } from './shared-types';
+import type { NetworkStateProvider } from './event-types';
 
 export interface LongPollClient<TReceive = unknown> {
   connect(): void;
@@ -18,6 +19,7 @@ export interface LongPollClientConfig {
   adaptivePolling?: AdaptivePollingConfig;
   retryConfig?: RetryConfig;
   serializer?: PayloadSerializer;
+  networkStateProvider?: NetworkStateProvider | undefined;
 }
 
 export interface AdaptivePollingConfig {
