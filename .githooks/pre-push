@@ -1,0 +1,42 @@
+#!/bin/sh
+
+if ! command -v claude >/dev/null 2>&1; then
+  echo "ERROR: claude CLI not found. Install it or use git push --no-verify to skip."
+  exit 1
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+AUDIT_FILE="$REPO_ROOT/frontend/.claude/commands/security-audit.md"
+
+if [ ! -f "$AUDIT_FILE" ]; then
+  echo "ERROR: Security audit prompt not found at $AUDIT_FILE"
+  exit 1
+fi
+
+AUDIT_PROMPT="$(cat "$AUDIT_FILE")"
+
+FULL_PROMPT="$AUDIT_PROMPT
+
+Review all committed changes on this branch that are about to be pushed. Run git diff against the remote tracking branch to find what is new.
+
+IMPORTANT: Your final line of output MUST be exactly one of these two words:
+PASS - if there are no critical or high severity findings
+FAIL - if there are any critical or high severity findings"
+
+echo "Running security audit before push..."
+RESULT="$(claude --max-turns 30 -p "$FULL_PROMPT")"
+
+if [ $? -ne 0 ]; then
+  echo "Security audit failed to run. Push blocked."
+  exit 1
+fi
+
+echo "$RESULT"
+
+VERDICT="$(echo "$RESULT" | tail -1 | tr -d '[:space:]')"
+
+if [ "$VERDICT" != "PASS" ]; then
+  echo ""
+  echo "Security audit did not pass. Push blocked."
+  exit 1
+fi

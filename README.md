@@ -1,4 +1,21 @@
-# ION Architecture 
+# ION Architecture
+
+## Setup
+
+### Git Hooks
+
+This repo uses a pre-push hook that runs an AI security audit via the Claude CLI before every push. To enable it:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+Requirements:
+- [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) installed and on PATH
+
+The hook reads the audit prompt from `frontend/.claude/commands/security-audit.md` and blocks the push if any critical or high severity findings are detected. To bypass in an emergency: `git push --no-verify`.
+
+---
 
 ![ION Architecture](./ion_architecture_high_level.svg)
 

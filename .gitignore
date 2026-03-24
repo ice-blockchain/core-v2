@@ -2,6 +2,9 @@
 .vscode/**
 **/node_modules/**
 **/.claude/**
+!**/.claude/settings.json
+!**/.claude/commands/**
+!**/.claude/rules/**
 **/dist/**
 *.env
 **/*.env
