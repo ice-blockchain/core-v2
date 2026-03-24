@@ -1,0 +1,44 @@
+{
+  "name": "@ion/platform",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "react-native": ">=0.76",
+    "react-native-device-info": ">=11.0.0",
+    "react-native-keychain": ">=9.0.0",
+    "@react-native-async-storage/async-storage": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    },
+    "react-native-device-info": {
+      "optional": true
+    },
+    "react-native-keychain": {
+      "optional": true
+    },
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-typescript": "^7.27.0",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.0.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "typescript": "^5.8.3"
+  }
+}
