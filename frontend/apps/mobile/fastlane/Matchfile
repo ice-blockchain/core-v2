@@ -1,0 +1,12 @@
+git_url("https://github.com/ion-app/core-v2-certs")
+storage_mode("git")
+type("appstore")
+
+app_identifier([
+  "io.ion.app",
+  "io.ion.app.staging",
+  "io.ion.app.testnet",
+])
+
+team_id("YJJ6X8TG5Y")
+git_branch("main")

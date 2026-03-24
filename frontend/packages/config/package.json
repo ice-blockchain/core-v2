@@ -1,0 +1,23 @@
+{
+  "name": "@ion/config",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "react-native-config": "^1.6.1"
+  },
+  "peerDependencies": {
+    "react-native": ">=0.84"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
