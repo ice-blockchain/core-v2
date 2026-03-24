@@ -1,0 +1,111 @@
+import type { RawTypographyVariant } from "../theme/theme-types";
+
+const FONT_FAMILY = "Noto Sans";
+
+export const typographyVariants: Record<string, RawTypographyVariant> = {
+  headline1: {
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  headline2: {
+    fontSize: 24,
+    fontWeight: "700",
+    lineHeight: 31,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: "600",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  subtitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  subtitle2: {
+    fontSize: 15,
+    fontWeight: "500",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  subtitle3: {
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  body: {
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  body2: {
+    fontSize: 13,
+    fontWeight: "400",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  caption: {
+    fontSize: 12,
+    fontWeight: "500",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  caption2: {
+    fontSize: 12,
+    fontWeight: "400",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  caption3: {
+    fontSize: 11,
+    fontWeight: "400",
+    lineHeight: 18,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  caption4: {
+    fontSize: 11,
+    fontWeight: "600",
+    lineHeight: 16,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  caption5: {
+    fontSize: 10,
+    fontWeight: "500",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+  caption6: {
+    fontSize: 11,
+    fontWeight: "500",
+    lineHeight: 16,
+    letterSpacing: 0.11,
+    fontFamily: FONT_FAMILY,
+  },
+  notificationCaption: {
+    fontSize: 6,
+    fontWeight: "700",
+    lineHeight: undefined,
+    letterSpacing: 0,
+    fontFamily: FONT_FAMILY,
+  },
+};

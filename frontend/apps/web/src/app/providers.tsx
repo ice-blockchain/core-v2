@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeProvider } from "@ion/ui";
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <ThemeProvider>{children}</ThemeProvider>;
 }
