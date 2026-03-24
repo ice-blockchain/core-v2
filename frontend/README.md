@@ -93,7 +93,7 @@ This copies:
 pnpm dev
 
 # Individual
-cd apps/web && pnpm dev          # http://localhost:3000
+pnpm web                         # http://localhost:3000
 cd apps/mobile && pnpm start     # Metro bundler
 ```
 
