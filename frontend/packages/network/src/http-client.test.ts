@@ -82,4 +82,13 @@ describe('createHttpClient HTTPS enforcement', () => {
     const client = createHttpClient({ baseUrl: 'http://api.example.com' });
     await expect(client.get('/users')).rejects.toThrow('HTTPS required');
   });
+
+  it('throws when isProduction is true with non-empty allowlist', () => {
+    expect(() => createHttpClient({
+      baseUrl: 'https://api.example.com',
+      isProduction: true,
+      httpsAllowlist: ['localhost'],
+    })).toThrow('HTTPS allowlist must be empty in production');
+  });
+
 });

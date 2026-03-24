@@ -32,7 +32,7 @@ describe('calculateDelay', () => {
   });
 });
 
-describe('shouldRetry', () => {
+describe('shouldRetry retryable errors', () => {
   it('retries server errors for GET', () => {
     const error = new NetworkError({ code: 'SERVER_ERROR', message: 'fail', status: 500 });
     expect(shouldRetry(error, 'GET', false)).toBe(true);
@@ -43,6 +43,17 @@ describe('shouldRetry', () => {
     expect(shouldRetry(error, 'GET', false)).toBe(true);
   });
 
+  it('retries POST when retryable flag is set', () => {
+    const error = new NetworkError({ code: 'SERVER_ERROR', message: 'fail', status: 500 });
+    expect(shouldRetry(error, 'POST', true)).toBe(true);
+  });
+
+  it('retries TypeError from fetch', () => {
+    expect(shouldRetry(new TypeError('Failed to fetch'), 'GET', false)).toBe(true);
+  });
+});
+
+describe('shouldRetry non-retryable', () => {
   it('does not retry client errors', () => {
     const error = new NetworkError({ code: 'CLIENT_ERROR', message: 'bad', status: 400 });
     expect(shouldRetry(error, 'GET', false)).toBe(false);
@@ -58,13 +69,9 @@ describe('shouldRetry', () => {
     expect(shouldRetry(error, 'POST', false)).toBe(false);
   });
 
-  it('retries POST when retryable flag is set', () => {
+  it('does not retry DELETE by default', () => {
     const error = new NetworkError({ code: 'SERVER_ERROR', message: 'fail', status: 500 });
-    expect(shouldRetry(error, 'POST', true)).toBe(true);
-  });
-
-  it('retries TypeError from fetch', () => {
-    expect(shouldRetry(new TypeError('Failed to fetch'), 'GET', false)).toBe(true);
+    expect(shouldRetry(error, 'DELETE', false)).toBe(false);
   });
 });
 

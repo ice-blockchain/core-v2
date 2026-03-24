@@ -6,7 +6,7 @@ import { createHttpsValidator } from './https-validator';
 import { followRedirects } from './redirect-handler';
 import { parseResponse, validateRequestBodySize } from './response-parser';
 import { runRequestInterceptors, runResponseInterceptors, runErrorInterceptors } from './interceptor-pipeline';
-import { executeWithRetry } from './retry-handler';
+import { executeWithRetry, parseRetryAfter } from './retry-handler';
 import { NetworkError } from './network-error';
 import { DEFAULT_RETRY_CONFIG } from './retry-types';
 
@@ -42,7 +42,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
 }
 
 function buildInternals(config: HttpClientConfig): ClientInternals {
-  const isProduction = false;
+  const isProduction = config.isProduction ?? false;
   return {
     config: {
       baseUrl: config.baseUrl,
@@ -164,13 +164,13 @@ function buildRateLimitError(
   response: InterceptedResponse,
 ): NetworkError {
   const header = response.headers['retry-after'];
-  const retryAfterMs = header ? parseInt(header, 10) * 1000 : undefined;
+  const retryAfterMs = header ? parseRetryAfter(header, 60_000) : null;
   return new NetworkError({
     code: 'RATE_LIMITED',
     message: 'Rate limited',
     status,
     responseBody: response.body,
-    ...(retryAfterMs !== undefined && !isNaN(retryAfterMs) ? { retryAfterMs } : {}),
+    ...(retryAfterMs !== null ? { retryAfterMs } : {}),
   });
 }
 

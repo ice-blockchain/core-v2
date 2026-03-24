@@ -11,7 +11,7 @@ interface RetryOptions<T> {
   retryable?: boolean | undefined;
 }
 
-const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE']);
+const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT']);
 
 export function calculateDelay(
   attempt: number,

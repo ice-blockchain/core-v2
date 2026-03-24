@@ -11,6 +11,7 @@ export interface HttpClientConfig {
   interceptors?: Interceptor[];
   retryConfig?: RetryConfig;
   httpsAllowlist?: string[];
+  isProduction?: boolean | undefined;
 }
 
 export interface RequestOptions {
