@@ -17,11 +17,12 @@
   },
   "dependencies": {
     "@ion/config": "workspace:*",
-    "@react-native/new-app-screen": "0.84.1",
+    "@ion/ui": "workspace:*",
     "react": "19.2.3",
     "react-native": "0.84.1",
     "react-native-config": "^1.6.1",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-safe-area-context": "^5.5.2",
+    "react-native-svg": "^15.15.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
