@@ -5,6 +5,18 @@ const REQUIRED_KEYS = ['APP_ENV', 'API_BASE_URL', 'RELAY_URL', 'LOG_LEVEL'] as c
 const VALID_ENVIRONMENTS: AppEnvironment[] = ['staging', 'testnet', 'production'];
 const VALID_LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
 
+function validateUrl(value: string, name: string, protocol: string): void {
+  try {
+    new URL(value);
+  } catch {
+    throw new Error(`Invalid ${name}: "${value}". Must be a valid URL`);
+  }
+
+  if (!value.startsWith(`${protocol}://`)) {
+    throw new Error(`Invalid ${name}: "${value}". Must use ${protocol}://`);
+  }
+}
+
 export function validateEnvironmentConfig(
   config: Record<string, string | undefined>,
 ): EnvironmentConfig {
@@ -28,10 +40,10 @@ export function validateEnvironmentConfig(
     );
   }
 
-  return {
-    appEnvironment,
-    apiBaseUrl: config.API_BASE_URL as string,
-    relayUrl: config.RELAY_URL as string,
-    logLevel,
-  };
+  const apiBaseUrl = config.API_BASE_URL as string;
+  const relayUrl = config.RELAY_URL as string;
+  validateUrl(apiBaseUrl, 'API_BASE_URL', 'https');
+  validateUrl(relayUrl, 'RELAY_URL', 'wss');
+
+  return { appEnvironment, apiBaseUrl, relayUrl, logLevel };
 }

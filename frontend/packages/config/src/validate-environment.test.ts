@@ -54,4 +54,28 @@ describe('validateEnvironmentConfig', () => {
       validateEnvironmentConfig({ ...validConfig, LOG_LEVEL: 'verbose' }),
     ).toThrow('Invalid LOG_LEVEL: "verbose"');
   });
+
+  it('throws when API_BASE_URL is not a valid URL', () => {
+    expect(() =>
+      validateEnvironmentConfig({ ...validConfig, API_BASE_URL: 'not-a-url' }),
+    ).toThrow('Invalid API_BASE_URL: "not-a-url". Must be a valid URL');
+  });
+
+  it('throws when API_BASE_URL uses http instead of https', () => {
+    expect(() =>
+      validateEnvironmentConfig({ ...validConfig, API_BASE_URL: 'http://api.ion.app' }),
+    ).toThrow('Invalid API_BASE_URL: "http://api.ion.app". Must use https://');
+  });
+
+  it('throws when RELAY_URL is not a valid URL', () => {
+    expect(() =>
+      validateEnvironmentConfig({ ...validConfig, RELAY_URL: 'javascript:alert(1)' }),
+    ).toThrow('Must use wss://');
+  });
+
+  it('throws when RELAY_URL uses ws instead of wss', () => {
+    expect(() =>
+      validateEnvironmentConfig({ ...validConfig, RELAY_URL: 'ws://relay.ion.app' }),
+    ).toThrow('Invalid RELAY_URL: "ws://relay.ion.app". Must use wss://');
+  });
 });
