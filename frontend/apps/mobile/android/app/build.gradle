@@ -37,7 +37,7 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 def signingProps = new Properties()
-def signingPropsFile = file("signing/key.properties")
+def signingPropsFile = file("../key.properties")
 if (signingPropsFile.exists()) signingPropsFile.withInputStream { signingProps.load(it) }
 
 android {
@@ -81,7 +81,7 @@ android {
         }
         release {
             if (signingPropsFile.exists()) {
-                storeFile file("signing/${signingProps['storeFile']}")
+                storeFile file(signingProps['storeFile'])
                 storePassword signingProps['storePassword']
                 keyAlias signingProps['keyAlias']
                 keyPassword signingProps['keyPassword']

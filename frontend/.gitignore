@@ -42,16 +42,18 @@ pnpm-debug.log*
 # Claude Code
 .claude/settings.local.json
 
-# Secrets folder (clone core-v2-secrets repo here)
+# Secrets (clone core-v2-secrets repo: git clone <url> .secrets)
 .secrets/
 
 # Per-environment files placed by scripts/setup-env.sh
 apps/mobile/.env
 apps/mobile/.env.secrets
+apps/mobile/android/key.properties
 apps/mobile/android/app/google-services.json
-apps/mobile/android/signing/
 apps/mobile/ios/GoogleService-Info.plist
 apps/mobile/ios/xcconfig/
 apps/mobile/ios/mobile.xcodeproj/xcshareddata/xcschemes/
+apps/mobile/sentry.properties
+apps/mobile/fastlane/keys/
 apps/web/.env
 apps/web/.env.secrets

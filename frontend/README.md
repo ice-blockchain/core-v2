@@ -34,7 +34,7 @@ pnpm install
 
 The project supports three environments: **staging**, **testnet**, and **production**.
 
-All environment-specific values (bundle IDs, API URLs, signing keys, Google Services configs) live in a `.secrets/` folder at the repo root. This folder is gitignored and mirrors the structure of a private secrets repo.
+All environment-specific values (bundle IDs, API URLs, signing keys, Google Services configs) live in a `.secrets/` folder at the repo root. This is a clone of the private `core-v2-secrets` repo (gitignored).
 
 | Environment | Mobile Bundle ID     | App Name     |
 |-------------|---------------------|--------------|
@@ -48,26 +48,33 @@ All environment-specific values (bundle IDs, API URLs, signing keys, Google Serv
 ./scripts/setup-env.sh staging    # or testnet, production
 ```
 
+On first run, the script prompts for the secrets repo URL and clones it into `.secrets/`. On subsequent runs, it pulls the latest changes automatically.
+
 This copies:
 - `.env` (runtime vars bundled via `react-native-config` / Next.js auto-load)
 - `.env.secrets` (build-time only, sourced into shell — never bundled)
-- Google Services configs, signing keys, xcconfig files, Xcode schemes
+- Android signing keystore + key.properties
+- Google Services configs, sentry properties, fastlane keys
+- iOS xcconfig files and Xcode schemes
 
 ### `.secrets/` folder layout
 
+`.secrets/` is a clone of `core-v2-secrets`. The script reads from `.secrets/frontend/`:
+
 ```
-.secrets/
-  shared/
-    mobile/ios/xcconfig/         Per-env xcconfig files (bundle ID, app name)
-    mobile/ios/.../xcschemes/    Xcode schemes (Ion-Staging, Ion-Testnet, Ion-Production)
+.secrets/frontend/
+  shared/mobile/
+    .env.secrets                           Build-time secrets (Match credentials)
+    android/key.properties                 Android signing config
+    android/app/ion-key.keystore           Android signing keystore
+    ios/xcconfig/                          Per-env xcconfig files (bundle ID, app name)
+    ios/mobile.xcodeproj/.../xcschemes/    Xcode schemes
   staging/
-    mobile/.env                  Runtime vars
-    mobile/.env.secrets          Build-time secrets (Sentry, etc.)
+    mobile/.env                            Runtime vars
     mobile/android/app/google-services.json
-    mobile/android/signing/      Keystore + key.properties
-    mobile/ios/GoogleService-Info.plist
+    mobile/sentry.properties
+    mobile/fastlane/keys/                  App Store Connect, Firebase, Google Play keys
     web/.env
-    web/.env.secrets
   testnet/   ...same structure...
   production/...same structure...
 ```
