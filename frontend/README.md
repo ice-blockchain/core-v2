@@ -108,24 +108,23 @@ pnpm format         # Prettier
 
 ## Mobile builds
 
-### iOS
+One command sets up the environment and runs the app:
 
 ```bash
-# After setup-env.sh:
-npx react-native run-ios --scheme Ion-Staging
-npx react-native run-ios --scheme Ion-Testnet
-npx react-native run-ios --scheme Ion-Production
+# iOS
+pnpm ios:staging
+pnpm ios:testnet
+pnpm ios:production
+
+# Android
+pnpm android:staging
+pnpm android:testnet
+pnpm android:production
 ```
+
+These run `setup-env.sh` first, then the corresponding `react-native run-ios --scheme` or `run-android --variant` command. Also available from `apps/mobile/` via `pnpm ios:staging` etc.
 
 iOS uses 6 build configurations (Debug/Release x Staging/Testnet/Production) with xcconfig files that set `PRODUCT_BUNDLE_IDENTIFIER` and `PRODUCT_NAME` per environment.
-
-### Android
-
-```bash
-npx react-native run-android --variant stagingDebug
-npx react-native run-android --variant testnetDebug
-npx react-native run-android --variant productionDebug
-```
 
 Android uses product flavors defined in `build.gradle` with per-flavor `applicationId` and `resValue` app names.
 

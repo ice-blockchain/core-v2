@@ -6,7 +6,13 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "ios:staging": "pnpm --filter @ion/mobile ios:staging",
+    "ios:testnet": "pnpm --filter @ion/mobile ios:testnet",
+    "ios:production": "pnpm --filter @ion/mobile ios:production",
+    "android:staging": "pnpm --filter @ion/mobile android:staging",
+    "android:testnet": "pnpm --filter @ion/mobile android:testnet",
+    "android:production": "pnpm --filter @ion/mobile android:production"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",

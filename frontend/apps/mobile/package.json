@@ -5,6 +5,12 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
+    "ios:staging": "../../scripts/setup-env.sh staging && react-native run-ios --scheme Ion-Staging",
+    "ios:testnet": "../../scripts/setup-env.sh testnet && react-native run-ios --scheme Ion-Testnet",
+    "ios:production": "../../scripts/setup-env.sh production && react-native run-ios --scheme Ion-Production",
+    "android:staging": "../../scripts/setup-env.sh staging && react-native run-android --variant stagingDebug",
+    "android:testnet": "../../scripts/setup-env.sh testnet && react-native run-android --variant testnetDebug",
+    "android:production": "../../scripts/setup-env.sh production && react-native run-android --variant productionDebug",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest"
