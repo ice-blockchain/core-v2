@@ -2,10 +2,10 @@ import Svg, { Path } from "react-native-svg";
 
 interface ManageIconProps {
   size?: number;
-  color?: string;
+  color: string;
 }
 
-export function ManageIcon({ size = 24, color = "#0166FF" }: ManageIconProps) {
+export function ManageIcon({ size = 24, color }: ManageIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

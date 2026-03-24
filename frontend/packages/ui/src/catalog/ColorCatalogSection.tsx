@@ -11,6 +11,7 @@ interface SwatchProps {
 }
 
 function Swatch({ name, color, size }: SwatchProps) {
+  const theme = useTheme();
   return (
     <View style={{ alignItems: "center", margin: 4, width: size + 20 }}>
       <View
@@ -20,7 +21,7 @@ function Swatch({ name, color, size }: SwatchProps) {
           backgroundColor: color,
           borderRadius: 6,
           borderWidth: 1,
-          borderColor: "rgba(0,0,0,0.08)",
+          borderColor: theme.colors.strokeElements,
         }}
       />
       <Text variant="caption5" style={{ marginTop: 4, textAlign: "center" }}>
@@ -28,7 +29,7 @@ function Swatch({ name, color, size }: SwatchProps) {
       </Text>
       <Text
         variant="notificationCaption"
-        color="#9A9A9A"
+        color={theme.colors.tertiaryText}
         style={{ textAlign: "center" }}
       >
         {color}
