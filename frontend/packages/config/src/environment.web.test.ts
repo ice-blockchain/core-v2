@@ -1,10 +1,10 @@
 import type { EnvironmentConfig } from './types';
 
 const ENV_KEYS = [
-  'NEXT_PUBLIC_APP_ENV',
-  'NEXT_PUBLIC_API_BASE_URL',
-  'NEXT_PUBLIC_RELAY_URL',
-  'NEXT_PUBLIC_LOG_LEVEL',
+  'VITE_APP_ENV',
+  'VITE_API_BASE_URL',
+  'VITE_RELAY_URL',
+  'VITE_LOG_LEVEL',
 ] as const;
 
 function clearWebEnvVars(): void {
@@ -19,10 +19,10 @@ function loadWebEnvironment(
   jest.resetModules();
   clearWebEnvVars();
 
-  if (vars.APP_ENV) process.env.NEXT_PUBLIC_APP_ENV = vars.APP_ENV;
-  if (vars.API_BASE_URL) process.env.NEXT_PUBLIC_API_BASE_URL = vars.API_BASE_URL;
-  if (vars.RELAY_URL) process.env.NEXT_PUBLIC_RELAY_URL = vars.RELAY_URL;
-  if (vars.LOG_LEVEL) process.env.NEXT_PUBLIC_LOG_LEVEL = vars.LOG_LEVEL;
+  if (vars.APP_ENV) process.env.VITE_APP_ENV = vars.APP_ENV;
+  if (vars.API_BASE_URL) process.env.VITE_API_BASE_URL = vars.API_BASE_URL;
+  if (vars.RELAY_URL) process.env.VITE_RELAY_URL = vars.RELAY_URL;
+  if (vars.LOG_LEVEL) process.env.VITE_LOG_LEVEL = vars.LOG_LEVEL;
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('./environment.web').environmentConfig as EnvironmentConfig;
@@ -40,7 +40,7 @@ afterEach(() => {
 });
 
 describe('environmentConfig (web)', () => {
-  it('reads config from NEXT_PUBLIC_ env vars and returns validated result', () => {
+  it('reads config from VITE_ env vars and returns validated result', () => {
     const config = loadWebEnvironment(validVars);
 
     expect(config).toEqual({
@@ -51,7 +51,7 @@ describe('environmentConfig (web)', () => {
     });
   });
 
-  it('throws when NEXT_PUBLIC_ env vars are missing', () => {
+  it('throws when VITE_ env vars are missing', () => {
     expect(() => loadWebEnvironment({ APP_ENV: 'staging' })).toThrow(
       'Missing required environment variable',
     );

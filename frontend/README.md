@@ -1,13 +1,13 @@
 # ion-app
 
-ION mobile-first social + crypto platform — pnpm monorepo for the React Native app, Next.js web app, and shared packages.
+Online+ mobile-first social + crypto platform — pnpm monorepo for the React Native app, React + Vite web app, and shared packages.
 
 ## Structure
 
 ```
 apps/
   mobile/              React Native 0.84 (bare, New Architecture + Hermes)
-  web/                 Next.js 15 (App Router)
+  web/                 React 19 + Vite (SPA)
 packages/
   config/              @ion/config — environment configuration (Foundation layer)
   ui/                  Shared React/RN component primitives
@@ -38,9 +38,9 @@ All environment-specific values (bundle IDs, API URLs, signing keys, Google Serv
 
 | Environment | Mobile Bundle ID     | App Name     |
 |-------------|---------------------|--------------|
-| staging     | io.ion.app.staging  | ION Staging  |
-| testnet     | io.ion.app.testnet  | ION Testnet  |
-| production  | io.ion.app          | ION          |
+| staging     | io.ion.app.staging  | Online+ Staging  |
+| testnet     | io.ion.app.testnet  | Online+ Testnet  |
+| production  | io.ion.app          | Online+          |
 
 ### Setting up an environment
 
@@ -51,7 +51,7 @@ All environment-specific values (bundle IDs, API URLs, signing keys, Google Serv
 On first run, the script prompts for the secrets repo URL and clones it into `.secrets/`. On subsequent runs, it pulls the latest changes automatically.
 
 This copies:
-- `.env` (runtime vars bundled via `react-native-config` / Next.js auto-load)
+- `.env` (runtime vars bundled via `react-native-config` / Vite)
 - `.env.secrets` (build-time only, sourced into shell — never bundled)
 - Android signing keystore + key.properties
 - Google Services configs, sentry properties, fastlane keys
@@ -83,7 +83,7 @@ This copies:
 
 | File           | Read by                              | In app binary? | Examples                            |
 |----------------|--------------------------------------|----------------|-------------------------------------|
-| `.env`         | `react-native-config` / Next.js      | Yes            | APP_ENV, API_BASE_URL, RELAY_URL    |
+| `.env`         | `react-native-config` / Vite         | Yes            | APP_ENV, API_BASE_URL, RELAY_URL    |
 | `.env.secrets` | Shell (`source`) — build tooling     | No             | SENTRY_AUTH_TOKEN, MATCH_GIT_URL, MATCH_GIT_BASIC_AUTHORIZATION, MATCH_PASSWORD |
 
 ## Dev
@@ -93,7 +93,7 @@ This copies:
 pnpm dev
 
 # Individual
-pnpm web                         # http://localhost:3000
+pnpm web                         # http://localhost:5173
 pnpm metro                       # Metro bundler
 ```
 

@@ -21,5 +21,5 @@ module.exports = {
     "max-params": ["error", 3],
     "no-empty": "error",
   },
-  ignorePatterns: ["node_modules/", "dist/", ".next/", "*.config.js", "**/icons/generated/**"],
+  ignorePatterns: ["node_modules/", "dist/", "*.config.js", "*.config.ts", "**/icons/generated/**"],
 };

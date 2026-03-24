@@ -154,7 +154,7 @@ async function startRecording(): Promise<void> {
 Platform-specific code lives in `src/platform/` using file extension resolution:
 
 - `*.native.ts` — React Native (resolved by Metro)
-- `*.web.ts` — Browser (resolved by Webpack/Next.js)
+- `*.web.ts` — Browser (resolved by Vite)
 - `*.ts` — Stub for TypeScript compilation
 
 Shared code (types, store, hook, orchestrator) has no platform dependencies.
