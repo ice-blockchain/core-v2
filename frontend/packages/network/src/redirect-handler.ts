@@ -8,6 +8,9 @@ interface RedirectOptions {
 const SENSITIVE_HEADERS = ['authorization', 'cookie', 'proxy-authorization'];
 
 const PRIVATE_IP_PATTERNS = [
+  /^localhost$/i,
+  /^\[?::1\]?$/,
+  /^0\.0\.0\.0$/,
   /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
   /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/,
   /^192\.168\.\d{1,3}\.\d{1,3}$/,
@@ -50,6 +53,13 @@ function validateRedirectTarget(
     throw new NetworkError({
       code: 'CLIENT_ERROR',
       message: `Redirect to non-HTTP(S) scheme: ${target.protocol}`,
+    });
+  }
+  const originalProtocol = new URL(originalUrl).protocol;
+  if (originalProtocol === 'https:' && target.protocol === 'http:') {
+    throw new NetworkError({
+      code: 'HTTPS_REQUIRED',
+      message: `HTTPS-to-HTTP downgrade blocked: ${target.href}`,
     });
   }
   const originalHostname = new URL(originalUrl).hostname;
