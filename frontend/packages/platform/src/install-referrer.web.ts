@@ -1,3 +1,5 @@
+"use client";
+
 import type { InstallReferrer } from "./types";
 
 let cached: InstallReferrer | null = null;

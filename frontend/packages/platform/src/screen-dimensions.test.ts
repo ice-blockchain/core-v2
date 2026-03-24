@@ -29,15 +29,9 @@ describe("getScreenDimensions web", () => {
 });
 
 describe("getSafeAreaInsets web", () => {
-  it("returns numeric insets for all four sides", async () => {
+  it("returns all zeros since CSS env() is not readable from JS", async () => {
     const { getSafeAreaInsets } = await import("./screen-dimensions.web");
-    const insets = getSafeAreaInsets();
 
-    expect(insets).toEqual({
-      top: expect.any(Number),
-      bottom: expect.any(Number),
-      left: expect.any(Number),
-      right: expect.any(Number),
-    });
+    expect(getSafeAreaInsets()).toEqual({ top: 0, bottom: 0, left: 0, right: 0 });
   });
 });

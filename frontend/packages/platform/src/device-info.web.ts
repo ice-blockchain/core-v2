@@ -1,3 +1,5 @@
+"use client";
+
 import type { DeviceInfo } from "./types";
 
 let cached: DeviceInfo | null = null;

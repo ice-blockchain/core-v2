@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppLifecycleState, AppLifecycleListener } from "./types";
 
 export function getCurrentAppState(): AppLifecycleState {

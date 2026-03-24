@@ -14,8 +14,12 @@ async function readOrCreateFallbackId(): Promise<string> {
 }
 
 export async function getAndroidDeviceId(): Promise<string> {
-  const androidId = await DeviceInfo.getAndroidId();
-  if (androidId && androidId !== "unknown") return androidId;
+  try {
+    const androidId = await DeviceInfo.getAndroidId();
+    if (androidId && androidId !== "unknown") return androidId;
+  } catch {
+    // Android ID unavailable on some OEM ROMs — fall through to UUID
+  }
 
   return readOrCreateFallbackId();
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import type { ScreenDimensions, SafeAreaInsets } from "./types";
 
 export function getScreenDimensions(): ScreenDimensions {
@@ -8,16 +10,13 @@ export function getScreenDimensions(): ScreenDimensions {
   };
 }
 
-function parseCssEnv(name: string): number {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name);
-  return parseFloat(value) || 0;
-}
-
+/**
+ * Returns safe area insets on web.
+ *
+ * CSS env() values (safe-area-inset-*) are resolved by the CSS engine during
+ * layout and cannot be read via getComputedStyle. This function returns zeros.
+ * Web apps should handle safe areas in CSS using env() directly, not via JS.
+ */
 export function getSafeAreaInsets(): SafeAreaInsets {
-  return {
-    top: parseCssEnv("env(safe-area-inset-top)"),
-    bottom: parseCssEnv("env(safe-area-inset-bottom)"),
-    left: parseCssEnv("env(safe-area-inset-left)"),
-    right: parseCssEnv("env(safe-area-inset-right)"),
-  };
+  return { top: 0, bottom: 0, left: 0, right: 0 };
 }

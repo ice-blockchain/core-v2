@@ -56,3 +56,22 @@ describe("install-referrer web caching", () => {
     expect(first.senderId).toBe(second.senderId);
   });
 });
+
+describe("install-referrer native error handling", () => {
+  it("returns empty referrer when native module throws", async () => {
+    jest.mock("react-native", () => ({
+      Platform: { OS: "android" },
+      NativeModules: {
+        InstallReferrerModule: {
+          getInstallReferrer: () => Promise.reject(new Error("fail")),
+        },
+      },
+    }));
+
+    const { getInstallReferrer } = await import("./install-referrer");
+    const referrer = await getInstallReferrer();
+
+    expect(referrer.senderId).toBeNull();
+    expect(referrer.rawReferrer).toBeNull();
+  });
+});

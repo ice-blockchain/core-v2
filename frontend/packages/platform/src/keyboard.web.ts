@@ -1,3 +1,5 @@
+"use client";
+
 import type { KeyboardChangeEvent, KeyboardChangeListener } from "./types";
 
 let lastHeight = 0;

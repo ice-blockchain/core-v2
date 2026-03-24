@@ -13,7 +13,12 @@ export interface DeviceInfo {
 // --- Install Referrer ---
 
 export interface InstallReferrer {
+  /**
+   * Raw user-controlled input from referrer URL params.
+   * Must be sanitized before display, interpolation into HTML/URLs, or logging.
+   */
   senderId: string | null;
+  /** Raw referrer query string. Treat as untrusted user input. */
   rawReferrer: string | null;
 }
 

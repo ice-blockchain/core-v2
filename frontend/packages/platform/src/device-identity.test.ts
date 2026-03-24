@@ -56,3 +56,16 @@ describe("getDeviceId web caching", () => {
     expect(localStorage.getItem).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("getDeviceId web concurrent calls", () => {
+  it("returns same ID for all concurrent callers", async () => {
+    const { getDeviceId } = await import("./device-identity.web");
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => getDeviceId()),
+    );
+
+    const unique = new Set(results);
+    expect(unique.size).toBe(1);
+  });
+});

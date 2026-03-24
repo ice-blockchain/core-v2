@@ -51,3 +51,21 @@ describe("getDeviceInfo caches results", () => {
     expect(mockGetSystemVersion).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("getDeviceInfo concurrent dedup", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    mockGetSystemVersion.mockClear();
+  });
+
+  it("fetches only once for concurrent callers", async () => {
+    const { getDeviceInfo } = await import("./device-info");
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => getDeviceInfo()),
+    );
+
+    expect(mockGetSystemVersion).toHaveBeenCalledTimes(1);
+    expect(results.every((r) => r === results[0])).toBe(true);
+  });
+});

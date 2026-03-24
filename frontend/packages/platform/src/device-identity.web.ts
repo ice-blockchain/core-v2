@@ -1,3 +1,5 @@
+"use client";
+
 import { generateUuid } from "./generate-uuid";
 
 const STORAGE_KEY = "@ion/platform/device-id";

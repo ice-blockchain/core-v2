@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import type { DeviceInfo } from "./types";
 
 let cached: DeviceInfo | null = null;
+let pending: Promise<DeviceInfo> | null = null;
 
 function resolvePlatform(): DeviceInfo["platform"] {
   return Platform.OS === "ios" ? "ios" : "android";
@@ -27,6 +28,13 @@ async function fetchDeviceInfo(): Promise<DeviceInfo> {
 
 export async function getDeviceInfo(): Promise<DeviceInfo> {
   if (cached) return cached;
-  cached = await fetchDeviceInfo();
-  return cached;
+  if (pending) return pending;
+
+  pending = fetchDeviceInfo().then((info) => {
+    cached = info;
+    pending = null;
+    return info;
+  });
+
+  return pending;
 }
