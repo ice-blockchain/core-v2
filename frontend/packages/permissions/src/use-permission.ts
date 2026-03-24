@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type PermissionType,
   PermissionStatus,
@@ -16,32 +16,19 @@ export interface UsePermissionResult {
   ensure: () => Promise<PermissionResult>;
 }
 
-function usePermissionSubscription(
-  type: PermissionType,
-  mountedRef: React.RefObject<boolean>,
-  setStatus: (status: PermissionStatus) => void,
-): void {
+export function usePermission(type: PermissionType): UsePermissionResult {
+  const [status, setStatus] = useState(Permissions.getStatus(type));
+
   useEffect(() => {
+    let active = true;
     void Permissions.check(type);
     const unsubscribe = Permissions.subscribe((result) => {
-      if (result.type === type && mountedRef.current) {
+      if (result.type === type && active) {
         setStatus(result.status);
       }
     });
-    return unsubscribe;
-  }, [type, mountedRef, setStatus]);
-}
-
-export function usePermission(type: PermissionType): UsePermissionResult {
-  const [status, setStatus] = useState(Permissions.getStatus(type));
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  usePermissionSubscription(type, mountedRef, setStatus);
+    return () => { active = false; unsubscribe(); };
+  }, [type]);
 
   return {
     status,

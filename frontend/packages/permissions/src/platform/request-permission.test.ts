@@ -66,19 +66,21 @@ describe("requestPermission native iOS", () => {
   });
 });
 
-describe("requestPermission native Android", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    const platform = jest.requireMock("react-native").Platform;
-    platform.OS = "android";
-    platform.Version = 33;
-  });
+function setupAndroid(): void {
+  const platform = jest.requireMock("react-native").Platform;
+  platform.OS = "android";
+  platform.Version = 33;
+}
 
-  afterEach(() => {
-    const platform = jest.requireMock("react-native").Platform;
-    platform.OS = "ios";
-    platform.Version = 17;
-  });
+function teardownAndroid(): void {
+  const platform = jest.requireMock("react-native").Platform;
+  platform.OS = "ios";
+  platform.Version = 17;
+}
+
+describe("requestPermission native Android cloud", () => {
+  beforeEach(() => { jest.clearAllMocks(); setupAndroid(); });
+  afterEach(() => { teardownAndroid(); });
 
   it("returns Granted for Cloud", async () => {
     const result = await requestNative(PermissionType.Cloud);
@@ -91,13 +93,26 @@ describe("requestPermission native Android", () => {
     expect(result.status).toBe(PermissionStatus.Granted);
     expect(mockRequest).toHaveBeenCalledTimes(2);
   });
+});
 
-  it("returns most restrictive for multi-permission", async () => {
+describe("requestPermission native Android restrictiveness", () => {
+  beforeEach(() => { jest.clearAllMocks(); setupAndroid(); });
+  afterEach(() => { teardownAndroid(); });
+
+  it("returns Denied when images denied and video granted", async () => {
     mockRequest
       .mockResolvedValueOnce("granted")
       .mockResolvedValueOnce("denied");
     const result = await requestNative(PermissionType.Photos);
     expect(result.status).toBe(PermissionStatus.Denied);
+  });
+
+  it("returns PermanentlyDenied when one perm is blocked", async () => {
+    mockRequest
+      .mockResolvedValueOnce("denied")
+      .mockResolvedValueOnce("blocked");
+    const result = await requestNative(PermissionType.Photos);
+    expect(result.status).toBe(PermissionStatus.PermanentlyDenied);
   });
 });
 
@@ -113,34 +128,45 @@ describe("requestPermission web photos and cloud", () => {
   });
 });
 
-describe("requestPermission web camera", () => {
-  const originalNavigator = global.navigator;
-
-  afterEach(() => {
-    Object.defineProperty(global, "navigator", {
-      value: originalNavigator,
-      configurable: true,
-    });
+function setNavigator(value: unknown): void {
+  Object.defineProperty(global, "navigator", {
+    value,
+    configurable: true,
   });
+}
+
+describe("requestPermission web camera stream", () => {
+  const originalNavigator = global.navigator;
+  afterEach(() => { setNavigator(originalNavigator); });
 
   it("triggers getUserMedia and releases stream", async () => {
     const stopFn = jest.fn();
     const mockStream = { getTracks: () => [{ stop: stopFn }] };
-    Object.defineProperty(global, "navigator", {
-      value: { mediaDevices: { getUserMedia: jest.fn().mockResolvedValue(mockStream) } },
-      configurable: true,
-    });
+    setNavigator({ mediaDevices: { getUserMedia: jest.fn().mockResolvedValue(mockStream) } });
     const result = await requestWeb(PermissionType.Camera);
     expect(result.status).toBe(PermissionStatus.Granted);
     expect(stopFn).toHaveBeenCalled();
   });
 
+  it("releases all tracks even if one stop() throws", async () => {
+    const stopA = jest.fn(() => { throw new Error("stop failed"); });
+    const stopB = jest.fn();
+    const mockStream = { getTracks: () => [{ stop: stopA }, { stop: stopB }] };
+    setNavigator({ mediaDevices: { getUserMedia: jest.fn().mockResolvedValue(mockStream) } });
+    const result = await requestWeb(PermissionType.Camera);
+    expect(result.status).toBe(PermissionStatus.Granted);
+    expect(stopA).toHaveBeenCalled();
+    expect(stopB).toHaveBeenCalled();
+  });
+});
+
+describe("requestPermission web camera denied", () => {
+  const originalNavigator = global.navigator;
+  afterEach(() => { setNavigator(originalNavigator); });
+
   it("returns PermanentlyDenied on NotAllowedError", async () => {
     const error = new DOMException("denied", "NotAllowedError");
-    Object.defineProperty(global, "navigator", {
-      value: { mediaDevices: { getUserMedia: jest.fn().mockRejectedValue(error) } },
-      configurable: true,
-    });
+    setNavigator({ mediaDevices: { getUserMedia: jest.fn().mockRejectedValue(error) } });
     const result = await requestWeb(PermissionType.Camera);
     expect(result.status).toBe(PermissionStatus.PermanentlyDenied);
   });

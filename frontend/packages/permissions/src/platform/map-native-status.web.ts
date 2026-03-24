@@ -4,6 +4,7 @@ const STATE_MAP: Record<string, PermissionStatus> = {
   granted: PermissionStatus.Granted,
   denied: PermissionStatus.PermanentlyDenied,
   prompt: PermissionStatus.Denied,
+  default: PermissionStatus.Denied,
 };
 
 export function mapNativeStatus(state: string): PermissionStatus {

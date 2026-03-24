@@ -15,6 +15,7 @@ const ALL_TYPES = Object.values(PermissionType);
 let trackedTypes: PermissionType[] = ALL_TYPES;
 let isInitialized = false;
 const inFlightRequests = new Map<PermissionType, Promise<PermissionResult>>();
+const inFlightEnsure = new Map<PermissionType, Promise<PermissionResult>>();
 
 function initialize(config?: PermissionsConfig): void {
   trackedTypes = config?.types ?? ALL_TYPES;
@@ -45,6 +46,19 @@ async function request(type: PermissionType): Promise<PermissionResult> {
 }
 
 async function ensurePermission(
+  type: PermissionType,
+): Promise<PermissionResult> {
+  const existing = inFlightEnsure.get(type);
+  if (existing) return existing;
+
+  const promise = performEnsure(type).finally(() => {
+    inFlightEnsure.delete(type);
+  });
+  inFlightEnsure.set(type, promise);
+  return promise;
+}
+
+async function performEnsure(
   type: PermissionType,
 ): Promise<PermissionResult> {
   const current = await check(type);
@@ -93,7 +107,10 @@ async function checkAll(): Promise<Map<PermissionType, PermissionResult>> {
 }
 
 async function refreshAll(): Promise<void> {
-  await refreshPermissions(trackedTypes, checkPermission);
+  const toRefresh = trackedTypes.filter(
+    (t) => !inFlightRequests.has(t),
+  );
+  await refreshPermissions(toRefresh, checkPermission);
 }
 
 function getStatus(type: PermissionType): PermissionStatus {

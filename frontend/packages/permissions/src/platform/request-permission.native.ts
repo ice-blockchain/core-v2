@@ -11,6 +11,24 @@ import {
 } from "../types";
 import { mapNativeStatus } from "./map-native-status";
 
+const RESTRICTIVENESS: Record<string, number> = {
+  [PermissionStatus.Granted]: 0,
+  [PermissionStatus.Limited]: 1,
+  [PermissionStatus.Provisional]: 2,
+  [PermissionStatus.Denied]: 3,
+  [PermissionStatus.Unknown]: 4,
+  [PermissionStatus.PermanentlyDenied]: 5,
+  [PermissionStatus.Restricted]: 6,
+  [PermissionStatus.NotAvailable]: 7,
+};
+
+function moreRestrictive(
+  a: PermissionStatus,
+  b: PermissionStatus,
+): PermissionStatus {
+  return (RESTRICTIVENESS[a] ?? 0) >= (RESTRICTIVENESS[b] ?? 0) ? a : b;
+}
+
 function getIosPermission(type: PermissionType): Permission | null {
   const map: Record<string, Permission> = {
     [PermissionType.Camera]: PERMISSIONS.IOS.CAMERA,
@@ -49,16 +67,9 @@ async function requestAndroidPhotos(): Promise<PermissionResult> {
 
   const imageStatus = mapNativeStatus(images);
   const videoStatus = mapNativeStatus(video);
+  const status = moreRestrictive(imageStatus, videoStatus);
 
-  const mostRestrictive =
-    imageStatus === PermissionStatus.Granted &&
-    videoStatus === PermissionStatus.Granted
-      ? PermissionStatus.Granted
-      : imageStatus !== PermissionStatus.Granted
-        ? imageStatus
-        : videoStatus;
-
-  return { type: PermissionType.Photos, status: mostRestrictive };
+  return { type: PermissionType.Photos, status };
 }
 
 export async function requestPermission(

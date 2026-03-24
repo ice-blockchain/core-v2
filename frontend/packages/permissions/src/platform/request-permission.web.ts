@@ -5,6 +5,12 @@ import {
 } from "../types";
 import { checkPermission } from "./check-permission";
 
+function releaseStream(stream: MediaStream): void {
+  for (const track of stream.getTracks()) {
+    try { track.stop(); } catch { /* best-effort cleanup */ }
+  }
+}
+
 async function requestMediaPermission(
   type: PermissionType,
   constraints: MediaStreamConstraints,
@@ -15,9 +21,7 @@ async function requestMediaPermission(
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    for (const track of stream.getTracks()) {
-      track.stop();
-    }
+    releaseStream(stream);
     return { type, status: PermissionStatus.Granted };
   } catch (error: unknown) {
     const name = error instanceof DOMException ? error.name : "";

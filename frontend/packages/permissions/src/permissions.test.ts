@@ -218,3 +218,52 @@ describe("Permissions initialize config", () => {
     expect(results.size).toBe(2);
   });
 });
+
+describe("ensurePermission deduplicates concurrent calls", () => {
+  it("calls openSettings once for two concurrent calls", async () => {
+    mockCheckPermission.mockResolvedValue({
+      type: PermissionType.Camera,
+      status: PermissionStatus.PermanentlyDenied,
+    });
+    mockOpenSettings.mockResolvedValue(undefined);
+    await Promise.all([
+      Permissions.ensurePermission(PermissionType.Camera),
+      Permissions.ensurePermission(PermissionType.Camera),
+    ]);
+    expect(mockOpenSettings).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("refreshAll skips in-flight request types", () => {
+  it("does not overwrite in-flight request result", async () => {
+    let resolveRequest: (v: PermissionResult) => void;
+    const requestPromise = new Promise<PermissionResult>((r) => {
+      resolveRequest = r;
+    });
+    mockRequestPermission.mockReturnValue(requestPromise);
+
+    mockCheckPermission.mockImplementation(
+      async (type: PermissionType) => ({
+        type,
+        status: PermissionStatus.Denied,
+      }),
+    );
+
+    const requestCall = Permissions.request(PermissionType.Camera);
+    await Permissions.refreshAll();
+
+    // Camera should NOT have been checked during refresh
+    // because it has an in-flight request
+    const checkCalls = mockCheckPermission.mock.calls.filter(
+      (c) => c[0] === PermissionType.Camera,
+    );
+    expect(checkCalls).toHaveLength(0);
+
+    resolveRequest!({
+      type: PermissionType.Camera,
+      status: PermissionStatus.Granted,
+    });
+    await requestCall;
+    expect(Permissions.isGranted(PermissionType.Camera)).toBe(true);
+  });
+});

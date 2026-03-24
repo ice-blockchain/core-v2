@@ -51,6 +51,10 @@ describe("mapNativeStatus web", () => {
     expect(mapWeb("prompt")).toBe(PermissionStatus.Denied);
   });
 
+  it("maps default to Denied (Notification API)", () => {
+    expect(mapWeb("default")).toBe(PermissionStatus.Denied);
+  });
+
   it("returns Unknown for unrecognized values", () => {
     expect(mapWeb("unknown_state")).toBe(PermissionStatus.Unknown);
   });
