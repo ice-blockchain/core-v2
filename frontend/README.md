@@ -122,7 +122,7 @@ pnpm android:testnet
 pnpm android:production
 ```
 
-These run `setup-env.sh` first, then the corresponding `react-native run-ios --scheme` or `run-android --variant` command. Also available from `apps/mobile/` via `pnpm ios:staging` etc.
+These run `setup-env.sh` first, then the corresponding `react-native run-ios --scheme` or `run-android --mode` command.
 
 iOS uses 6 build configurations (Debug/Release x Staging/Testnet/Production) with xcconfig files that set `PRODUCT_BUNDLE_IDENTIFIER` and `PRODUCT_NAME` per environment.
 

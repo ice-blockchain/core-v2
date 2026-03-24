@@ -41,6 +41,5 @@ if [[ -f "${SECRETS_FILE}" ]]; then
   set -a && source "${SECRETS_FILE}" && set +a
 fi
 
-SCHEME="Ion-$(tr '[:lower:]' '[:upper:]' <<< "${ENV:0:1}")${ENV:1}"
-echo "Done. iOS: react-native run-ios --scheme ${SCHEME}"
-echo "      Android: react-native run-android --variant ${ENV}Debug"
+echo "Done. iOS: pnpm ios:${ENV}"
+echo "      Android: pnpm android:${ENV}"

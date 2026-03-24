@@ -5,12 +5,12 @@ apply plugin: "com.facebook.react"
 // env setup step places the correct .env at apps/mobile/.env before build.
 // All variants read the same file — env selection is done by scripts/setup-env.sh.
 project.ext.envConfigFiles = [
-    stagingDebug:      "../../.env",
-    stagingRelease:    "../../.env",
-    testnetDebug:      "../../.env",
-    testnetRelease:    "../../.env",
-    productionDebug:   "../../.env",
-    productionRelease: "../../.env",
+    stagingDebug:        "../../.env",
+    stagingRelease:      "../../.env",
+    ionTestnetDebug:     "../../.env",
+    ionTestnetRelease:   "../../.env",
+    productionDebug:     "../../.env",
+    productionRelease:   "../../.env",
 ]
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
@@ -20,7 +20,7 @@ apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.grad
  */
 react {
     /* Variants */
-    debuggableVariants = ["stagingDebug", "testnetDebug", "productionDebug"]
+    debuggableVariants = ["stagingDebug", "ionTestnetDebug", "productionDebug"]
 
     /* Autolinking */
     autolinkLibrariesWithApp()
@@ -60,7 +60,7 @@ android {
             applicationId "io.ion.app.staging"
             resValue "string", "app_name", "ION Staging"
         }
-        testnet {
+        ionTestnet {
             dimension "environment"
             applicationId "io.ion.app.testnet"
             resValue "string", "app_name", "ION Testnet"
