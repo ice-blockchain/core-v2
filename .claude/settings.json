@@ -10,6 +10,19 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | grep -q '^git push' || exit 0; echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Run /security-audit before pushing. Once the audit passes, retry the push.\"}}'",
+            "timeout": 5,
+            "statusMessage": "Checking for git push..."
+          }
+        ]
+      }
     ]
   }
 }
