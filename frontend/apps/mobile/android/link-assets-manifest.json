@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/videos/intro.mp4",
+      "sha1": "434ce822ee3abdc1a4d181699f3a14be3ebc038e"
+    },
+    {
+      "path": "assets/videos/logo_static.mp4",
+      "sha1": "58882f44b9d55588c6570482a251843d03f8d433"
+    }
+  ]
+}
