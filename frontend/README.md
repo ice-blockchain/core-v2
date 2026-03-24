@@ -77,7 +77,7 @@ This copies:
 | File           | Read by                              | In app binary? | Examples                            |
 |----------------|--------------------------------------|----------------|-------------------------------------|
 | `.env`         | `react-native-config` / Next.js      | Yes            | APP_ENV, API_BASE_URL, RELAY_URL    |
-| `.env.secrets` | Shell (`source`) — build tooling     | No             | SENTRY_AUTH_TOKEN                   |
+| `.env.secrets` | Shell (`source`) — build tooling     | No             | SENTRY_AUTH_TOKEN, MATCH_GIT_URL, MATCH_GIT_BASIC_AUTHORIZATION, MATCH_PASSWORD |
 
 ## Dev
 
@@ -124,8 +124,12 @@ Android uses product flavors defined in `build.gradle` with per-flavor `applicat
 
 ### iOS certificates (fastlane match)
 
-Provisioning profiles and distribution certs are managed by fastlane match in a separate private repo. See [apps/mobile/fastlane/Matchfile](apps/mobile/fastlane/Matchfile).
+Provisioning profiles and distribution certs are managed by fastlane match. Certs repo and credentials are configured via `.env.secrets` (`MATCH_GIT_URL`, `MATCH_GIT_BASIC_AUTHORIZATION`, `MATCH_PASSWORD`). See [apps/mobile/fastlane/Matchfile](apps/mobile/fastlane/Matchfile).
 
 ```bash
-cd apps/mobile && bundle exec fastlane match appstore
+# Install certs and profiles (read-only — for local dev and CI)
+cd apps/mobile && bundle exec fastlane fetch_certs
+
+# Renew and push updated certs and profiles
+cd apps/mobile && bundle exec fastlane update_certs
 ```

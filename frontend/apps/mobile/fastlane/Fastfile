@@ -1,0 +1,20 @@
+dotenv_path = File.expand_path('../.env.secrets', __dir__)
+Dotenv.load(dotenv_path) if File.exist?(dotenv_path)
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Fetch certificates and profiles for appstore, adhoc, and development"
+  lane :fetch_certs do
+    ["appstore", "adhoc", "development"].each do |type|
+      match(type: type, readonly: true)
+    end
+  end
+
+  desc "Renew and push certificates and profiles for appstore, adhoc, and development"
+  lane :update_certs do
+    ["appstore", "adhoc", "development"].each do |type|
+      match(type: type, readonly: false)
+    end
+  end
+end
