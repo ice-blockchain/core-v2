@@ -5,10 +5,10 @@ import { NetworkError } from './network-error';
 
 interface RetryOptions<T> {
   executeFn: () => Promise<T>;
-  retryConfig?: RetryConfig;
-  method?: string;
-  signal?: AbortSignal;
-  retryable?: boolean;
+  retryConfig?: RetryConfig | undefined;
+  method?: string | undefined;
+  signal?: AbortSignal | undefined;
+  retryable?: boolean | undefined;
 }
 
 const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE']);
