@@ -1,4 +1,4 @@
-package com.mobile
+package io.ion.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
