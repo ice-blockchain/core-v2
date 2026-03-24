@@ -46,3 +46,7 @@ export { NetworkError } from './network-error';
 export { createConnectionStateMachine } from './connection-state';
 export type { ConnectionStateMachine } from './connection-state';
 export { createNetworkEventEmitter } from './network-event-emitter';
+export { createHttpClient } from './http-client';
+export { createBearerAuthInterceptor } from './bearer-auth-interceptor';
+export { createRequestQueue } from './request-queue';
+export { createLongPollClient } from './long-poll-client';
