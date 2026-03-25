@@ -1,5 +1,5 @@
 import { FFprobeKit } from "ffmpeg-kit-react-native";
-import { Video } from "react-native-video-compressor";
+import { Video } from "react-native-compressor";
 import type { VideoProcessingOptions, ProcessedMedia } from "../types";
 import { generateBlurhash } from "./generate-blurhash.native";
 import { getFileSize } from "./get-file-size.native";
