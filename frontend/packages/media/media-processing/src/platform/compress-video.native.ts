@@ -3,11 +3,14 @@ import { Video } from "react-native-video-compressor";
 import type { VideoProcessingOptions, ProcessedMedia } from "../types";
 import { generateBlurhash } from "./generate-blurhash.native";
 import { getFileSize } from "./get-file-size.native";
+import { assertFinitePositive } from "./validate-options";
+import { assertSafeUri } from "./validate-uri";
 
 export async function compressVideo(
   uri: string,
   options?: VideoProcessingOptions,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   const compressOptions = buildCompressOptions(options);
   const resultUri = await Video.compress(uri, compressOptions);
   const [blurhash, fileSize, dimensions] = await Promise.all([
@@ -29,8 +32,14 @@ function buildCompressOptions(
   options?: VideoProcessingOptions,
 ): { maxSize?: number; bitrate?: number } {
   const compressOptions: { maxSize?: number; bitrate?: number } = {};
-  if (options?.maxWidth) compressOptions.maxSize = options.maxWidth;
-  if (options?.bitrate) compressOptions.bitrate = options.bitrate;
+  if (options?.maxWidth) {
+    assertFinitePositive(options.maxWidth, "maxWidth");
+    compressOptions.maxSize = options.maxWidth;
+  }
+  if (options?.bitrate) {
+    assertFinitePositive(options.bitrate, "bitrate");
+    compressOptions.bitrate = options.bitrate;
+  }
   return compressOptions;
 }
 

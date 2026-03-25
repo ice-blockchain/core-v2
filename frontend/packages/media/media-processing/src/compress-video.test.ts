@@ -6,6 +6,7 @@ const mockVideoBlob = new Blob(["video-data"], { type: "video/mp4" });
 
 vi.stubGlobal("fetch", vi.fn(() =>
   Promise.resolve({
+    ok: true,
     blob: () => Promise.resolve(mockVideoBlob),
   }),
 ));

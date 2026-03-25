@@ -13,3 +13,9 @@ export function clampQuality(quality: number, min: number, max: number): number 
   if (!Number.isFinite(quality)) return min;
   return Math.max(min, Math.min(max, quality));
 }
+
+export function assertFinitePositive(value: number, name: string): void {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${name} must be a finite positive number`);
+  }
+}

@@ -1,6 +1,7 @@
 import { FFmpegKit, ReturnCode } from "ffmpeg-kit-react-native";
 import type { AudioProcessingOptions, ProcessedMedia } from "../types";
 import { getFileSize } from "./get-file-size.native";
+import { assertFinitePositive } from "./validate-options";
 import { assertSafeUri } from "./validate-uri";
 
 export async function extractAudio(
@@ -40,6 +41,8 @@ function buildFfmpegCommand(
 ): string {
   const bitrate = options?.bitrate ?? 128000;
   const sampleRate = options?.sampleRate ?? 48000;
+  assertFinitePositive(bitrate, "bitrate");
+  assertFinitePositive(sampleRate, "sampleRate");
   return [
     `-i "${inputUri}"`,
     "-vn",

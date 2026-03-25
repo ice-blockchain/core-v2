@@ -2,7 +2,8 @@ import * as ImageManipulator from "expo-image-manipulator";
 import type { ProcessingOptions, ProcessedMedia } from "../types";
 import { generateBlurhash } from "./generate-blurhash.native";
 import { getFileSize } from "./get-file-size.native";
-import { clampQuality } from "./validate-options";
+import { assertFinitePositive, clampQuality } from "./validate-options";
+import { assertSafeUri } from "./validate-uri";
 
 const DEFAULT_QUALITY = 0.8;
 
@@ -10,6 +11,7 @@ export async function compressImage(
   uri: string,
   options?: ProcessingOptions,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   const actions = buildActions(options);
   const saveOptions = buildSaveOptions(options);
   const result = await ImageManipulator.manipulateAsync(
@@ -37,8 +39,14 @@ function buildActions(
 ): ImageManipulator.Action[] {
   if (!options?.maxWidth && !options?.maxHeight) return [];
   const resize: { width?: number; height?: number } = {};
-  if (options.maxWidth) resize.width = options.maxWidth;
-  if (options.maxHeight) resize.height = options.maxHeight;
+  if (options.maxWidth) {
+    assertFinitePositive(options.maxWidth, "maxWidth");
+    resize.width = options.maxWidth;
+  }
+  if (options.maxHeight) {
+    assertFinitePositive(options.maxHeight, "maxHeight");
+    resize.height = options.maxHeight;
+  }
   return [{ resize }];
 }
 

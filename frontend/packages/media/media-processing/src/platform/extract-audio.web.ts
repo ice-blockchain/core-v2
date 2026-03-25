@@ -4,7 +4,7 @@ export async function extractAudio(
   uri: string,
   options?: AudioProcessingOptions,
 ): Promise<ProcessedMedia> {
-  const response = await fetch(uri);
+  const response = await fetchWithTimeout(uri);
   const arrayBuffer = await response.arrayBuffer();
   const audioContext = new AudioContext({
     sampleRate: options?.sampleRate ?? 48000,
@@ -87,5 +87,21 @@ function writeSamples(view: DataView, samples: Float32Array): void {
 function writeString(view: DataView, offset: number, str: string): void {
   for (let i = 0; i < str.length; i++) {
     view.setUint8(offset + i, str.charCodeAt(i));
+  }
+}
+
+const FETCH_TIMEOUT_MS = 30_000;
+
+async function fetchWithTimeout(uri: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(uri, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Fetch failed with status ${response.status}`);
+    }
+    return response;
+  } finally {
+    clearTimeout(timeout);
   }
 }

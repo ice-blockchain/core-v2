@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { assertValidCropRegion, clampQuality } from "./validate-options";
+import {
+  assertValidCropRegion,
+  clampQuality,
+  assertFinitePositive,
+} from "./validate-options";
 
 describe("assertValidCropRegion", () => {
   it("accepts valid crop region", () => {
@@ -57,5 +61,45 @@ describe("clampQuality", () => {
   it("clamps brotli quality range correctly", () => {
     expect(clampQuality(15, 0, 11)).toBe(11);
     expect(clampQuality(6, 0, 11)).toBe(6);
+  });
+});
+
+describe("assertFinitePositive", () => {
+  it("accepts a valid positive number", () => {
+    expect(() => assertFinitePositive(128000, "bitrate")).not.toThrow();
+  });
+
+  it("accepts 1", () => {
+    expect(() => assertFinitePositive(1, "sampleRate")).not.toThrow();
+  });
+
+  it("rejects zero", () => {
+    expect(() => assertFinitePositive(0, "bitrate")).toThrow(
+      "finite positive",
+    );
+  });
+
+  it("rejects negative numbers", () => {
+    expect(() => assertFinitePositive(-100, "maxWidth")).toThrow(
+      "finite positive",
+    );
+  });
+
+  it("rejects NaN", () => {
+    expect(() => assertFinitePositive(NaN, "bitrate")).toThrow(
+      "finite positive",
+    );
+  });
+
+  it("rejects Infinity", () => {
+    expect(() => assertFinitePositive(Infinity, "maxHeight")).toThrow(
+      "finite positive",
+    );
+  });
+
+  it("rejects negative Infinity", () => {
+    expect(() => assertFinitePositive(-Infinity, "sampleRate")).toThrow(
+      "finite positive",
+    );
   });
 });

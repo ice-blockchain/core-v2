@@ -3,11 +3,13 @@ import type { CropRegion, ProcessedMedia } from "../types";
 import { generateBlurhash } from "./generate-blurhash.native";
 import { getFileSize } from "./get-file-size.native";
 import { assertValidCropRegion } from "./validate-options";
+import { assertSafeUri } from "./validate-uri";
 
 export async function cropImage(
   uri: string,
   region: CropRegion,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   assertValidCropRegion(region);
   const result = await ImageManipulator.manipulateAsync(uri, [
     {

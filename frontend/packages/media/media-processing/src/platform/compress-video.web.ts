@@ -59,9 +59,20 @@ function computeDimensions(
   return { width, height };
 }
 
+const FETCH_TIMEOUT_MS = 30_000;
+
 async function fetchAsBlob(uri: string): Promise<Blob> {
-  const response = await fetch(uri);
-  return response.blob();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(uri, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Fetch failed with status ${response.status}`);
+    }
+    return response.blob();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function extractBlurhashFromCanvas(

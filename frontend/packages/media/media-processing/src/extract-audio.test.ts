@@ -22,6 +22,7 @@ const mockAudioBuffer = createMockAudioBuffer();
 
 vi.stubGlobal("fetch", vi.fn(() =>
   Promise.resolve({
+    ok: true,
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(1024)),
   }),
 ));
