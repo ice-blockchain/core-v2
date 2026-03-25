@@ -6,6 +6,8 @@ import {
   PrimaryButton,
   RegisterScreen,
   VerifyPasskeyScreen,
+  VerifyPasswordBackground,
+  VerifyPasswordOverlay,
 } from "@ion/auth-ui";
 import { SplashVideo } from "@/components/splash-video";
 import { IntroVideo } from "@/components/intro-video";
@@ -17,6 +19,7 @@ type Phase =
   | { name: "intro" }
   | { name: "get-started" }
   | { name: "register" }
+  | { name: "verify-password"; identityKeyName: string }
   | { name: "verify-passkey"; identityKeyName: string };
 
 function usePhaseNavigation() {
@@ -27,6 +30,10 @@ function usePhaseNavigation() {
     goToIntro: useCallback(() => setPhase({ name: "intro" }), []),
     goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), []),
     goToRegister: useCallback(() => setPhase({ name: "register" }), []),
+    goToVerifyPassword: useCallback(
+      (identityKeyName: string) => setPhase({ name: "verify-password", identityKeyName }),
+      [],
+    ),
     goToVerifyPasskey: useCallback(
       (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
       [],
@@ -39,7 +46,14 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
     return (
       <RegisterScreen
         onBack={nav.goToGetStarted}
-        onNavigateToVerifyPasskey={nav.goToVerifyPasskey}
+        onContinue={({ identityKeyName }) => nav.goToVerifyPassword(identityKeyName)}
+      />
+    );
+  }
+  if (nav.phase.name === "verify-password") {
+    return (
+      <VerifyPasswordBackground
+        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
       />
     );
   }
@@ -61,6 +75,12 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
   );
 }
 
+function PasswordOverlay({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
+  if (nav.phase.name !== "verify-password") return null;
+  const { identityKeyName } = nav.phase;
+  return <VerifyPasswordOverlay onConfirm={() => nav.goToVerifyPasskey(identityKeyName)} />;
+}
+
 export default function SplashPage() {
   const nav = usePhaseNavigation();
 
@@ -76,9 +96,12 @@ export default function SplashPage() {
         ) : null}
       </IntroVideo>
       {nav.phase.name !== "intro" && (
-        <BottomSheet>
-          <AuthSheetContent nav={nav} />
-        </BottomSheet>
+        <>
+          <BottomSheet>
+            <AuthSheetContent nav={nav} />
+          </BottomSheet>
+          <PasswordOverlay nav={nav} />
+        </>
       )}
     </>
   );

@@ -32,6 +32,38 @@ function RightAction({ icon, onPress }: { icon: ReactNode; onPress?: (() => void
   );
 }
 
+interface InputColumnProps {
+  props: FormInputProps;
+  setFocused: (v: boolean) => void;
+  hasError: boolean;
+  showLabel: boolean;
+  labelText: string | null | undefined;
+}
+
+function InputColumn({ props, setFocused, hasError, showLabel, labelText }: InputColumnProps) {
+  return (
+    <View style={styles.inputColumn}>
+      {showLabel && (
+        <Text style={hasError ? styles.errorLabel : styles.label}>{labelText}</Text>
+      )}
+      <TextInput
+        value={props.value}
+        onChangeText={props.onChange}
+        onFocus={() => { setFocused(true); props.onFocus?.(); }}
+        onBlur={() => { setFocused(false); props.onBlur?.(); }}
+        placeholder={showLabel ? "" : props.placeholder}
+        placeholderTextColor="#9A9A9A"
+        secureTextEntry={props.secureTextEntry}
+        textContentType="oneTimeCode"
+        autoComplete="off"
+        autoCorrect={false}
+        spellCheck={false}
+        style={styles.input}
+      />
+    </View>
+  );
+}
+
 export function FormInput(props: FormInputProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(props.errorMessage);
@@ -42,21 +74,10 @@ export function FormInput(props: FormInputProps) {
   return (
     <View style={[styles.base, { borderColor }]}>
       {props.leftIcon && <LeftSection icon={props.leftIcon} />}
-      <View style={styles.inputColumn}>
-        {showLabel && (
-          <Text style={hasError ? styles.errorLabel : styles.label}>{labelText}</Text>
-        )}
-        <TextInput
-          value={props.value}
-          onChangeText={props.onChange}
-          onFocus={() => { setFocused(true); props.onFocus?.(); }}
-          onBlur={() => { setFocused(false); props.onBlur?.(); }}
-          placeholder={showLabel ? "" : props.placeholder}
-          placeholderTextColor="#9A9A9A"
-          secureTextEntry={props.secureTextEntry}
-          style={styles.input}
-        />
-      </View>
+      <InputColumn
+        props={props} setFocused={setFocused}
+        hasError={hasError} showLabel={showLabel} labelText={labelText}
+      />
       {props.rightIcon && (
         <RightAction icon={props.rightIcon} onPress={props.onRightIconPress} />
       )}

@@ -2,6 +2,7 @@
 export { GetStartedScreen } from "./get-started-screen";
 export { RegisterScreen } from "./register-screen";
 export { VerifyPasskeyScreen } from "./verify-passkey-screen";
+export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
 
 // Inputs
 export { FormInput } from "./form-input";
@@ -48,3 +49,4 @@ export { RegisterPasswordIcon } from "./register-password-icon";
 export { RestoreKeyIcon } from "./restore-key-icon";
 export { SafeAccountIcon } from "./safe-account-icon";
 export { VerifyPasskeyIcon } from "./verify-passkey-icon";
+export { VerifyPasswordIcon } from "./verify-password-icon";

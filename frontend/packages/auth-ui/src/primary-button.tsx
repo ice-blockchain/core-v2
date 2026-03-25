@@ -5,13 +5,19 @@ interface PrimaryButtonProps {
   label: string;
   onPress?: () => void;
   style?: ViewStyle;
+  disabled?: boolean;
+  showArrow?: boolean;
 }
 
-export function PrimaryButton({ label, onPress, style }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress, style, disabled, showArrow = true }: PrimaryButtonProps) {
   return (
-    <Pressable style={[styles.button, style]} onPress={onPress}>
+    <Pressable
+      style={[styles.button, disabled && styles.disabled, style]}
+      onPress={onPress}
+      disabled={disabled}
+    >
       <Text style={styles.label}>{label}</Text>
-      <ArrowIcon size={15} />
+      {showArrow && <ArrowIcon size={15} />}
     </Pressable>
   );
 }
@@ -33,5 +39,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: "#FFFFFF",
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

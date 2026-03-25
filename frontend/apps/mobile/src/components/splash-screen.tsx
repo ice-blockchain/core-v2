@@ -5,6 +5,8 @@ import {
   PrimaryButton,
   RegisterScreen,
   VerifyPasskeyScreen,
+  VerifyPasswordBackground,
+  VerifyPasswordOverlay,
 } from "@ion/auth-ui";
 import { SplashVideo } from "./splash-video";
 import { IntroVideo } from "./intro-video";
@@ -16,6 +18,7 @@ type Phase =
   | { name: "intro" }
   | { name: "get-started" }
   | { name: "register" }
+  | { name: "verify-password"; identityKeyName: string }
   | { name: "verify-passkey"; identityKeyName: string };
 
 function usePhaseNavigation() {
@@ -26,6 +29,10 @@ function usePhaseNavigation() {
     goToIntro: useCallback(() => setPhase({ name: "intro" }), []),
     goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), []),
     goToRegister: useCallback(() => setPhase({ name: "register" }), []),
+    goToVerifyPassword: useCallback(
+      (identityKeyName: string) => setPhase({ name: "verify-password", identityKeyName }),
+      [],
+    ),
     goToVerifyPasskey: useCallback(
       (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
       [],
@@ -38,7 +45,14 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
     return (
       <RegisterScreen
         onBack={nav.goToGetStarted}
-        onNavigateToVerifyPasskey={nav.goToVerifyPasskey}
+        onContinue={({ identityKeyName }) => nav.goToVerifyPassword(identityKeyName)}
+      />
+    );
+  }
+  if (nav.phase.name === "verify-password") {
+    return (
+      <VerifyPasswordBackground
+        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
       />
     );
   }
@@ -60,12 +74,10 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
   );
 }
 
-function AuthOverlay({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
-  return (
-    <BottomSheet>
-      <AuthSheetContent nav={nav} />
-    </BottomSheet>
-  );
+function PasswordOverlay({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
+  if (nav.phase.name !== "verify-password") return null;
+  const { identityKeyName } = nav.phase;
+  return <VerifyPasswordOverlay onConfirm={() => nav.goToVerifyPasskey(identityKeyName)} />;
 }
 
 export function SplashScreen() {
@@ -82,7 +94,14 @@ export function SplashScreen() {
           <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
         ) : null}
       </IntroVideo>
-      {nav.phase.name !== "intro" && <AuthOverlay nav={nav} />}
+      {nav.phase.name !== "intro" && (
+        <>
+          <BottomSheet>
+            <AuthSheetContent nav={nav} />
+          </BottomSheet>
+          <PasswordOverlay nav={nav} />
+        </>
+      )}
     </View>
   );
 }

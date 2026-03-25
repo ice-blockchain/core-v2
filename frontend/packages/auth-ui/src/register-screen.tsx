@@ -1,50 +1,127 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SheetHeader } from "./sheet-header";
 import { PrimaryButton } from "./primary-button";
-import { RegisterForm } from "./register-form";
+import { FormInput } from "./form-input";
 import { RegisterHeader } from "./register-header";
-import { RegisterPasskeyIcon } from "./register-passkey-icon";
-import { PasskeyBenefitList } from "./passkey-benefit-list";
+import { RegisterPasswordIcon } from "./register-password-icon";
+import { PasswordStrengthChecklist } from "./password-strength-checklist";
 import { SecuredByFooter } from "./secured-by-footer";
 import { TermsFooter } from "./terms-footer";
+import { IdentityKeyIcon } from "./identity-key-icon";
+import { InfoIcon } from "./info-icon";
+import { PasswordIcon } from "./password-icon";
+import { EyeIcon } from "./eye-icon";
+import { validateIdentityKeyName } from "./identity-key-rules";
+import { buildPasswordRules, areAllPasswordRulesMet } from "./password-rules";
 
 interface RegisterScreenProps {
   onBack: () => void;
-  onNavigateToVerifyPasskey: (identityKeyName: string) => void;
+  onContinue: (data: { identityKeyName: string; password: string }) => void;
 }
 
-function useRegisterFormState(onNavigateToVerifyPasskey: (name: string) => void) {
-  const [isValid, setIsValid] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const identityKeyRef = useRef("");
+function useRegisterPasswordForm() {
+  const [identityKeyName, setIdentityKeyName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const identityKeyError = validateIdentityKeyName(identityKeyName);
+  const isIdentityKeyValid = identityKeyName.trim().length > 0 && !identityKeyError;
+  const isPasswordValid = areAllPasswordRulesMet(password);
+  const isPasswordMatch = password.length > 0 && password === confirmPassword;
+  const isFormValid = isIdentityKeyValid && isPasswordValid && isPasswordMatch;
 
   return {
-    submitted,
-    handleValidChange: useCallback((v: boolean) => setIsValid(v), []),
-    handleIdentityKeyChange: useCallback((v: string) => { identityKeyRef.current = v; }, []),
-    handleContinue: useCallback(() => {
-      setSubmitted(true);
-      if (isValid) onNavigateToVerifyPasskey(identityKeyRef.current);
-    }, [isValid, onNavigateToVerifyPasskey]),
+    identityKeyName, setIdentityKeyName,
+    identityKeyError,
+    password, setPassword,
+    confirmPassword, setConfirmPassword,
+    showPassword, toggleShowPassword: useCallback(() => setShowPassword((v) => !v), []),
+    showConfirm, toggleShowConfirm: useCallback(() => setShowConfirm((v) => !v), []),
+    isFormValid, isPasswordMatch,
+    passwordRules: buildPasswordRules(password),
   };
 }
 
-export function RegisterScreen({ onBack, onNavigateToVerifyPasskey }: RegisterScreenProps) {
-  const form = useRegisterFormState(onNavigateToVerifyPasskey);
+type FormState = ReturnType<typeof useRegisterPasswordForm>;
+
+interface PasswordFieldProps {
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+}
+
+function PasswordField({ placeholder, value, onChange, show, onToggle }: PasswordFieldProps) {
+  return (
+    <FormInput
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      leftIcon={<PasswordIcon />}
+      rightIcon={<EyeIcon isOff={!show} />}
+      onRightIconPress={onToggle}
+      secureTextEntry={!show}
+    />
+  );
+}
+
+function RegisterFormFields({ form }: { form: FormState }) {
+  return (
+    <View style={styles.formContainer}>
+      <FormInput
+        placeholder="Identity key name"
+        value={form.identityKeyName}
+        onChange={form.setIdentityKeyName}
+        leftIcon={<IdentityKeyIcon />}
+        rightIcon={<InfoIcon />}
+        errorMessage={form.identityKeyError}
+      />
+      <PasswordField
+        placeholder="Password"
+        value={form.password}
+        onChange={form.setPassword}
+        show={form.showPassword}
+        onToggle={form.toggleShowPassword}
+      />
+      <PasswordField
+        placeholder="Confirm password"
+        value={form.confirmPassword}
+        onChange={form.setConfirmPassword}
+        show={form.showConfirm}
+        onToggle={form.toggleShowConfirm}
+      />
+    </View>
+  );
+}
+
+export function RegisterScreen({ onBack, onContinue }: RegisterScreenProps) {
+  const form = useRegisterPasswordForm();
+
+  const handleContinue = useCallback(() => {
+    if (!form.isFormValid) return;
+    onContinue({ identityKeyName: form.identityKeyName, password: form.password });
+  }, [form.isFormValid, form.identityKeyName, form.password, onContinue]);
 
   return (
     <View style={styles.page}>
       <SheetHeader title="" onBack={onBack} />
-      <RegisterHeader icon={<RegisterPasskeyIcon />} title="Register with a passkey" />
-      <PasskeyBenefitList />
-      <RegisterForm
-        onValidChange={form.handleValidChange}
-        onIdentityKeyChange={form.handleIdentityKeyChange}
-        submitted={form.submitted}
+      <RegisterHeader
+        icon={<RegisterPasswordIcon />}
+        title="Register"
+        subtitle="Choose a strong password to create an account"
       />
+      <RegisterFormFields form={form} />
+      <View style={styles.checklist}>
+        <PasswordStrengthChecklist
+          rules={[...form.passwordRules, { label: "Passwords match", isMet: form.isPasswordMatch }]}
+        />
+      </View>
       <View style={styles.continueWrapper}>
-        <PrimaryButton label="Continue" onPress={form.handleContinue} />
+        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!form.isFormValid} />
       </View>
       <View style={styles.footer}>
         <SecuredByFooter />
@@ -56,15 +133,23 @@ export function RegisterScreen({ onBack, onNavigateToVerifyPasskey }: RegisterSc
 
 const styles = StyleSheet.create({
   page: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     width: "100%",
+  },
+  formContainer: {
+    marginTop: 24,
+    gap: 16,
+  },
+  checklist: {
+    marginTop: 16,
+    width: 287,
   },
   continueWrapper: {
     marginTop: 24,
   },
   footer: {
-    marginTop: "auto",
+    marginTop: 40,
     alignItems: "center",
     gap: 12,
     paddingBottom: 40,

@@ -9,7 +9,7 @@ export default function RegisterPage() {
   return (
     <RegisterScreen
       onBack={() => router.back()}
-      onNavigateToVerifyPasskey={() => router.push("/verify-passkey")}
+      onContinue={() => router.push("/verify-passkey")}
     />
   );
 }
