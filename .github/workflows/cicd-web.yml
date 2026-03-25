@@ -78,7 +78,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ice-blockchain/core-v2-secrets
-          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
+          token: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
           path: .secrets
 
       - name: Mask secrets
