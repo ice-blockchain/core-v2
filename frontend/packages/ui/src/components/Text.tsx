@@ -12,6 +12,7 @@ export interface TextProps extends RNTextProps {
 function buildVariantStyle(variant: TypographyVariant, color: string): TextStyle {
   return {
     fontFamily: variant.fontFamily,
+    fontWeight: variant.fontWeight,
     fontSize: variant.fontSize,
     lineHeight: variant.lineHeight,
     letterSpacing: variant.letterSpacing,

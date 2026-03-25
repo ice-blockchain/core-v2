@@ -2,6 +2,8 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
+const stubsDir = path.resolve(__dirname, 'src/stubs');
+
 const REQUIRED_ENV_VARS = [
   'VITE_APP_ENV',
   'VITE_API_BASE_URL',
@@ -42,14 +44,30 @@ function reactNativeWebPlugin(): Plugin {
               replacement: codegenShim,
             },
             {
+              find: 'react-native/Libraries/TurboModule/TurboModuleRegistry',
+              replacement: path.join(stubsDir, 'TurboModuleRegistry.ts'),
+            },
+            {
               find: 'react-native',
               replacement: rnwReplacement,
+            },
+            {
+              find: /^react-native-svg$/,
+              replacement: path.resolve(stubsDir, 'react-native-svg.tsx'),
+            },
+            {
+              find: /^react-native-safe-area-context$/,
+              replacement: path.join(stubsDir, 'react-native-safe-area-context.tsx'),
             },
           ],
         },
         optimizeDeps: {
           include: ['react-native-web'],
-          exclude: ['react-native'],
+          exclude: [
+            'react-native',
+            'react-native-svg',
+            'react-native-safe-area-context',
+          ],
           resolve: {
             extensions: webExtensions,
             mainFields: ['browser', 'module', 'main'],

@@ -54,7 +54,7 @@ function VerifiedDemo() {
         value={value}
         onChangeText={setValue}
         state="verified"
-        suffixIcon={<Icon name="checkbox_on" size={24} color="#35D487" />}
+        suffixIcon={<Icon name="checkbox-on" size={24} color="#35D487" />}
       />
     </DemoRow>
   );

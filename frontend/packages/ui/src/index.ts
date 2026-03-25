@@ -17,6 +17,18 @@ export type { SmallButtonProps, SmallButtonColor, SmallButtonIconPosition } from
 export { TextField } from "./components/TextField";
 export type { TextFieldProps } from "./components/TextField";
 
+export { BottomSheet } from "./components/BottomSheet";
+export type { BottomSheetProps } from "./components/bottom-sheet-types";
+
+export { TextInput } from "./components/TextInput";
+export type { TextInputProps, TextInputState } from "./components/text-input-types";
+
+export { SearchBar } from "./components/SearchBar";
+export type { SearchBarProps } from "./components/SearchBar";
+
+export { HorizontalSeparator } from "./components/HorizontalSeparator";
+export type { HorizontalSeparatorProps } from "./components/HorizontalSeparator";
+
 // Icons
 export { Icon } from "./icons/Icon";
 export type { IconProps, IconName } from "./icons/Icon";

@@ -11,7 +11,8 @@
   "scripts": {
     "generate:icons": "node scripts/generate-icons.js",
     "lint": "eslint src/",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "react": ">=19",
@@ -24,9 +25,13 @@
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@svgr/plugin-svgo": "^8.1.0",
+    "@testing-library/jest-native": "5.4.3",
+    "@testing-library/react-native": "13.3.3",
     "@types/react": "^19.0.0",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-svg": "^15.15.4",
-    "typescript": "^5.9.3"
+    "react-test-renderer": "19.2.3",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   }
 }
