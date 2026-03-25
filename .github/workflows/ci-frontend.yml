@@ -28,6 +28,10 @@ jobs:
       - name: Setup Node.js and pnpm
         uses: ./.github/actions/setup-node-pnpm
 
+      # CVE-2026-26278 (fast-xml-parser): dev-only transitive dep via @react-native-community/cli.
+      # Parses local XML during builds, never ships in production. No patched 4.x exists;
+      # fix requires major bump to 5.x which may break RN CLI. Ignored in pnpm.auditConfig.
+      # Revisit when @react-native-community/cli updates its dependency.
       - name: Dependency audit
         run: pnpm audit --audit-level=high
 
