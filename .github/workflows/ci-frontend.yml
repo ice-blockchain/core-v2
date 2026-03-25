@@ -1,0 +1,45 @@
+name: CI Frontend
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'frontend/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      # CVE-2026-26278 (fast-xml-parser): dev-only transitive dep via @react-native-community/cli.
+      # Parses local XML during builds, never ships in production. No patched 4.x exists;
+      # fix requires major bump to 5.x which may break RN CLI. Ignored in pnpm.auditConfig.
+      # Revisit when @react-native-community/cli updates its dependency.
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm turbo test

@@ -22,9 +22,9 @@
 |---|---|---|
 | `@ion/platform` | Device ID, install referrer, OS info | Planned |
 | `@ion/storage` | MMKV, SQLite, secure keychain | Implemented |
-| `@ion/network` | HTTP, WebSocket, SSE clients | Planned |
+| `@ion/network` | HTTP, long polling, auth, retry, offline queue | Implemented |
 | `@ion/diagnostics` | Sentry, on-device logs | Implemented |
-| `@ion/permissions` | Camera, photos, notifications permissions | Planned |
+| `@ion/permissions` | Camera, photos, microphone, notifications, cloud permissions (iOS, Android, Web) | Implemented |
 | `@ion/config` | Remote config, env, feature flags | Planned |
 | `@ion/localization` | i18n, plurals, fallback | Planned |
 | `@ion/auth-ui` | Shared auth screens, forms, buttons, icons, validation | Implemented |
@@ -33,7 +33,7 @@
 | Package | Purpose | Status |
 |---|---|---|
 | `@ion/media-acquisition` | Picker, camera, metadata | Planned |
-| `@ion/media-processing` | Crop, resize, blurhash, compress | Planned |
+| `@ion/media-processing` | Crop, resize, blurhash, compress (image/video/audio/brotli) | Implemented |
 | `@ion/media-upload` | Encrypt, chunk, retry, queue | Planned |
 | `@ion/media-viewer` | Image, video, gif, fullscreen | Planned |
 | `@ion/nsfw-detection` | On-device safety checks | Planned |
@@ -83,7 +83,7 @@
 | Phase 0 | Scaffold repos, workspaces, CI, CLAUDE.md | Not started |
 | Phase 1 | Foundation packages | Not started |
 | Phase 2 | Clients + API contracts | Not started |
-| Phase 3 | Media pipeline | Not started |
+| Phase 3 | Media pipeline | In Progress |
 | Phase 4 | Feature packages | Not started |
 | Phase 5 | App shell + screens | Not started |
 | Phase 6 | Backend migration | Not started |

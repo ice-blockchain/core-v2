@@ -1,0 +1,43 @@
+{
+  "name": "@ion/media-processing",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "expo-image-manipulator": ">=12",
+    "ffmpeg-kit-react-native": ">=6",
+    "react-native-compressor": ">=1"
+  },
+  "peerDependenciesMeta": {
+    "expo-image-manipulator": {
+      "optional": true
+    },
+    "react-native-compressor": {
+      "optional": true
+    },
+    "ffmpeg-kit-react-native": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/pngjs": "^6.0.5",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
+  },
+  "dependencies": {
+    "blurhash": "^2.0.5",
+    "brotli-wasm": "^3.0.1",
+    "pngjs": "^7.0.0"
+  }
+}

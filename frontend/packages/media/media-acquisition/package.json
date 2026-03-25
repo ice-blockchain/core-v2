@@ -1,0 +1,28 @@
+{
+  "name": "@ion/media-acquisition",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "expo-camera": ">=15",
+    "expo-image-picker": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "expo-camera": { "optional": true },
+    "expo-image-picker": { "optional": true }
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
+  }
+}

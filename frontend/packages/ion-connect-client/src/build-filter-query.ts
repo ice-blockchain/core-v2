@@ -5,63 +5,87 @@ interface FilterQuery {
   params: unknown[];
 }
 
+interface FilterState {
+  conditions: string[];
+  params: unknown[];
+  joins: string[];
+  tagJoinIndex: number;
+}
+
 export function buildFilterQuery(filter: NostrFilter): FilterQuery {
-  const conditions: string[] = [];
-  const params: unknown[] = [];
-  const joins: string[] = [];
-  let tagJoinIndex = 0;
+  const state: FilterState = {
+    conditions: [],
+    params: [],
+    joins: [],
+    tagJoinIndex: 0,
+  };
 
-  if (filter.ids && filter.ids.length > 0) {
-    const placeholders = filter.ids.map(() => "?").join(", ");
-    conditions.push(`e.id IN (${placeholders})`);
-    params.push(...filter.ids);
-  }
+  addInFilter(state, "e.id", filter.ids);
+  addInFilter(state, "e.pubkey", filter.authors);
+  addInFilter(state, "e.kind", filter.kinds);
+  addRangeFilters(state, filter);
+  addTagFilters(state, filter);
 
-  if (filter.authors && filter.authors.length > 0) {
-    const placeholders = filter.authors.map(() => "?").join(", ");
-    conditions.push(`e.pubkey IN (${placeholders})`);
-    params.push(...filter.authors);
-  }
+  return buildFinalQuery(state, filter.limit);
+}
 
-  if (filter.kinds && filter.kinds.length > 0) {
-    const placeholders = filter.kinds.map(() => "?").join(", ");
-    conditions.push(`e.kind IN (${placeholders})`);
-    params.push(...filter.kinds);
-  }
+function addInFilter(
+  state: FilterState,
+  column: string,
+  values: unknown[] | undefined,
+): void {
+  if (!values || values.length === 0) return;
+  const placeholders = values.map(() => "?").join(", ");
+  state.conditions.push(`${column} IN (${placeholders})`);
+  state.params.push(...values);
+}
 
+function addRangeFilters(state: FilterState, filter: NostrFilter): void {
   if (filter.since !== undefined) {
-    conditions.push("e.created_at >= ?");
-    params.push(filter.since);
+    state.conditions.push("e.created_at >= ?");
+    state.params.push(filter.since);
   }
-
   if (filter.until !== undefined) {
-    conditions.push("e.created_at <= ?");
-    params.push(filter.until);
+    state.conditions.push("e.created_at <= ?");
+    state.params.push(filter.until);
   }
+}
 
+function addTagFilters(state: FilterState, filter: NostrFilter): void {
   for (const [key, values] of Object.entries(filter)) {
     if (!key.startsWith("#") || !values || !Array.isArray(values)) continue;
-    const tagName = key.slice(1);
-    const alias = `t${tagJoinIndex++}`;
-    joins.push(
-      `JOIN event_tags_index ${alias} ON e.id = ${alias}.event_id`,
-    );
-    const placeholders = values.map(() => "?").join(", ");
-    conditions.push(`${alias}.tag_name = ?`);
-    params.push(tagName);
-    conditions.push(`${alias}.tag_value IN (${placeholders})`);
-    params.push(...values);
+    addSingleTagFilter(state, key.slice(1), values as string[]);
   }
+}
 
-  const joinClause = joins.length > 0 ? " " + joins.join(" ") : "";
+function addSingleTagFilter(
+  state: FilterState,
+  tagName: string,
+  values: string[],
+): void {
+  const alias = `t${state.tagJoinIndex++}`;
+  state.joins.push(
+    `JOIN event_tags_index ${alias} ON e.id = ${alias}.event_id`,
+  );
+  const placeholders = values.map(() => "?").join(", ");
+  state.conditions.push(`${alias}.tag_name = ?`);
+  state.params.push(tagName);
+  state.conditions.push(`${alias}.tag_value IN (${placeholders})`);
+  state.params.push(...values);
+}
+
+function buildFinalQuery(state: FilterState, limit?: number): FilterQuery {
+  const joinClause =
+    state.joins.length > 0 ? " " + state.joins.join(" ") : "";
   const whereClause =
-    conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
-  const limitClause =
-    filter.limit !== undefined ? ` LIMIT ${Number(filter.limit)}` : "";
+    state.conditions.length > 0
+      ? " WHERE " + state.conditions.join(" AND ")
+      : "";
+  const limitClause = limit !== undefined ? ` LIMIT ${Number(limit)}` : "";
 
   const sql =
     `SELECT DISTINCT e.* FROM events e${joinClause}${whereClause}` +
     ` ORDER BY e.created_at DESC${limitClause}`;
 
-  return { sql, params };
+  return { sql, params: state.params };
 }

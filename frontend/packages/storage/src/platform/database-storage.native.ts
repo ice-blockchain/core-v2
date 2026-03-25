@@ -7,10 +7,24 @@ import type {
 } from "../types";
 import { runMigrations } from "./run-migrations";
 
+function createTransaction(
+  conn: ReturnType<typeof open>,
+): Transaction {
+  return {
+    async execute(sql: string, params?: unknown[]) {
+      await conn.executeAsync(sql, params);
+    },
+    async query<R>(sql: string, params?: unknown[]) {
+      const result = await conn.executeAsync(sql, params);
+      return result.rows as R[];
+    },
+  };
+}
+
 function wrapConnection(
   conn: ReturnType<typeof open>,
 ): Database {
-  const db: Database = {
+  return {
     async execute(sql: string, params?: unknown[]): Promise<void> {
       await conn.executeAsync(sql, params);
     },
@@ -29,16 +43,7 @@ function wrapConnection(
     async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
       await conn.executeAsync("BEGIN TRANSACTION");
       try {
-        const tx: Transaction = {
-          async execute(sql: string, params?: unknown[]) {
-            await conn.executeAsync(sql, params);
-          },
-          async query<R>(sql: string, params?: unknown[]) {
-            const result = await conn.executeAsync(sql, params);
-            return result.rows as R[];
-          },
-        };
-        const result = await fn(tx);
+        const result = await fn(createTransaction(conn));
         await conn.executeAsync("COMMIT");
         return result;
       } catch (error) {
@@ -47,8 +52,18 @@ function wrapConnection(
       }
     },
   };
+}
 
-  return db;
+function openAndWrap(options: DatabaseOptions): {
+  db: Database;
+  conn: ReturnType<typeof open>;
+} {
+  const conn = open({ name: `${options.name}.db` });
+  conn.execute("PRAGMA journal_mode = WAL");
+  conn.execute("PRAGMA foreign_keys = ON");
+  const db = wrapConnection(conn);
+  void runMigrations(db, options.migrations);
+  return { db, conn };
 }
 
 export function createDatabaseStorage(): IDatabaseStorage {
@@ -61,18 +76,9 @@ export function createDatabaseStorage(): IDatabaseStorage {
     getDatabase(options: DatabaseOptions): Database {
       const existing = databases.get(options.name);
       if (existing) return existing.db;
-
-      const conn = open({ name: `${options.name}.db` });
-      conn.execute("PRAGMA journal_mode = WAL");
-      conn.execute("PRAGMA foreign_keys = ON");
-
-      const db = wrapConnection(conn);
-
-      databases.set(options.name, { db, conn });
-
-      void runMigrations(db, options.migrations);
-
-      return db;
+      const entry = openAndWrap(options);
+      databases.set(options.name, entry);
+      return entry.db;
     },
 
     async closeDatabase(name: string): Promise<void> {

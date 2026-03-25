@@ -6,7 +6,15 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "ios:staging": "pnpm --filter @ion/mobile ios:staging",
+    "ios:testnet": "pnpm --filter @ion/mobile ios:testnet",
+    "ios:production": "pnpm --filter @ion/mobile ios:production",
+    "android:staging": "pnpm --filter @ion/mobile android:staging",
+    "android:testnet": "pnpm --filter @ion/mobile android:testnet",
+    "android:production": "pnpm --filter @ion/mobile android:production",
+    "web": "pnpm --filter @ion/web dev",
+    "metro": "pnpm --filter @ion/mobile start"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -21,5 +29,12 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-8gc5-j5rx-235r"
+      ]
+    }
+  }
 }

@@ -2,26 +2,32 @@
   "name": "@ion/web",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
     "lint": "eslint src/",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@ion/auth-ui": "workspace:^",
-    "@ion/ui": "workspace:^",
+    "@ion/auth-ui": "workspace:*",
+    "@ion/config": "workspace:*",
+    "@ion/ui": "workspace:*",
     "lottie-react": "^2.4.1",
     "next": "^15.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-native-safe-area-context": "^5.7.0",
+    "react-native-svg": "^15.15.4",
     "react-native-web": "^0.19.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.9.3"
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.2"
   }
 }

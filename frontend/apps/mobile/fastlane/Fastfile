@@ -1,0 +1,68 @@
+dotenv_path = File.expand_path('../.env.secrets', __dir__)
+Dotenv.load(dotenv_path) if File.exist?(dotenv_path)
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Fetch certificates and profiles for appstore, adhoc, and development"
+  lane :fetch_certs do
+    ["appstore", "adhoc", "development"].each do |type|
+      match(type: type, readonly: true)
+    end
+  end
+
+  desc "Renew and push certificates and profiles for appstore, adhoc, and development"
+  lane :update_certs do
+    ["appstore", "adhoc", "development"].each do |type|
+      match(type: type, readonly: false)
+    end
+  end
+
+  desc "Distribute IPA to Firebase App Distribution"
+  lane :distribute_firebase do
+    firebase_app_distribution(
+      app: ENV["FIREBASE_APP_ID_IOS"],
+      ipa_path: Dir["../ios/build/export/*.ipa"].first,
+      service_credentials_file: "fastlane/keys/firebase-distribution.json"
+    )
+  end
+
+  desc "Upload IPA to App Store Connect"
+  lane :distribute_appstore do
+    api_key = app_store_connect_api_key(
+      key_filepath: "fastlane/keys/appstore-connect-key.json",
+      in_house: false
+    )
+    upload_to_app_store(
+      api_key: api_key,
+      ipa: Dir["../ios/build/export/*.ipa"].first,
+      skip_metadata: true,
+      skip_screenshots: true,
+      precheck_include_in_app_purchases: false
+    )
+  end
+end
+
+platform :android do
+  desc "Distribute APK to Firebase App Distribution"
+  lane :distribute_firebase do
+    firebase_app_distribution(
+      app: ENV["FIREBASE_APP_ID_ANDROID"],
+      android_artifact_path: Dir["../android/app/build/outputs/apk/**/*-release.apk"].first,
+      service_credentials_file: "fastlane/keys/firebase-distribution.json"
+    )
+  end
+
+  desc "Upload AAB to Google Play Store"
+  lane :distribute_playstore do
+    supply(
+      aab: Dir["../android/app/build/outputs/bundle/**/*-release.aab"].first,
+      json_key: "fastlane/keys/gp-console.json",
+      track: "internal",
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end

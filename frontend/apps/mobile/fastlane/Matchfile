@@ -1,0 +1,15 @@
+type("appstore")
+
+app_identifier([
+  "io.ion.app",
+  "io.ion.app.NotificationServiceExtension",
+  "io.ion.app.ShareExtension",
+  "io.ion.app.staging",
+  "io.ion.app.staging.NotificationServiceExtension",
+  "io.ion.app.staging.ShareExtension",
+  "io.ion.app.testnet",
+  "io.ion.app.testnet.NotificationServiceExtension",
+  "io.ion.app.testnet.ShareExtension"
+])
+
+team_id("YJJ6X8TG5Y")
