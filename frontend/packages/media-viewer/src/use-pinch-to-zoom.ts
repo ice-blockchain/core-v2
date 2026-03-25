@@ -4,6 +4,7 @@ import {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -14,62 +15,87 @@ function clampScale(value: number): number {
   return Math.min(Math.max(value, MIN_SCALE), MAX_SCALE);
 }
 
-export function usePinchToZoom() {
-  const scale = useSharedValue(1);
-  const savedScale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const savedTranslateX = useSharedValue(0);
-  const savedTranslateY = useSharedValue(0);
+interface ZoomState {
+  scale: SharedValue<number>;
+  savedScale: SharedValue<number>;
+  translateX: SharedValue<number>;
+  translateY: SharedValue<number>;
+  savedTranslateX: SharedValue<number>;
+  savedTranslateY: SharedValue<number>;
+}
 
-  const pinchGesture = Gesture.Pinch()
+function resetTranslation(state: ZoomState) {
+  'worklet';
+  state.translateX.value = withTiming(0);
+  state.translateY.value = withTiming(0);
+  state.savedTranslateX.value = 0;
+  state.savedTranslateY.value = 0;
+}
+
+function buildPinchGesture(state: ZoomState) {
+  return Gesture.Pinch()
     .onUpdate((event) => {
-      scale.value = clampScale(savedScale.value * event.scale);
+      state.scale.value = clampScale(state.savedScale.value * event.scale);
     })
     .onEnd(() => {
-      savedScale.value = scale.value;
-      if (scale.value <= MIN_SCALE) {
-        scale.value = withTiming(MIN_SCALE);
-        savedScale.value = MIN_SCALE;
-        translateX.value = withTiming(0);
-        translateY.value = withTiming(0);
-        savedTranslateX.value = 0;
-        savedTranslateY.value = 0;
+      state.savedScale.value = state.scale.value;
+      if (state.scale.value <= MIN_SCALE) {
+        state.scale.value = withTiming(MIN_SCALE);
+        state.savedScale.value = MIN_SCALE;
+        resetTranslation(state);
       }
     });
+}
 
-  const doubleTapGesture = Gesture.Tap()
+function buildDoubleTapGesture(state: ZoomState) {
+  return Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
-      const isZoomed = scale.value > MIN_SCALE;
-      const targetScale = isZoomed ? MIN_SCALE : DOUBLE_TAP_SCALE;
-      scale.value = withTiming(targetScale);
-      savedScale.value = targetScale;
-      translateX.value = withTiming(0);
-      translateY.value = withTiming(0);
-      savedTranslateX.value = 0;
-      savedTranslateY.value = 0;
+      const isZoomed = state.scale.value > MIN_SCALE;
+      const target = isZoomed ? MIN_SCALE : DOUBLE_TAP_SCALE;
+      state.scale.value = withTiming(target);
+      state.savedScale.value = target;
+      resetTranslation(state);
     });
+}
 
-  const panGesture = Gesture.Pan()
+function buildPanGesture(state: ZoomState) {
+  return Gesture.Pan()
     .enabled(true)
     .onUpdate((event) => {
-      if (scale.value <= MIN_SCALE) return;
-      translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY;
+      if (state.scale.value <= MIN_SCALE) return;
+      state.translateX.value = state.savedTranslateX.value + event.translationX;
+      state.translateY.value = state.savedTranslateY.value + event.translationY;
     })
     .onEnd(() => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
+      state.savedTranslateX.value = state.translateX.value;
+      state.savedTranslateY.value = state.translateY.value;
     });
+}
+
+export function usePinchToZoom() {
+  const state: ZoomState = {
+    scale: useSharedValue(1),
+    savedScale: useSharedValue(1),
+    translateX: useSharedValue(0),
+    translateY: useSharedValue(0),
+    savedTranslateX: useSharedValue(0),
+    savedTranslateY: useSharedValue(0),
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: scale.value },
-      { translateX: translateX.value },
-      { translateY: translateY.value },
+      { scale: state.scale.value },
+      { translateX: state.translateX.value },
+      { translateY: state.translateY.value },
     ],
   }));
 
-  return { animatedStyle, pinchGesture, doubleTapGesture, panGesture, scale };
+  return {
+    animatedStyle,
+    pinchGesture: buildPinchGesture(state),
+    doubleTapGesture: buildDoubleTapGesture(state),
+    panGesture: buildPanGesture(state),
+    scale: state.scale,
+  };
 }

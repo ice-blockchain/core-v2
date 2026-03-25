@@ -14,7 +14,7 @@ interface FullscreenImageItemProps {
 }
 
 export function FullscreenImageItem(props: FullscreenImageItemProps) {
-  const { source, onClose, onZoomChange } = props;
+  const { source, onClose } = props;
   const { width, height } = useWindowDimensions();
   const pinch = usePinchToZoom();
   const dismiss = useDismissGesture({ onClose, scale: pinch.scale });

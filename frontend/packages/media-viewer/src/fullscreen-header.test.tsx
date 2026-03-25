@@ -1,4 +1,5 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { FullscreenHeader } from './fullscreen-header';
 
@@ -6,10 +7,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
 }));
 
-jest.mock('@ion/ui', () => {
-  const { Text } = require('react-native');
-  return { Text };
-});
+jest.mock('@ion/ui', () => ({ Text }));
 
 describe('FullscreenHeader', () => {
   it('displays page indicator with correct index', () => {
