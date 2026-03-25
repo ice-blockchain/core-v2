@@ -21,5 +21,13 @@ module.exports = {
     "max-params": ["error", 3],
     "no-empty": "error",
   },
+  overrides: [
+    {
+      files: ["*.test.ts"],
+      rules: {
+        "max-lines-per-function": "off",
+      },
+    },
+  ],
   ignorePatterns: ["node_modules/", "dist/", "*.config.js", "*.config.ts", "**/icons/generated/**"],
 };
