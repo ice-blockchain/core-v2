@@ -18,7 +18,7 @@ vi.stubGlobal(
 );
 
 vi.stubGlobal("URL", {
-  createObjectURL: () => "blob:mock/compressed",
+  createObjectURL: () => "blob://mock/compressed",
   revokeObjectURL: vi.fn(),
 });
 
@@ -43,15 +43,15 @@ describe("compressImage (web)", () => {
   });
 
   it("returns compressed image with correct dimensions", async () => {
-    const result = await compressImage("blob:mock/original");
+    const result = await compressImage("blob://mock/original");
     expect(result.width).toBe(1920);
     expect(result.height).toBe(1080);
     expect(result.mimeType).toBe("image/jpeg");
-    expect(result.uri).toBe("blob:mock/compressed");
+    expect(result.uri).toBe("blob://mock/compressed");
   });
 
   it("scales down when maxWidth is set", async () => {
-    const result = await compressImage("blob:mock/original", {
+    const result = await compressImage("blob://mock/original", {
       maxWidth: 960,
     });
     expect(result.width).toBe(960);
@@ -59,7 +59,7 @@ describe("compressImage (web)", () => {
   });
 
   it("scales down when maxHeight is set", async () => {
-    const result = await compressImage("blob:mock/original", {
+    const result = await compressImage("blob://mock/original", {
       maxHeight: 540,
     });
     expect(result.width).toBe(960);
@@ -67,21 +67,21 @@ describe("compressImage (web)", () => {
   });
 
   it("respects format option for png output", async () => {
-    const result = await compressImage("blob:mock/original", {
+    const result = await compressImage("blob://mock/original", {
       format: "png",
     });
     expect(result.mimeType).toBe("image/png");
   });
 
   it("respects format option for webp output", async () => {
-    const result = await compressImage("blob:mock/original", {
+    const result = await compressImage("blob://mock/original", {
       format: "webp",
     });
     expect(result.mimeType).toBe("image/webp");
   });
 
   it("includes a blurhash in the result", async () => {
-    const result = await compressImage("blob:mock/original");
+    const result = await compressImage("blob://mock/original");
     expect(result.blurhash).toBeTruthy();
     expect(typeof result.blurhash).toBe("string");
   });

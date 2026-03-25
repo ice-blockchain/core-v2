@@ -35,7 +35,7 @@ describe("generateBlurhash (web)", () => {
   });
 
   it("returns a non-empty blurhash string", async () => {
-    const hash = await generateBlurhash("blob:mock/image");
+    const hash = await generateBlurhash("blob://mock/image");
     expect(hash).toBeTruthy();
     expect(typeof hash).toBe("string");
     expect(hash.length).toBeGreaterThan(0);

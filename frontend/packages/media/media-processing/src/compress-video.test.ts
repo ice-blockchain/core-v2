@@ -44,18 +44,18 @@ describe("compressVideo (web)", () => {
   });
 
   it("returns video with mp4 mimeType", async () => {
-    const result = await compressVideo("blob:mock/video.mp4");
+    const result = await compressVideo("blob://mock/video.mp4");
     expect(result.mimeType).toBe("video/mp4");
   });
 
   it("returns correct dimensions from video metadata", async () => {
-    const result = await compressVideo("blob:mock/video.mp4");
+    const result = await compressVideo("blob://mock/video.mp4");
     expect(result.width).toBe(1280);
     expect(result.height).toBe(720);
   });
 
   it("scales down when maxWidth is set", async () => {
-    const result = await compressVideo("blob:mock/video.mp4", {
+    const result = await compressVideo("blob://mock/video.mp4", {
       maxWidth: 640,
     });
     expect(result.width).toBe(640);
@@ -63,7 +63,7 @@ describe("compressVideo (web)", () => {
   });
 
   it("includes a blurhash from the first frame", async () => {
-    const result = await compressVideo("blob:mock/video.mp4");
+    const result = await compressVideo("blob://mock/video.mp4");
     expect(result.blurhash).toBeTruthy();
   });
 });

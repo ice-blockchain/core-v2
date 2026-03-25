@@ -1,26 +1,31 @@
 import type { AudioProcessingOptions, ProcessedMedia } from "../types";
+import { assertSafeUri } from "./validate-uri";
 
 export async function extractAudio(
   uri: string,
   options?: AudioProcessingOptions,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   const response = await fetchWithTimeout(uri);
   const arrayBuffer = await response.arrayBuffer();
   const audioContext = new AudioContext({
     sampleRate: options?.sampleRate ?? 48000,
   });
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  const renderedBuffer = await renderOffline(audioBuffer, options);
-  const blob = encodeToBlob(renderedBuffer);
-  await audioContext.close();
-  return {
-    uri: URL.createObjectURL(blob),
-    mimeType: "audio/wav",
-    fileSize: blob.size,
-    width: 0,
-    height: 0,
-    blurhash: "",
-  };
+  try {
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    const renderedBuffer = await renderOffline(audioBuffer, options);
+    const blob = encodeToBlob(renderedBuffer);
+    return {
+      uri: URL.createObjectURL(blob),
+      mimeType: "audio/wav",
+      fileSize: blob.size,
+      width: 0,
+      height: 0,
+      blurhash: "",
+    };
+  } finally {
+    await audioContext.close();
+  }
 }
 
 async function renderOffline(

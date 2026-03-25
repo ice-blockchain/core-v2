@@ -21,7 +21,7 @@ describe("getImageDimensions (web)", () => {
   });
 
   it("returns correct width and height", async () => {
-    const dimensions = await getImageDimensions("blob:mock/image");
+    const dimensions = await getImageDimensions("blob://mock/image");
     expect(dimensions.width).toBe(1024);
     expect(dimensions.height).toBe(768);
   });
@@ -39,7 +39,7 @@ describe("getImageDimensions (web)", () => {
     );
 
     await expect(
-      getImageDimensions("blob:mock/broken"),
+      getImageDimensions("blob://mock/broken"),
     ).rejects.toThrow("Failed to load image");
   });
 });

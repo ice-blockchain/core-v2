@@ -1,8 +1,11 @@
 import { encode } from "blurhash";
+import { assertSafeUri } from "./validate-uri";
 
 const BLURHASH_SIZE = 32;
+const LOAD_TIMEOUT_MS = 30_000;
 
 export async function generateBlurhash(uri: string): Promise<string> {
+  assertSafeUri(uri);
   const image = await loadImage(uri);
   const canvas = downscaleToCanvas(image);
   const context = canvas.getContext("2d");
@@ -13,10 +16,14 @@ export async function generateBlurhash(uri: string): Promise<string> {
 
 function loadImage(uri: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("Image load timed out")),
+      LOAD_TIMEOUT_MS,
+    );
     const image = new Image();
     image.crossOrigin = "anonymous";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Failed to load image"));
+    image.onload = () => { clearTimeout(timer); resolve(image); };
+    image.onerror = () => { clearTimeout(timer); reject(new Error("Failed to load image")); };
     image.src = uri;
   });
 }

@@ -1,12 +1,15 @@
 import { encode } from "blurhash";
 import type { VideoProcessingOptions, ProcessedMedia } from "../types";
+import { assertSafeUri } from "./validate-uri";
 
 const BLURHASH_CANVAS_SIZE = 32;
+const LOAD_TIMEOUT_MS = 30_000;
 
 export async function compressVideo(
   uri: string,
   options?: VideoProcessingOptions,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   const video = await loadVideo(uri);
   const { width, height } = computeDimensions(video, options);
   const canvas = document.createElement("canvas");
@@ -29,12 +32,16 @@ export async function compressVideo(
 
 function loadVideo(uri: string): Promise<HTMLVideoElement> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("Video load timed out")),
+      LOAD_TIMEOUT_MS,
+    );
     const video = document.createElement("video");
     video.crossOrigin = "anonymous";
     video.preload = "metadata";
     video.muted = true;
-    video.onloadeddata = () => resolve(video);
-    video.onerror = () => reject(new Error("Failed to load video"));
+    video.onloadeddata = () => { clearTimeout(timer); resolve(video); };
+    video.onerror = () => { clearTimeout(timer); reject(new Error("Failed to load video")); };
     video.src = uri;
   });
 }

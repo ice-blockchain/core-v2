@@ -44,7 +44,7 @@ vi.stubGlobal("OfflineAudioContext", class {
 });
 
 vi.stubGlobal("URL", {
-  createObjectURL: () => "blob:mock/audio",
+  createObjectURL: () => "blob://mock/audio",
   revokeObjectURL: vi.fn(),
 });
 
@@ -54,23 +54,23 @@ describe("extractAudio (web)", () => {
   });
 
   it("returns audio with wav mimeType", async () => {
-    const result = await extractAudio("blob:mock/video.mp4");
+    const result = await extractAudio("blob://mock/video.mp4");
     expect(result.mimeType).toBe("audio/wav");
   });
 
   it("returns zero dimensions for audio", async () => {
-    const result = await extractAudio("blob:mock/video.mp4");
+    const result = await extractAudio("blob://mock/video.mp4");
     expect(result.width).toBe(0);
     expect(result.height).toBe(0);
   });
 
   it("returns empty blurhash for audio", async () => {
-    const result = await extractAudio("blob:mock/video.mp4");
+    const result = await extractAudio("blob://mock/video.mp4");
     expect(result.blurhash).toBe("");
   });
 
   it("has non-zero file size", async () => {
-    const result = await extractAudio("blob:mock/video.mp4");
+    const result = await extractAudio("blob://mock/video.mp4");
     expect(result.fileSize).toBeGreaterThan(0);
   });
 });

@@ -1,16 +1,19 @@
 import { encode } from "blurhash";
 import type { ProcessingOptions, ProcessedMedia } from "../types";
 import { clampQuality } from "./validate-options";
+import { assertSafeUri } from "./validate-uri";
 
 const DEFAULT_QUALITY = 0.8;
 const BLURHASH_SIZE = 32;
 const BLURHASH_COMPONENTS_X = 4;
 const BLURHASH_COMPONENTS_Y = 3;
+const LOAD_TIMEOUT_MS = 30_000;
 
 export async function compressImage(
   uri: string,
   options?: ProcessingOptions,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   const image = await loadImage(uri);
   const { width, height } = computeDimensions(image, options);
   const canvas = drawToCanvas(image, width, height);
@@ -30,10 +33,14 @@ export async function compressImage(
 
 function loadImage(uri: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("Image load timed out")),
+      LOAD_TIMEOUT_MS,
+    );
     const image = new Image();
     image.crossOrigin = "anonymous";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Failed to load image"));
+    image.onload = () => { clearTimeout(timer); resolve(image); };
+    image.onerror = () => { clearTimeout(timer); reject(new Error("Failed to load image")); };
     image.src = uri;
   });
 }

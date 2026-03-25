@@ -21,12 +21,23 @@ describe("assertSafeUri accepts safe URIs", () => {
       assertSafeUri("https://example.com/image.png"),
     ).not.toThrow();
   });
+
+  it("accepts a URI with percent-encoded characters", () => {
+    expect(() =>
+      assertSafeUri("file:///tmp/my%20video.mp4"),
+    ).not.toThrow();
+  });
+
+  it("accepts a URI with query params using = and #", () => {
+    expect(() =>
+      assertSafeUri("https://example.com/img?w=100#frag"),
+    ).not.toThrow();
+  });
 });
 
 describe("assertSafeUri rejects unsafe URIs", () => {
   it.each([
     ["double quote", 'file:///tmp/video";rm -rf /'],
-    ["semicolon", "file:///tmp/video;echo hack"],
     ["backtick", "file:///tmp/`whoami`"],
     ["pipe", "file:///tmp/video|cat /etc/passwd"],
     ["newline", "file:///tmp/video\necho hack"],
@@ -35,6 +46,15 @@ describe("assertSafeUri rejects unsafe URIs", () => {
     ["space", "file:///tmp/my video.mp4"],
     ["curly brace", "file:///tmp/${HOME}"],
     ["angle bracket", "file:///tmp/<script>"],
+    ["dollar sign", "file:///tmp/$(whoami)"],
+    ["parenthesis open", "file:///tmp/foo(bar)"],
+    ["single quote", "file:///tmp/foo'bar"],
+    ["exclamation mark", "file:///tmp/foo!bar"],
+    ["ampersand", "file:///tmp/foo&bar"],
+    ["semicolon", "file:///tmp/foo;bar"],
+    ["asterisk", "file:///tmp/foo*"],
+    ["plus sign", "file:///tmp/foo+bar"],
+    ["comma", "file:///tmp/foo,bar"],
   ])("rejects URI containing %s", (_label, uri) => {
     expect(() => assertSafeUri(uri)).toThrow("unsafe characters");
   });
