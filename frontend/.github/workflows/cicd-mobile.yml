@@ -1,0 +1,299 @@
+name: Mobile Build & Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - testnet
+          - production
+      deployment_target:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - firebase
+          - store
+      app_version:
+        description: App version (e.g. 1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      android_flavor: ${{ steps.resolve.outputs.android_flavor }}
+      ios_scheme: ${{ steps.resolve.outputs.ios_scheme }}
+      build_number: ${{ steps.resolve.outputs.build_number }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm turbo test
+
+      - name: Resolve build parameters
+        id: resolve
+        run: |
+          case "${{ inputs.environment }}" in
+            staging)
+              echo "android_flavor=staging" >> "$GITHUB_OUTPUT"
+              echo "ios_scheme=Ion-Staging" >> "$GITHUB_OUTPUT"
+              ;;
+            testnet)
+              echo "android_flavor=ionTestnet" >> "$GITHUB_OUTPUT"
+              echo "ios_scheme=Ion-Testnet" >> "$GITHUB_OUTPUT"
+              ;;
+            production)
+              echo "android_flavor=production" >> "$GITHUB_OUTPUT"
+              echo "ios_scheme=Ion-Production" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+          echo "build_number=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+  build-android:
+    name: Build Android
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Checkout secrets
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: ice-blockchain/core-v2-secrets
+          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
+          path: .secrets
+
+      - name: Mask secrets
+        run: |
+          SECRETS_FILE=".secrets/frontend/${{ inputs.environment }}/mobile/.env.secrets"
+          if [[ -f "$SECRETS_FILE" ]]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$value" || "$key" =~ ^# ]] && continue
+              echo "::add-mask::${value}"
+            done < "$SECRETS_FILE"
+          fi
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup environment
+        run: ./scripts/setup-env.sh ${{ inputs.environment }}
+
+      - name: Build JS packages
+        run: pnpm turbo build --filter=@ion/mobile...
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Android
+        working-directory: apps/mobile/android
+        run: |
+          FLAVOR="${{ needs.verify.outputs.android_flavor }}"
+          VERSION_NAME="${{ inputs.app_version }}"
+          VERSION_CODE="${{ needs.verify.outputs.build_number }}"
+
+          if [[ "${{ inputs.deployment_target }}" == "firebase" ]]; then
+            ./gradlew "assemble${FLAVOR^}Release" \
+              -PversionName="$VERSION_NAME" \
+              -PversionCode="$VERSION_CODE"
+          else
+            ./gradlew "bundle${FLAVOR^}Release" \
+              -PversionName="$VERSION_NAME" \
+              -PversionCode="$VERSION_CODE"
+          fi
+
+      - name: Find build artifact
+        id: artifact
+        run: |
+          FLAVOR="${{ needs.verify.outputs.android_flavor }}"
+          if [[ "${{ inputs.deployment_target }}" == "firebase" ]]; then
+            ARTIFACT=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -1)
+          else
+            ARTIFACT=$(find apps/mobile/android/app/build/outputs/bundle -name "*.aab" | head -1)
+          fi
+          echo "path=$ARTIFACT" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-${{ inputs.environment }}-${{ inputs.deployment_target }}
+          path: ${{ steps.artifact.outputs.path }}
+          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@a4effe49ee7ee5579507cf59e2c4f1a20744ee1e # v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Deploy to Firebase
+        if: inputs.deployment_target == 'firebase'
+        working-directory: apps/mobile
+        run: bundle exec fastlane android distribute_firebase
+
+      - name: Deploy to Play Store
+        if: inputs.deployment_target == 'store'
+        working-directory: apps/mobile
+        run: bundle exec fastlane android distribute_playstore
+
+  build-ios:
+    name: Build iOS
+    needs: verify
+    runs-on: macos-15
+    timeout-minutes: 45
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Checkout secrets
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: ice-blockchain/core-v2-secrets
+          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
+          path: .secrets
+
+      - name: Mask secrets
+        run: |
+          SECRETS_FILE=".secrets/frontend/${{ inputs.environment }}/mobile/.env.secrets"
+          if [[ -f "$SECRETS_FILE" ]]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$value" || "$key" =~ ^# ]] && continue
+              echo "::add-mask::${value}"
+            done < "$SECRETS_FILE"
+          fi
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup environment
+        run: ./scripts/setup-env.sh ${{ inputs.environment }}
+
+      - name: Build JS packages
+        run: pnpm turbo build --filter=@ion/mobile...
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@a4effe49ee7ee5579507cf59e2c4f1a20744ee1e # v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: bundle exec pod install
+
+      - name: Fetch certificates
+        working-directory: apps/mobile
+        run: bundle exec fastlane ios fetch_certs
+
+      - name: Set app version
+        working-directory: apps/mobile/ios
+        run: |
+          agvtool new-marketing-version "${{ inputs.app_version }}"
+          agvtool new-version -all "${{ needs.verify.outputs.build_number }}"
+
+      - name: Archive
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild archive \
+            -workspace mobile.xcworkspace \
+            -scheme "${{ needs.verify.outputs.ios_scheme }}" \
+            -configuration "Release-${{ inputs.environment == 'testnet' && 'Testnet' || (inputs.environment == 'staging' && 'Staging' || 'Production') }}" \
+            -archivePath build/Ion.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual
+
+      - name: Generate export options
+        working-directory: apps/mobile/ios
+        run: |
+          if [[ "${{ inputs.deployment_target }}" == "firebase" ]]; then
+            METHOD="ad-hoc"
+          else
+            METHOD="app-store"
+          fi
+
+          case "${{ inputs.environment }}" in
+            staging)    BUNDLE_ID="io.ion.app.staging" ;;
+            testnet)    BUNDLE_ID="io.ion.app.testnet" ;;
+            production) BUNDLE_ID="io.ion.app" ;;
+          esac
+
+          cat > build/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${METHOD}</string>
+            <key>teamID</key>
+            <string>YJJ6X8TG5Y</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export IPA
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Ion.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -exportPath build/export
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ios-${{ inputs.environment }}-${{ inputs.deployment_target }}
+          path: apps/mobile/ios/build/export/*.ipa
+          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
+
+      - name: Deploy to Firebase
+        if: inputs.deployment_target == 'firebase'
+        working-directory: apps/mobile
+        run: bundle exec fastlane ios distribute_firebase
+
+      - name: Deploy to App Store
+        if: inputs.deployment_target == 'store'
+        working-directory: apps/mobile
+        run: bundle exec fastlane ios distribute_appstore

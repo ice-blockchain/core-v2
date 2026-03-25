@@ -1,0 +1,99 @@
+name: Web Build & Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - testnet
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm turbo test
+
+  build-and-deploy:
+    name: Build & Deploy
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Checkout secrets
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: ice-blockchain/core-v2-secrets
+          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
+          path: .secrets
+
+      - name: Mask secrets
+        run: |
+          SECRETS_FILE=".secrets/frontend/${{ inputs.environment }}/web/.env.secrets"
+          if [[ -f "$SECRETS_FILE" ]]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$value" || "$key" =~ ^# ]] && continue
+              echo "::add-mask::${value}"
+            done < "$SECRETS_FILE"
+          fi
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup environment
+        run: ./scripts/setup-env.sh ${{ inputs.environment }}
+
+      - name: Build
+        run: pnpm turbo build --filter=@ion/web...
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-${{ inputs.environment }}
+          path: apps/web/dist/
+          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@a6f90b1f127823b31a4f4b0e3a34e75c0e5b6e5b # v0.9.0
+        with:
+          ssh-known-hosts: ${{ secrets.WEB_DEPLOY_HOST }}
+          ssh-private-key: ${{ secrets.WEB_DEPLOY_SSH_KEY }}
+
+      - name: Deploy
+        run: |
+          rsync -avz --delete \
+            apps/web/dist/ \
+            "${{ secrets.WEB_DEPLOY_USER }}@${{ secrets.WEB_DEPLOY_HOST }}:${{ secrets.WEB_DEPLOY_PATH }}/"
