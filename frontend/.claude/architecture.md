@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-03-20
+> Last updated: 2026-03-25
 
 ---
 
@@ -32,7 +32,7 @@
 | Package | Purpose | Status |
 |---|---|---|
 | `@ion/media-acquisition` | Picker, camera, metadata | Planned |
-| `@ion/media-processing` | Crop, resize, blurhash, compress | Planned |
+| `@ion/media-processing` | Crop, resize, blurhash, compress (image/video/audio/brotli) | Implemented |
 | `@ion/media-upload` | Encrypt, chunk, retry, queue | Planned |
 | `@ion/media-viewer` | Image, video, gif, fullscreen | Planned |
 | `@ion/nsfw-detection` | On-device safety checks | Planned |
@@ -82,7 +82,7 @@
 | Phase 0 | Scaffold repos, workspaces, CI, CLAUDE.md | Not started |
 | Phase 1 | Foundation packages | Not started |
 | Phase 2 | Clients + API contracts | Not started |
-| Phase 3 | Media pipeline | Not started |
+| Phase 3 | Media pipeline | In Progress |
 | Phase 4 | Feature packages | Not started |
 | Phase 5 | App shell + screens | Not started |
 | Phase 6 | Backend migration | Not started |
