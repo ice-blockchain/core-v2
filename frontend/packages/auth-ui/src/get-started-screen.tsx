@@ -1,16 +1,16 @@
 import { StyleSheet, Text, View } from "react-native";
-import { FormInput } from "../components/form-input";
-import { PrimaryButton } from "../components/primary-button";
-import { SecondaryButton } from "../components/secondary-button";
-import { TextButton } from "../components/text-button";
-import { SecuredByFooter } from "../components/secured-by-footer";
-import { TermsFooter } from "../components/terms-footer";
-import { IceLogoIcon } from "../components/ice-logo-icon";
-import { IdentityKeyIcon } from "../components/identity-key-icon";
-import { InfoIcon } from "../components/info-icon";
-import { CreateAccountIcon } from "../components/create-account-icon";
-import { RestoreKeyIcon } from "../components/restore-key-icon";
-import { useIdentityKeyValidation } from "../components/identity-key-rules";
+import { FormInput } from "./form-input";
+import { PrimaryButton } from "./primary-button";
+import { SecondaryButton } from "./secondary-button";
+import { TextButton } from "./text-button";
+import { SecuredByFooter } from "./secured-by-footer";
+import { TermsFooter } from "./terms-footer";
+import { IceLogoIcon } from "./ice-logo-icon";
+import { IdentityKeyIcon } from "./identity-key-icon";
+import { InfoIcon } from "./info-icon";
+import { CreateAccountIcon } from "./create-account-icon";
+import { RestoreKeyIcon } from "./restore-key-icon";
+import { useIdentityKeyValidation } from "./identity-key-rules";
 
 function GetStartedHeader() {
   return (

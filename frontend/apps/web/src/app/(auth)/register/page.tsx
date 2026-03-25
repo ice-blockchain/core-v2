@@ -1,52 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CSSProperties } from "react";
-import { SheetHeader } from "@/components/sheet-header";
-import { PrimaryButton } from "@/components/primary-button";
-import { RegisterForm } from "@/components/register-form";
-import { RegisterHeader } from "@/components/register-header";
-import { SecuredByFooter } from "@/components/secured-by-footer";
-import { TermsFooter } from "@/components/terms-footer";
-
-const pageStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  width: "100%",
-  flex: 1,
-};
-
-const footerStyle: CSSProperties = {
-  marginTop: "auto",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 12,
-  paddingBottom: 40,
-};
+import { RegisterScreen } from "@ion/auth-ui";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [isValid, setIsValid] = useState(false);
-  const handleValidChange = useCallback((v: boolean) => setIsValid(v), []);
 
   return (
-    <div style={pageStyle}>
-      <SheetHeader title="" onBack={() => router.back()} />
-      <RegisterHeader />
-      <RegisterForm onValidChange={handleValidChange} />
-      <div style={{ marginTop: 24 }}>
-        <PrimaryButton
-          label="Continue"
-          onClick={() => isValid && router.push("/verify-passkey")}
-        />
-      </div>
-      <div style={footerStyle}>
-        <SecuredByFooter />
-        <TermsFooter />
-      </div>
-    </div>
+    <RegisterScreen
+      onBack={() => router.back()}
+      onNavigateToVerifyPasskey={() => router.push("/verify-passkey")}
+    />
   );
 }

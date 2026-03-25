@@ -4,13 +4,31 @@ const path = require('path');
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
 
+const appNodeModules = path.resolve(projectRoot, 'node_modules');
+
+const singletonPackages = {
+  react: path.resolve(appNodeModules, 'react'),
+  'react-native': path.resolve(appNodeModules, 'react-native'),
+  'react-native-svg': path.resolve(appNodeModules, 'react-native-svg'),
+};
+
 const config = {
   watchFolders: [workspaceRoot],
   resolver: {
     nodeModulesPaths: [
-      path.resolve(projectRoot, 'node_modules'),
+      appNodeModules,
       path.resolve(workspaceRoot, 'node_modules'),
     ],
+    extraNodeModules: singletonPackages,
+    resolveRequest: (context, moduleName, platform) => {
+      if (singletonPackages[moduleName]) {
+        return {
+          filePath: require.resolve(moduleName, { paths: [appNodeModules] }),
+          type: 'sourceFile',
+        };
+      }
+      return context.resolveRequest(context, moduleName, platform);
+    },
   },
 };
 

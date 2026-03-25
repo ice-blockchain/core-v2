@@ -1,30 +1,41 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import {
+  GetStartedScreen,
+  PrimaryButton,
+  RegisterScreen,
+  VerifyPasskeyScreen,
+} from "@ion/auth-ui";
 import { SplashVideo } from "@/components/splash-video";
 import { IntroVideo } from "@/components/intro-video";
-import { PrimaryButton } from "@/components/primary-button";
 import { BottomSheet } from "@/components/bottom-sheet";
-import { GetStartedScreen } from "@/components/get-started-screen";
-import { RegisterScreen } from "@/components/register-screen";
-import { VerifyPasskeyScreen } from "@/components/verify-passkey-screen";
+import { LoadingAnimation } from "@/components/loading-animation";
 
-type Phase = "splash" | "intro" | "get-started" | "register" | "verify-passkey";
+type Phase =
+  | { name: "splash" }
+  | { name: "intro" }
+  | { name: "get-started" }
+  | { name: "register" }
+  | { name: "verify-passkey"; identityKeyName: string };
 
 function usePhaseNavigation() {
-  const [phase, setPhase] = useState<Phase>("splash");
+  const [phase, setPhase] = useState<Phase>({ name: "splash" });
 
   return {
     phase,
-    goToIntro: useCallback(() => setPhase("intro"), []),
-    goToGetStarted: useCallback(() => setPhase("get-started"), []),
-    goToRegister: useCallback(() => setPhase("register"), []),
-    goToVerifyPasskey: useCallback(() => setPhase("verify-passkey"), []),
+    goToIntro: useCallback(() => setPhase({ name: "intro" }), []),
+    goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), []),
+    goToRegister: useCallback(() => setPhase({ name: "register" }), []),
+    goToVerifyPasskey: useCallback(
+      (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
+      [],
+    ),
   };
 }
 
 function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
-  if (nav.phase === "register") {
+  if (nav.phase.name === "register") {
     return (
       <RegisterScreen
         onBack={nav.goToGetStarted}
@@ -32,8 +43,15 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
       />
     );
   }
-  if (nav.phase === "verify-passkey") {
-    return <VerifyPasskeyScreen />;
+  if (nav.phase.name === "verify-passkey") {
+    return (
+      <VerifyPasskeyScreen
+        identityKeyName={nav.phase.identityKeyName}
+        onBack={nav.goToRegister}
+        onDismiss={nav.goToGetStarted}
+        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
+      />
+    );
   }
   return (
     <GetStartedScreen
@@ -46,18 +64,18 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
 export default function SplashPage() {
   const nav = usePhaseNavigation();
 
-  if (nav.phase === "splash") {
+  if (nav.phase.name === "splash") {
     return <SplashVideo onComplete={nav.goToIntro} />;
   }
 
   return (
     <>
       <IntroVideo>
-        {nav.phase === "intro" ? (
-          <PrimaryButton label="Log In" onClick={nav.goToGetStarted} />
+        {nav.phase.name === "intro" ? (
+          <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
         ) : null}
       </IntroVideo>
-      {nav.phase !== "intro" && (
+      {nav.phase.name !== "intro" && (
         <BottomSheet>
           <AuthSheetContent nav={nav} />
         </BottomSheet>

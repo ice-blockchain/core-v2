@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@ion/auth-ui": "workspace:^",
     "@ion/ui": "workspace:^",
     "@react-native/new-app-screen": "0.84.1",
     "lottie-react-native": "^7.3.6",

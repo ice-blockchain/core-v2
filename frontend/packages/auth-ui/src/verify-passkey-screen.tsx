@@ -1,8 +1,8 @@
+import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { LoadingAnimation } from "../components/loading-animation";
-import { SecuredByFooter } from "../components/secured-by-footer";
-import { VerifyPasskeyIcon } from "../components/verify-passkey-icon";
+import { SecuredByFooter } from "./secured-by-footer";
+import { VerifyPasskeyIcon } from "./verify-passkey-icon";
 
 const AUTO_DISMISS_DELAY = 3000;
 
@@ -10,9 +10,10 @@ interface VerifyPasskeyScreenProps {
   identityKeyName: string;
   onBack: () => void;
   onDismiss: () => void;
+  loadingElement: ReactNode;
 }
 
-export function VerifyPasskeyScreen({ onDismiss }: VerifyPasskeyScreenProps) {
+export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskeyScreenProps) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, AUTO_DISMISS_DELAY);
     return () => clearTimeout(timer);
@@ -29,7 +30,7 @@ export function VerifyPasskeyScreen({ onDismiss }: VerifyPasskeyScreenProps) {
         fingerprint, face, or screen lock
       </Text>
       <View style={styles.loader}>
-        <LoadingAnimation variant="onLightBackground" size={30} />
+        {loadingElement}
       </View>
       <View style={styles.footer}>
         <SecuredByFooter />

@@ -24,7 +24,7 @@ function LeftSection({ icon }: { icon: ReactNode }) {
   );
 }
 
-function RightAction({ icon, onPress }: { icon: ReactNode; onPress?: () => void }) {
+function RightAction({ icon, onPress }: { icon: ReactNode; onPress?: (() => void) | undefined }) {
   return (
     <Pressable onPress={onPress} style={styles.rightButton}>
       {icon}

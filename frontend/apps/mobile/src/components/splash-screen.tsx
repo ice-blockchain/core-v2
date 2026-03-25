@@ -1,12 +1,15 @@
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import {
+  GetStartedScreen,
+  PrimaryButton,
+  RegisterScreen,
+  VerifyPasskeyScreen,
+} from "@ion/auth-ui";
 import { SplashVideo } from "./splash-video";
 import { IntroVideo } from "./intro-video";
-import { PrimaryButton } from "./primary-button";
 import { BottomSheet } from "./bottom-sheet";
-import { GetStartedScreen } from "../screens/get-started-screen";
-import { RegisterScreen } from "../screens/register-screen";
-import { VerifyPasskeyScreen } from "../screens/verify-passkey-screen";
+import { LoadingAnimation } from "./loading-animation";
 
 type Phase =
   | { name: "splash" }
@@ -45,6 +48,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
         identityKeyName={nav.phase.identityKeyName}
         onBack={nav.goToRegister}
         onDismiss={nav.goToGetStarted}
+        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
       />
     );
   }
