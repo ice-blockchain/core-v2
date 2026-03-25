@@ -39,6 +39,9 @@ jobs:
     needs: validate-inputs
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -64,6 +67,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: ${{ inputs.environment }}
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -76,6 +82,7 @@ jobs:
           path: .secrets
 
       - name: Mask secrets
+        working-directory: .
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
@@ -102,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: web-${{ inputs.environment }}
-          path: apps/web/dist/
+          path: frontend/apps/web/dist/
           retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup SSH and deploy
