@@ -49,7 +49,13 @@ function VerifiedDemo() {
   const [value, setValue] = useState("@jasonglover");
   return (
     <DemoRow label="Verified">
-      <TextField label="Nickname" value={value} onChangeText={setValue} state="verified" />
+      <TextField
+        label="Nickname"
+        value={value}
+        onChangeText={setValue}
+        state="verified"
+        suffixIcon={<Icon name="checkbox_on" size={24} color="#35D487" />}
+      />
     </DemoRow>
   );
 }
