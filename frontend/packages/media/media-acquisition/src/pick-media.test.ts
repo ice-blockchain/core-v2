@@ -105,8 +105,8 @@ describe("pickMedia (web)", () => {
         onchange: null as (() => void) | null,
         files: createFileList([]),
         click() {
-          capturedInput = this;
-          if (this.onchange) this.onchange();
+          capturedInput = input;
+          if (input.onchange) input.onchange();
         },
       };
       return input as unknown as HTMLElement;

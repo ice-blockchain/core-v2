@@ -11,58 +11,51 @@ function buildAcceptString(options?: MediaPickerOptions): string {
 }
 
 function readFileAsMedia(file: File): Promise<CapturedMedia> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const isVideo = file.type.startsWith("video/");
-
-    if (isVideo) {
-      resolveVideoMedia(file, url, resolve, reject);
-    } else {
-      resolveImageMedia(file, url, resolve, reject);
-    }
-  });
+  const url = URL.createObjectURL(file);
+  const isVideo = file.type.startsWith("video/");
+  return isVideo ? resolveVideoMedia(file, url) : resolveImageMedia(file, url);
 }
 
 function resolveImageMedia(
   file: File,
   url: string,
-  resolve: (value: CapturedMedia) => void,
-  reject: (reason: Error) => void,
-): void {
-  const image = new Image();
-  image.onload = () => {
-    resolve({
-      uri: url,
-      mimeType: file.type,
-      fileSize: file.size,
-      width: image.naturalWidth,
-      height: image.naturalHeight,
-    });
-  };
-  image.onerror = () => reject(new Error("Failed to load image"));
-  image.src = url;
+): Promise<CapturedMedia> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      resolve({
+        uri: url,
+        mimeType: file.type,
+        fileSize: file.size,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      });
+    };
+    image.onerror = () => reject(new Error("Failed to load image"));
+    image.src = url;
+  });
 }
 
 function resolveVideoMedia(
   file: File,
   url: string,
-  resolve: (value: CapturedMedia) => void,
-  reject: (reason: Error) => void,
-): void {
-  const video = document.createElement("video");
-  video.preload = "metadata";
-  video.onloadedmetadata = () => {
-    resolve({
-      uri: url,
-      mimeType: file.type,
-      fileSize: file.size,
-      width: video.videoWidth,
-      height: video.videoHeight,
-      duration: Math.round(video.duration * 1000),
-    });
-  };
-  video.onerror = () => reject(new Error("Failed to load video"));
-  video.src = url;
+): Promise<CapturedMedia> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      resolve({
+        uri: url,
+        mimeType: file.type,
+        fileSize: file.size,
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: Math.round(video.duration * 1000),
+      });
+    };
+    video.onerror = () => reject(new Error("Failed to load video"));
+    video.src = url;
+  });
 }
 
 export async function pickMedia(
