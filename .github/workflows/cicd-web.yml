@@ -101,7 +101,7 @@ jobs:
       - name: Setup environment
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
-        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT" web
 
       - name: Verify web env
         run: |
