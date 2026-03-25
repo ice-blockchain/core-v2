@@ -22,8 +22,9 @@ platform :ios do
       "production" => "io.ion.app"
     }
     bundle_id = bundle_ids[environment]
+    UI.user_error!("Unknown environment: #{environment}") unless bundle_id
 
-    sign_type = deployment_target == "appstore" ? "AppStore" : "AdHoc"
+    sign_type = deployment_target == "store" ? "AppStore" : "AdHoc"
     profile_name = "match #{sign_type} #{bundle_id}"
 
     config_suffix = environment.capitalize
