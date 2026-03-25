@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { FormInput } from "./form-input";
+import { TextField } from "@ion/ui";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
@@ -37,13 +37,15 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
   return (
     <View style={styles.page}>
       <GetStartedHeader />
-      <FormInput
-        placeholder="Identity key name"
+      <TextField
+        label="Identity key name"
         value={identity.value}
-        onChange={identity.setValue}
-        leftIcon={<IdentityKeyIcon />}
-        rightIcon={<InfoIcon />}
-        errorMessage={identity.errorMessage}
+        onChangeText={identity.setValue}
+        prefixIcon={<IdentityKeyIcon />}
+        hasPrefixDivider
+        suffixIcon={<InfoIcon />}
+        {...(identity.errorMessage ? { state: "error" as const, errorMessage: identity.errorMessage } : {})}
+        style={styles.field}
       />
       <View style={styles.continueWrapper}>
         <PrimaryButton label="Continue" onPress={() => identity.validate() && props.onNavigateToVerifyPasskey(identity.value)} />
@@ -88,6 +90,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 320,
     marginBottom: 40,
+  },
+  field: {
+    width: 287,
   },
   continueWrapper: {
     marginTop: 16,

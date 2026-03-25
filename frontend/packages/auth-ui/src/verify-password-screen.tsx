@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { FormInput } from "./form-input";
+import { TextField } from "@ion/ui";
 import { PasswordIcon } from "./password-icon";
 import { EyeIcon } from "./eye-icon";
 import { VerifyPasskeyIcon } from "./verify-passkey-icon";
@@ -54,14 +54,16 @@ function InnerSheetForm({ onConfirm }: { onConfirm: () => void }) {
     <View style={styles.innerContent}>
       <InnerSheetHeader />
       <View style={styles.innerInput}>
-        <FormInput
-          placeholder="Password"
+        <TextField
+          label="Password"
           value={password}
-          onChange={setPassword}
-          leftIcon={<PasswordIcon />}
-          rightIcon={<EyeIcon isOff={!showPassword} />}
-          onRightIconPress={toggleShowPassword}
-          secureTextEntry={!showPassword}
+          onChangeText={setPassword}
+          prefixIcon={<PasswordIcon />}
+          hasPrefixDivider
+          suffixIcon={<Pressable onPress={toggleShowPassword}><EyeIcon isOff={!showPassword} /></Pressable>}
+          isSecureTextEntry={!showPassword}
+          textInputProps={{ textContentType: "oneTimeCode", autoComplete: "off", autoCorrect: false }}
+          style={styles.fieldWidth}
         />
       </View>
       <Pressable style={styles.confirmButton} onPress={onConfirm}>
@@ -172,6 +174,9 @@ const styles = StyleSheet.create({
   },
   innerInput: {
     marginBottom: 24,
+  },
+  fieldWidth: {
+    width: 287,
   },
   confirmButton: {
     width: 343,

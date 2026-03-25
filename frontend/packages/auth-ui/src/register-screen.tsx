@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { TextField } from "@ion/ui";
 import { SheetHeader } from "./sheet-header";
 import { PrimaryButton } from "./primary-button";
-import { FormInput } from "./form-input";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasswordIcon } from "./register-password-icon";
 import { PasswordStrengthChecklist } from "./password-strength-checklist";
@@ -48,23 +48,43 @@ function useRegisterPasswordForm() {
 type FormState = ReturnType<typeof useRegisterPasswordForm>;
 
 interface PasswordFieldProps {
-  placeholder: string;
+  label: string;
   value: string;
-  onChange: (v: string) => void;
+  onChangeText: (v: string) => void;
   show: boolean;
   onToggle: () => void;
 }
 
-function PasswordField({ placeholder, value, onChange, show, onToggle }: PasswordFieldProps) {
+function PasswordField({ label, value, onChangeText, show, onToggle }: PasswordFieldProps) {
   return (
-    <FormInput
-      placeholder={placeholder}
+    <TextField
+      label={label}
       value={value}
-      onChange={onChange}
-      leftIcon={<PasswordIcon />}
-      rightIcon={<EyeIcon isOff={!show} />}
-      onRightIconPress={onToggle}
-      secureTextEntry={!show}
+      onChangeText={onChangeText}
+      prefixIcon={<PasswordIcon />}
+      hasPrefixDivider
+      suffixIcon={<Pressable onPress={onToggle}><EyeIcon isOff={!show} /></Pressable>}
+      isSecureTextEntry={!show}
+      textInputProps={{ textContentType: "oneTimeCode", autoComplete: "off", autoCorrect: false }}
+      style={styles.field}
+    />
+  );
+}
+
+function IdentityKeyField({ form }: { form: FormState }) {
+  const errorProps = form.identityKeyError
+    ? { state: "error" as const, errorMessage: form.identityKeyError }
+    : {};
+  return (
+    <TextField
+      label="Identity key name"
+      value={form.identityKeyName}
+      onChangeText={form.setIdentityKeyName}
+      prefixIcon={<IdentityKeyIcon />}
+      hasPrefixDivider
+      suffixIcon={<InfoIcon />}
+      {...errorProps}
+      style={styles.field}
     />
   );
 }
@@ -72,25 +92,18 @@ function PasswordField({ placeholder, value, onChange, show, onToggle }: Passwor
 function RegisterFormFields({ form }: { form: FormState }) {
   return (
     <View style={styles.formContainer}>
-      <FormInput
-        placeholder="Identity key name"
-        value={form.identityKeyName}
-        onChange={form.setIdentityKeyName}
-        leftIcon={<IdentityKeyIcon />}
-        rightIcon={<InfoIcon />}
-        errorMessage={form.identityKeyError}
-      />
+      <IdentityKeyField form={form} />
       <PasswordField
-        placeholder="Password"
+        label="Password"
         value={form.password}
-        onChange={form.setPassword}
+        onChangeText={form.setPassword}
         show={form.showPassword}
         onToggle={form.toggleShowPassword}
       />
       <PasswordField
-        placeholder="Confirm password"
+        label="Confirm password"
         value={form.confirmPassword}
-        onChange={form.setConfirmPassword}
+        onChangeText={form.setConfirmPassword}
         show={form.showConfirm}
         onToggle={form.toggleShowConfirm}
       />
@@ -140,6 +153,9 @@ const styles = StyleSheet.create({
   formContainer: {
     marginTop: 24,
     gap: 16,
+  },
+  field: {
+    width: 287,
   },
   checklist: {
     marginTop: 16,

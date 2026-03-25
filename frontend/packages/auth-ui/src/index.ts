@@ -4,9 +4,6 @@ export { RegisterScreen } from "./register-screen";
 export { VerifyPasskeyScreen } from "./verify-passkey-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
 
-// Inputs
-export { FormInput } from "./form-input";
-
 // Buttons
 export { PrimaryButton } from "./primary-button";
 export { SecondaryButton } from "./secondary-button";

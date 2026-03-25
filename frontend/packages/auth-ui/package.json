@@ -11,6 +11,9 @@
     "type-check": "tsc --noEmit",
     "test": "jest"
   },
+  "dependencies": {
+    "@ion/ui": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=19",
     "react-native": ">=0.76",
