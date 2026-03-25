@@ -103,6 +103,13 @@ jobs:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
+      - name: Verify web env
+        run: |
+          if [[ ! -f apps/web/.env ]]; then
+            echo "::error::apps/web/.env missing after setup-env.sh — secrets repo may be missing web env files"
+            exit 1
+          fi
+
       - name: Build
         run: pnpm turbo build --filter=@ion/web...
 

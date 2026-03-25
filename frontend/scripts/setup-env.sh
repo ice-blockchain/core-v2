@@ -45,6 +45,16 @@ if [[ -d "${SECRETS_DIR}/${ENV}/web" ]]; then
   cp -r "${SECRETS_DIR}/${ENV}/web/" "${REPO_ROOT}/apps/web/"
 fi
 
+# Validate env files were created for apps with secrets
+for APP in mobile web; do
+  if [[ -d "${SECRETS_DIR}/${ENV}/${APP}" ]]; then
+    if [[ ! -f "${REPO_ROOT}/apps/${APP}/.env" ]]; then
+      echo "error: apps/${APP}/.env not created. Check secrets repo ${ENV}/${APP}/ has .env file." >&2
+      exit 1
+    fi
+  fi
+done
+
 # Source build-time secrets into current shell (NOT bundled into app)
 for SECRETS_FILE in \
   "${REPO_ROOT}/apps/mobile/.env.secrets" \
