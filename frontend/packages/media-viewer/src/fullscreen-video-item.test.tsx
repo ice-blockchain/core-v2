@@ -1,0 +1,63 @@
+import React from 'react';
+import { render } from '@testing-library/react-native';
+import { FullscreenVideoItem } from './fullscreen-video-item';
+import type { MediaViewerSource } from './types';
+
+jest.mock('react-native-gesture-handler', () => {
+  const { View } = require('react-native');
+  const gestureBuilder = () => ({
+    onUpdate: () => gestureBuilder(),
+    onEnd: () => gestureBuilder(),
+    activeOffsetY: () => gestureBuilder(),
+  });
+  return {
+    GestureDetector: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
+    Gesture: { Pan: gestureBuilder },
+  };
+});
+
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    default: { View },
+    useSharedValue: (initial: number) => ({ value: initial }),
+    useAnimatedStyle: (fn: () => unknown) => fn(),
+    withSpring: (value: number) => value,
+    runOnJS: (fn: () => void) => fn,
+    interpolate: () => 1,
+    Extrapolation: { CLAMP: 'clamp' },
+  };
+});
+
+jest.mock('expo-av', () => {
+  const { forwardRef } = require('react');
+  const { View } = require('react-native');
+  return {
+    Video: forwardRef((props: Record<string, unknown>, ref: unknown) => (
+      <View testID="expo-video" {...props} ref={ref} />
+    )),
+    ResizeMode: { CONTAIN: 'contain' },
+  };
+});
+
+const source: MediaViewerSource = {
+  uri: 'https://example.com/video.mp4',
+  mimeType: 'video/mp4',
+};
+
+describe('FullscreenVideoItem', () => {
+  it('renders a video player', () => {
+    const { getByTestId } = render(
+      <FullscreenVideoItem source={source} onClose={jest.fn()} />,
+    );
+    expect(getByTestId('expo-video')).toBeTruthy();
+  });
+
+  it('auto-plays the video in fullscreen', () => {
+    const { getByTestId } = render(
+      <FullscreenVideoItem source={source} onClose={jest.fn()} />,
+    );
+    const video = getByTestId('expo-video');
+    expect(video.props.shouldPlay).toBe(true);
+  });
+});
