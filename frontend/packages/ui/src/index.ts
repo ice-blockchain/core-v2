@@ -14,6 +14,9 @@ export type { ButtonProps, ButtonColor, ButtonIconPosition } from "./components/
 export { SmallButton } from "./components/SmallButton";
 export type { SmallButtonProps, SmallButtonColor, SmallButtonIconPosition } from "./components/SmallButton";
 
+export { TextField } from "./components/TextField";
+export type { TextFieldProps } from "./components/TextField";
+
 // Icons
 export { Icon } from "./icons/Icon";
 export type { IconProps, IconName } from "./icons/Icon";

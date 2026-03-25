@@ -13,6 +13,7 @@ import { TypographyCatalogSection } from "./TypographyCatalogSection";
 import { IconCatalogSection } from "./IconCatalogSection";
 import { ButtonCatalogSection } from "./ButtonCatalogSection";
 import { SmallButtonCatalogSection } from "./SmallButtonCatalogSection";
+import { TextFieldCatalogSection } from "./TextFieldCatalogSection";
 
 function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
@@ -37,6 +38,7 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
         <IconCatalogSection />
         <ButtonCatalogSection />
         <SmallButtonCatalogSection />
+        <TextFieldCatalogSection />
       </View>
     </ScrollView>
     </SafeAreaView>
