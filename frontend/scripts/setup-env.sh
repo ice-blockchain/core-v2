@@ -33,11 +33,27 @@ fi
 echo "Setting up environment: ${ENV}"
 
 # Copy shared files (android signing, xcconfigs, Xcode schemes, build-time secrets)
-cp -r "${SECRETS_DIR}/shared/mobile/" "${REPO_ROOT}/apps/mobile/"
+if [[ -d "${SECRETS_DIR}/shared/mobile" ]]; then
+  cp -r "${SECRETS_DIR}/shared/mobile/." "${REPO_ROOT}/apps/mobile/"
+fi
 
 # Copy env-specific files (.env, google-services.json, sentry, fastlane keys)
-cp -r "${SECRETS_DIR}/${ENV}/mobile/" "${REPO_ROOT}/apps/mobile/"
-cp -r "${SECRETS_DIR}/${ENV}/web/"    "${REPO_ROOT}/apps/web/"
+if [[ -d "${SECRETS_DIR}/${ENV}/mobile" ]]; then
+  cp -r "${SECRETS_DIR}/${ENV}/mobile/." "${REPO_ROOT}/apps/mobile/"
+fi
+if [[ -d "${SECRETS_DIR}/${ENV}/web" ]]; then
+  cp -r "${SECRETS_DIR}/${ENV}/web/." "${REPO_ROOT}/apps/web/"
+fi
+
+# Validate env files were created for apps with secrets
+for APP in mobile web; do
+  if [[ -d "${SECRETS_DIR}/${ENV}/${APP}" ]]; then
+    if [[ ! -f "${REPO_ROOT}/apps/${APP}/.env" ]]; then
+      echo "error: apps/${APP}/.env not created. Check secrets repo ${ENV}/${APP}/ has .env file." >&2
+      exit 1
+    fi
+  fi
+done
 
 # Source build-time secrets into current shell (NOT bundled into app)
 for SECRETS_FILE in \

@@ -124,15 +124,16 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ice-blockchain/core-v2-secrets
-          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
-          path: .secrets
+          ref: master
+          token: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
+          path: frontend/.secrets
 
       - name: Mask secrets
         working-directory: .
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
+          SECRETS_FILE="frontend/.secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
             while IFS='=' read -r key value; do
               [[ -z "$value" || "$key" =~ ^# ]] && continue
@@ -195,7 +196,7 @@ jobs:
           retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@a4effe49ee7ee5579507cf59e2c4f1a20744ee1e # v1
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
           bundler-cache: true
@@ -228,15 +229,16 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           repository: ice-blockchain/core-v2-secrets
-          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
-          path: .secrets
+          ref: master
+          token: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
+          path: frontend/.secrets
 
       - name: Mask secrets
         working-directory: .
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
+          SECRETS_FILE="frontend/.secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
             while IFS='=' read -r key value; do
               [[ -z "$value" || "$key" =~ ^# ]] && continue
@@ -256,7 +258,7 @@ jobs:
         run: pnpm turbo build --filter=@ion/mobile...
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@a4effe49ee7ee5579507cf59e2c4f1a20744ee1e # v1
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
           bundler-cache: true
