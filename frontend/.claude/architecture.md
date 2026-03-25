@@ -27,6 +27,7 @@
 | `@ion/permissions` | Camera, photos, microphone, notifications, cloud permissions (iOS, Android, Web) | Implemented |
 | `@ion/config` | Remote config, env, feature flags | Planned |
 | `@ion/localization` | i18n, plurals, fallback | Planned |
+| `@ion/auth-ui` | Shared auth screens, forms, buttons, icons, validation | Implemented |
 
 ### Media Layer
 | Package | Purpose | Status |
@@ -58,7 +59,7 @@
 |---|---|---|
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
 
-**Total: 22 packages**
+**Total: 23 packages**
 
 ---
 
@@ -98,6 +99,7 @@
 | Actions layer as internal SDK | New dev productivity, clean separation of concerns | 2026-03-20 |
 | React Native (from Flutter) | AI training data, TypeScript type safety, shared types with backend | 2026-03-20 |
 | MMKV + SQLite for storage | MMKV for fast key-value, SQLite for structured/relational data | 2026-03-20 |
+| react-native-web for shared UI | Auth UI package uses RN primitives, web consumes via react-native-web | 2026-03-25 |
 
 ---
 

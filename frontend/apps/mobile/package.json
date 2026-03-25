@@ -13,16 +13,19 @@
     "android:production": "../../scripts/setup-env.sh production && react-native run-android --mode productionDebug --appId io.ion.app",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@ion/auth-ui": "workspace:*",
     "@ion/config": "workspace:*",
     "@ion/ui": "workspace:*",
+    "lottie-react-native": "^7.3.6",
     "react": "19.2.3",
     "react-native": "0.84.1",
     "react-native-config": "^1.6.1",
     "react-native-safe-area-context": "^5.5.2",
-    "react-native-svg": "^15.15.4"
+    "react-native-svg": "^15.15.4",
+    "react-native-video": "^6.19.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

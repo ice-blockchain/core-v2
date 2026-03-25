@@ -1,15 +1,16 @@
-import { StatusBar, useColorScheme } from "react-native";
+import { StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { CatalogScreen } from "@ion/ui";
+import { ThemeProvider } from "@ion/ui";
+import { SplashScreen } from "./src/components/splash-screen";
 
 function App() {
-  const isDarkMode = useColorScheme() === "dark";
-
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
-      <CatalogScreen />
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <StatusBar barStyle="light-content" />
+        <SplashScreen />
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
 

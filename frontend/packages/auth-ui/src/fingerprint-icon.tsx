@@ -1,0 +1,20 @@
+import Svg, { Path } from "react-native-svg";
+
+interface FingerprintIconProps {
+  size?: number;
+  color?: string;
+}
+
+export function FingerprintIcon({ size = 24, color = "#0166FF" }: FingerprintIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M19.5 7.093A10.62 10.62 0 0 0 11.983 4C9.063 4 6.417 5.169 4.5 7.06m.478 7.186v-.024c0-3.927 3.15-7.11 7.038-7.11m2.912.634a7.12 7.12 0 0 1 4.127 6.476v.006M8.057 17.333v-3.111c0-2.209 1.772-4 3.959-4s3.96 1.791 3.96 4v3.111M9.386 20c.797-.199 1.31-1.048 1.31-1.766v-3.567c0-.354.138-.693.386-.943a1.313 1.313 0 0 1 1.866 0c.248.25.387.589.387.943v3.567"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
