@@ -7,7 +7,12 @@ SECRETS_DIR="${REPO_ROOT}/.secrets/frontend"
 
 SECRETS_ROOT="${REPO_ROOT}/.secrets"
 
-if [[ -d "${SECRETS_ROOT}/.git" ]]; then
+if [[ "${CI:-}" == "true" ]]; then
+  if [[ ! -d "${SECRETS_DIR}" ]]; then
+    echo "error: Secrets dir missing in CI. Checkout secrets repo first." >&2
+    exit 1
+  fi
+elif [[ -d "${SECRETS_ROOT}/.git" ]]; then
   echo "Pulling latest secrets..."
   git -C "${SECRETS_ROOT}" pull --ff-only
 elif [[ ! -d "${SECRETS_DIR}" ]]; then
@@ -35,11 +40,14 @@ cp -r "${SECRETS_DIR}/${ENV}/mobile/" "${REPO_ROOT}/apps/mobile/"
 cp -r "${SECRETS_DIR}/${ENV}/web/"    "${REPO_ROOT}/apps/web/"
 
 # Source build-time secrets into current shell (NOT bundled into app)
-SECRETS_FILE="${REPO_ROOT}/apps/mobile/.env.secrets"
-if [[ -f "${SECRETS_FILE}" ]]; then
-  # shellcheck disable=SC1090
-  set -a && source "${SECRETS_FILE}" && set +a
-fi
+for SECRETS_FILE in \
+  "${REPO_ROOT}/apps/mobile/.env.secrets" \
+  "${REPO_ROOT}/apps/web/.env.secrets"; do
+  if [[ -f "${SECRETS_FILE}" ]]; then
+    # shellcheck disable=SC1090
+    set -a && source "${SECRETS_FILE}" && set +a
+  fi
+done
 
 echo "Done. iOS: pnpm ios:${ENV}"
 echo "      Android: pnpm android:${ENV}"

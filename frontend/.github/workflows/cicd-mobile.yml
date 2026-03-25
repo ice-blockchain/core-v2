@@ -1,0 +1,351 @@
+name: Mobile Build & Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - testnet
+          - production
+      deployment_target:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - firebase
+          - store
+      app_version:
+        description: App version (e.g. 1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Validate inputs
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          INPUT_APP_VERSION: ${{ inputs.app_version }}
+        run: |
+          if [[ ! "$INPUT_ENVIRONMENT" =~ ^(staging|testnet|production)$ ]]; then
+            echo "::error::Invalid environment: $INPUT_ENVIRONMENT"
+            exit 1
+          fi
+          if [[ ! "$INPUT_DEPLOYMENT_TARGET" =~ ^(firebase|store)$ ]]; then
+            echo "::error::Invalid deployment target: $INPUT_DEPLOYMENT_TARGET"
+            exit 1
+          fi
+          if [[ ! "$INPUT_APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $INPUT_APP_VERSION. Expected semver: X.Y.Z"
+            exit 1
+          fi
+
+  verify:
+    name: Verify
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      android_flavor: ${{ steps.resolve.outputs.android_flavor }}
+      ios_scheme: ${{ steps.resolve.outputs.ios_scheme }}
+      build_number: ${{ steps.resolve.outputs.build_number }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm turbo test
+
+      - name: Resolve build parameters
+        id: resolve
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          case "$INPUT_ENVIRONMENT" in
+            staging)
+              echo "android_flavor=staging" >> "$GITHUB_OUTPUT"
+              echo "ios_scheme=Ion-Staging" >> "$GITHUB_OUTPUT"
+              ;;
+            testnet)
+              echo "android_flavor=ionTestnet" >> "$GITHUB_OUTPUT"
+              echo "ios_scheme=Ion-Testnet" >> "$GITHUB_OUTPUT"
+              ;;
+            production)
+              echo "android_flavor=production" >> "$GITHUB_OUTPUT"
+              echo "ios_scheme=Ion-Production" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+          echo "build_number=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+  build-android:
+    name: Build Android
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Checkout secrets
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: ice-blockchain/core-v2-secrets
+          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
+          path: .secrets
+
+      - name: Mask secrets
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
+          if [[ -f "$SECRETS_FILE" ]]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$value" || "$key" =~ ^# ]] && continue
+              echo "::add-mask::${value}"
+            done < "$SECRETS_FILE"
+          fi
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup environment
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
+
+      - name: Build JS packages
+        run: pnpm turbo build --filter=@ion/mobile...
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build Android
+        working-directory: apps/mobile/android
+        env:
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          INPUT_APP_VERSION: ${{ inputs.app_version }}
+          ANDROID_FLAVOR: ${{ needs.verify.outputs.android_flavor }}
+          BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
+        run: |
+          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
+            ./gradlew "assemble${ANDROID_FLAVOR^}Release" \
+              -PversionName="$INPUT_APP_VERSION" \
+              -PversionCode="$BUILD_NUMBER"
+          else
+            ./gradlew "bundle${ANDROID_FLAVOR^}Release" \
+              -PversionName="$INPUT_APP_VERSION" \
+              -PversionCode="$BUILD_NUMBER"
+          fi
+
+      - name: Find build artifact
+        id: artifact
+        env:
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+        run: |
+          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
+            ARTIFACT=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -1)
+          else
+            ARTIFACT=$(find apps/mobile/android/app/build/outputs/bundle -name "*.aab" | head -1)
+          fi
+          echo "path=$ARTIFACT" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-${{ inputs.environment }}-${{ inputs.deployment_target }}
+          path: ${{ steps.artifact.outputs.path }}
+          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@a4effe49ee7ee5579507cf59e2c4f1a20744ee1e # v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Deploy to Firebase
+        if: inputs.deployment_target == 'firebase'
+        working-directory: apps/mobile
+        run: bundle exec fastlane android distribute_firebase
+
+      - name: Deploy to Play Store
+        if: inputs.deployment_target == 'store'
+        working-directory: apps/mobile
+        run: bundle exec fastlane android distribute_playstore
+
+  build-ios:
+    name: Build iOS
+    needs: verify
+    runs-on: macos-15
+    timeout-minutes: 45
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Checkout secrets
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          repository: ice-blockchain/core-v2-secrets
+          ssh-key: ${{ secrets.SECRETS_REPO_SSH_KEY }}
+          path: .secrets
+
+      - name: Mask secrets
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
+          if [[ -f "$SECRETS_FILE" ]]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$value" || "$key" =~ ^# ]] && continue
+              echo "::add-mask::${value}"
+            done < "$SECRETS_FILE"
+          fi
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup environment
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
+
+      - name: Build JS packages
+        run: pnpm turbo build --filter=@ion/mobile...
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@a4effe49ee7ee5579507cf59e2c4f1a20744ee1e # v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: apps/mobile
+
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: bundle exec pod install
+
+      - name: Fetch certificates
+        working-directory: apps/mobile
+        run: bundle exec fastlane ios fetch_certs
+
+      - name: Set app version
+        working-directory: apps/mobile/ios
+        env:
+          INPUT_APP_VERSION: ${{ inputs.app_version }}
+          BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
+        run: |
+          agvtool new-marketing-version "$INPUT_APP_VERSION"
+          agvtool new-version -all "$BUILD_NUMBER"
+
+      - name: Archive
+        working-directory: apps/mobile/ios
+        env:
+          IOS_SCHEME: ${{ needs.verify.outputs.ios_scheme }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          case "$INPUT_ENVIRONMENT" in
+            staging)    CONFIG_SUFFIX="Staging" ;;
+            testnet)    CONFIG_SUFFIX="Testnet" ;;
+            production) CONFIG_SUFFIX="Production" ;;
+          esac
+
+          xcodebuild archive \
+            -workspace mobile.xcworkspace \
+            -scheme "$IOS_SCHEME" \
+            -configuration "Release-${CONFIG_SUFFIX}" \
+            -archivePath build/Ion.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual
+
+      - name: Generate export options
+        working-directory: apps/mobile/ios
+        env:
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
+            METHOD="ad-hoc"
+          else
+            METHOD="app-store"
+          fi
+
+          case "$INPUT_ENVIRONMENT" in
+            staging)    BUNDLE_ID="io.ion.app.staging" ;;
+            testnet)    BUNDLE_ID="io.ion.app.testnet" ;;
+            production) BUNDLE_ID="io.ion.app" ;;
+          esac
+
+          cat > build/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${METHOD}</string>
+            <key>teamID</key>
+            <string>YJJ6X8TG5Y</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Export IPA
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Ion.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -exportPath build/export
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ios-${{ inputs.environment }}-${{ inputs.deployment_target }}
+          path: apps/mobile/ios/build/export/*.ipa
+          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
+
+      - name: Deploy to Firebase
+        if: inputs.deployment_target == 'firebase'
+        working-directory: apps/mobile
+        run: bundle exec fastlane ios distribute_firebase
+
+      - name: Deploy to App Store
+        if: inputs.deployment_target == 'store'
+        working-directory: apps/mobile
+        run: bundle exec fastlane ios distribute_appstore
