@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react-native';
 import { usePinchToZoom } from './use-pinch-to-zoom';
 
 jest.mock('react-native-gesture-handler', () => {

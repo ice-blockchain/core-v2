@@ -33,7 +33,7 @@ export function FullscreenImageItem(props: FullscreenImageItemProps) {
             source={{ uri: source.uri }}
             style={{ width, height }}
             contentFit="contain"
-            placeholder={source.blurhash ? { blurhash: source.blurhash } : undefined}
+            placeholder={source.blurhash ? { blurhash: source.blurhash } : null}
             cachePolicy="memory-disk"
           />
         </Animated.View>

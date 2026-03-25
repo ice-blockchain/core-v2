@@ -1,4 +1,4 @@
-import type { ViewStyle } from 'react-native';
+import type { ImageStyle, ViewStyle } from 'react-native';
 
 // --- Public ---
 
@@ -13,7 +13,7 @@ export interface MediaViewerSource {
 
 export interface MediaImageProps {
   source: MediaViewerSource;
-  style?: ViewStyle;
+  style?: ImageStyle;
   resizeMode?: 'cover' | 'contain' | 'fill';
   onLoad?: () => void;
   onError?: (error: Error) => void;

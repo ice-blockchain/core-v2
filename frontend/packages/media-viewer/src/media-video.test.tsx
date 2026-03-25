@@ -5,8 +5,8 @@ import { MediaVideo } from './media-video';
 import type { MediaViewerSource } from './types';
 
 jest.mock('expo-av', () => ({
-  Video: forwardRef((props: Record<string, unknown>, ref: unknown) => (
-    <View testID="expo-video" {...props} ref={ref} />
+  Video: forwardRef((props: Record<string, unknown>, _ref) => (
+    <View testID="expo-video" {...props} />
   )),
   ResizeMode: { CONTAIN: 'contain' },
 }));
