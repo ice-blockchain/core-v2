@@ -11,6 +11,7 @@
     { "path": "packages/platform" },
     { "path": "packages/network" },
     { "path": "packages/media-viewer" },
-    { "path": "packages/localization" }
+    { "path": "packages/localization" },
+    { "path": "packages/identity-client" }
   ]
 }
