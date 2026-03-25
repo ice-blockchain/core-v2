@@ -11,6 +11,33 @@ platform :ios do
     end
   end
 
+  desc "Configure code signing settings for the build target"
+  lane :setup_signing do
+    environment = ENV["INPUT_ENVIRONMENT"]
+    deployment_target = ENV["INPUT_DEPLOYMENT_TARGET"]
+
+    bundle_ids = {
+      "staging" => "io.ion.app.staging",
+      "testnet" => "io.ion.app.testnet",
+      "production" => "io.ion.app"
+    }
+    bundle_id = bundle_ids[environment]
+
+    sign_type = deployment_target == "appstore" ? "AppStore" : "AdHoc"
+    profile_name = "match #{sign_type} #{bundle_id}"
+
+    config_suffix = environment.capitalize
+
+    update_code_signing_settings(
+      path: "ios/mobile.xcodeproj",
+      targets: ["mobile"],
+      team_id: "YJJ6X8TG5Y",
+      profile_name: profile_name,
+      code_sign_identity: "iPhone Distribution",
+      build_configurations: ["Release-#{config_suffix}"]
+    )
+  end
+
   desc "Renew and push certificates and profiles for appstore, adhoc, and development"
   lane :update_certs do
     ["appstore", "adhoc", "development"].each do |type|

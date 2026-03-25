@@ -272,6 +272,13 @@ jobs:
         working-directory: frontend/apps/mobile
         run: bundle exec fastlane ios fetch_certs
 
+      - name: Configure code signing
+        working-directory: frontend/apps/mobile
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+        run: bundle exec fastlane ios setup_signing
+
       - name: Set app version
         working-directory: frontend/apps/mobile/ios
         env:
