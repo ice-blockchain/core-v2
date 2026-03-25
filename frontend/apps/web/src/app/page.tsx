@@ -42,6 +42,8 @@ function usePhaseNavigation() {
 }
 
 function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
+  const loadingElement = <LoadingAnimation variant="onLightBackground" size={30} />;
+
   if (nav.phase.name === "register") {
     return (
       <RegisterScreen
@@ -51,11 +53,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
     );
   }
   if (nav.phase.name === "verify-password") {
-    return (
-      <VerifyPasswordBackground
-        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
-      />
-    );
+    return <VerifyPasswordBackground loadingElement={loadingElement} />;
   }
   if (nav.phase.name === "verify-passkey") {
     return (
@@ -63,7 +61,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
         identityKeyName={nav.phase.identityKeyName}
         onBack={nav.goToRegister}
         onDismiss={nav.goToGetStarted}
-        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
+        loadingElement={loadingElement}
       />
     );
   }
