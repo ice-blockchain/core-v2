@@ -1,0 +1,42 @@
+services:
+  greenfield-ingester:
+    build:
+      context: ..
+      dockerfile: services/greenfield-ingester/Dockerfile
+    environment:
+      GREENFIELD_RPC_URLS: ${GREENFIELD_RPC_URLS:-https://gnfd-testnet-fullnode-tendermint-us.bnbchain.org:443}
+      GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
+      GREENFIELD_PRIVATE_KEY: ${GREENFIELD_PRIVATE_KEY}
+      ONLINEIO_ENV: ${ONLINEIO_ENV:-dev}
+      REDIS_URL: redis://dragonfly:6379
+      QUEUE_NAME: ${QUEUE_NAME:-greenfield-events}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    depends_on:
+      dragonfly:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health-check || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    container_name: greenfield-ingester
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    ulimits:
+      memlock: -1
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - dragonfly-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  dragonfly-data:
