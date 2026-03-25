@@ -26,6 +26,7 @@ module.exports = {
       files: ["*.test.ts"],
       rules: {
         "max-lines-per-function": "off",
+        "@typescript-eslint/no-var-requires": "off",
       },
     },
   ],

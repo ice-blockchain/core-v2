@@ -92,55 +92,74 @@ function saveKeyRegistry(keys: string[]): void {
   localStorage.setItem(KEY_REGISTRY, JSON.stringify(keys));
 }
 
-export function createSecureStorage(password: string): ISecureStorage {
+interface KeyState {
+  keyPromise: Promise<CryptoKey> | null;
+}
+
+function createKeyResolver(password: string): {
+  state: KeyState;
+  getKey: () => Promise<CryptoKey>;
+} {
   const salt = getOrCreateSalt();
-  let keyPromise: Promise<CryptoKey> | null = null;
+  const state: KeyState = { keyPromise: null };
+  return {
+    state,
+    getKey(): Promise<CryptoKey> {
+      if (!state.keyPromise) {
+        state.keyPromise = deriveKey(password, salt);
+      }
+      return state.keyPromise;
+    },
+  };
+}
 
-  function getKey(): Promise<CryptoKey> {
-    if (!keyPromise) {
-      keyPromise = deriveKey(password, salt);
-    }
-    return keyPromise;
-  }
-
+function buildReadMethods(getKey: () => Promise<CryptoKey>): Pick<
+  ISecureStorage, "getItem" | "hasItem"
+> {
   return {
     async getItem(key: string): Promise<string | null> {
       const encrypted = localStorage.getItem(STORAGE_PREFIX + key);
       if (encrypted === null) return null;
-      const encryptionKey = await getKey();
-      return decrypt(encrypted, encryptionKey);
+      return decrypt(encrypted, await getKey());
     },
+    async hasItem(key: string): Promise<boolean> {
+      return localStorage.getItem(STORAGE_PREFIX + key) !== null;
+    },
+  };
+}
 
+function buildWriteMethods(getKey: () => Promise<CryptoKey>, state: KeyState): Pick<
+  ISecureStorage, "setItem" | "removeItem" | "clear"
+> {
+  return {
     async setItem(key: string, value: string): Promise<void> {
-      const encryptionKey = await getKey();
-      const encrypted = await encrypt(value, encryptionKey);
+      const encrypted = await encrypt(value, await getKey());
       localStorage.setItem(STORAGE_PREFIX + key, encrypted);
-
       const keys = getKeyRegistry();
       if (!keys.includes(key)) {
         keys.push(key);
         saveKeyRegistry(keys);
       }
     },
-
     async removeItem(key: string): Promise<void> {
       localStorage.removeItem(STORAGE_PREFIX + key);
-      const keys = getKeyRegistry().filter((k) => k !== key);
-      saveKeyRegistry(keys);
+      saveKeyRegistry(getKeyRegistry().filter((k) => k !== key));
     },
-
-    async hasItem(key: string): Promise<boolean> {
-      return localStorage.getItem(STORAGE_PREFIX + key) !== null;
-    },
-
     async clear(): Promise<void> {
-      const keys = getKeyRegistry();
-      for (const key of keys) {
+      for (const key of getKeyRegistry()) {
         localStorage.removeItem(STORAGE_PREFIX + key);
       }
       localStorage.removeItem(KEY_REGISTRY);
       localStorage.removeItem(SALT_KEY);
-      keyPromise = null;
+      state.keyPromise = null;
     },
+  };
+}
+
+export function createSecureStorage(password: string): ISecureStorage {
+  const { state, getKey } = createKeyResolver(password);
+  return {
+    ...buildReadMethods(getKey),
+    ...buildWriteMethods(getKey, state),
   };
 }
