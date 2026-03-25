@@ -1,0 +1,61 @@
+import * as ImageManipulator from "expo-image-manipulator";
+import type { ProcessingOptions, ProcessedMedia } from "../types";
+import { generateBlurhash } from "./generate-blurhash.native";
+
+const DEFAULT_QUALITY = 0.8;
+
+export async function compressImage(
+  uri: string,
+  options?: ProcessingOptions,
+): Promise<ProcessedMedia> {
+  const actions = buildActions(options);
+  const saveOptions = buildSaveOptions(options);
+  const result = await ImageManipulator.manipulateAsync(
+    uri,
+    actions,
+    saveOptions,
+  );
+  const mimeType = resolveMimeType(saveOptions.format);
+  const blurhash = await generateBlurhash(result.uri);
+  return {
+    uri: result.uri,
+    mimeType,
+    fileSize: 0,
+    width: result.width,
+    height: result.height,
+    blurhash,
+  };
+}
+
+function buildActions(
+  options?: ProcessingOptions,
+): ImageManipulator.Action[] {
+  if (!options?.maxWidth && !options?.maxHeight) return [];
+  const resize: { width?: number; height?: number } = {};
+  if (options.maxWidth) resize.width = options.maxWidth;
+  if (options.maxHeight) resize.height = options.maxHeight;
+  return [{ resize }];
+}
+
+function buildSaveOptions(
+  options?: ProcessingOptions,
+): ImageManipulator.SaveOptions {
+  return {
+    compress: options?.quality ?? DEFAULT_QUALITY,
+    format: resolveFormat(options?.format),
+  };
+}
+
+function resolveFormat(
+  format?: string,
+): "jpeg" | "png" | "webp" {
+  if (format === "png") return "png";
+  if (format === "webp") return "webp";
+  return "jpeg";
+}
+
+function resolveMimeType(format?: string): string {
+  if (format === "png") return "image/png";
+  if (format === "webp") return "image/webp";
+  return "image/jpeg";
+}
