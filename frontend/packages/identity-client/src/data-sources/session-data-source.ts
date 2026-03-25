@@ -2,7 +2,7 @@ import type { HttpClient } from '@ion/network';
 
 export interface SessionDataSource {
   refreshToken(currentToken: string, refreshToken: string): Promise<{ token: string }>;
-  logout(userId: string, token: string): Promise<void>;
+  logout(token: string): Promise<void>;
 }
 
 export function createSessionDataSource(httpClient: HttpClient): SessionDataSource {
@@ -14,8 +14,8 @@ export function createSessionDataSource(httpClient: HttpClient): SessionDataSour
       });
     },
 
-    async logout(userId, token) {
-      await httpClient.post<void>(`/v1/users/${userId}/logout`, {
+    async logout(token) {
+      await httpClient.post<void>('/auth/logout', {
         headers: { Authorization: `Bearer ${token}` },
       });
     },

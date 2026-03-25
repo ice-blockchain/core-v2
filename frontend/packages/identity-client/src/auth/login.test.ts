@@ -106,4 +106,18 @@ describe('loginWithPassword', () => {
       code: IdentityErrorCode.INVALID_CREDENTIALS,
     });
   });
+
+  it('throws when credential has no encrypted private key', async () => {
+    const challenge: UserActionChallenge = {
+      ...createMockChallenge(),
+      allowCredentials: {
+        webauthn: null,
+        passwordProtectedKey: [{ type: 'public-key', id: 'ppk-1' }],
+      },
+    };
+    const deps = createMockDeps(challenge);
+    await expect(loginWithPassword('bob', 'pass', deps)).rejects.toMatchObject({
+      code: IdentityErrorCode.INVALID_CREDENTIALS,
+    });
+  });
 });

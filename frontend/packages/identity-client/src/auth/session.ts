@@ -8,13 +8,12 @@ interface SessionDeps {
 }
 
 export async function logout(
-  userId: string,
   username: string,
   deps: SessionDeps,
 ): Promise<void> {
   const tokens = await deps.tokenManager.getTokens(username);
   if (tokens) {
-    await deps.sessionDataSource.logout(userId, tokens.token);
+    await deps.sessionDataSource.logout(tokens.token);
   }
   await deps.tokenManager.clearTokens(username);
 }

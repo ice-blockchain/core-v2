@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { NetworkError } from '@ion/network';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import { getLoginCapabilities } from './login-capabilities';
 
@@ -49,9 +50,11 @@ describe('getLoginCapabilities', () => {
     expect(caps.identityFound).toBe(true);
   });
 
-  it('reports identity not found when init fails', async () => {
+  it('reports identity not found on client error', async () => {
     const ds: LoginDataSource = {
-      initLogin: vi.fn(() => Promise.reject(new Error('not found'))),
+      initLogin: vi.fn(() => Promise.reject(
+        new NetworkError({ code: 'CLIENT_ERROR', message: 'Not found', status: 404 }),
+      )),
       completeLogin: vi.fn(),
     };
     const caps = await getLoginCapabilities('unknown', ds);
@@ -60,5 +63,22 @@ describe('getLoginCapabilities', () => {
       supportsPassword: false,
       identityFound: false,
     });
+  });
+
+  it('re-throws server errors instead of swallowing them', async () => {
+    const serverError = new NetworkError({ code: 'SERVER_ERROR', message: 'Internal', status: 500 });
+    const ds: LoginDataSource = {
+      initLogin: vi.fn(() => Promise.reject(serverError)),
+      completeLogin: vi.fn(),
+    };
+    await expect(getLoginCapabilities('alice', ds)).rejects.toBe(serverError);
+  });
+
+  it('re-throws non-network errors', async () => {
+    const ds: LoginDataSource = {
+      initLogin: vi.fn(() => Promise.reject(new TypeError('unexpected'))),
+      completeLogin: vi.fn(),
+    };
+    await expect(getLoginCapabilities('alice', ds)).rejects.toThrow('unexpected');
   });
 });

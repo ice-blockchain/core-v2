@@ -24,7 +24,7 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
     registerWithPassword: (username, password) => registerWithPassword(username, password, regDeps),
     loginWithPasskey: (username) => loginWithPasskey(username, loginDeps),
     loginWithPassword: (username, password) => loginWithPassword(username, password, loginDeps),
-    logout: (userId) => logout(userId, userId, sessionDeps),
+    logout: (username) => logout(username, sessionDeps),
     refreshToken: (username) => refreshToken(username, sessionDeps),
     isAuthenticated: (username) => isAuthenticated(username, sessionDeps),
     getLoginCapabilities: (username) => getLoginCapabilities(username, loginDataSource),

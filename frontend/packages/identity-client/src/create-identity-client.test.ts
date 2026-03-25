@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { HttpClient } from '@ion/network';
-import type { ISecureStorage, IKeyValueStorage } from '@ion/storage';
+import type { ISecureStorage } from '@ion/storage';
 import { createIdentityClient } from './create-identity-client';
 
 function createMockHttpClient(): HttpClient {
@@ -24,28 +24,11 @@ function createMockSecureStorage(): ISecureStorage {
   };
 }
 
-function createMockKeyValueStorage(): IKeyValueStorage {
-  return {
-    getString: vi.fn(() => null),
-    setString: vi.fn(),
-    getBoolean: vi.fn(() => null),
-    setBoolean: vi.fn(),
-    getNumber: vi.fn(() => null),
-    setNumber: vi.fn(),
-    getObject: vi.fn(() => null),
-    setObject: vi.fn(),
-    removeItem: vi.fn(),
-    hasItem: vi.fn(() => false),
-    clear: vi.fn(),
-  };
-}
-
 describe('createIdentityClient', () => {
   it('returns an object with all required methods', () => {
     const client = createIdentityClient({
       httpClient: createMockHttpClient(),
       secureStorage: createMockSecureStorage(),
-      keyValueStorage: createMockKeyValueStorage(),
       appId: 'com.example.app',
     });
 

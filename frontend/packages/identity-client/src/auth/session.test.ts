@@ -7,7 +7,7 @@ import { IdentityErrorCode } from '../errors';
 function createMockDeps() {
   const sessionDataSource: SessionDataSource = {
     refreshToken: vi.fn(() => Promise.resolve({ token: 'new-token' })),
-    logout: vi.fn(() => Promise.resolve()),
+    logout: vi.fn((_token: string) => Promise.resolve()),
   };
   const tokenManager: TokenManager = {
     getTokens: vi.fn(() => Promise.resolve({ token: 'old-tok', refreshToken: 'ref-tok' })),
@@ -26,14 +26,14 @@ describe('logout', () => {
   });
 
   it('calls server logout and clears tokens', async () => {
-    await logout('user-1', 'alice', deps);
-    expect(deps.sessionDataSource.logout).toHaveBeenCalledWith('user-1', 'old-tok');
+    await logout('alice', deps);
+    expect(deps.sessionDataSource.logout).toHaveBeenCalledWith('old-tok');
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
   });
 
   it('clears tokens even when no tokens exist', async () => {
     vi.mocked(deps.tokenManager.getTokens).mockResolvedValueOnce(null);
-    await logout('user-1', 'alice', deps);
+    await logout('alice', deps);
     expect(deps.sessionDataSource.logout).not.toHaveBeenCalled();
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
   });

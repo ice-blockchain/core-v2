@@ -10,6 +10,13 @@ interface RegistrationDeps {
   origin: string;
 }
 
+function requireTemporaryToken(token: string | null): string {
+  if (!token) {
+    throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Registration challenge missing temporary token');
+  }
+  return token;
+}
+
 export async function registerWithPasskey(
   username: string,
   deps: RegistrationDeps,
@@ -18,6 +25,7 @@ export async function registerWithPasskey(
     throw new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'Passkeys are not supported');
   }
   const challenge = await deps.registrationDataSource.initRegistration(username);
+  const tempToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   const passkey = await createPasskeyCredential(challenge);
   const result = await deps.registrationDataSource.completeRegistration(
     {
@@ -30,7 +38,7 @@ export async function registerWithPasskey(
         },
       },
     },
-    challenge.temporaryAuthenticationToken!,
+    tempToken,
   );
   await deps.tokenManager.setTokens(username, result.authentication);
 }
@@ -41,6 +49,7 @@ export async function registerWithPassword(
   deps: RegistrationDeps,
 ): Promise<void> {
   const challenge = await deps.registrationDataSource.initRegistration(username);
+  const tempToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   const keyPair = generateKeyPair();
   const signed = await signForRegistration({
     challenge: challenge.challenge,
@@ -60,7 +69,7 @@ export async function registerWithPassword(
         encryptedPrivateKey: signed.encryptedPrivateKey,
       },
     },
-    challenge.temporaryAuthenticationToken!,
+    tempToken,
   );
   await deps.tokenManager.setTokens(username, result.authentication);
 }

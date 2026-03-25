@@ -79,6 +79,15 @@ describe('registerWithPasskey', () => {
       code: IdentityErrorCode.PASSKEY_NOT_AVAILABLE,
     });
   });
+
+  it('throws when temporary auth token is null', async () => {
+    const nullTokenChallenge = { ...mockChallenge, temporaryAuthenticationToken: null };
+    vi.mocked(deps.registrationDataSource.initRegistration).mockResolvedValueOnce(nullTokenChallenge);
+
+    await expect(registerWithPasskey('alice@example.com', deps)).rejects.toMatchObject({
+      code: IdentityErrorCode.UNKNOWN,
+    });
+  });
 });
 
 describe('registerWithPassword', () => {
@@ -104,6 +113,15 @@ describe('registerWithPassword', () => {
     expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice@example.com', {
       token: 'access-tok',
       refreshToken: 'refresh-tok',
+    });
+  });
+
+  it('throws when temporary auth token is null', async () => {
+    const nullTokenChallenge = { ...mockChallenge, temporaryAuthenticationToken: null };
+    vi.mocked(deps.registrationDataSource.initRegistration).mockResolvedValueOnce(nullTokenChallenge);
+
+    await expect(registerWithPassword('alice@example.com', 'secret', deps)).rejects.toMatchObject({
+      code: IdentityErrorCode.UNKNOWN,
     });
   });
 });

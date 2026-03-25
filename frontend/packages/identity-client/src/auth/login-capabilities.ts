@@ -1,3 +1,4 @@
+import { NetworkError } from '@ion/network';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { LoginCapabilities } from '../types';
 import { isPasskeyAvailable } from '../passkey';
@@ -15,7 +16,10 @@ export async function getLoginCapabilities(
       supportsPassword: hasPassword,
       identityFound: true,
     };
-  } catch {
-    return { supportsPasskey: false, supportsPassword: false, identityFound: false };
+  } catch (error) {
+    if (error instanceof NetworkError && error.code === 'CLIENT_ERROR') {
+      return { supportsPasskey: false, supportsPassword: false, identityFound: false };
+    }
+    throw error;
   }
 }

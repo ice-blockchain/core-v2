@@ -66,8 +66,11 @@ export async function loginWithPassword(
 ): Promise<string> {
   const challenge = await deps.loginDataSource.initLogin(username);
   const cred = extractPasswordCredential(challenge);
+  if (!cred.encryptedPrivateKey) {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Credential missing encrypted private key');
+  }
   const privateKeyPem = await decryptPrivateKey(
-    JSON.parse(cred.encryptedPrivateKey!) as EncryptedPrivateKey,
+    JSON.parse(cred.encryptedPrivateKey) as EncryptedPrivateKey,
     password,
   );
   const signed = signForLogin({

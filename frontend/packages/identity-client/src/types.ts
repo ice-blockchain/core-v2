@@ -1,10 +1,9 @@
 import type { HttpClient } from '@ion/network';
-import type { ISecureStorage, IKeyValueStorage } from '@ion/storage';
+import type { ISecureStorage } from '@ion/storage';
 
 export interface IdentityClientConfig {
   httpClient: HttpClient;
   secureStorage: ISecureStorage;
-  keyValueStorage: IKeyValueStorage;
   appId: string;
 }
 
@@ -13,7 +12,7 @@ export interface IdentityClient {
   registerWithPassword(username: string, password: string): Promise<void>;
   loginWithPasskey(username: string): Promise<string>;
   loginWithPassword(username: string, password: string): Promise<string>;
-  logout(userId: string): Promise<void>;
+  logout(username: string): Promise<void>;
   refreshToken(username: string): Promise<void>;
   isAuthenticated(username: string): Promise<boolean>;
   getLoginCapabilities(username: string): Promise<LoginCapabilities>;
