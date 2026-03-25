@@ -9,6 +9,7 @@
     { "path": "packages/ion-connect-client" },
     { "path": "packages/permissions" },
     { "path": "packages/platform" },
-    { "path": "packages/network" }
+    { "path": "packages/network" },
+    { "path": "packages/media-viewer" }
   ]
 }
