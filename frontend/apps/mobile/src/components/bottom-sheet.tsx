@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SheetHandle } from "./sheet-handle";
 
 interface BottomSheetProps {
@@ -11,7 +17,20 @@ export function BottomSheet({ children }: BottomSheetProps) {
     <View style={styles.backdrop}>
       <View style={styles.sheet}>
         <SheetHandle />
-        {children}
+        <KeyboardAvoidingView
+          style={styles.content}
+          behavior={Platform.select({ ios: "padding", android: "height" })}
+          keyboardVerticalOffset={Platform.select({ ios: 150, android: 0 })}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     </View>
   );
@@ -34,5 +53,13 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     alignItems: "center",
     paddingTop: 20,
+  },
+  content: {
+    flex: 1,
+    width: "100%",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: "center",
   },
 });
