@@ -33,11 +33,17 @@ fi
 echo "Setting up environment: ${ENV}"
 
 # Copy shared files (android signing, xcconfigs, Xcode schemes, build-time secrets)
-cp -r "${SECRETS_DIR}/shared/mobile/" "${REPO_ROOT}/apps/mobile/"
+if [[ -d "${SECRETS_DIR}/shared/mobile" ]]; then
+  cp -r "${SECRETS_DIR}/shared/mobile/" "${REPO_ROOT}/apps/mobile/"
+fi
 
 # Copy env-specific files (.env, google-services.json, sentry, fastlane keys)
-cp -r "${SECRETS_DIR}/${ENV}/mobile/" "${REPO_ROOT}/apps/mobile/"
-cp -r "${SECRETS_DIR}/${ENV}/web/"    "${REPO_ROOT}/apps/web/"
+if [[ -d "${SECRETS_DIR}/${ENV}/mobile" ]]; then
+  cp -r "${SECRETS_DIR}/${ENV}/mobile/" "${REPO_ROOT}/apps/mobile/"
+fi
+if [[ -d "${SECRETS_DIR}/${ENV}/web" ]]; then
+  cp -r "${SECRETS_DIR}/${ENV}/web/" "${REPO_ROOT}/apps/web/"
+fi
 
 # Source build-time secrets into current shell (NOT bundled into app)
 for SECRETS_FILE in \

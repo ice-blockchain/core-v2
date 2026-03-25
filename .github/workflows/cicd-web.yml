@@ -114,9 +114,16 @@ jobs:
           retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup SSH and deploy
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          # Source web secrets (DEPLOY_SSH_KEY, DEPLOY_USER, DEPLOY_HOST, DEPLOY_PATH)
-          set -a && source apps/web/.env.secrets && set +a
+          # Source web deploy secrets (DEPLOY_SSH_KEY, DEPLOY_USER, DEPLOY_HOST, DEPLOY_PATH)
+          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/web/.env.secrets"
+          if [[ ! -f "$SECRETS_FILE" ]]; then
+            echo "::error::Web secrets file not found: $SECRETS_FILE"
+            exit 1
+          fi
+          set -a && source "$SECRETS_FILE" && set +a
 
           # Decode base64-encoded SSH private key
           mkdir -p ~/.ssh
