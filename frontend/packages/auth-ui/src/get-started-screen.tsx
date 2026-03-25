@@ -18,7 +18,7 @@ function GetStartedHeader() {
       <View style={styles.iconCircle}>
         <IceLogoIcon />
       </View>
-      <Text style={styles.title}>Get started</Text>
+      <Text style={styles.title}>Hello Claude</Text>
       <Text style={styles.subtitle}>
         Enter your identity key name to log in into your account
       </Text>
