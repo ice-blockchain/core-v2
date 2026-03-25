@@ -8,6 +8,7 @@
     { "path": "packages/storage" },
     { "path": "packages/ion-connect-client" },
     { "path": "packages/permissions" },
-    { "path": "packages/platform" }
+    { "path": "packages/platform" },
+    { "path": "packages/network" }
   ]
 }
