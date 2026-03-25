@@ -1,5 +1,6 @@
 import axios from 'axios';
-import type { AxiosInstance, AxiosProgressEvent, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosInstance, AxiosProgressEvent, AxiosResponse } from 'axios';
+import axiosRetry from 'axios-retry';
 import { Logger } from '@ion/diagnostics';
 import type { HttpClient, HttpClientConfig, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
 import type { InterceptedRequest, InterceptedResponse } from './interceptor-types';
@@ -8,19 +9,19 @@ import type { RequestQueue } from './queue-types';
 import { interpolatePathParams } from './url-builder';
 import { createHttpsValidator } from './https-validator';
 import { runRequestInterceptors, runResponseInterceptors, runErrorInterceptors } from './interceptor-pipeline';
-import { executeWithRetry, parseRetryAfter } from './retry-handler';
 import { NetworkError } from './network-error';
 import { DEFAULT_RETRY_CONFIG } from './retry-types';
+import type { RetryConfig } from './retry-types';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
 const DEFAULT_MAX_REQUEST_BODY_SIZE = 50 * 1024 * 1024;
+const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT']);
 
 interface ClientInternals {
   config: { timeoutMs: number; maxRequestBodySizeBytes: number };
   axiosInstance: AxiosInstance;
   interceptors: HttpClientConfig['interceptors'];
-  retryConfig: HttpClientConfig['retryConfig'];
   requestQueue?: RequestQueue | undefined;
 }
 
@@ -53,33 +54,47 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
   const maxRequestBodySizeBytes = config.maxRequestBodySizeBytes ?? DEFAULT_MAX_REQUEST_BODY_SIZE;
   const validateHttps = createHttpsValidator({ allowlist: config.httpsAllowlist ?? [], isProduction });
   validateHttps(config.baseUrl);
+  const instance = axios.create({
+    baseURL: config.baseUrl,
+    validateStatus: (status) => !(status >= 500 || status === 429),
+    maxContentLength: maxResponseSizeBytes,
+    maxBodyLength: maxRequestBodySizeBytes,
+    transitional: { clarifyTimeoutError: true },
+  });
+  configureRetry(instance, config.retryConfig ?? DEFAULT_RETRY_CONFIG);
   return {
     config: { timeoutMs, maxRequestBodySizeBytes },
-    axiosInstance: axios.create({
-      baseURL: config.baseUrl,
-      validateStatus: () => true,
-      maxContentLength: maxResponseSizeBytes,
-      maxBodyLength: maxRequestBodySizeBytes,
-      transitional: { clarifyTimeoutError: true },
-    }),
+    axiosInstance: instance,
     interceptors: config.interceptors,
-    retryConfig: config.retryConfig,
     requestQueue: config.requestQueue,
   };
 }
 
+function configureRetry(instance: AxiosInstance, retryConfig: RetryConfig): void {
+  axiosRetry(instance, {
+    retries: retryConfig.maxRetries,
+    shouldResetTimeout: true,
+    retryDelay: (retryCount, error) => {
+      if (error?.response?.status === 429) {
+        const header = error.response.headers['retry-after'] as string | undefined;
+        if (header) {
+          const parsed = parseRetryAfter(header, retryConfig.maxDelayMs);
+          if (parsed !== null) return parsed;
+        }
+      }
+      const exponential = Math.min(retryConfig.baseDelayMs * Math.pow(2, retryCount), retryConfig.maxDelayMs);
+      return exponential + Math.random() * retryConfig.jitterFactor * exponential;
+    },
+    retryCondition: () => true,
+  });
+}
+
 async function executeRequest<T>(context: RequestContext): Promise<T> {
-  const { internals, method, options } = context;
+  const { internals, options } = context;
   const path = interpolatePathParams(context.url, options?.params);
   validateRequestBodySize(options?.body, internals.config.maxRequestBodySizeBytes);
   try {
-    return await executeWithRetry({
-      executeFn: () => executeSingleRequest<T>({ ...context, url: path }),
-      retryConfig: internals.retryConfig ?? DEFAULT_RETRY_CONFIG,
-      method,
-      signal: options?.signal,
-      retryable: options?.retryable,
-    });
+    return await executeSingleRequest<T>({ ...context, url: path });
   } catch (error) {
     if (shouldEnqueue(internals, error, options)) {
       await enqueueFailedRequest(internals, context, path);
@@ -103,6 +118,7 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
       ...(options?.signal ? { signal: options.signal } : {}),
       ...(options?.query ? { params: options.query } : {}),
       ...(context.onProgress ? { onUploadProgress: buildProgressHandler(context.onProgress) } : {}),
+      'axios-retry': { retryCondition: buildRetryCondition(context.method, options?.retryable) },
     });
     const parsedBody = parseResponseData<T>(response);
     const interceptedResp = await buildInterceptedResponse(internals, response, parsedBody);
@@ -115,6 +131,17 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
     }
     throw handled;
   }
+}
+
+function buildRetryCondition(method: string, retryable?: boolean): (error: AxiosError) => boolean {
+  return (error) => {
+    if (!retryable && !IDEMPOTENT_METHODS.has(method.toUpperCase())) return false;
+    if (axios.isCancel(error)) return false;
+    if (axiosRetry.isNetworkError(error)) return true;
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return true;
+    const status = error.response?.status;
+    return status === 429 || (status !== undefined && status >= 500);
+  };
 }
 
 function buildProgressHandler(onProgress: (progress: UploadProgress) => void): (event: AxiosProgressEvent) => void {
@@ -173,21 +200,7 @@ function throwOnErrorStatus(status: number, response: InterceptedResponse): void
   if (status >= 200 && status < 300) return;
   if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body, requestUrl: response.url });
   if (status === 403) throw new NetworkError({ code: 'FORBIDDEN', message: 'Forbidden', status, responseBody: response.body });
-  if (status === 429) throw buildRateLimitError(status, response);
   if (status >= 400 && status < 500) throw new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: response.body });
-  if (status >= 500) throw new NetworkError({ code: 'SERVER_ERROR', message: `Server error: ${status}`, status, responseBody: response.body });
-}
-
-function buildRateLimitError(status: number, response: InterceptedResponse): NetworkError {
-  const header = response.headers['retry-after'];
-  const retryAfterMs = header ? parseRetryAfter(header, 60_000) : null;
-  return new NetworkError({
-    code: 'RATE_LIMITED',
-    message: 'Rate limited',
-    status,
-    responseBody: response.body,
-    ...(retryAfterMs !== null ? { retryAfterMs } : {}),
-  });
 }
 
 async function handleError(internals: ClientInternals, error: unknown): Promise<NetworkError> {
@@ -195,7 +208,9 @@ async function handleError(internals: ClientInternals, error: unknown): Promise<
     if (internals.interceptors?.length) return runErrorInterceptors(internals.interceptors, error);
     return error;
   }
-  return mapAxiosError(error);
+  const networkError = mapAxiosError(error);
+  if (internals.interceptors?.length) return runErrorInterceptors(internals.interceptors, networkError);
+  return networkError;
 }
 
 function mapAxiosError(error: unknown): NetworkError {
@@ -209,12 +224,34 @@ function mapAxiosError(error: unknown): NetworkError {
     if (error.code === 'ERR_NETWORK') {
       return new NetworkError({ code: 'NETWORK_OFFLINE', message: error.message ?? 'Network error' });
     }
+    if (error.response) return mapAxiosResponseError(error);
     return new NetworkError({ code: 'CLIENT_ERROR', message: error.message ?? 'Request failed' });
   }
   if (error instanceof TypeError) {
     return new NetworkError({ code: 'NETWORK_OFFLINE', message: error.message ?? 'Network error' });
   }
   return new NetworkError({ code: 'CLIENT_ERROR', message: (error as Error).message ?? 'Unexpected error' });
+}
+
+function mapAxiosResponseError(error: AxiosError): NetworkError {
+  const status = error.response!.status;
+  if (status === 429) {
+    const header = error.response!.headers['retry-after'] as string | undefined;
+    const retryAfterMs = header ? parseRetryAfter(header, 60_000) : null;
+    return new NetworkError({ code: 'RATE_LIMITED', message: 'Rate limited', status, responseBody: error.response!.data, ...(retryAfterMs !== null ? { retryAfterMs } : {}) });
+  }
+  if (status >= 500) {
+    return new NetworkError({ code: 'SERVER_ERROR', message: `Server error: ${status}`, status, responseBody: error.response!.data });
+  }
+  return new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: error.response!.data });
+}
+
+function parseRetryAfter(headerValue: string, maxDelayMs: number): number | null {
+  const seconds = parseInt(headerValue, 10);
+  if (!isNaN(seconds)) return Math.min(seconds * 1000, maxDelayMs);
+  const date = Date.parse(headerValue);
+  if (!isNaN(date)) return Math.min(Math.max(date - Date.now(), 0), maxDelayMs);
+  return null;
 }
 
 function validateRequestBodySize(body: unknown, maxSize: number): void {

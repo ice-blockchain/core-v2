@@ -1,7 +1,6 @@
 import type { LongPollClient, LongPollClientConfig, SyncRequest, SyncResponse, AdaptivePollingConfig, PayloadSerializer } from './long-poll-types';
 import type { ConnectionStateMachine } from './connection-state';
 import { createConnectionStateMachine } from './connection-state';
-import { calculateDelay } from './retry-handler';
 import type { RetryConfig } from './retry-types';
 
 const DEFAULT_SERVER_HOLD_TIMEOUT_MS = 20_000;
@@ -156,7 +155,9 @@ function handlePollError<T>(ctx: PollContext<T>): void {
   const state = ctx.machine.getState();
   if (state === 'connected') ctx.machine.transition('reconnecting');
   if (state === 'connecting') ctx.machine.transition('disconnected');
-  const backoff = calculateDelay(ctx.errorCount - 1, ctx.retryConfig);
+  const attempt = ctx.errorCount - 1;
+  const exponential = Math.min(ctx.retryConfig.baseDelayMs * Math.pow(2, attempt), ctx.retryConfig.maxDelayMs);
+  const backoff = exponential + Math.random() * ctx.retryConfig.jitterFactor * exponential;
   schedulePoll(ctx, backoff);
 }
 

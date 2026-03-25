@@ -9,6 +9,11 @@ vi.mock('@ion/diagnostics', () => ({
   },
 }));
 
+vi.mock('axios-retry', () => ({
+  default: vi.fn(),
+  isNetworkError: vi.fn(() => false),
+}));
+
 const mockRequest = vi.fn();
 vi.mock('axios', () => ({
   default: {
@@ -51,17 +56,47 @@ describe('createHttpClient POST requests', () => {
   });
 });
 
-describe('createHttpClient error handling', () => {
+describe('createHttpClient maps 500 to SERVER_ERROR', () => {
   beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
 
-  it('throws on 500 server error', async () => {
-    mockRequest.mockResolvedValue(mockAxiosResponse({ error: 'Internal' }, 500));
-    const client = createHttpClient({
-      baseUrl: 'https://api.example.com',
-      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0, jitterFactor: 0 },
+  it('throws SERVER_ERROR on 500 response', async () => {
+    const axiosError = Object.assign(new Error('Request failed'), {
+      isAxiosError: true, response: { status: 500, data: { error: 'Internal' }, headers: {} },
     });
-    await expect(client.get('/fail')).rejects.toThrow('Server error: 500');
+    mockRequest.mockRejectedValue(axiosError);
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    try {
+      await client.get('/fail');
+      expect.unreachable('should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NetworkError);
+      expect((error as NetworkError).code).toBe('SERVER_ERROR');
+    }
   });
+});
+
+describe('createHttpClient maps 429 to RATE_LIMITED', () => {
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
+
+  it('throws RATE_LIMITED with retryAfterMs on 429 response', async () => {
+    const axiosError = Object.assign(new Error('Request failed'), {
+      isAxiosError: true, response: { status: 429, data: {}, headers: { 'retry-after': '5' } },
+    });
+    mockRequest.mockRejectedValue(axiosError);
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    try {
+      await client.get('/fail');
+      expect.unreachable('should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NetworkError);
+      expect((error as NetworkError).code).toBe('RATE_LIMITED');
+      expect((error as NetworkError).retryAfterMs).toBe(5000);
+    }
+  });
+});
+
+describe('createHttpClient body size validation', () => {
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
 
   it('rejects body exceeding max request body size', async () => {
     const client = createHttpClient({
@@ -80,10 +115,7 @@ describe('createHttpClient classifies network error as NETWORK_OFFLINE', () => {
   it('maps ERR_NETWORK to NETWORK_OFFLINE', async () => {
     const axiosError = Object.assign(new Error('Network Error'), { isAxiosError: true, code: 'ERR_NETWORK' });
     mockRequest.mockRejectedValue(axiosError);
-    const client = createHttpClient({
-      baseUrl: 'https://api.example.com',
-      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0, jitterFactor: 0 },
-    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
     try {
       await client.get('/fail');
       expect.unreachable('should have thrown');
@@ -100,10 +132,7 @@ describe('createHttpClient classifies timeout as NETWORK_TIMEOUT', () => {
   it('maps ETIMEDOUT to NETWORK_TIMEOUT', async () => {
     const axiosError = Object.assign(new Error('timeout'), { isAxiosError: true, code: 'ETIMEDOUT' });
     mockRequest.mockRejectedValue(axiosError);
-    const client = createHttpClient({
-      baseUrl: 'https://api.example.com',
-      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0, jitterFactor: 0 },
-    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
     try {
       await client.get('/fail');
       expect.unreachable('should have thrown');
@@ -120,10 +149,7 @@ describe('createHttpClient classifies cancel as REQUEST_ABORTED', () => {
   it('maps cancel to REQUEST_ABORTED', async () => {
     const cancelError = { __CANCEL__: true, message: 'canceled' };
     mockRequest.mockRejectedValue(cancelError);
-    const client = createHttpClient({
-      baseUrl: 'https://api.example.com',
-      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0, jitterFactor: 0 },
-    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
     try {
       await client.get('/fail');
       expect.unreachable('should have thrown');

@@ -7,8 +7,6 @@ vi.mock('@ion/diagnostics', () => ({
   Logger: { debug: vi.fn(), warning: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 
-import { Logger } from '@ion/diagnostics';
-
 function createMockHttpClient(): HttpClient {
   return {
     get: vi.fn(),
