@@ -55,7 +55,9 @@ describe('ConnectionStateMachine reconnect transitions', () => {
     machine.transition('connecting');
     expect(machine.getState()).toBe('connecting');
   });
+});
 
+describe('ConnectionStateMachine disconnected to reconnecting', () => {
   it('transitions from disconnected to reconnecting', () => {
     const machine = createConnectionStateMachine();
     machine.transition('connecting');

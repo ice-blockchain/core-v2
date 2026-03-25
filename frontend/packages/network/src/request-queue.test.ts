@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createRequestQueue } from './request-queue';
 import { NetworkError } from './network-error';
 import type { QueuedRequest, QueueStorage } from './queue-types';
@@ -42,6 +42,17 @@ describe('RequestQueue enqueue', () => {
     expect(saved[0]!.headers!['content-type']).toBe('application/json');
   });
 
+  it('drops oldest when max size exceeded', async () => {
+    const storage = createMockStorage();
+    const queue = createRequestQueue({ maxSize: 2, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/1' }));
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/2' }));
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/3' }));
+    expect(await queue.getSize()).toBe(2);
+  });
+});
+
+describe('RequestQueue header stripping', () => {
   it('strips sensitive headers regardless of casing', async () => {
     const storage = createMockStorage();
     const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
@@ -58,15 +69,6 @@ describe('RequestQueue enqueue', () => {
     expect(saved[0]!.headers!['Cookie']).toBeUndefined();
     expect(saved[0]!.headers!['PROXY-AUTHORIZATION']).toBeUndefined();
     expect(saved[0]!.headers!['content-type']).toBe('application/json');
-  });
-
-  it('drops oldest when max size exceeded', async () => {
-    const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 2, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
-    await queue.enqueue(createRequest({ url: 'https://api.example.com/1' }));
-    await queue.enqueue(createRequest({ url: 'https://api.example.com/2' }));
-    await queue.enqueue(createRequest({ url: 'https://api.example.com/3' }));
-    expect(await queue.getSize()).toBe(2);
   });
 });
 

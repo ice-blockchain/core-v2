@@ -65,6 +65,20 @@ describe('createHttpClient error handling', () => {
     await expect(client.get('/fail')).rejects.toThrow('Server error: 500');
   });
 
+  it('rejects body exceeding max request body size', async () => {
+    const client = createHttpClient({
+      baseUrl: 'https://api.example.com',
+      maxRequestBodySizeBytes: 10,
+    });
+    await expect(
+      client.post('/data', { body: { data: 'x'.repeat(100) } }),
+    ).rejects.toThrow('exceeds max size');
+  });
+});
+
+describe('createHttpClient error classification', () => {
+  beforeEach(() => { vi.restoreAllMocks(); });
+
   it('classifies RangeError as CLIENT_ERROR not NETWORK_OFFLINE', async () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation(() => { throw new RangeError('out of range'); }));
     const client = createHttpClient({
@@ -79,16 +93,6 @@ describe('createHttpClient error handling', () => {
       expect((error as NetworkError).code).toBe('CLIENT_ERROR');
       expect((error as NetworkError).message).toBe('out of range');
     }
-  });
-
-  it('rejects body exceeding max request body size', async () => {
-    const client = createHttpClient({
-      baseUrl: 'https://api.example.com',
-      maxRequestBodySizeBytes: 10,
-    });
-    await expect(
-      client.post('/data', { body: { data: 'x'.repeat(100) } }),
-    ).rejects.toThrow('exceeds max size');
   });
 });
 

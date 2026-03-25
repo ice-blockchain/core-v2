@@ -85,6 +85,9 @@ describe('WebUploadTransport errors', () => {
     await expect(promise).rejects.toThrow('Upload aborted');
   });
 
+});
+
+describe('WebUploadTransport HTTP status errors', () => {
   it('rejects with SERVER_ERROR when upload returns 500', async () => {
     const transport = createUploadTransport();
     const promise = transport.upload({

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NetworkError } from '../network-error';
 
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
