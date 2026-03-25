@@ -7,7 +7,7 @@ const VALID_TRANSITIONS: TransitionMap = {
   connecting: ['connected', 'disconnected'],
   connected: ['reconnecting', 'disconnected'],
   reconnecting: ['connected', 'disconnected'],
-  disconnected: ['connecting'],
+  disconnected: ['connecting', 'reconnecting'],
 };
 
 export interface ConnectionStateMachine {

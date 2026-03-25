@@ -55,6 +55,14 @@ describe('ConnectionStateMachine reconnect transitions', () => {
     machine.transition('connecting');
     expect(machine.getState()).toBe('connecting');
   });
+
+  it('transitions from disconnected to reconnecting', () => {
+    const machine = createConnectionStateMachine();
+    machine.transition('connecting');
+    machine.transition('disconnected');
+    machine.transition('reconnecting');
+    expect(machine.getState()).toBe('reconnecting');
+  });
 });
 
 describe('ConnectionStateMachine invalid transitions', () => {

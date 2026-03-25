@@ -253,5 +253,8 @@ async function handleRequestError(
     if (abortController.signal.reason === undefined) return new NetworkError({ code: 'NETWORK_TIMEOUT', message: 'Request timed out' });
     return new NetworkError({ code: 'REQUEST_ABORTED', message: 'Request aborted' });
   }
-  return new NetworkError({ code: 'NETWORK_OFFLINE', message: (error as Error).message ?? 'Network error' });
+  if (error instanceof TypeError) {
+    return new NetworkError({ code: 'NETWORK_OFFLINE', message: error.message ?? 'Network error' });
+  }
+  return new NetworkError({ code: 'CLIENT_ERROR', message: (error as Error).message ?? 'Unexpected error' });
 }

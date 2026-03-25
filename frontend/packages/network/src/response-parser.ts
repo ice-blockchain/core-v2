@@ -1,3 +1,4 @@
+import { Logger } from '@ion/diagnostics';
 import { NetworkError } from './network-error';
 
 interface ParseOptions {
@@ -70,16 +71,18 @@ function parseByContentType<T>(
       rawBody,
     });
   }
-  return parseJson<T>(rawBody);
+  Logger.warning('Unexpected content type, attempting JSON parse', { tag: 'network', data: { contentType } });
+  return parseJson<T>(rawBody, contentType);
 }
 
-function parseJson<T>(rawBody: string): T {
+function parseJson<T>(rawBody: string, contentType?: string): T {
   try {
     return JSON.parse(rawBody) as T;
   } catch {
+    const suffix = contentType ? ` (content-type: ${contentType})` : '';
     throw new NetworkError({
       code: 'PARSE_ERROR',
-      message: 'Failed to parse response as JSON',
+      message: `Failed to parse response as JSON${suffix}`,
       rawBody,
     });
   }

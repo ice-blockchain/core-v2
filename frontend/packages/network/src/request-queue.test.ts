@@ -27,14 +27,14 @@ function createRequest(overrides?: Partial<QueuedRequest>): QueuedRequest {
 describe('RequestQueue enqueue', () => {
   it('enqueues and persists request', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
     await queue.enqueue(createRequest());
     expect(await queue.getSize()).toBe(1);
   });
 
   it('strips auth headers before persisting', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
     await queue.enqueue(createRequest());
     const saved = (storage.save as ReturnType<typeof vi.fn>).mock.calls[0]![0] as QueuedRequest[];
     expect(saved[0]!.headers!['Authorization']).toBeUndefined();
@@ -42,9 +42,27 @@ describe('RequestQueue enqueue', () => {
     expect(saved[0]!.headers!['content-type']).toBe('application/json');
   });
 
+  it('strips sensitive headers regardless of casing', async () => {
+    const storage = createMockStorage();
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
+    await queue.enqueue(createRequest({
+      headers: {
+        'AUTHORIZATION': 'Bearer secret',
+        'Cookie': 'session=abc',
+        'PROXY-AUTHORIZATION': 'Basic xyz',
+        'content-type': 'application/json',
+      },
+    }));
+    const saved = (storage.save as ReturnType<typeof vi.fn>).mock.calls[0]![0] as QueuedRequest[];
+    expect(saved[0]!.headers!['AUTHORIZATION']).toBeUndefined();
+    expect(saved[0]!.headers!['Cookie']).toBeUndefined();
+    expect(saved[0]!.headers!['PROXY-AUTHORIZATION']).toBeUndefined();
+    expect(saved[0]!.headers!['content-type']).toBe('application/json');
+  });
+
   it('drops oldest when max size exceeded', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 2, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const queue = createRequestQueue({ maxSize: 2, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
     await queue.enqueue(createRequest({ url: 'https://api.example.com/1' }));
     await queue.enqueue(createRequest({ url: 'https://api.example.com/2' }));
     await queue.enqueue(createRequest({ url: 'https://api.example.com/3' }));
@@ -55,7 +73,7 @@ describe('RequestQueue enqueue', () => {
 describe('RequestQueue events', () => {
   it('emits queue-changed on enqueue', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
     const handler = vi.fn();
     queue.onQueueChanged(handler);
     await queue.enqueue(createRequest());
@@ -64,7 +82,7 @@ describe('RequestQueue events', () => {
 
   it('emits queue-changed on clear', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn: vi.fn().mockResolvedValue(undefined) });
     const handler = vi.fn();
     await queue.enqueue(createRequest());
     queue.onQueueChanged(handler);
@@ -74,11 +92,10 @@ describe('RequestQueue events', () => {
 });
 
 describe('RequestQueue replay', () => {
-  beforeEach(() => { vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('ok'))); });
-
   it('replays in FIFO order and returns result', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const replayFn = vi.fn().mockResolvedValue(undefined);
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn });
     await queue.enqueue(createRequest());
     await queue.enqueue(createRequest());
     const result = await queue.replay();
@@ -89,7 +106,8 @@ describe('RequestQueue replay', () => {
 
   it('skips expired requests', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const replayFn = vi.fn().mockResolvedValue(undefined);
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn });
     await queue.enqueue(createRequest({ enqueuedAt: Date.now() - 7_200_000 }));
     const result = await queue.replay();
     expect(result.expired).toBe(1);
@@ -97,12 +115,26 @@ describe('RequestQueue replay', () => {
   });
 });
 
-describe('RequestQueue replay mutex', () => {
-  beforeEach(() => { vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('ok'))); });
+describe('RequestQueue deduplication', () => {
+  it('removes the correct item when two requests share same url and enqueuedAt', async () => {
+    const storage = createMockStorage();
+    const now = Date.now();
+    const replayFn = vi.fn().mockResolvedValueOnce(undefined).mockRejectedValueOnce(
+      new NetworkError({ code: 'SERVER_ERROR', message: 'fail', status: 500 }),
+    );
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn });
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/data', enqueuedAt: now }));
+    await queue.enqueue(createRequest({ url: 'https://api.example.com/data', enqueuedAt: now }));
+    await queue.replay();
+    expect(await queue.getSize()).toBe(1);
+  });
+});
 
+describe('RequestQueue replay mutex', () => {
   it('deduplicates concurrent replay calls', async () => {
     const storage = createMockStorage();
-    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage });
+    const replayFn = vi.fn().mockResolvedValue(undefined);
+    const queue = createRequestQueue({ maxSize: 50, defaultTimeToLiveMs: 3600000, replayDelayMs: 0, storage, replayFn });
     await queue.enqueue(createRequest());
     const [r1, r2, r3] = await Promise.all([queue.replay(), queue.replay(), queue.replay()]);
     expect(r1).toBe(r2);

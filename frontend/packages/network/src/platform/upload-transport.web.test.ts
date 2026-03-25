@@ -84,4 +84,26 @@ describe('WebUploadTransport errors', () => {
     xhrListeners['abort']!(new Event('abort'));
     await expect(promise).rejects.toThrow('Upload aborted');
   });
+
+  it('rejects with SERVER_ERROR when upload returns 500', async () => {
+    const transport = createUploadTransport();
+    const promise = transport.upload({
+      url: 'https://api.example.com/upload',
+      formData: new FormData(),
+    });
+    mockXhr.status = 500;
+    xhrListeners['load']!(new Event('load'));
+    await expect(promise).rejects.toThrow('Upload failed with status 500');
+  });
+
+  it('rejects with CLIENT_ERROR when upload returns 400', async () => {
+    const transport = createUploadTransport();
+    const promise = transport.upload({
+      url: 'https://api.example.com/upload',
+      formData: new FormData(),
+    });
+    mockXhr.status = 400;
+    xhrListeners['load']!(new Event('load'));
+    await expect(promise).rejects.toThrow('Upload failed with status 400');
+  });
 });

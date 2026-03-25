@@ -50,10 +50,11 @@ function stripSensitiveHeaders(
   headers?: Record<string, string>,
 ): Record<string, string> | undefined {
   if (!headers) return headers;
-  const cleaned = { ...headers };
-  for (const key of SENSITIVE_HEADERS) {
-    delete cleaned[key];
-    delete cleaned[key.charAt(0).toUpperCase() + key.slice(1)];
+  const cleaned: Record<string, string> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (!SENSITIVE_HEADERS.includes(key.toLowerCase())) {
+      cleaned[key] = value;
+    }
   }
   return cleaned;
 }
@@ -63,7 +64,7 @@ async function enqueueRequest(
   handlers: EventHandlers,
   request: QueuedRequest,
 ): Promise<void> {
-  const sanitized = { ...request, headers: stripSensitiveHeaders(request.headers) };
+  const sanitized = { ...request, id: crypto.randomUUID(), headers: stripSensitiveHeaders(request.headers) };
   const items = await config.storage.load();
   if (items.length >= config.maxSize) items.shift();
   items.push(sanitized);
@@ -145,12 +146,7 @@ async function sendOrFail(
 }
 
 async function executeReplayRequest(context: ReplayItemContext): Promise<void> {
-  if (context.config.replayFn) {
-    await context.config.replayFn(context.item);
-    return;
-  }
-  const body = context.item.body ? JSON.stringify(context.item.body) : null;
-  await fetch(context.item.url, { method: context.item.method, body });
+  await context.config.replayFn(context.item);
 }
 
 function isNetworkFailure(error: unknown): boolean {
@@ -179,7 +175,7 @@ async function removeItem(
   item: QueuedRequest,
 ): Promise<void> {
   const items = await storage.load();
-  const filtered = items.filter((i) => i.enqueuedAt !== item.enqueuedAt || i.url !== item.url);
+  const filtered = items.filter((i) => i.id !== item.id);
   await storage.save(filtered);
 }
 

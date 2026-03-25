@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createHttpClient } from './http-client';
+import { NetworkError } from './network-error';
 
 vi.mock('@ion/diagnostics', () => ({
   Logger: {
@@ -62,6 +63,22 @@ describe('createHttpClient error handling', () => {
       retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0, jitterFactor: 0 },
     });
     await expect(client.get('/fail')).rejects.toThrow('Server error: 500');
+  });
+
+  it('classifies RangeError as CLIENT_ERROR not NETWORK_OFFLINE', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => { throw new RangeError('out of range'); }));
+    const client = createHttpClient({
+      baseUrl: 'https://api.example.com',
+      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0, jitterFactor: 0 },
+    });
+    try {
+      await client.get('/fail');
+      expect.unreachable('should have thrown');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NetworkError);
+      expect((error as NetworkError).code).toBe('CLIENT_ERROR');
+      expect((error as NetworkError).message).toBe('out of range');
+    }
   });
 
   it('rejects body exceeding max request body size', async () => {

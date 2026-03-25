@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { Logger } from '@ion/diagnostics';
+
+vi.mock('@ion/diagnostics', () => ({
+  Logger: { debug: vi.fn(), warning: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
 import { parseResponse, validateRequestBodySize } from './response-parser';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -58,6 +64,29 @@ describe('parseResponse size limit', () => {
     await expect(
       parseResponse(response, { maxResponseSizeBytes: 100 }),
     ).rejects.toThrow('exceeds max size');
+  });
+});
+
+describe('parseResponse unexpected content type', () => {
+  it('logs warning when content type is not JSON, HTML, or text', async () => {
+    const response = new Response('{"data":1}', {
+      status: 200,
+      headers: { 'content-type': 'application/xml' },
+    });
+    const result = await parseResponse<{ data: number }>(response);
+    expect(result).toEqual({ data: 1 });
+    expect(Logger.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Unexpected content type'),
+      expect.objectContaining({ tag: 'network' }),
+    );
+  });
+
+  it('includes content type in error message when JSON parse fails for unknown type', async () => {
+    const response = new Response('not json', {
+      status: 200,
+      headers: { 'content-type': 'application/octet-stream' },
+    });
+    await expect(parseResponse(response)).rejects.toThrow('application/octet-stream');
   });
 });
 

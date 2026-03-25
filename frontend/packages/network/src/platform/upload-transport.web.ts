@@ -49,6 +49,14 @@ function attachResultListeners<T>(
   reject: (reason: NetworkError) => void,
 ): void {
   xhr.addEventListener('load', () => {
+    if (xhr.status >= 400) {
+      reject(new NetworkError({
+        code: xhr.status >= 500 ? 'SERVER_ERROR' : 'CLIENT_ERROR',
+        message: `Upload failed with status ${xhr.status}`,
+        status: xhr.status,
+      }));
+      return;
+    }
     try { resolve(JSON.parse(xhr.responseText) as T); } catch {
       reject(new NetworkError({ code: 'PARSE_ERROR', message: 'Failed to parse upload response', rawBody: xhr.responseText }));
     }

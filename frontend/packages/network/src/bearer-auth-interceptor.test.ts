@@ -137,4 +137,16 @@ describe('BearerAuthInterceptor refreshEndpoint skip', () => {
     expect(config.refreshFn).not.toHaveBeenCalled();
     expect(handler).toHaveBeenCalled();
   });
+
+  it('awaits clearTokens before returning error', async () => {
+    const config = createMockConfig();
+    let cleared = false;
+    (config.tokenStorage.clearTokens as ReturnType<typeof vi.fn>).mockImplementation(
+      () => new Promise((resolve) => { setTimeout(() => { cleared = true; resolve(undefined); }, 10); }),
+    );
+    const interceptor = createBearerAuthInterceptor(config);
+    const error = new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status: 401, requestUrl: 'https://api.example.com/auth/refresh' });
+    await interceptor.onError!(error);
+    expect(cleared).toBe(true);
+  });
 });

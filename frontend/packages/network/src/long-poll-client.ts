@@ -111,8 +111,6 @@ async function executePollCycle<T>(ctx: PollContext<T>): Promise<void> {
 function ensureReconnectingState<T>(ctx: PollContext<T>): void {
   const state = ctx.machine.getState();
   if (state === 'disconnected') {
-    ctx.machine.transition('connecting');
-    ctx.machine.transition('connected');
     ctx.machine.transition('reconnecting');
   }
 }

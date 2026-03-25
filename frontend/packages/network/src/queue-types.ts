@@ -1,6 +1,7 @@
 import type { NetworkError } from './network-error';
 
 export interface QueuedRequest {
+  id?: string | undefined;
   method: string;
   url: string;
   body?: unknown;
@@ -14,7 +15,7 @@ export interface RequestQueueConfig {
   defaultTimeToLiveMs: number;
   replayDelayMs: number;
   storage: QueueStorage;
-  replayFn?: ((request: QueuedRequest) => Promise<void>) | undefined;
+  replayFn: (request: QueuedRequest) => Promise<void>;
 }
 
 export interface QueueStorage {
