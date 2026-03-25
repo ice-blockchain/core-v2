@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV="${1:?Usage: setup-env.sh <staging|testnet|production> [app]}"
-APP_FILTER="${2:-}"
+ENV="${1:?Usage: setup-env.sh <staging|testnet|production>}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SECRETS_DIR="${REPO_ROOT}/.secrets/frontend"
 
@@ -33,42 +32,33 @@ fi
 
 echo "Setting up environment: ${ENV}"
 
-# Determine which apps to process
-if [[ -n "${APP_FILTER}" ]]; then
-  APPS=("${APP_FILTER}")
-else
-  APPS=(mobile web)
-fi
-
 # Copy shared files (android signing, xcconfigs, Xcode schemes, build-time secrets)
-if [[ " ${APPS[*]} " == *" mobile "* ]] && [[ -d "${SECRETS_DIR}/shared/mobile" ]]; then
+if [[ -d "${SECRETS_DIR}/shared/mobile" ]]; then
   cp -r "${SECRETS_DIR}/shared/mobile/." "${REPO_ROOT}/apps/mobile/"
 fi
 
 # Copy env-specific files (.env, google-services.json, sentry, fastlane keys)
-for APP in "${APPS[@]}"; do
-  if [[ -d "${SECRETS_DIR}/${ENV}/${APP}" ]]; then
-    cp -r "${SECRETS_DIR}/${ENV}/${APP}/." "${REPO_ROOT}/apps/${APP}/"
-  fi
-done
+if [[ -d "${SECRETS_DIR}/${ENV}/mobile" ]]; then
+  cp -r "${SECRETS_DIR}/${ENV}/mobile/." "${REPO_ROOT}/apps/mobile/"
+fi
+if [[ -d "${SECRETS_DIR}/${ENV}/web" ]]; then
+  cp -r "${SECRETS_DIR}/${ENV}/web/." "${REPO_ROOT}/apps/web/"
+fi
 
 # Validate env files were created for apps with secrets
-for APP in "${APPS[@]}"; do
+for APP in mobile web; do
   if [[ -d "${SECRETS_DIR}/${ENV}/${APP}" ]]; then
     if [[ ! -f "${REPO_ROOT}/apps/${APP}/.env" ]]; then
-      echo "error: apps/${APP}/.env not created." >&2
-      echo "  source dir contents:" >&2
-      ls -la "${SECRETS_DIR}/${ENV}/${APP}/" >&2 || true
-      echo "  dest dir contents:" >&2
-      ls -la "${REPO_ROOT}/apps/${APP}/" >&2 || true
+      echo "error: apps/${APP}/.env not created. Check secrets repo ${ENV}/${APP}/ has .env file." >&2
       exit 1
     fi
   fi
 done
 
 # Source build-time secrets into current shell (NOT bundled into app)
-for APP in "${APPS[@]}"; do
-  SECRETS_FILE="${REPO_ROOT}/apps/${APP}/.env.secrets"
+for SECRETS_FILE in \
+  "${REPO_ROOT}/apps/mobile/.env.secrets" \
+  "${REPO_ROOT}/apps/web/.env.secrets"; do
   if [[ -f "${SECRETS_FILE}" ]]; then
     # shellcheck disable=SC1090
     set -a && source "${SECRETS_FILE}" && set +a

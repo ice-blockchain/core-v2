@@ -147,7 +147,7 @@ jobs:
       - name: Setup environment
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
-        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT" mobile
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
       - name: Build JS packages
         run: pnpm turbo build --filter=@ion/mobile...
@@ -252,7 +252,7 @@ jobs:
       - name: Setup environment
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
-        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT" mobile
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
       - name: Build JS packages
         run: pnpm turbo build --filter=@ion/mobile...
