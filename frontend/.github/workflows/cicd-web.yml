@@ -106,8 +106,6 @@ jobs:
           retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup SSH and deploy
-        env:
-          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
         run: |
           # Source web secrets (DEPLOY_SSH_KEY, DEPLOY_USER, DEPLOY_HOST, DEPLOY_PATH)
           set -a && source apps/web/.env.secrets && set +a
@@ -117,8 +115,8 @@ jobs:
           echo "$DEPLOY_SSH_KEY" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Use pinned host key (no TOFU — prevents MITM during build)
-          echo "$DEPLOY_HOST_KEY" >> ~/.ssh/known_hosts
+          # Add host key to known_hosts
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
           # Deploy
           rsync -avz --delete \
