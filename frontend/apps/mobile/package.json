@@ -13,7 +13,7 @@
     "android:production": "../../scripts/setup-env.sh production && react-native run-android --mode productionDebug --appId io.ion.app",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@ion/auth-ui": "workspace:*",
