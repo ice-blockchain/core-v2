@@ -42,13 +42,13 @@ fi
 
 # Copy shared files (android signing, xcconfigs, Xcode schemes, build-time secrets)
 if [[ " ${APPS[*]} " == *" mobile "* ]] && [[ -d "${SECRETS_DIR}/shared/mobile" ]]; then
-  cp -r "${SECRETS_DIR}/shared/mobile/" "${REPO_ROOT}/apps/mobile/"
+  cp -r "${SECRETS_DIR}/shared/mobile/." "${REPO_ROOT}/apps/mobile/"
 fi
 
 # Copy env-specific files (.env, google-services.json, sentry, fastlane keys)
 for APP in "${APPS[@]}"; do
   if [[ -d "${SECRETS_DIR}/${ENV}/${APP}" ]]; then
-    cp -r "${SECRETS_DIR}/${ENV}/${APP}/" "${REPO_ROOT}/apps/${APP}/"
+    cp -r "${SECRETS_DIR}/${ENV}/${APP}/." "${REPO_ROOT}/apps/${APP}/"
   fi
 done
 
