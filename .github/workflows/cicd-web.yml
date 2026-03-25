@@ -80,14 +80,14 @@ jobs:
           repository: ice-blockchain/core-v2-secrets
           ref: master
           token: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
-          path: .secrets
+          path: frontend/.secrets
 
       - name: Mask secrets
         working-directory: .
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/web/.env.secrets"
+          SECRETS_FILE="frontend/.secrets/frontend/${INPUT_ENVIRONMENT}/web/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
             while IFS='=' read -r key value; do
               [[ -z "$value" || "$key" =~ ^# ]] && continue
