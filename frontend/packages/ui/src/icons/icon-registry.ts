@@ -2,6 +2,7 @@
 
 import type { ComponentType } from "react";
 
+import { CloseIcon } from "./generated/CloseIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { SendIcon } from "./generated/SendIcon";
 
@@ -11,6 +12,7 @@ interface IconComponentProps {
 }
 
 export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
+  "close": CloseIcon,
   "manage": ManageIcon,
   "send": SendIcon,
 };
