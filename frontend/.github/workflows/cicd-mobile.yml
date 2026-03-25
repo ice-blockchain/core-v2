@@ -31,8 +31,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Validate inputs
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          INPUT_APP_VERSION: ${{ inputs.app_version }}
+        run: |
+          if [[ ! "$INPUT_ENVIRONMENT" =~ ^(staging|testnet|production)$ ]]; then
+            echo "::error::Invalid environment: $INPUT_ENVIRONMENT"
+            exit 1
+          fi
+          if [[ ! "$INPUT_DEPLOYMENT_TARGET" =~ ^(firebase|store)$ ]]; then
+            echo "::error::Invalid deployment target: $INPUT_DEPLOYMENT_TARGET"
+            exit 1
+          fi
+          if [[ ! "$INPUT_APP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $INPUT_APP_VERSION. Expected semver: X.Y.Z"
+            exit 1
+          fi
+
   verify:
     name: Verify
+    needs: validate-inputs
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -60,8 +85,10 @@ jobs:
 
       - name: Resolve build parameters
         id: resolve
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          case "${{ inputs.environment }}" in
+          case "$INPUT_ENVIRONMENT" in
             staging)
               echo "android_flavor=staging" >> "$GITHUB_OUTPUT"
               echo "ios_scheme=Ion-Staging" >> "$GITHUB_OUTPUT"
@@ -95,8 +122,10 @@ jobs:
           path: .secrets
 
       - name: Mask secrets
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          SECRETS_FILE=".secrets/frontend/${{ inputs.environment }}/mobile/.env.secrets"
+          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
             while IFS='=' read -r key value; do
               [[ -z "$value" || "$key" =~ ^# ]] && continue
@@ -108,7 +137,9 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Setup environment
-        run: ./scripts/setup-env.sh ${{ inputs.environment }}
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
       - name: Build JS packages
         run: pnpm turbo build --filter=@ion/mobile...
@@ -121,26 +152,28 @@ jobs:
 
       - name: Build Android
         working-directory: apps/mobile/android
+        env:
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          INPUT_APP_VERSION: ${{ inputs.app_version }}
+          ANDROID_FLAVOR: ${{ needs.verify.outputs.android_flavor }}
+          BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
         run: |
-          FLAVOR="${{ needs.verify.outputs.android_flavor }}"
-          VERSION_NAME="${{ inputs.app_version }}"
-          VERSION_CODE="${{ needs.verify.outputs.build_number }}"
-
-          if [[ "${{ inputs.deployment_target }}" == "firebase" ]]; then
-            ./gradlew "assemble${FLAVOR^}Release" \
-              -PversionName="$VERSION_NAME" \
-              -PversionCode="$VERSION_CODE"
+          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
+            ./gradlew "assemble${ANDROID_FLAVOR^}Release" \
+              -PversionName="$INPUT_APP_VERSION" \
+              -PversionCode="$BUILD_NUMBER"
           else
-            ./gradlew "bundle${FLAVOR^}Release" \
-              -PversionName="$VERSION_NAME" \
-              -PversionCode="$VERSION_CODE"
+            ./gradlew "bundle${ANDROID_FLAVOR^}Release" \
+              -PversionName="$INPUT_APP_VERSION" \
+              -PversionCode="$BUILD_NUMBER"
           fi
 
       - name: Find build artifact
         id: artifact
+        env:
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
         run: |
-          FLAVOR="${{ needs.verify.outputs.android_flavor }}"
-          if [[ "${{ inputs.deployment_target }}" == "firebase" ]]; then
+          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
             ARTIFACT=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -1)
           else
             ARTIFACT=$(find apps/mobile/android/app/build/outputs/bundle -name "*.aab" | head -1)
@@ -189,8 +222,10 @@ jobs:
           path: .secrets
 
       - name: Mask secrets
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          SECRETS_FILE=".secrets/frontend/${{ inputs.environment }}/mobile/.env.secrets"
+          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
             while IFS='=' read -r key value; do
               [[ -z "$value" || "$key" =~ ^# ]] && continue
@@ -202,7 +237,9 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Setup environment
-        run: ./scripts/setup-env.sh ${{ inputs.environment }}
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
       - name: Build JS packages
         run: pnpm turbo build --filter=@ion/mobile...
@@ -224,31 +261,46 @@ jobs:
 
       - name: Set app version
         working-directory: apps/mobile/ios
+        env:
+          INPUT_APP_VERSION: ${{ inputs.app_version }}
+          BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
         run: |
-          agvtool new-marketing-version "${{ inputs.app_version }}"
-          agvtool new-version -all "${{ needs.verify.outputs.build_number }}"
+          agvtool new-marketing-version "$INPUT_APP_VERSION"
+          agvtool new-version -all "$BUILD_NUMBER"
 
       - name: Archive
         working-directory: apps/mobile/ios
+        env:
+          IOS_SCHEME: ${{ needs.verify.outputs.ios_scheme }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
+          case "$INPUT_ENVIRONMENT" in
+            staging)    CONFIG_SUFFIX="Staging" ;;
+            testnet)    CONFIG_SUFFIX="Testnet" ;;
+            production) CONFIG_SUFFIX="Production" ;;
+          esac
+
           xcodebuild archive \
             -workspace mobile.xcworkspace \
-            -scheme "${{ needs.verify.outputs.ios_scheme }}" \
-            -configuration "Release-${{ inputs.environment == 'testnet' && 'Testnet' || (inputs.environment == 'staging' && 'Staging' || 'Production') }}" \
+            -scheme "$IOS_SCHEME" \
+            -configuration "Release-${CONFIG_SUFFIX}" \
             -archivePath build/Ion.xcarchive \
             -destination 'generic/platform=iOS' \
             CODE_SIGN_STYLE=Manual
 
       - name: Generate export options
         working-directory: apps/mobile/ios
+        env:
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          if [[ "${{ inputs.deployment_target }}" == "firebase" ]]; then
+          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
             METHOD="ad-hoc"
           else
             METHOD="app-store"
           fi
 
-          case "${{ inputs.environment }}" in
+          case "$INPUT_ENVIRONMENT" in
             staging)    BUNDLE_ID="io.ion.app.staging" ;;
             testnet)    BUNDLE_ID="io.ion.app.testnet" ;;
             production) BUNDLE_ID="io.ion.app" ;;

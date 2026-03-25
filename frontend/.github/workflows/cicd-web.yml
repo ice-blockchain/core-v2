@@ -20,8 +20,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Validate inputs
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          if [[ ! "$INPUT_ENVIRONMENT" =~ ^(staging|testnet|production)$ ]]; then
+            echo "::error::Invalid environment: $INPUT_ENVIRONMENT"
+            exit 1
+          fi
+
   verify:
     name: Verify
+    needs: validate-inputs
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -61,8 +76,10 @@ jobs:
           path: .secrets
 
       - name: Mask secrets
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          SECRETS_FILE=".secrets/frontend/${{ inputs.environment }}/web/.env.secrets"
+          SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/web/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
             while IFS='=' read -r key value; do
               [[ -z "$value" || "$key" =~ ^# ]] && continue
@@ -74,7 +91,9 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm
 
       - name: Setup environment
-        run: ./scripts/setup-env.sh ${{ inputs.environment }}
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
       - name: Build
         run: pnpm turbo build --filter=@ion/web...
@@ -87,6 +106,8 @@ jobs:
           retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup SSH and deploy
+        env:
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
         run: |
           # Source web secrets (DEPLOY_SSH_KEY, DEPLOY_USER, DEPLOY_HOST, DEPLOY_PATH)
           set -a && source apps/web/.env.secrets && set +a
@@ -96,8 +117,8 @@ jobs:
           echo "$DEPLOY_SSH_KEY" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Add host key to known_hosts (avoid MITM prompt)
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # Use pinned host key (no TOFU — prevents MITM during build)
+          echo "$DEPLOY_HOST_KEY" >> ~/.ssh/known_hosts
 
           # Deploy
           rsync -avz --delete \
