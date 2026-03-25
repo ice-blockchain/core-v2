@@ -4,5 +4,5 @@
     "outDir": "dist",
     "types": ["node", "jest"]
   },
-  "include": ["src", "index.ts", "index.web.ts"]
+  "include": ["src", "index.ts"]
 }

@@ -1,8 +1,7 @@
-import Config from 'react-native-config';
-
 import type { EnvironmentConfig } from './types';
-import { validateEnvironmentConfig } from './validate-environment';
 
-export const environmentConfig: EnvironmentConfig = validateEnvironmentConfig(
-  Config as Record<string, string | undefined>,
-);
+// Platform stub for TypeScript resolution.
+// At runtime, bundlers resolve .native.ts or .web.ts instead.
+export const environmentConfig: EnvironmentConfig = (() => {
+  throw new Error('Platform implementation not resolved');
+})();

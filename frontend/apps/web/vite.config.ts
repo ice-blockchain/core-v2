@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     resolve: {
+      extensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js'],
       alias: {
         '@': path.resolve(__dirname, './src'),
       },

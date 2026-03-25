@@ -1,4 +1,4 @@
-import { environmentConfig } from '@ion/config/web';
+import { environmentConfig } from '@ion/config';
 
 export function App() {
   return (

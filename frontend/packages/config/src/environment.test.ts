@@ -13,7 +13,7 @@ function loadEnvironment(vars: Record<string, string>): EnvironmentConfig {
   jest.resetModules();
   jest.doMock('react-native-config', () => ({ __esModule: true, default: vars }));
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('./environment').environmentConfig as EnvironmentConfig;
+  return require('./environment.native').environmentConfig as EnvironmentConfig;
 }
 
 describe('environmentConfig (mobile)', () => {
