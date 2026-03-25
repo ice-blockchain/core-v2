@@ -14,7 +14,7 @@ interface FullscreenImageItemProps {
 }
 
 export function FullscreenImageItem(props: FullscreenImageItemProps) {
-  const { source, onClose, onZoomChange } = props;
+  const { source, onClose } = props;
   const { width, height } = useWindowDimensions();
   const pinch = usePinchToZoom();
   const dismiss = useDismissGesture({ onClose, scale: pinch.scale });
@@ -33,7 +33,7 @@ export function FullscreenImageItem(props: FullscreenImageItemProps) {
             source={{ uri: source.uri }}
             style={{ width, height }}
             contentFit="contain"
-            placeholder={source.blurhash ? { blurhash: source.blurhash } : undefined}
+            placeholder={source.blurhash ? { blurhash: source.blurhash } : null}
             cachePolicy="memory-disk"
           />
         </Animated.View>

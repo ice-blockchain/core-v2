@@ -110,21 +110,11 @@ function encodeBlurhash(canvas: HTMLCanvasElement): string {
   if (!context) return "";
   context.drawImage(canvas, 0, 0, BLURHASH_SIZE, BLURHASH_SIZE);
   const pixels = context.getImageData(0, 0, BLURHASH_SIZE, BLURHASH_SIZE);
-  return encodePixelsToBlurhash(
+  return encode(
     pixels.data,
     BLURHASH_SIZE,
     BLURHASH_SIZE,
     BLURHASH_COMPONENTS_X,
     BLURHASH_COMPONENTS_Y,
   );
-}
-
-function encodePixelsToBlurhash(
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  componentX: number,
-  componentY: number,
-): string {
-  return encode(pixels, width, height, componentX, componentY);
 }

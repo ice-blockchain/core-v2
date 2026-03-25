@@ -26,9 +26,7 @@ function renderMediaItem(
   return <FullscreenVideoItem source={source} onClose={onClose} />;
 }
 
-export function MediaFullscreen(props: MediaFullscreenProps) {
-  const { sources, initialIndex = 0, onClose } = props;
-  const { width } = useWindowDimensions();
+function useViewableIndex(initialIndex: number) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 });
 
@@ -42,6 +40,10 @@ export function MediaFullscreen(props: MediaFullscreenProps) {
     [],
   );
 
+  return { currentIndex, viewabilityConfig, handleViewableItemsChanged };
+}
+
+function useMediaListCallbacks(onClose: () => void, width: number) {
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
       length: width,
@@ -56,16 +58,20 @@ export function MediaFullscreen(props: MediaFullscreenProps) {
     [onClose],
   );
 
-  const keyExtractor = useCallback(
-    (item: MediaViewerSource, index: number) => `${item.uri}-${index}`,
-    [],
-  );
+  return { getItemLayout, renderItem };
+}
+
+export function MediaFullscreen(props: MediaFullscreenProps) {
+  const { sources, initialIndex = 0, onClose } = props;
+  const { width } = useWindowDimensions();
+  const viewable = useViewableIndex(initialIndex);
+  const { getItemLayout, renderItem } = useMediaListCallbacks(onClose, width);
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent>
       <View style={styles.backdrop}>
         <FullscreenHeader
-          currentIndex={currentIndex}
+          currentIndex={viewable.currentIndex}
           totalCount={sources.length}
           onClose={onClose}
         />
@@ -77,14 +83,18 @@ export function MediaFullscreen(props: MediaFullscreenProps) {
           pagingEnabled
           initialScrollIndex={initialIndex}
           getItemLayout={getItemLayout}
-          onViewableItemsChanged={handleViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig.current}
+          onViewableItemsChanged={viewable.handleViewableItemsChanged}
+          viewabilityConfig={viewable.viewabilityConfig.current}
           showsHorizontalScrollIndicator={false}
           windowSize={3}
         />
       </View>
     </Modal>
   );
+}
+
+function keyExtractor(item: MediaViewerSource, index: number) {
+  return `${item.uri}-${index}`;
 }
 
 const styles = StyleSheet.create({

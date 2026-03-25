@@ -14,35 +14,29 @@ function buildVideoStyle(
   return [aspectStyle && { width: '100%', aspectRatio: aspectStyle.aspectRatio }, style];
 }
 
-export function MediaVideo(props: MediaVideoProps) {
-  const {
-    source,
-    autoPlay = false,
-    muted = false,
-    isLooping = false,
-    style,
-    onLoad,
-    onError,
-  } = props;
+function usePlaybackHandlers(props: Pick<MediaVideoProps, 'onLoad' | 'onError'>) {
+  const { onLoad, onError } = props;
 
-  const videoRef = useRef<Video>(null);
-
-  const handlePlaybackStatusUpdate = useCallback(
+  const handleStatusUpdate = useCallback(
     (status: AVPlaybackStatus) => {
       if (!status.isLoaded) return;
-      if (status.isLoaded && onLoad && status.durationMillis !== undefined) {
-        onLoad();
-      }
+      if (onLoad && status.durationMillis !== undefined) onLoad();
     },
     [onLoad],
   );
 
   const handleError = useCallback(
-    (errorMessage: string) => {
-      onError?.(new Error(errorMessage));
-    },
+    (errorMessage: string) => onError?.(new Error(errorMessage)),
     [onError],
   );
+
+  return { handleStatusUpdate, handleError };
+}
+
+export function MediaVideo(props: MediaVideoProps) {
+  const { source, autoPlay = false, muted = false, isLooping = false, style } = props;
+  const videoRef = useRef<Video>(null);
+  const { handleStatusUpdate, handleError } = usePlaybackHandlers(props);
 
   return (
     <Video
@@ -56,7 +50,7 @@ export function MediaVideo(props: MediaVideoProps) {
       useNativeControls
       posterSource={source.thumbnailUri ? { uri: source.thumbnailUri } : undefined}
       usePoster={Boolean(source.thumbnailUri)}
-      onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+      onPlaybackStatusUpdate={handleStatusUpdate}
       onError={handleError}
     />
   );

@@ -3,26 +3,26 @@ import type { ISecureStorage } from "../types";
 
 const KEY_REGISTRY = "__secure_storage_keys__";
 
+async function getKeyRegistry(): Promise<string[]> {
+  const raw = await ExpoSecureStore.getItemAsync(KEY_REGISTRY);
+  if (!raw) return [];
+  return JSON.parse(raw) as string[];
+}
+
+async function addToRegistry(key: string): Promise<void> {
+  const keys = await getKeyRegistry();
+  if (keys.includes(key)) return;
+  keys.push(key);
+  await ExpoSecureStore.setItemAsync(KEY_REGISTRY, JSON.stringify(keys));
+}
+
+async function removeFromRegistry(key: string): Promise<void> {
+  const keys = await getKeyRegistry();
+  const filtered = keys.filter((k) => k !== key);
+  await ExpoSecureStore.setItemAsync(KEY_REGISTRY, JSON.stringify(filtered));
+}
+
 export function createSecureStorage(): ISecureStorage {
-  async function getKeyRegistry(): Promise<string[]> {
-    const raw = await ExpoSecureStore.getItemAsync(KEY_REGISTRY);
-    if (!raw) return [];
-    return JSON.parse(raw) as string[];
-  }
-
-  async function addToRegistry(key: string): Promise<void> {
-    const keys = await getKeyRegistry();
-    if (keys.includes(key)) return;
-    keys.push(key);
-    await ExpoSecureStore.setItemAsync(KEY_REGISTRY, JSON.stringify(keys));
-  }
-
-  async function removeFromRegistry(key: string): Promise<void> {
-    const keys = await getKeyRegistry();
-    const filtered = keys.filter((k) => k !== key);
-    await ExpoSecureStore.setItemAsync(KEY_REGISTRY, JSON.stringify(filtered));
-  }
-
   return {
     async getItem(key: string): Promise<string | null> {
       return ExpoSecureStore.getItemAsync(key);

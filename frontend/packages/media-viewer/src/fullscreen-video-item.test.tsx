@@ -1,44 +1,36 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
+import { View } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { FullscreenVideoItem } from './fullscreen-video-item';
 import type { MediaViewerSource } from './types';
 
-jest.mock('react-native-gesture-handler', () => {
-  const { View } = require('react-native');
-  const gestureBuilder = () => ({
-    onUpdate: () => gestureBuilder(),
-    onEnd: () => gestureBuilder(),
-    activeOffsetY: () => gestureBuilder(),
-  });
-  return {
-    GestureDetector: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
-    Gesture: { Pan: gestureBuilder },
-  };
+const gestureBuilder = () => ({
+  onUpdate: () => gestureBuilder(),
+  onEnd: () => gestureBuilder(),
+  activeOffsetY: () => gestureBuilder(),
 });
 
-jest.mock('react-native-reanimated', () => {
-  const { View } = require('react-native');
-  return {
-    default: { View },
-    useSharedValue: (initial: number) => ({ value: initial }),
-    useAnimatedStyle: (fn: () => unknown) => fn(),
-    withSpring: (value: number) => value,
-    runOnJS: (fn: () => void) => fn,
-    interpolate: () => 1,
-    Extrapolation: { CLAMP: 'clamp' },
-  };
-});
+jest.mock('react-native-gesture-handler', () => ({
+  GestureDetector: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
+  Gesture: { Pan: gestureBuilder },
+}));
 
-jest.mock('expo-av', () => {
-  const { forwardRef } = require('react');
-  const { View } = require('react-native');
-  return {
-    Video: forwardRef((props: Record<string, unknown>, ref: unknown) => (
-      <View testID="expo-video" {...props} ref={ref} />
-    )),
-    ResizeMode: { CONTAIN: 'contain' },
-  };
-});
+jest.mock('react-native-reanimated', () => ({
+  default: { View },
+  useSharedValue: (initial: number) => ({ value: initial }),
+  useAnimatedStyle: (fn: () => unknown) => fn(),
+  withSpring: (value: number) => value,
+  runOnJS: (fn: () => void) => fn,
+  interpolate: () => 1,
+  Extrapolation: { CLAMP: 'clamp' },
+}));
+
+jest.mock('expo-av', () => ({
+  Video: forwardRef((props: Record<string, unknown>, _ref) => (
+    <View testID="expo-video" {...props} />
+  )),
+  ResizeMode: { CONTAIN: 'contain' },
+}));
 
 const source: MediaViewerSource = {
   uri: 'https://example.com/video.mp4',

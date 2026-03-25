@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image } from 'expo-image';
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { ImageStyle, StyleProp } from 'react-native';
 import type { MediaImageProps } from './types';
 import { getAspectRatioStyle } from './aspect-ratio';
 
@@ -13,14 +13,14 @@ const RESIZE_MODE_MAP = {
 const TRANSITION_DURATION = 200;
 
 function buildPlaceholder(blurhash: string | undefined) {
-  if (!blurhash) return undefined;
+  if (!blurhash) return null;
   return { blurhash };
 }
 
 function buildImageStyle(
-  style: ViewStyle | undefined,
+  style: ImageStyle | undefined,
   source: MediaImageProps['source'],
-): StyleProp<ViewStyle> {
+): StyleProp<ImageStyle> {
   const aspectStyle = getAspectRatioStyle(source);
   if (!aspectStyle && !style) return { width: '100%', height: '100%' };
   return [aspectStyle && { width: '100%', aspectRatio: aspectStyle.aspectRatio }, style];
@@ -28,6 +28,7 @@ function buildImageStyle(
 
 export function MediaImage(props: MediaImageProps) {
   const { source, style, resizeMode = 'cover', onLoad, onError } = props;
+  const optionalProps = buildOptionalProps(onLoad, onError);
 
   return (
     <Image
@@ -37,8 +38,17 @@ export function MediaImage(props: MediaImageProps) {
       placeholder={buildPlaceholder(source.blurhash)}
       transition={{ duration: TRANSITION_DURATION }}
       cachePolicy="memory-disk"
-      onLoad={onLoad}
-      onError={onError ? () => onError(new Error('Image failed to load')) : undefined}
+      {...optionalProps}
     />
   );
+}
+
+function buildOptionalProps(
+  onLoad: (() => void) | undefined,
+  onError: ((error: Error) => void) | undefined,
+) {
+  const result: Record<string, unknown> = {};
+  if (onLoad) result.onLoad = onLoad;
+  if (onError) result.onError = () => onError(new Error('Image failed to load'));
+  return result;
 }

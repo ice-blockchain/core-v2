@@ -77,7 +77,7 @@ declare module "expo-file-system" {
   ): Promise<FileInfo>;
 }
 
-declare module "react-native-video-compressor" {
+declare module "react-native-compressor" {
   export interface CompressOptions {
     maxSize?: number;
     bitrate?: number;

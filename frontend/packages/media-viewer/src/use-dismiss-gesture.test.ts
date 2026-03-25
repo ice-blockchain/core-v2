@@ -1,4 +1,5 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import { useDismissGesture } from './use-dismiss-gesture';
 
 jest.mock('react-native-gesture-handler', () => {
@@ -27,7 +28,7 @@ jest.mock('react-native-reanimated', () => ({
 describe('useDismissGesture', () => {
   const defaultOptions = {
     onClose: jest.fn(),
-    scale: { value: 1 },
+    scale: { value: 1 } as SharedValue<number>,
   };
 
   it('returns dismiss style with zero translation initially', () => {

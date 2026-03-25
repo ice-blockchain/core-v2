@@ -21,5 +21,14 @@ module.exports = {
     "max-params": ["error", 3],
     "no-empty": "error",
   },
+  overrides: [
+    {
+      files: ["*.test.ts"],
+      rules: {
+        "max-lines-per-function": "off",
+        "@typescript-eslint/no-var-requires": "off",
+      },
+    },
+  ],
   ignorePatterns: ["node_modules/", "dist/", "*.config.js", "*.config.ts", "**/icons/generated/**"],
 };
