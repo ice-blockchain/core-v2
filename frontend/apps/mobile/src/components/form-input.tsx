@@ -11,6 +11,8 @@ interface FormInputProps {
   secureTextEntry?: boolean;
   label?: string;
   errorMessage?: string | null;
+  onBlur?: () => void;
+  onFocus?: () => void;
 }
 
 function LeftSection({ icon }: { icon: ReactNode }) {
@@ -47,8 +49,8 @@ export function FormInput(props: FormInputProps) {
         <TextInput
           value={props.value}
           onChangeText={props.onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onFocus={() => { setFocused(true); props.onFocus?.(); }}
+          onBlur={() => { setFocused(false); props.onBlur?.(); }}
           placeholder={showLabel ? "" : props.placeholder}
           placeholderTextColor="#9A9A9A"
           secureTextEntry={props.secureTextEntry}

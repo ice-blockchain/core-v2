@@ -1,13 +1,27 @@
+import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { LoadingAnimation } from "../components/loading-animation";
 import { SecuredByFooter } from "../components/secured-by-footer";
-import { PasskeyIcon } from "../components/passkey-icon";
+import { VerifyPasskeyIcon } from "../components/verify-passkey-icon";
 
-export function VerifyPasskeyScreen() {
+const AUTO_DISMISS_DELAY = 3000;
+
+interface VerifyPasskeyScreenProps {
+  identityKeyName: string;
+  onBack: () => void;
+  onDismiss: () => void;
+}
+
+export function VerifyPasskeyScreen({ onDismiss }: VerifyPasskeyScreenProps) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, AUTO_DISMISS_DELAY);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
   return (
     <View style={styles.page}>
       <View style={styles.iconContainer}>
-        <PasskeyIcon />
+        <VerifyPasskeyIcon />
       </View>
       <Text style={styles.title}>Verify with a passkey</Text>
       <Text style={styles.subtitle}>

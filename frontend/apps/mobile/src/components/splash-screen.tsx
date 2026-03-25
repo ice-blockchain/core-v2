@@ -8,22 +8,30 @@ import { GetStartedScreen } from "../screens/get-started-screen";
 import { RegisterScreen } from "../screens/register-screen";
 import { VerifyPasskeyScreen } from "../screens/verify-passkey-screen";
 
-type Phase = "splash" | "intro" | "get-started" | "register" | "verify-passkey";
+type Phase =
+  | { name: "splash" }
+  | { name: "intro" }
+  | { name: "get-started" }
+  | { name: "register" }
+  | { name: "verify-passkey"; identityKeyName: string };
 
 function usePhaseNavigation() {
-  const [phase, setPhase] = useState<Phase>("splash");
+  const [phase, setPhase] = useState<Phase>({ name: "splash" });
 
   return {
     phase,
-    goToIntro: useCallback(() => setPhase("intro"), []),
-    goToGetStarted: useCallback(() => setPhase("get-started"), []),
-    goToRegister: useCallback(() => setPhase("register"), []),
-    goToVerifyPasskey: useCallback(() => setPhase("verify-passkey"), []),
+    goToIntro: useCallback(() => setPhase({ name: "intro" }), []),
+    goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), []),
+    goToRegister: useCallback(() => setPhase({ name: "register" }), []),
+    goToVerifyPasskey: useCallback(
+      (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
+      [],
+    ),
   };
 }
 
 function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
-  if (nav.phase === "register") {
+  if (nav.phase.name === "register") {
     return (
       <RegisterScreen
         onBack={nav.goToGetStarted}
@@ -31,8 +39,14 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
       />
     );
   }
-  if (nav.phase === "verify-passkey") {
-    return <VerifyPasskeyScreen />;
+  if (nav.phase.name === "verify-passkey") {
+    return (
+      <VerifyPasskeyScreen
+        identityKeyName={nav.phase.identityKeyName}
+        onBack={nav.goToRegister}
+        onDismiss={nav.goToGetStarted}
+      />
+    );
   }
   return (
     <GetStartedScreen
@@ -53,18 +67,18 @@ function AuthOverlay({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
 export function SplashScreen() {
   const nav = usePhaseNavigation();
 
-  if (nav.phase === "splash") {
+  if (nav.phase.name === "splash") {
     return <SplashVideo onComplete={nav.goToIntro} />;
   }
 
   return (
     <View style={styles.container}>
       <IntroVideo>
-        {nav.phase === "intro" ? (
+        {nav.phase.name === "intro" ? (
           <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
         ) : null}
       </IntroVideo>
-      {nav.phase !== "intro" && <AuthOverlay nav={nav} />}
+      {nav.phase.name !== "intro" && <AuthOverlay nav={nav} />}
     </View>
   );
 }

@@ -1,16 +1,22 @@
+import { type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { RegisterPasswordIcon } from "./register-password-icon";
 
-export function RegisterHeader() {
+interface RegisterHeaderProps {
+  icon: ReactNode;
+  title: string;
+  subtitle?: string;
+}
+
+export function RegisterHeader({ icon, title, subtitle }: RegisterHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <RegisterPasswordIcon />
+        {icon}
       </View>
-      <Text style={styles.title}>Register</Text>
-      <Text style={styles.subtitle}>
-        Choose a strong password to create an account
-      </Text>
+      <Text style={styles.title}>{title}</Text>
+      {subtitle ? (
+        <Text style={styles.subtitle}>{subtitle}</Text>
+      ) : null}
     </View>
   );
 }
