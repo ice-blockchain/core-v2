@@ -21,13 +21,11 @@ describe('NetworkError construction', () => {
       status: 500,
       responseBody: { detail: 'Something broke' },
       retryAfterMs: 5000,
-      timeoutMs: 30000,
       rawBody: '{"detail":"Something broke"}',
     });
     expect(error.status).toBe(500);
     expect(error.responseBody).toEqual({ detail: 'Something broke' });
     expect(error.retryAfterMs).toBe(5000);
-    expect(error.timeoutMs).toBe(30000);
     expect(error.rawBody).toBe('{"detail":"Something broke"}');
   });
 });
@@ -41,7 +39,6 @@ describe('NetworkError optional fields', () => {
     expect(error.status).toBeUndefined();
     expect(error.responseBody).toBeUndefined();
     expect(error.retryAfterMs).toBeUndefined();
-    expect(error.timeoutMs).toBeUndefined();
     expect(error.rawBody).toBeUndefined();
   });
 
@@ -60,7 +57,7 @@ describe('NetworkError codes', () => {
       'NETWORK_OFFLINE', 'NETWORK_TIMEOUT', 'REQUEST_ABORTED',
       'SERVER_ERROR', 'CLIENT_ERROR', 'AUTH_EXPIRED',
       'FORBIDDEN', 'RATE_LIMITED', 'PARSE_ERROR',
-      'REDIRECT_LOOP', 'HTTPS_REQUIRED',
+      'HTTPS_REQUIRED',
     ] as const;
     for (const code of codes) {
       const error = new NetworkError({ code, message: `${code} error` });

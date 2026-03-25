@@ -1,5 +1,5 @@
 // Types — shared
-export type { ConnectionState, NetworkErrorCode, CancelableRequest, UploadProgress } from './shared-types';
+export type { ConnectionState, NetworkErrorCode, UploadProgress } from './shared-types';
 
 // Types — events (public listener only, NOT NetworkEventEmitter)
 export type { NetworkEvent, NetworkEventListener, NetworkStateProvider } from './event-types';
@@ -18,9 +18,6 @@ export type { Interceptor, InterceptedRequest, InterceptedResponse } from './int
 
 // Types — auth
 export type { TokenStorage, BearerAuthInterceptorConfig, RefreshResult } from './auth-types';
-
-// Types — upload transport
-export type { UploadTransport, UploadTransportOptions } from './platform/upload-transport';
 
 // Types — retry
 export type { RetryConfig } from './retry-types';

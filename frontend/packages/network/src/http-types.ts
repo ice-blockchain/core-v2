@@ -1,20 +1,17 @@
 import type { Interceptor } from './interceptor-types';
 import type { RetryConfig } from './retry-types';
 import type { UploadProgress } from './shared-types';
-import type { UploadTransport } from './platform/upload-transport';
 import type { RequestQueue } from './queue-types';
 
 export interface HttpClientConfig {
   baseUrl: string;
   timeoutMs?: number;
-  maxRedirects?: number;
   maxResponseSizeBytes?: number;
   maxRequestBodySizeBytes?: number;
   interceptors?: Interceptor[];
   retryConfig?: RetryConfig;
   httpsAllowlist?: string[];
   isProduction?: boolean | undefined;
-  uploadTransport?: UploadTransport | undefined;
   requestQueue?: RequestQueue | undefined;
 }
 

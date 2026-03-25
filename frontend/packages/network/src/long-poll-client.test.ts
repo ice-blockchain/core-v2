@@ -3,6 +3,12 @@ import { createLongPollClient } from './long-poll-client';
 import type { HttpClient } from './http-types';
 import type { SyncResponse } from './long-poll-types';
 
+vi.mock('@ion/diagnostics', () => ({
+  Logger: { debug: vi.fn(), warning: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
+import { Logger } from '@ion/diagnostics';
+
 function createMockHttpClient(): HttpClient {
   return {
     get: vi.fn(),

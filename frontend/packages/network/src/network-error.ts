@@ -6,7 +6,6 @@ interface NetworkErrorOptions {
   status?: number | undefined;
   responseBody?: unknown;
   retryAfterMs?: number | undefined;
-  timeoutMs?: number | undefined;
   rawBody?: string | undefined;
   requestUrl?: string | undefined;
   shouldRetry?: boolean | undefined;
@@ -17,7 +16,6 @@ export class NetworkError extends Error {
   readonly status?: number | undefined;
   readonly responseBody?: unknown;
   readonly retryAfterMs?: number | undefined;
-  readonly timeoutMs?: number | undefined;
   readonly rawBody?: string | undefined;
   readonly requestUrl?: string | undefined;
   readonly shouldRetry?: boolean | undefined;
@@ -29,7 +27,6 @@ export class NetworkError extends Error {
     this.status = options.status;
     this.responseBody = options.responseBody;
     this.retryAfterMs = options.retryAfterMs;
-    this.timeoutMs = options.timeoutMs;
     this.rawBody = options.rawBody;
     this.requestUrl = options.requestUrl;
     this.shouldRetry = options.shouldRetry;

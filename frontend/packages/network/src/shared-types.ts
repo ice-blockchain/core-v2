@@ -15,13 +15,7 @@ export type NetworkErrorCode =
   | 'FORBIDDEN'
   | 'RATE_LIMITED'
   | 'PARSE_ERROR'
-  | 'REDIRECT_LOOP'
   | 'HTTPS_REQUIRED';
-
-export interface CancelableRequest<T> {
-  promise: Promise<T>;
-  cancel: () => void;
-}
 
 export interface UploadProgress {
   bytesSent: number;

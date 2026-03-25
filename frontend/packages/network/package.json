@@ -13,9 +13,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ion/config": "workspace:*",
     "@ion/diagnostics": "workspace:*",
-    "@ion/storage": "workspace:*"
+    "axios": "^1.7.0"
   },
   "peerDependencies": {
     "@react-native-community/netinfo": ">=11.0.0"
