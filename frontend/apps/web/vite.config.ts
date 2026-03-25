@@ -13,7 +13,11 @@ const REQUIRED_ENV_VARS = [
 ] as const;
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const fileEnv = loadEnv(mode, process.cwd(), 'VITE_');
+  const env: Record<string, string> = {};
+  for (const key of REQUIRED_ENV_VARS) {
+    env[key] = fileEnv[key] || process.env[key] || '';
+  }
 
   const missing = REQUIRED_ENV_VARS.filter((key) => !env[key]);
   if (missing.length > 0) {
