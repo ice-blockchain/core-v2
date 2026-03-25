@@ -41,6 +41,40 @@ declare module "ffmpeg-kit-react-native" {
   export class FFmpegKit {
     static execute(command: string): Promise<Session>;
   }
+
+  export interface StreamInformation {
+    getWidth(): number;
+    getHeight(): number;
+  }
+
+  export interface MediaInformation {
+    getStreams(): StreamInformation[];
+  }
+
+  export interface MediaInformationSession {
+    getMediaInformation(): MediaInformation | null;
+  }
+
+  export class FFprobeKit {
+    static getMediaInformation(
+      path: string,
+    ): Promise<MediaInformationSession>;
+  }
+}
+
+declare module "expo-file-system" {
+  export interface FileInfo {
+    exists: boolean;
+    size?: number;
+    uri: string;
+    isDirectory: boolean;
+    modificationTime?: number;
+  }
+
+  export function getInfoAsync(
+    uri: string,
+    options?: { size?: boolean },
+  ): Promise<FileInfo>;
 }
 
 declare module "react-native-video-compressor" {

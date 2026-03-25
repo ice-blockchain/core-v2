@@ -15,7 +15,7 @@ export async function extractAudio(
   await audioContext.close();
   return {
     uri: URL.createObjectURL(blob),
-    mimeType: "audio/ogg; codecs=opus",
+    mimeType: "audio/wav",
     fileSize: blob.size,
     width: 0,
     height: 0,
@@ -43,7 +43,7 @@ async function renderOffline(
 function encodeToBlob(audioBuffer: AudioBuffer): Blob {
   const channelData = audioBuffer.getChannelData(0);
   const wavData = encodeWav(channelData, audioBuffer.sampleRate);
-  return new Blob([wavData], { type: "audio/ogg; codecs=opus" });
+  return new Blob([wavData], { type: "audio/wav" });
 }
 
 function encodeWav(samples: Float32Array, sampleRate: number): ArrayBuffer {

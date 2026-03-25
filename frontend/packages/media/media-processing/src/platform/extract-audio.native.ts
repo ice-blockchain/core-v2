@@ -1,10 +1,13 @@
 import { FFmpegKit, ReturnCode } from "ffmpeg-kit-react-native";
 import type { AudioProcessingOptions, ProcessedMedia } from "../types";
+import { getFileSize } from "./get-file-size.native";
+import { assertSafeUri } from "./validate-uri";
 
 export async function extractAudio(
   uri: string,
   options?: AudioProcessingOptions,
 ): Promise<ProcessedMedia> {
+  assertSafeUri(uri);
   const outputUri = buildOutputUri(uri);
   const command = buildFfmpegCommand(uri, outputUri, options);
   const session = await FFmpegKit.execute(command);
@@ -14,10 +17,11 @@ export async function extractAudio(
     throw new Error("Audio extraction failed");
   }
 
+  const fileSize = await getFileSize(outputUri);
   return {
     uri: outputUri,
     mimeType: "audio/ogg; codecs=opus",
-    fileSize: 0,
+    fileSize,
     width: 0,
     height: 0,
     blurhash: "",

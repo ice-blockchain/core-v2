@@ -40,6 +40,20 @@ vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
   return document.createElement(tag);
 });
 
+describe("cropImage rejects invalid crop regions", () => {
+  it("rejects negative crop coordinates", async () => {
+    await expect(
+      cropImage("blob:mock/original", { x: -1, y: 0, width: 100, height: 100 }),
+    ).rejects.toThrow("non-negative");
+  });
+
+  it("rejects zero-dimension crop region", async () => {
+    await expect(
+      cropImage("blob:mock/original", { x: 0, y: 0, width: 0, height: 100 }),
+    ).rejects.toThrow("positive");
+  });
+});
+
 describe("cropImage (web)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,10 +62,7 @@ describe("cropImage (web)", () => {
 
   it("returns cropped image with correct dimensions", async () => {
     const result = await cropImage("blob:mock/original", {
-      x: 100,
-      y: 50,
-      width: 400,
-      height: 300,
+      x: 100, y: 50, width: 400, height: 300,
     });
     expect(result.width).toBe(400);
     expect(result.height).toBe(300);
@@ -60,10 +71,7 @@ describe("cropImage (web)", () => {
 
   it("passes crop region coordinates to drawImage", async () => {
     await cropImage("blob:mock/original", {
-      x: 100,
-      y: 50,
-      width: 400,
-      height: 300,
+      x: 100, y: 50, width: 400, height: 300,
     });
     const cropCall = allDrawImageCalls[0]!;
     expect(cropCall[1]).toBe(100);
@@ -74,10 +82,7 @@ describe("cropImage (web)", () => {
 
   it("includes a blurhash in the result", async () => {
     const result = await cropImage("blob:mock/original", {
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 100,
+      x: 0, y: 0, width: 100, height: 100,
     });
     expect(result.blurhash).toBeTruthy();
   });

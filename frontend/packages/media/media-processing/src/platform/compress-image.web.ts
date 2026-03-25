@@ -1,5 +1,6 @@
 import { encode } from "blurhash";
 import type { ProcessingOptions, ProcessedMedia } from "../types";
+import { clampQuality } from "./validate-options";
 
 const DEFAULT_QUALITY = 0.8;
 const BLURHASH_SIZE = 32;
@@ -14,7 +15,7 @@ export async function compressImage(
   const { width, height } = computeDimensions(image, options);
   const canvas = drawToCanvas(image, width, height);
   const mimeType = resolveMimeType(options?.format);
-  const quality = options?.quality ?? DEFAULT_QUALITY;
+  const quality = clampQuality(options?.quality ?? DEFAULT_QUALITY, 0, 1);
   const blob = await canvasToBlob(canvas, mimeType, quality);
   const blurhash = encodeBlurhash(canvas);
   return {
@@ -30,6 +31,7 @@ export async function compressImage(
 function loadImage(uri: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Failed to load image"));
     image.src = uri;

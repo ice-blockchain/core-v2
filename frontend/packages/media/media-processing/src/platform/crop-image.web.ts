@@ -1,5 +1,6 @@
 import { encode } from "blurhash";
 import type { CropRegion, ProcessedMedia } from "../types";
+import { assertValidCropRegion } from "./validate-options";
 
 const BLURHASH_SIZE = 32;
 
@@ -7,6 +8,7 @@ export async function cropImage(
   uri: string,
   region: CropRegion,
 ): Promise<ProcessedMedia> {
+  assertValidCropRegion(region);
   const image = await loadImage(uri);
   const canvas = cropToCanvas(image, region);
   const blob = await canvasToBlob(canvas);
@@ -24,6 +26,7 @@ export async function cropImage(
 function loadImage(uri: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Failed to load image"));
     image.src = uri;

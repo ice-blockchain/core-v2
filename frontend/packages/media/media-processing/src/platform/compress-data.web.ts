@@ -1,5 +1,6 @@
 import brotliPromise from "brotli-wasm";
 import type { CompressDataOptions, CompressedData } from "../types";
+import { clampQuality } from "./validate-options";
 
 const DEFAULT_QUALITY = 6;
 
@@ -10,7 +11,7 @@ export async function compressData(
   const brotli = await brotliPromise;
   const bytes = toBytes(input);
   const compressed = brotli.compress(bytes, {
-    quality: options?.quality ?? DEFAULT_QUALITY,
+    quality: clampQuality(options?.quality ?? DEFAULT_QUALITY, 0, 11),
   });
   return {
     data: compressed,

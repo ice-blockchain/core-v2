@@ -1,6 +1,8 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import type { ProcessingOptions, ProcessedMedia } from "../types";
 import { generateBlurhash } from "./generate-blurhash.native";
+import { getFileSize } from "./get-file-size.native";
+import { clampQuality } from "./validate-options";
 
 const DEFAULT_QUALITY = 0.8;
 
@@ -16,11 +18,14 @@ export async function compressImage(
     saveOptions,
   );
   const mimeType = resolveMimeType(saveOptions.format);
-  const blurhash = await generateBlurhash(result.uri);
+  const [blurhash, fileSize] = await Promise.all([
+    generateBlurhash(result.uri),
+    getFileSize(result.uri),
+  ]);
   return {
     uri: result.uri,
     mimeType,
-    fileSize: 0,
+    fileSize,
     width: result.width,
     height: result.height,
     blurhash,
@@ -41,7 +46,7 @@ function buildSaveOptions(
   options?: ProcessingOptions,
 ): ImageManipulator.SaveOptions {
   return {
-    compress: options?.quality ?? DEFAULT_QUALITY,
+    compress: clampQuality(options?.quality ?? DEFAULT_QUALITY, 0, 1),
     format: resolveFormat(options?.format),
   };
 }

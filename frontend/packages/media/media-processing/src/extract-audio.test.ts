@@ -52,9 +52,9 @@ describe("extractAudio (web)", () => {
     vi.clearAllMocks();
   });
 
-  it("returns audio with opus mimeType", async () => {
+  it("returns audio with wav mimeType", async () => {
     const result = await extractAudio("blob:mock/video.mp4");
-    expect(result.mimeType).toBe("audio/ogg; codecs=opus");
+    expect(result.mimeType).toBe("audio/wav");
   });
 
   it("returns zero dimensions for audio", async () => {

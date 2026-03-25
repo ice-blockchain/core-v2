@@ -30,6 +30,7 @@ export async function compressVideo(
 function loadVideo(uri: string): Promise<HTMLVideoElement> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
     video.preload = "metadata";
     video.muted = true;
     video.onloadeddata = () => resolve(video);

@@ -1,11 +1,14 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import type { CropRegion, ProcessedMedia } from "../types";
 import { generateBlurhash } from "./generate-blurhash.native";
+import { getFileSize } from "./get-file-size.native";
+import { assertValidCropRegion } from "./validate-options";
 
 export async function cropImage(
   uri: string,
   region: CropRegion,
 ): Promise<ProcessedMedia> {
+  assertValidCropRegion(region);
   const result = await ImageManipulator.manipulateAsync(uri, [
     {
       crop: {
@@ -16,11 +19,14 @@ export async function cropImage(
       },
     },
   ]);
-  const blurhash = await generateBlurhash(result.uri);
+  const [blurhash, fileSize] = await Promise.all([
+    generateBlurhash(result.uri),
+    getFileSize(result.uri),
+  ]);
   return {
     uri: result.uri,
     mimeType: "image/png",
-    fileSize: 0,
+    fileSize,
     width: result.width,
     height: result.height,
     blurhash,

@@ -14,6 +14,7 @@ export async function generateBlurhash(uri: string): Promise<string> {
 function loadImage(uri: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Failed to load image"));
     image.src = uri;
