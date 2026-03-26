@@ -20,11 +20,12 @@ function requireTemporaryToken(token: string | null): string {
 export async function registerWithPasskey(
   username: string,
   deps: RegistrationDeps,
+  earlyAccessEmail?: string,
 ): Promise<void> {
   if (!isPasskeyAvailable()) {
     throw new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'Passkeys are not supported');
   }
-  const challenge = await deps.registrationDataSource.initRegistration(username);
+  const challenge = await deps.registrationDataSource.initRegistration(username, earlyAccessEmail);
   const tempToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   const passkey = await createPasskeyCredential(challenge);
   const result = await deps.registrationDataSource.completeRegistration(
@@ -39,23 +40,29 @@ export async function registerWithPasskey(
       },
     },
     tempToken,
+    earlyAccessEmail,
   );
   await deps.tokenManager.setTokens(username, result.authentication);
 }
 
+interface PasswordRegistrationInput {
+  username: string;
+  password: string;
+  earlyAccessEmail?: string | undefined;
+}
+
 export async function registerWithPassword(
-  username: string,
-  password: string,
+  input: PasswordRegistrationInput,
   deps: RegistrationDeps,
 ): Promise<void> {
-  const challenge = await deps.registrationDataSource.initRegistration(username);
+  const challenge = await deps.registrationDataSource.initRegistration(input.username, input.earlyAccessEmail);
   const tempToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   const keyPair = generateKeyPair();
   const signed = await signForRegistration({
     challenge: challenge.challenge,
     origin: deps.origin,
     keyPair,
-    password,
+    password: input.password,
   });
   const result = await deps.registrationDataSource.completeRegistration(
     {
@@ -70,6 +77,7 @@ export async function registerWithPassword(
       },
     },
     tempToken,
+    input.earlyAccessEmail,
   );
-  await deps.tokenManager.setTokens(username, result.authentication);
+  await deps.tokenManager.setTokens(input.username, result.authentication);
 }

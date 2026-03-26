@@ -26,10 +26,10 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
   const userDeps = { userDataSource, tokenManager };
 
   return {
-    registerWithPasskey: (username) => registerWithPasskey(username, regDeps),
-    registerWithPassword: (username, password) => registerWithPassword(username, password, regDeps),
-    loginWithPasskey: (username) => loginWithPasskey(username, loginDeps),
-    loginWithPassword: (username, password) => loginWithPassword(username, password, loginDeps),
+    registerWithPasskey: (username, earlyAccessEmail) => registerWithPasskey(username, regDeps, earlyAccessEmail),
+    registerWithPassword: (username, password, earlyAccessEmail) => registerWithPassword({ username, password, earlyAccessEmail }, regDeps),
+    loginWithPasskey: (username, twoFAVerificationCodes) => loginWithPasskey(username, loginDeps, twoFAVerificationCodes),
+    loginWithPassword: (username, password, twoFAVerificationCodes) => loginWithPassword({ username, password, twoFAVerificationCodes }, loginDeps),
     logout: (username) => logout(username, sessionDeps),
     refreshToken: (username) => refreshToken(username, sessionDeps),
     isAuthenticated: (username) => isAuthenticated(username, sessionDeps),

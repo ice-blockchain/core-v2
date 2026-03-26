@@ -8,10 +8,10 @@ export interface IdentityClientConfig {
 }
 
 export interface IdentityClient {
-  registerWithPasskey(username: string): Promise<void>;
-  registerWithPassword(username: string, password: string): Promise<void>;
-  loginWithPasskey(username: string): Promise<string>;
-  loginWithPassword(username: string, password: string): Promise<string>;
+  registerWithPasskey(username: string, earlyAccessEmail?: string): Promise<void>;
+  registerWithPassword(username: string, password: string, earlyAccessEmail?: string): Promise<void>;
+  loginWithPasskey(username: string, twoFAVerificationCodes?: Record<string, string>): Promise<string>;
+  loginWithPassword(username: string, password: string, twoFAVerificationCodes?: Record<string, string>): Promise<string>;
   logout(username: string): Promise<void>;
   refreshToken(username: string): Promise<void>;
   isAuthenticated(username: string): Promise<boolean>;

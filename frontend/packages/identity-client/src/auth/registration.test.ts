@@ -58,12 +58,13 @@ describe('registerWithPasskey', () => {
   it('completes passkey registration and stores tokens', async () => {
     await registerWithPasskey('alice@example.com', deps);
 
-    expect(deps.registrationDataSource.initRegistration).toHaveBeenCalledWith('alice@example.com');
+    expect(deps.registrationDataSource.initRegistration).toHaveBeenCalledWith('alice@example.com', undefined);
     expect(deps.registrationDataSource.completeRegistration).toHaveBeenCalledWith(
       expect.objectContaining({
         firstFactorCredential: expect.objectContaining({ credentialKind: 'Fido2' }),
       }),
       'temp-token-abc',
+      undefined,
     );
     expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice@example.com', {
       token: 'access-tok',
@@ -98,9 +99,9 @@ describe('registerWithPassword', () => {
   });
 
   it('completes password registration and stores tokens', async () => {
-    await registerWithPassword('alice@example.com', 'secret', deps);
+    await registerWithPassword({ username: 'alice@example.com', password: 'secret' }, deps);
 
-    expect(deps.registrationDataSource.initRegistration).toHaveBeenCalledWith('alice@example.com');
+    expect(deps.registrationDataSource.initRegistration).toHaveBeenCalledWith('alice@example.com', undefined);
     expect(deps.registrationDataSource.completeRegistration).toHaveBeenCalledWith(
       expect.objectContaining({
         firstFactorCredential: expect.objectContaining({
@@ -109,6 +110,7 @@ describe('registerWithPassword', () => {
         }),
       }),
       'temp-token-abc',
+      undefined,
     );
     expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice@example.com', {
       token: 'access-tok',
@@ -120,7 +122,7 @@ describe('registerWithPassword', () => {
     const nullTokenChallenge = { ...mockChallenge, temporaryAuthenticationToken: null };
     vi.mocked(deps.registrationDataSource.initRegistration).mockResolvedValueOnce(nullTokenChallenge);
 
-    await expect(registerWithPassword('alice@example.com', 'secret', deps)).rejects.toMatchObject({
+    await expect(registerWithPassword({ username: 'alice@example.com', password: 'secret' }, deps)).rejects.toMatchObject({
       code: IdentityErrorCode.UNKNOWN,
     });
   });

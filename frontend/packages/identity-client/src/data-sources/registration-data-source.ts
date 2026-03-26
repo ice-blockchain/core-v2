@@ -2,10 +2,11 @@ import type { HttpClient } from '@ion/network';
 import type { UserRegistrationChallenge, RegistrationResult } from '../types';
 
 export interface RegistrationDataSource {
-  initRegistration(email: string): Promise<UserRegistrationChallenge>;
+  initRegistration(email: string, earlyAccessEmail?: string): Promise<UserRegistrationChallenge>;
   completeRegistration(
     credential: RegistrationCredentialPayload,
     tempToken: string,
+    earlyAccessEmail?: string,
   ): Promise<RegistrationResult>;
 }
 
@@ -19,15 +20,15 @@ export interface RegistrationCredentialPayload {
 
 export function createRegistrationDataSource(httpClient: HttpClient): RegistrationDataSource {
   return {
-    initRegistration(email) {
+    initRegistration(email, earlyAccessEmail) {
       return httpClient.post<UserRegistrationChallenge>('/auth/registration/delegated', {
-        body: { email },
+        body: { email, ...(earlyAccessEmail != null && { earlyAccessEmail }) },
       });
     },
 
-    completeRegistration(credential, tempToken) {
+    completeRegistration(credential, tempToken, earlyAccessEmail) {
       return httpClient.post<RegistrationResult>('/auth/registration/enduser', {
-        body: credential,
+        body: { ...credential, ...(earlyAccessEmail != null && { earlyAccessEmail }) },
         headers: { Authorization: `Bearer ${tempToken}` },
       });
     },
