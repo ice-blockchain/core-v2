@@ -156,7 +156,9 @@ jobs:
           java-version: 17
 
       - name: Fix Hermes permissions
-        run: chmod +x apps/mobile/node_modules/hermes-compiler/hermesc/osx-bin/hermesc
+        run: |
+          find apps/mobile/node_modules -name "hermesc" -type f -exec chmod +x {} +
+          find apps/mobile/node_modules -name "*.sh" -path "*/react-native/*" -exec chmod +x {} +
 
       - name: Build Android
         working-directory: frontend/apps/mobile/android
@@ -266,7 +268,9 @@ jobs:
           working-directory: frontend/apps/mobile
 
       - name: Fix Hermes permissions
-        run: chmod +x apps/mobile/node_modules/hermes-compiler/hermesc/osx-bin/hermesc
+        run: |
+          find apps/mobile/node_modules -name "hermesc" -type f -exec chmod +x {} +
+          find apps/mobile/node_modules -name "*.sh" -path "*/react-native/*" -exec chmod +x {} +
 
       - name: Install CocoaPods
         working-directory: frontend/apps/mobile/ios
