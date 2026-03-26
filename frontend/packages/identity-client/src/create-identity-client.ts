@@ -4,6 +4,7 @@ import { createLoginDataSource } from './data-sources/login-data-source';
 import { createSessionDataSource } from './data-sources/session-data-source';
 import { createUserDataSource } from './data-sources/user-data-source';
 import { createTokenManager } from './token/token-manager';
+import { withDefaultHeaders } from './http-client-with-headers';
 import { registerWithPasskey, registerWithPassword } from './auth/registration';
 import { loginWithPasskey, loginWithPassword } from './auth/login';
 import { logout, refreshToken, isAuthenticated } from './auth/session';
@@ -11,10 +12,11 @@ import { getLoginCapabilities } from './auth/login-capabilities';
 import { getUser } from './users/get-user';
 
 export function createIdentityClient(config: IdentityClientConfig): IdentityClient {
-  const registrationDataSource = createRegistrationDataSource(config.httpClient);
-  const loginDataSource = createLoginDataSource(config.httpClient);
-  const sessionDataSource = createSessionDataSource(config.httpClient);
-  const userDataSource = createUserDataSource(config.httpClient);
+  const httpClient = withDefaultHeaders(config.httpClient, { 'X-Client-ID': config.appId });
+  const registrationDataSource = createRegistrationDataSource(httpClient);
+  const loginDataSource = createLoginDataSource(httpClient);
+  const sessionDataSource = createSessionDataSource(httpClient);
+  const userDataSource = createUserDataSource(httpClient);
   const tokenManager = createTokenManager(config.secureStorage);
   const origin = config.appId;
 
