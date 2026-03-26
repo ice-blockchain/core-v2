@@ -179,25 +179,6 @@ jobs:
               -PversionCode="$BUILD_NUMBER"
           fi
 
-      - name: Find build artifact
-        id: artifact
-        env:
-          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
-        run: |
-          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
-            ARTIFACT=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -1)
-          else
-            ARTIFACT=$(find apps/mobile/android/app/build/outputs/bundle -name "*.aab" | head -1)
-          fi
-          echo "path=$ARTIFACT" >> "$GITHUB_OUTPUT"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
-        with:
-          name: android-${{ inputs.environment }}-${{ inputs.deployment_target }}
-          path: frontend/${{ steps.artifact.outputs.path }}
-          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
-
       - name: Setup Ruby
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
@@ -315,7 +296,7 @@ jobs:
             -archivePath build/Ion.xcarchive \
             -destination 'generic/platform=iOS' \
             -jobs 4 \
-            -quiet \
+            -hideShellScriptEnvironment \
             CODE_SIGN_STYLE=Manual \
             COMPILER_INDEX_STORE_ENABLE=NO \
             DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
@@ -364,13 +345,6 @@ jobs:
             -archivePath build/Ion.xcarchive \
             -exportOptionsPlist build/ExportOptions.plist \
             -exportPath build/export
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
-        with:
-          name: ios-${{ inputs.environment }}-${{ inputs.deployment_target }}
-          path: frontend/apps/mobile/ios/build/export/*.ipa
-          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Deploy to Firebase
         if: inputs.deployment_target == 'firebase'
