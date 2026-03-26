@@ -111,8 +111,8 @@ jobs:
   build-android:
     name: Build Android
     needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: macos-15
+    timeout-minutes: 45
     environment: ${{ inputs.environment }}
     defaults:
       run:
@@ -158,9 +158,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Fix Hermes compiler permissions
-        run: chmod +x apps/mobile/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc
 
       - name: Build Android
         working-directory: frontend/apps/mobile/android
