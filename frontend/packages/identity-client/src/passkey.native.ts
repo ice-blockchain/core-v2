@@ -63,9 +63,16 @@ export async function getPasskeyAssertion(
   }
 }
 
+function extractErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String(error.message);
+  }
+  return String(error);
+}
+
 function mapNativePasskeyError(error: unknown): IdentityError {
-  const message = error instanceof Error ? error.message : String(error);
-  Logger.error('Passkey native error', { tag: 'identity', message });
+  const message = extractErrorMessage(error);
+  Logger.warning('Passkey native error', { tag: 'identity', data: { message } });
   if (message.includes('cancel') || message.includes('Cancel')) {
     return new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'Passkey operation cancelled', error);
   }
