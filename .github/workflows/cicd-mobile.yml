@@ -21,6 +21,7 @@ on:
       app_version:
         description: App version (e.g. 1.0.0)
         required: true
+        default: "9.9.9"
         type: string
 
 permissions:
