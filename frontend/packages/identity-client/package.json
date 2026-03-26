@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ion/diagnostics": "workspace:*",
     "@ion/network": "workspace:*",
     "@ion/storage": "workspace:*",
     "@noble/curves": "^1.8.0",
