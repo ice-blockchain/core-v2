@@ -15,7 +15,6 @@ import (
 	sptypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -111,8 +110,8 @@ func TestE2E_SubscribeAndReceiveEvent(t *testing.T) {
 	}
 
 	require.NotNil(t, receivedEvent)
-	assert.Greater(t, receivedEvent.Height, int64(0))
-	assert.NotEmpty(t, receivedEvent.TxHash)
+	require.Greater(t, receivedEvent.Height, int64(0))
+	require.NotEmpty(t, receivedEvent.TxHash)
 	t.Logf("received event at height=%d tx=%s", receivedEvent.Height, receivedEvent.TxHash)
 }
 

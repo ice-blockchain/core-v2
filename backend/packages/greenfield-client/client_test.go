@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -88,19 +87,19 @@ func TestParseTxResponse_FullPayload(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, txEvent)
 
-	assert.Equal(t, int64(29331798), txEvent.Height)
-	assert.Equal(t, "90B5A5084BC255A37C222294D023883D4ED06E9A72D37E405924007D96AA2C83", txEvent.TxHash)
-	assert.Len(t, txEvent.Events, 2)
+	require.Equal(t, int64(29331798), txEvent.Height)
+	require.Equal(t, "90B5A5084BC255A37C222294D023883D4ED06E9A72D37E405924007D96AA2C83", txEvent.TxHash)
+	require.Len(t, txEvent.Events, 2)
 
 	bucketEvent := txEvent.Events[0]
-	assert.Equal(t, "greenfield.storage.EventCreateBucket", bucketEvent.Type)
-	assert.Equal(t, "user-bucket3", bucketEvent.Attributes["bucket_name"])
-	assert.Equal(t, "1774432372", bucketEvent.Attributes["create_at"])
+	require.Equal(t, "greenfield.storage.EventCreateBucket", bucketEvent.Type)
+	require.Equal(t, "user-bucket3", bucketEvent.Attributes["bucket_name"])
+	require.Equal(t, "1774432372", bucketEvent.Attributes["create_at"])
 
 	tagEvent := txEvent.Events[1]
-	assert.Equal(t, "greenfield.storage.EventSetTag", tagEvent.Type)
-	assert.Equal(t, "grn:b::user-bucket3", tagEvent.Attributes["resource"])
-	assert.Contains(t, tagEvent.Attributes["tags"], `"key":"onlineioEnv","value":"dev"`)
+	require.Equal(t, "greenfield.storage.EventSetTag", tagEvent.Type)
+	require.Equal(t, "grn:b::user-bucket3", tagEvent.Attributes["resource"])
+	require.Contains(t, tagEvent.Attributes["tags"], `"key":"onlineioEnv","value":"dev"`)
 }
 
 func TestParseTxResponse_NilData(t *testing.T) {
@@ -111,15 +110,15 @@ func TestParseTxResponse_NilData(t *testing.T) {
 	rawJSON, _ := json.Marshal(result)
 	txEvent, err := ParseTxResponse(rawJSON, result)
 	require.NoError(t, err)
-	assert.Nil(t, txEvent)
+	require.Nil(t, txEvent)
 }
 
 func TestIsRelevantEventType(t *testing.T) {
-	assert.True(t, isRelevantEventType("greenfield.storage.EventCreateObject"))
-	assert.True(t, isRelevantEventType("greenfield.storage.EventUpdateObjectContent"))
-	assert.True(t, isRelevantEventType("greenfield.storage.EventSetTag"))
-	assert.False(t, isRelevantEventType("greenfield.storage.EventDeleteObject"))
-	assert.False(t, isRelevantEventType("message"))
+	require.True(t, isRelevantEventType("greenfield.storage.EventCreateObject"))
+	require.True(t, isRelevantEventType("greenfield.storage.EventUpdateObjectContent"))
+	require.True(t, isRelevantEventType("greenfield.storage.EventSetTag"))
+	require.False(t, isRelevantEventType("greenfield.storage.EventDeleteObject"))
+	require.False(t, isRelevantEventType("message"))
 }
 
 func TestHasOnlineIOTag(t *testing.T) {
@@ -133,7 +132,7 @@ func TestHasOnlineIOTag(t *testing.T) {
 			},
 		},
 	}
-	assert.True(t, hasOnlineIOTag(t, events, tagKey))
+	require.True(t, hasOnlineIOTag(t, events, tagKey))
 
 	noTagEvents := []ABCIEvent{
 		{
@@ -143,7 +142,7 @@ func TestHasOnlineIOTag(t *testing.T) {
 			},
 		},
 	}
-	assert.False(t, hasOnlineIOTag(t, noTagEvents, tagKey))
+	require.False(t, hasOnlineIOTag(t, noTagEvents, tagKey))
 }
 
 func TestConcurrentHTTPClientAccess(t *testing.T) {
@@ -176,8 +175,8 @@ func TestNextRPC_RoundRobin(t *testing.T) {
 	url3 := c.nextRPC()
 	url4 := c.nextRPC()
 
-	assert.Equal(t, "http://rpc2", url1)
-	assert.Equal(t, "http://rpc3", url2)
-	assert.Equal(t, "http://rpc1", url3)
-	assert.Equal(t, "http://rpc2", url4)
+	require.Equal(t, "http://rpc2", url1)
+	require.Equal(t, "http://rpc3", url2)
+	require.Equal(t, "http://rpc1", url3)
+	require.Equal(t, "http://rpc2", url4)
 }

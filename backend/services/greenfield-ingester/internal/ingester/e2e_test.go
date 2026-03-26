@@ -19,7 +19,6 @@ import (
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/redis/go-redis/v9"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -144,7 +143,7 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 
 			val, err := redisClient.Get(ctx, heightKey).Result()
 			require.NoError(t, err)
-			assert.NotEmpty(t, val)
+			require.NotEmpty(t, val)
 			t.Logf("last height in redis: %s", val)
 
 			jobKey := fmt.Sprintf("bull:%s:%s", queueName, matchingJobID)
@@ -152,15 +151,15 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, fields, "job hash %s should exist", jobKey)
 
-			assert.Equal(t, "EventCreateObject", fields["name"])
-			assert.NotEmpty(t, fields["data"])
-			assert.NotEmpty(t, fields["timestamp"])
+			require.Equal(t, "EventCreateObject", fields["name"])
+			require.NotEmpty(t, fields["data"])
+			require.NotEmpty(t, fields["timestamp"])
 
 			var jobData map[string]interface{}
 			require.NoError(t, json.Unmarshal([]byte(fields["data"]), &jobData))
-			assert.Equal(t, objectName, jobData["object_name"])
-			assert.Equal(t, bucketName, jobData["bucket_name"])
-			assert.Equal(t, "application/json", jobData["content_type"])
+			require.Equal(t, objectName, jobData["object_name"])
+			require.Equal(t, bucketName, jobData["bucket_name"])
+			require.Equal(t, "application/json", jobData["content_type"])
 			t.Logf("verified job: name=%s bucket=%s object=%s content_type=%s",
 				fields["name"], jobData["bucket_name"], jobData["object_name"], jobData["content_type"])
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,30 +29,30 @@ func TestAddJob_SkipsDuplicate(t *testing.T) {
 	pipe := client.TxPipeline()
 	created, err := q.AddJob(ctx, pipe, "TestJob", data, jobID)
 	require.NoError(t, err)
-	assert.True(t, created)
+	require.True(t, created)
 	_, err = pipe.Exec(ctx)
 	require.NoError(t, err)
 
 	waitKey := "bull:test-queue:wait"
 	count, err := client.LLen(ctx, waitKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), count)
+	require.Equal(t, int64(1), count)
 
 	jobKey := "bull:test-queue:" + jobID
 	jobExists, err := client.Exists(ctx, jobKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), jobExists)
+	require.Equal(t, int64(1), jobExists)
 
 	pipe2 := client.TxPipeline()
 	created2, err := q.AddJob(ctx, pipe2, "TestJob", data, jobID)
 	require.NoError(t, err)
-	assert.False(t, created2)
+	require.False(t, created2)
 	_, err = pipe2.Exec(ctx)
 	require.NoError(t, err)
 
 	count, err = client.LLen(ctx, waitKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), count)
+	require.Equal(t, int64(1), count)
 }
 
 func TestAddJob_CreatesJobHash(t *testing.T) {
@@ -68,15 +67,15 @@ func TestAddJob_CreatesJobHash(t *testing.T) {
 	pipe := client.TxPipeline()
 	created, err := q.AddJob(ctx, pipe, "EventCreateObject", data, jobID)
 	require.NoError(t, err)
-	assert.True(t, created)
+	require.True(t, created)
 	_, err = pipe.Exec(ctx)
 	require.NoError(t, err)
 
 	jobKey := "bull:test-queue:" + jobID
 	fields, err := client.HGetAll(ctx, jobKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, "EventCreateObject", fields["name"])
-	assert.Equal(t, `{"bucket":"test"}`, fields["data"])
+	require.Equal(t, "EventCreateObject", fields["name"])
+	require.Equal(t, `{"bucket":"test"}`, fields["data"])
 }
 
 func TestAddJob_WritesMetaAndEvents(t *testing.T) {
@@ -96,10 +95,10 @@ func TestAddJob_WritesMetaAndEvents(t *testing.T) {
 	metaKey := "bull:test-queue:meta"
 	val, err := client.HGet(ctx, metaKey, "opts.maxLenEvents").Result()
 	require.NoError(t, err)
-	assert.Equal(t, "10000", val)
+	require.Equal(t, "10000", val)
 
 	eventsKey := "bull:test-queue:events"
 	streamLen, err := client.XLen(ctx, eventsKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), streamLen)
+	require.Equal(t, int64(1), streamLen)
 }

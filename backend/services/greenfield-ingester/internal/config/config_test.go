@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,7 +32,7 @@ func TestLoad_RejectsInvalidOnlineIOEnv(t *testing.T) {
 
 			_, err := Load()
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), "invalid characters")
+			require.Contains(t, err.Error(), "invalid characters")
 		})
 	}
 }
@@ -48,7 +47,7 @@ func TestLoad_AcceptsValidOnlineIOEnv(t *testing.T) {
 
 			cfg, err := Load()
 			require.NoError(t, err)
-			assert.Equal(t, env, cfg.OnlineIOEnv)
+			require.Equal(t, env, cfg.OnlineIOEnv)
 		})
 	}
 }
@@ -60,7 +59,7 @@ func TestLoad_RequiresPrivateKey(t *testing.T) {
 
 	_, err := Load()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "GREENFIELD_PRIVATE_KEY is required")
+	require.Contains(t, err.Error(), "GREENFIELD_PRIVATE_KEY is required")
 }
 
 func TestLoad_RequiresRpcURLs(t *testing.T) {
@@ -68,7 +67,7 @@ func TestLoad_RequiresRpcURLs(t *testing.T) {
 
 	_, err := Load()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "GREENFIELD_RPC_URLS is required")
+	require.Contains(t, err.Error(), "GREENFIELD_RPC_URLS is required")
 }
 
 func TestLoad_SuccessWithAllRequiredEnv(t *testing.T) {
@@ -76,7 +75,7 @@ func TestLoad_SuccessWithAllRequiredEnv(t *testing.T) {
 
 	cfg, err := Load()
 	require.NoError(t, err)
-	assert.Equal(t, []string{"https://rpc.example.com"}, cfg.GreenfieldRpcURLs)
-	assert.Equal(t, "dev", cfg.OnlineIOEnv)
-	assert.Equal(t, "abc123", cfg.GreenfieldPrivKey)
+	require.Equal(t, []string{"https://rpc.example.com"}, cfg.GreenfieldRpcURLs)
+	require.Equal(t, "dev", cfg.OnlineIOEnv)
+	require.Equal(t, "abc123", cfg.GreenfieldPrivKey)
 }

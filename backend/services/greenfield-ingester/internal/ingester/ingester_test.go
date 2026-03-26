@@ -13,7 +13,6 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -99,11 +98,11 @@ func TestIngester_ProcessCreateObjectEvent(t *testing.T) {
 	defer cancel()
 
 	err := ingester.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	storedHeight, err := redisClient.Get(ctx, heightKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, "29331798", storedHeight)
+	require.Equal(t, "29331798", storedHeight)
 }
 
 func TestIngester_LoadsLastHeight(t *testing.T) {
@@ -118,7 +117,7 @@ func TestIngester_LoadsLastHeight(t *testing.T) {
 
 	height, err := ingester.loadLastHeight(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, int64(12345), height)
+	require.Equal(t, int64(12345), height)
 }
 
 func TestIngester_LoadsLastHeight_NotSet(t *testing.T) {
@@ -130,7 +129,7 @@ func TestIngester_LoadsLastHeight_NotSet(t *testing.T) {
 
 	height, err := ingester.loadLastHeight(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, int64(0), height)
+	require.Equal(t, int64(0), height)
 }
 
 func TestIngester_UpdateObjectContentEvent(t *testing.T) {
@@ -163,18 +162,18 @@ func TestIngester_UpdateObjectContentEvent(t *testing.T) {
 	defer cancel()
 
 	err := ingester.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	storedHeight, err := redisClient.Get(ctx, heightKey).Result()
 	require.NoError(t, err)
 
 	h, _ := strconv.ParseInt(storedHeight, 10, 64)
-	assert.Equal(t, int64(29331800), h)
+	require.Equal(t, int64(29331800), h)
 }
 
 func TestIngester_JobIDFormat(t *testing.T) {
 	jobID := formatJobID(29331798, "ABCDEF", "my-bucket", "my-object")
-	assert.Equal(t, "29331798:ABCDEF:my-bucket:my-object", jobID)
+	require.Equal(t, "29331798:ABCDEF:my-bucket:my-object", jobID)
 }
 
 func formatJobID(height int64, txHash, bucket, object string) string {
@@ -205,10 +204,10 @@ func TestIngester_SkipsIrrelevantEvents(t *testing.T) {
 	defer cancel()
 
 	err := ingester.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	_, err = redisClient.Get(ctx, heightKey).Result()
-	assert.Equal(t, redis.Nil, err)
+	require.Equal(t, redis.Nil, err)
 }
 
 // Verify JSON serialization of job data
@@ -222,8 +221,8 @@ func TestJobDataSerialization(t *testing.T) {
 
 	jsonData, err := json.Marshal(data)
 	require.NoError(t, err)
-	assert.Contains(t, string(jsonData), `"block_height":29331798`)
-	assert.Contains(t, string(jsonData), `"bucket_name":"test"`)
+	require.Contains(t, string(jsonData), `"block_height":29331798`)
+	require.Contains(t, string(jsonData), `"bucket_name":"test"`)
 }
 
 func TestIngester_AtomicHeightAndJobWrite(t *testing.T) {
@@ -255,16 +254,16 @@ func TestIngester_AtomicHeightAndJobWrite(t *testing.T) {
 	defer cancel()
 
 	err := ing.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	storedHeight, err := redisClient.Get(ctx, heightKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, "500", storedHeight)
+	require.Equal(t, "500", storedHeight)
 
 	jobKey := "bull:test-queue:500:TX500:atomic-bucket:atomic-obj.json"
 	exists, err := redisClient.Exists(ctx, jobKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), exists)
+	require.Equal(t, int64(1), exists)
 }
 
 func TestIngester_SanitizesSpecialCharsInJobID(t *testing.T) {
@@ -296,12 +295,12 @@ func TestIngester_SanitizesSpecialCharsInJobID(t *testing.T) {
 	defer cancel()
 
 	err := ing.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	sanitizedKey := "bull:test-queue:600:TX600:bad_bucket_name:evil_object_name.json"
 	exists, err := redisClient.Exists(ctx, sanitizedKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), exists)
+	require.Equal(t, int64(1), exists)
 }
 
 func TestIngester_PartialFailureDoesNotUpdateHeight(t *testing.T) {
@@ -330,16 +329,16 @@ func TestIngester_PartialFailureDoesNotUpdateHeight(t *testing.T) {
 	defer cancel()
 
 	err := ing.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	_, err = redisClient.Get(ctx, heightKey).Result()
-	assert.Equal(t, redis.Nil, err)
+	require.Equal(t, redis.Nil, err)
 }
 
 func TestSanitizeJobIDComponent(t *testing.T) {
-	assert.Equal(t, "no_colons_here", sanitizeJobIDComponent("no:colons:here"))
-	assert.Equal(t, "normal-name", sanitizeJobIDComponent("normal-name"))
-	assert.Equal(t, "", sanitizeJobIDComponent(""))
+	require.Equal(t, "no_colons_here", sanitizeJobIDComponent("no:colons:here"))
+	require.Equal(t, "normal-name", sanitizeJobIDComponent("normal-name"))
+	require.Equal(t, "", sanitizeJobIDComponent(""))
 }
 
 func TestIngester_MultiEventTransaction_AtomicWrite(t *testing.T) {
@@ -380,27 +379,27 @@ func TestIngester_MultiEventTransaction_AtomicWrite(t *testing.T) {
 	defer cancel()
 
 	err := ing.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	storedHeight, err := redisClient.Get(ctx, heightKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, "900", storedHeight)
+	require.Equal(t, "900", storedHeight)
 
 	job1Key := "bull:test-queue:900:TX900:multi-bucket:first.json"
 	job2Key := "bull:test-queue:900:TX900:multi-bucket:second.json"
 
 	exists1, err := redisClient.Exists(ctx, job1Key).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), exists1)
+	require.Equal(t, int64(1), exists1)
 
 	exists2, err := redisClient.Exists(ctx, job2Key).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), exists2)
+	require.Equal(t, int64(1), exists2)
 
 	waitKey := "bull:test-queue:wait"
 	count, err := redisClient.LLen(ctx, waitKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(2), count)
+	require.Equal(t, int64(2), count)
 }
 
 func TestIngester_DuplicateEventDoesNotCreateDuplicateJob(t *testing.T) {
@@ -430,10 +429,10 @@ func TestIngester_DuplicateEventDoesNotCreateDuplicateJob(t *testing.T) {
 	defer cancel()
 
 	err := ing.Run(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	waitKey := "bull:test-queue:wait"
 	count, err := redisClient.LLen(ctx, waitKey).Result()
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), count)
+	require.Equal(t, int64(1), count)
 }
