@@ -115,6 +115,16 @@ describe('loginWithPassword', () => {
     });
   });
 
+  it('throws INVALID_CREDENTIALS when password is wrong', async () => {
+    const kp = generateKeyPair();
+    const encrypted = await encryptPrivateKey(kp.privateKeyPem, 'correct-pass');
+    const challenge = createMockChallenge(JSON.stringify(encrypted));
+    const deps = createMockDeps(challenge);
+    await expect(loginWithPassword({ username: 'bob', password: 'wrong-pass' }, deps)).rejects.toMatchObject({
+      code: IdentityErrorCode.INVALID_CREDENTIALS,
+    });
+  });
+
   it('throws when credential has no encrypted private key', async () => {
     const challenge: UserActionChallenge = {
       ...createMockChallenge(),

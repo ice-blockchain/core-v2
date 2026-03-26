@@ -66,6 +66,20 @@ function buildPasswordAssertion(signed: ReturnType<typeof signForLogin>, challen
   };
 }
 
+async function decryptCredentialKey(rawJson: string, password: string): Promise<string> {
+  let encryptedKey: EncryptedPrivateKey;
+  try {
+    encryptedKey = JSON.parse(rawJson) as EncryptedPrivateKey;
+  } catch {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key');
+  }
+  try {
+    return await decryptPrivateKey(encryptedKey, password);
+  } catch {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Incorrect password');
+  }
+}
+
 interface PasswordLoginInput {
   username: string;
   password: string;
@@ -81,13 +95,7 @@ export async function loginWithPassword(
   if (!cred.encryptedPrivateKey) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Credential missing encrypted private key');
   }
-  let encryptedKey: EncryptedPrivateKey;
-  try {
-    encryptedKey = JSON.parse(cred.encryptedPrivateKey) as EncryptedPrivateKey;
-  } catch {
-    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key');
-  }
-  const privateKeyPem = await decryptPrivateKey(encryptedKey, input.password);
+  const privateKeyPem = await decryptCredentialKey(cred.encryptedPrivateKey, input.password);
   const signed = signForLogin({
     challenge: challenge.challenge,
     origin: deps.origin,
