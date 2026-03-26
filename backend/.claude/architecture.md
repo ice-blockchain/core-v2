@@ -13,52 +13,6 @@
 | **ion-backend** | All backend services | Planning / Migration |
 | **@ion/api-contracts** | Shared typed API contracts | Planning |
 
----
-
-## ion-app Packages
-
-### Foundation Layer
-| Package | Purpose | Status |
-|---|---|---|
-| `@ion/platform` | Device ID, install referrer, OS info | Planned |
-| `@ion/storage` | MMKV, SQLite, secure keychain | Planned |
-| `@ion/network` | HTTP, WebSocket, SSE clients | Planned |
-| `@ion/diagnostics` | Sentry, on-device logs | Planned |
-| `@ion/permissions` | Camera, photos, notifications permissions | Planned |
-| `@ion/config` | Remote config, env, feature flags | Planned |
-| `@ion/localization` | i18n, plurals, fallback | Planned |
-
-### Media Layer
-| Package | Purpose | Status |
-|---|---|---|
-| `@ion/media-acquisition` | Picker, camera, metadata | Planned |
-| `@ion/media-processing` | Crop, resize, blurhash, compress | Planned |
-| `@ion/media-upload` | Encrypt, chunk, retry, queue | Planned |
-| `@ion/media-viewer` | Image, video, gif, fullscreen | Planned |
-| `@ion/nsfw-detection` | On-device safety checks | Planned |
-| `@ion/content-labeling` | fastText language/category | Planned |
-
-### Client Layer
-| Package | Purpose | Status |
-|---|---|---|
-| `@ion/identity-client` | Auth, users API | Planned |
-| `@ion/ion-connect-client` | Relays, events, NIPs, DVM | Planned |
-| `@ion/token-analytics-client` | Trades, holders, stats API | Planned |
-| `@ion/wallet-client` | Coins, NFT sync, DFNS | Planned |
-
-### Feature Layer
-| Package | Purpose | Status |
-|---|---|---|
-| `@ion/push-notifications` | FCM, token, handlers | Planned |
-| `@ion/deep-links` | AppsFlyer, navigation | Planned |
-| `@ion/sharing` | OS share, OG metadata | Planned |
-
-### Actions Layer
-| Package | Purpose | Status |
-|---|---|---|
-| `@ion/actions` | Internal SDK — business functions for screens | Planned |
-
-**Total: 22 packages**
 
 ---
 
@@ -70,6 +24,7 @@
 | wallet | Coin/NFT operations | Planned |
 | feed | Posts, likes, reposts | Planned |
 | chat | Messaging | Planned |
+| nft-minter | Minter | Planned |
 | token-analytics | Trades, holders, stats | Planned |
 | notifications | Push notification dispatch | Planned |
 
