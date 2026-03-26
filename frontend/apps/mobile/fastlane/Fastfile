@@ -50,7 +50,7 @@ platform :ios do
   lane :distribute_firebase do
     firebase_app_distribution(
       app: ENV["FIREBASE_APP_ID_IOS"],
-      ipa_path: Dir["ios/build/export/*.ipa"].first,
+      ipa_path: Dir[File.join(__dir__, "..", "ios/build/export/*.ipa")].first,
       service_credentials_file: "fastlane/keys/firebase-distribution.json"
     )
   end
@@ -63,7 +63,7 @@ platform :ios do
     )
     upload_to_app_store(
       api_key: api_key,
-      ipa: Dir["ios/build/export/*.ipa"].first,
+      ipa: Dir[File.join(__dir__, "..", "ios/build/export/*.ipa")].first,
       skip_metadata: true,
       skip_screenshots: true,
       precheck_include_in_app_purchases: false
@@ -76,7 +76,7 @@ platform :android do
   lane :distribute_firebase do
     firebase_app_distribution(
       app: ENV["FIREBASE_APP_ID_ANDROID"],
-      android_artifact_path: Dir["android/app/build/outputs/apk/**/*-release.apk"].first,
+      android_artifact_path: Dir[File.join(__dir__, "..", "android/app/build/outputs/apk/**/*-release.apk")].first,
       service_credentials_file: "fastlane/keys/firebase-distribution.json"
     )
   end
@@ -84,7 +84,7 @@ platform :android do
   desc "Upload AAB to Google Play Store"
   lane :distribute_playstore do
     supply(
-      aab: Dir["android/app/build/outputs/bundle/**/*-release.aab"].first,
+      aab: Dir[File.join(__dir__, "..", "android/app/build/outputs/bundle/**/*-release.aab")].first,
       json_key: "fastlane/keys/gp-console.json",
       track: "internal",
       skip_upload_metadata: true,
