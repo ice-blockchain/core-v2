@@ -1,0 +1,46 @@
+import { describe, it, expect } from "vitest";
+import { validateWebUri, validateNativeUri } from "./validate-uri";
+
+describe("validateWebUri", () => {
+  it("accepts blob: URIs", () => {
+    expect(() => validateWebUri("blob:https://example.com/abc")).not.toThrow();
+  });
+
+  it("accepts https: URIs", () => {
+    expect(() => validateWebUri("https://example.com/photo.jpg")).not.toThrow();
+  });
+
+  it("accepts data: URIs", () => {
+    expect(() => validateWebUri("data:image/png;base64,abc")).not.toThrow();
+  });
+
+  it("rejects file: URIs to prevent SSRF", () => {
+    expect(() => validateWebUri("file:///etc/passwd")).toThrow("Unsupported URI scheme");
+  });
+
+  it("rejects javascript: URIs", () => {
+    expect(() => validateWebUri("javascript:alert(1)")).toThrow("Unsupported URI scheme");
+  });
+
+  it("rejects URIs with no scheme", () => {
+    expect(() => validateWebUri("no-scheme")).toThrow("Invalid URI: no scheme");
+  });
+});
+
+describe("validateNativeUri", () => {
+  it("accepts file: URIs", () => {
+    expect(() => validateNativeUri("file:///data/photo.jpg")).not.toThrow();
+  });
+
+  it("accepts content: URIs", () => {
+    expect(() => validateNativeUri("content://media/photo")).not.toThrow();
+  });
+
+  it("rejects http: URIs on native", () => {
+    expect(() => validateNativeUri("http://evil.com/ssrf")).toThrow("Unsupported URI scheme");
+  });
+
+  it("rejects javascript: URIs", () => {
+    expect(() => validateNativeUri("javascript:alert(1)")).toThrow("Unsupported URI scheme");
+  });
+});

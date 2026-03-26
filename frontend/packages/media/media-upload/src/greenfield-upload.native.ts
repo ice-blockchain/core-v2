@@ -1,4 +1,5 @@
 import type { GreenfieldClient, GreenfieldUploadParams } from "./types";
+import { validateNativeUri } from "./validate-uri";
 
 export async function greenfieldUpload(
   client: GreenfieldClient,
@@ -7,6 +8,8 @@ export async function greenfieldUpload(
   if (params.signal.aborted) {
     throw new Error("Upload cancelled");
   }
+
+  validateNativeUri(params.uri);
 
   const { File: ExpoFile } = await import("expo-file-system");
   const file = new ExpoFile(params.uri);
@@ -18,6 +21,7 @@ export async function greenfieldUpload(
       bucketName: params.bucketName,
       objectName: params.objectName,
       body: bytes,
+      signal: params.signal,
     },
     {
       type: params.auth.type,

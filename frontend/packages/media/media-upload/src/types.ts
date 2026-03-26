@@ -35,7 +35,7 @@ export type UploadProgressCallback = (progress: UploadProgress) => void;
 export interface GreenfieldClient {
   object: {
     delegateUploadObject(
-      params: { bucketName: string; objectName: string; body: File | Uint8Array },
+      params: { bucketName: string; objectName: string; body: File | Uint8Array; signal?: AbortSignal },
       authOptions: { type: string; domain: string; seed: string; address: string },
     ): Promise<unknown>;
   };

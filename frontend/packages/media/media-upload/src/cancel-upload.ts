@@ -7,8 +7,14 @@ export function createUploadCanceller(deps: UploadDependencies) {
 
   async function cancelUpload(uploadId: string): Promise<boolean> {
     const wasCancelled = cancellationRegistry.cancel(uploadId);
-    await repository.updateStatus(uploadId, "cancelled");
-    return wasCancelled;
+    if (!wasCancelled) return false;
+
+    const record = await repository.getItem(uploadId);
+    if (record && record.status !== "completed") {
+      await repository.updateStatus(uploadId, "cancelled");
+    }
+
+    return true;
   }
 
   return { cancelUpload } as const;
