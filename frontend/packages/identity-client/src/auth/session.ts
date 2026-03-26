@@ -13,7 +13,7 @@ export async function logout(
 ): Promise<void> {
   const tokens = await deps.tokenManager.getTokens(username);
   if (tokens) {
-    await deps.sessionDataSource.logout(tokens.token);
+    await deps.sessionDataSource.logout(tokens.token, username);
   }
   await deps.tokenManager.clearTokens(username);
 }

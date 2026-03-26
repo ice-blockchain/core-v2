@@ -2,22 +2,26 @@ import type { IdentityClient, IdentityClientConfig } from './types';
 import { createRegistrationDataSource } from './data-sources/registration-data-source';
 import { createLoginDataSource } from './data-sources/login-data-source';
 import { createSessionDataSource } from './data-sources/session-data-source';
+import { createUserDataSource } from './data-sources/user-data-source';
 import { createTokenManager } from './token/token-manager';
 import { registerWithPasskey, registerWithPassword } from './auth/registration';
 import { loginWithPasskey, loginWithPassword } from './auth/login';
 import { logout, refreshToken, isAuthenticated } from './auth/session';
 import { getLoginCapabilities } from './auth/login-capabilities';
+import { getUser } from './users/get-user';
 
 export function createIdentityClient(config: IdentityClientConfig): IdentityClient {
   const registrationDataSource = createRegistrationDataSource(config.httpClient);
   const loginDataSource = createLoginDataSource(config.httpClient);
   const sessionDataSource = createSessionDataSource(config.httpClient);
+  const userDataSource = createUserDataSource(config.httpClient);
   const tokenManager = createTokenManager(config.secureStorage);
   const origin = config.appId;
 
   const regDeps = { registrationDataSource, tokenManager, origin };
   const loginDeps = { loginDataSource, tokenManager, origin };
   const sessionDeps = { sessionDataSource, tokenManager };
+  const userDeps = { userDataSource, tokenManager };
 
   return {
     registerWithPasskey: (username) => registerWithPasskey(username, regDeps),
@@ -28,5 +32,6 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
     refreshToken: (username) => refreshToken(username, sessionDeps),
     isAuthenticated: (username) => isAuthenticated(username, sessionDeps),
     getLoginCapabilities: (username) => getLoginCapabilities(username, loginDataSource),
+    getUser: (username, userIdOrMasterKey) => getUser(username, userIdOrMasterKey, userDeps),
   };
 }

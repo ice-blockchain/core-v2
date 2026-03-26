@@ -6,6 +6,9 @@ export type {
   UserActionChallenge,
   RegistrationResult,
   AuthTokens,
+  User,
+  UserAssignedRelay,
+  TwoFAOption,
 } from './src/types';
 
 export { IdentityError, IdentityErrorCode } from './src/errors';

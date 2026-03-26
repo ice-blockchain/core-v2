@@ -28,15 +28,15 @@ describe('createSessionDataSource', () => {
     expect(result).toEqual({ token: 'new-tok' });
   });
 
-  it('posts to logout endpoint with auth header', async () => {
+  it('sends PUT to logout endpoint with auth and username headers', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(undefined);
+    vi.mocked(httpClient.put).mockResolvedValueOnce(undefined);
     const ds = createSessionDataSource(httpClient);
 
-    await ds.logout('my-token');
+    await ds.logout('my-token', 'alice');
 
-    expect(httpClient.post).toHaveBeenCalledWith('/auth/logout', {
-      headers: { Authorization: 'Bearer my-token' },
+    expect(httpClient.put).toHaveBeenCalledWith('/auth/logout', {
+      headers: { Authorization: 'Bearer my-token', 'X-Username': 'alice' },
     });
   });
 });

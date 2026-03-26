@@ -33,8 +33,8 @@ export async function registerWithPasskey(
         credentialKind: 'Fido2',
         credentialInfo: {
           credId: passkey.credentialId,
-          clientDataJSON: passkey.clientDataJSON,
-          attestationObject: passkey.attestationObject,
+          clientData: passkey.clientDataJSON,
+          attestationData: passkey.attestationObject,
         },
       },
     },

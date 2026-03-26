@@ -16,6 +16,7 @@ export interface IdentityClient {
   refreshToken(username: string): Promise<void>;
   isAuthenticated(username: string): Promise<boolean>;
   getLoginCapabilities(username: string): Promise<LoginCapabilities>;
+  getUser(username: string, userIdOrMasterKey: string): Promise<User>;
 }
 
 export interface LoginCapabilities {
@@ -120,4 +121,21 @@ export interface PasskeyAuthResult {
   authenticatorData: string;
   signature: string;
   userHandle: string;
+}
+
+export type TwoFAOption = 'sms' | 'email' | 'totp_authenticator';
+
+export interface UserAssignedRelay {
+  type: string;
+  url: string;
+}
+
+export interface User {
+  '2faOptions': TwoFAOption[] | null;
+  duplicateOf: string | null;
+  email: string[] | null;
+  ionConnectIndexerRelays: string[] | null;
+  ionConnectRelays: UserAssignedRelay[] | null;
+  masterPubKey: string;
+  phoneNumber: string[] | null;
 }
