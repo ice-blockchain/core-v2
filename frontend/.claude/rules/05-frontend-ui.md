@@ -43,30 +43,56 @@ Every screen/component typically has: default, loading, empty, error, and edge-c
 
 ### Styling
 
-#### CRITICAL: All numeric sizes must be scaled with `rem()`. Never use raw pixel values.
-Designs are created for 375pt width. Every size — font sizes, paddings, margins, widths, heights, gaps, border radii — must be wrapped in `rem()` from `@ion/ui` so the UI looks identical on all devices. `rem()` scales the value by `screenWidth / 375` and rounds to half-pixel precision.
+#### CRITICAL: All numeric sizes must be scaled via Theme. Never use raw pixel values.
+Designs are created for 375pt width. Every size — font sizes, paddings, margins, widths, heights, gaps, border radii — must go through the Theme scaling system so the UI looks identical on all devices. The Theme scales values by `screenWidth / 375` and rounds to half-pixel precision.
+
+Access the theme via `useTheme()` from `@ion/ui`. It provides:
+- **`theme.spacing`** — pre-scaled spacing tokens (`xxs`, `xs`, `sm`, `md`, `lg`, `xl`, `xxl`, `xxxl`)
+- **`theme.typography`** — pre-scaled typography variants (font size, line height, weight, family)
+- **`theme.radii`** — pre-scaled border radius tokens (`small`, `medium`, `large`)
+- **`theme.scale.scaleSize(n)`** — scale any ad-hoc size value
+- **`theme.scale.scaleFont(n)`** — scale any ad-hoc font size
+- **`theme.scale.scaleRadius(n)`** — scale any ad-hoc border radius
+
+Since `useTheme()` is a hook, styles that depend on scaled values must be built inside the component using `useMemo`. Use `StyleSheet.create()` at module level only for styles with no numeric size values.
 
 ```typescript
-import { rem } from '@ion/ui';
-
 // VIOLATION — raw pixel values, breaks on non-375pt screens
 const styles = StyleSheet.create({
   container: { padding: 16, marginBottom: 24 },
   avatar: { width: 48, height: 48, borderRadius: 24 },
-  title: { fontSize: 18 },
 });
 
-// CORRECT — all sizes scaled with rem()
+// CORRECT — scaled via theme inside the component
+function ProfileCard() {
+  const theme = useTheme();
+
+  const containerStyle = useMemo(() => ({
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  }), [theme]);
+
+  const avatarStyle = useMemo(() => ({
+    width: theme.scale.scaleSize(48),
+    height: theme.scale.scaleSize(48),
+    borderRadius: theme.scale.scaleRadius(24),
+  }), [theme]);
+
+  return (
+    <View style={containerStyle}>
+      <Image style={avatarStyle} />
+    </View>
+  );
+}
+
+// OK — module-level StyleSheet for layout-only styles (no size values)
 const styles = StyleSheet.create({
-  container: { padding: rem(16), marginBottom: rem(24) },
-  avatar: { width: rem(48), height: rem(48), borderRadius: rem(24) },
-  title: { fontSize: rem(18) },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  fill: { flex: 1 },
 });
 ```
 
 The only exceptions are `0`, `1` (hairline borders), and `flex` values — these do not need scaling.
-
-`useTheme()` and `theme.scale.*` are deprecated. Use `rem()` instead.
 
 - **No CSS-in-JS libraries.**
 - **No magic numbers.** Use theme tokens or scale functions:

@@ -24,9 +24,6 @@ export type { IconProps, IconName } from "./icons/Icon";
 // Catalog
 export { CatalogScreen } from "./catalog/CatalogScreen";
 
-// Scaling
-export { rem } from "./scaling/rem";
-
 // Tokens
 export { colorPalette } from "./tokens/color-palette";
 export { gradients } from "./tokens/gradients";
