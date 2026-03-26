@@ -51,7 +51,8 @@ platform :ios do
     firebase_app_distribution(
       app: ENV["FIREBASE_APP_ID_IOS"],
       ipa_path: Dir[File.expand_path("../ios/build/export/*.ipa", __dir__)].first,
-      service_credentials_file: "fastlane/keys/firebase-distribution.json"
+      service_credentials_file: "fastlane/keys/firebase-distribution.json",
+      groups: "Internal-testers",
     )
   end
 
@@ -77,7 +78,8 @@ platform :android do
     firebase_app_distribution(
       app: ENV["FIREBASE_APP_ID_ANDROID"],
       android_artifact_path: Dir[File.expand_path("../android/app/build/outputs/apk/**/*-release.apk", __dir__)].first,
-      service_credentials_file: "fastlane/keys/firebase-distribution.json"
+      service_credentials_file: "fastlane/keys/firebase-distribution.json",
+      groups: "Internal-testers"
     )
   end
 
