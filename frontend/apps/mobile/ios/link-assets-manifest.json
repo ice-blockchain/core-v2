@@ -8,6 +8,42 @@
     {
       "path": "assets/videos/logo_static.mp4",
       "sha1": "58882f44b9d55588c6570482a251843d03f8d433"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/Monaco.ttf",
+      "sha1": "34dbcf1d2b58a31db61257f698523a73e175cf25"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-Bold.ttf",
+      "sha1": "f044479238f54823e97c30570e61bd1e1b5d9bd1"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-BoldItalic.ttf",
+      "sha1": "1adb0790f151c68d9b878af426474118df092b51"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-Italic.ttf",
+      "sha1": "80f0d1670c707a8c4447edeef812375edfb472da"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-Medium.ttf",
+      "sha1": "618b98ebcc07c8873c4478dd5bd03b107acfd08f"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-MediumItalic.ttf",
+      "sha1": "d87ff3e74fff957e1f4eb7477c2d8a2924b3ac08"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-Regular.ttf",
+      "sha1": "21452f523a2c54fb59c0ad3a0d3bfc888d0bef99"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-SemiBold.ttf",
+      "sha1": "2aa19f1905486c29504f074a8a48aa7735750b6c"
+    },
+    {
+      "path": "../../packages/ui/src/fonts/NotoSans-SemiBoldItalic.ttf",
+      "sha1": "7fa0f6caae7eb0ca2b157a9fa81509e3e0b0cff0"
     }
   ]
 }

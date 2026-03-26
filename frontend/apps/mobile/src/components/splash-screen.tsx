@@ -8,6 +8,7 @@ import {
   VerifyPasswordBackground,
   VerifyPasswordOverlay,
 } from "@ion/auth-ui";
+import { CatalogScreen } from "@ion/ui";
 import { SplashVideo } from "./splash-video";
 import { IntroVideo } from "./intro-video";
 import { BottomSheet } from "./bottom-sheet";
@@ -16,6 +17,7 @@ import { LoadingAnimation } from "./loading-animation";
 type Phase =
   | { name: "splash" }
   | { name: "intro" }
+  | { name: "catalog" }
   | { name: "get-started" }
   | { name: "register" }
   | { name: "verify-password"; identityKeyName: string }
@@ -37,6 +39,7 @@ function usePhaseNavigation() {
       (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
       [],
     ),
+    goToCatalog: useCallback(() => setPhase({ name: "catalog" }), []),
   };
 }
 
@@ -87,11 +90,18 @@ export function SplashScreen() {
     return <SplashVideo onComplete={nav.goToIntro} />;
   }
 
+  if (nav.phase.name === "catalog") {
+    return <CatalogScreen />;
+  }
+
   return (
     <View style={styles.container}>
       <IntroVideo>
         {nav.phase.name === "intro" ? (
-          <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
+          <View style={styles.introButtons}>
+            <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
+            <PrimaryButton label="UI Catalog" onPress={nav.goToCatalog} />
+          </View>
         ) : null}
       </IntroVideo>
       {nav.phase.name !== "intro" && (
@@ -109,5 +119,8 @@ export function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  introButtons: {
+    gap: 12,
   },
 });
