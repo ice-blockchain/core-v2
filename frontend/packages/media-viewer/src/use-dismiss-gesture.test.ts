@@ -40,7 +40,7 @@ describe('useDismissGesture', () => {
 
   it('returns background opacity of 1 initially', () => {
     const { result } = renderHook(() => useDismissGesture(defaultOptions));
-    expect(result.current.backgroundOpacity.opacity).toBe(1);
+    expect(result.current.backgroundOpacity).toEqual({ opacity: 1 });
   });
 
   it('returns a dismiss gesture object', () => {
