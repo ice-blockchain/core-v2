@@ -189,6 +189,8 @@ jobs:
       - name: Deploy to Firebase
         if: inputs.deployment_target == 'firebase'
         working-directory: frontend/apps/mobile
+        env:
+          RELEASE_NOTES: "${{ inputs.environment }}_${{ github.head_ref || github.ref_name }}"
         run: bundle exec fastlane android distribute_firebase
 
       - name: Deploy to Play Store
@@ -375,6 +377,8 @@ jobs:
       - name: Deploy to Firebase
         if: inputs.deployment_target == 'firebase'
         working-directory: frontend/apps/mobile
+        env:
+          RELEASE_NOTES: "${{ inputs.environment }}_${{ github.head_ref || github.ref_name }}"
         run: bundle exec fastlane ios distribute_firebase
 
       - name: Deploy to App Store
