@@ -56,5 +56,17 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>NotoSans-Regular.ttf</string>
+		<string>NotoSans-Medium.ttf</string>
+		<string>NotoSans-MediumItalic.ttf</string>
+		<string>NotoSans-Bold.ttf</string>
+		<string>NotoSans-SemiBold.ttf</string>
+		<string>Monaco.ttf</string>
+		<string>NotoSans-SemiBoldItalic.ttf</string>
+		<string>NotoSans-BoldItalic.ttf</string>
+		<string>NotoSans-Italic.ttf</string>
+	</array>
 </dict>
 </plist>

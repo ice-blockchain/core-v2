@@ -13,7 +13,6 @@ function buildVariantStyle(variant: TypographyVariant, color: string): TextStyle
   return {
     fontFamily: variant.fontFamily,
     fontSize: variant.fontSize,
-    fontWeight: variant.fontWeight,
     lineHeight: variant.lineHeight,
     letterSpacing: variant.letterSpacing,
     color,

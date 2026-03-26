@@ -43,6 +43,7 @@ function reactNativeWebPlugin(): Plugin {
           ],
         },
         optimizeDeps: {
+          include: ['react-native-web'],
           exclude: ['react-native'],
           resolve: {
             extensions: webExtensions,
