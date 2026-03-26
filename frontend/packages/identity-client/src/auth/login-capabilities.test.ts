@@ -65,6 +65,15 @@ describe('getLoginCapabilities', () => {
     });
   });
 
+  it('re-throws non-404 client errors', async () => {
+    const badRequest = new NetworkError({ code: 'CLIENT_ERROR', message: 'Bad request', status: 400 });
+    const ds: LoginDataSource = {
+      initLogin: vi.fn(() => Promise.reject(badRequest)),
+      completeLogin: vi.fn(),
+    };
+    await expect(getLoginCapabilities('alice', ds)).rejects.toBe(badRequest);
+  });
+
   it('re-throws server errors instead of swallowing them', async () => {
     const serverError = new NetworkError({ code: 'SERVER_ERROR', message: 'Internal', status: 500 });
     const ds: LoginDataSource = {

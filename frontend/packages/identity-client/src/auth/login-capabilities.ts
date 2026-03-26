@@ -17,7 +17,7 @@ export async function getLoginCapabilities(
       identityFound: true,
     };
   } catch (error) {
-    if (error instanceof NetworkError && error.code === 'CLIENT_ERROR') {
+    if (error instanceof NetworkError && error.code === 'CLIENT_ERROR' && error.status === 404) {
       return { supportsPasskey: false, supportsPassword: false, identityFound: false };
     }
     throw error;
