@@ -56,7 +56,7 @@ function buildSortedJson(obj: Record<string, unknown>): string {
 function toBase64Url(bytes: Uint8Array): string {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -93,7 +93,11 @@ function toPrivateKeyPem(seed: Uint8Array): string {
 
 export function parseSeedFromPem(pem: string): Uint8Array {
   const b64 = pem.replace(/-----[A-Z ]+-----/g, '').replace(/\s/g, '');
-  return base64ToBytes(b64).slice(16, 48);
+  const decoded = base64ToBytes(b64);
+  if (decoded.length !== 48) {
+    throw new Error('Invalid Ed25519 PKCS#8 key: expected 48 bytes');
+  }
+  return decoded.slice(16, 48);
 }
 
 export function generateKeyPair(): KeyPair {

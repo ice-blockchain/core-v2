@@ -107,6 +107,14 @@ describe('loginWithPassword', () => {
     });
   });
 
+  it('throws when encrypted private key is malformed JSON', async () => {
+    const challenge = createMockChallenge('not-valid-json{{{');
+    const deps = createMockDeps(challenge);
+    await expect(loginWithPassword({ username: 'bob', password: 'pass' }, deps)).rejects.toMatchObject({
+      code: IdentityErrorCode.INVALID_CREDENTIALS,
+    });
+  });
+
   it('throws when credential has no encrypted private key', async () => {
     const challenge: UserActionChallenge = {
       ...createMockChallenge(),

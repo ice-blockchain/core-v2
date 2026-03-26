@@ -27,6 +27,18 @@ describe('createUserDataSource', () => {
     expect(result).toEqual({ masterPubKey: 'pk' });
   });
 
+  it('encodes path-traversal characters in user ID', async () => {
+    const httpClient = createMockHttpClient();
+    vi.mocked(httpClient.get).mockResolvedValueOnce({ masterPubKey: 'pk' });
+    const ds = createUserDataSource(httpClient);
+
+    await ds.getUser('../admin', 'tok');
+
+    expect(httpClient.get).toHaveBeenCalledWith('/auth/users/..%2Fadmin', {
+      headers: { Authorization: 'Bearer tok' },
+    });
+  });
+
   it('fetches user by master key', async () => {
     const httpClient = createMockHttpClient();
     vi.mocked(httpClient.get).mockResolvedValueOnce({ masterPubKey: 'pk' });

@@ -8,7 +8,7 @@ export interface UserDataSource {
 export function createUserDataSource(httpClient: HttpClient): UserDataSource {
   return {
     getUser(userIdOrMasterKey, token) {
-      return httpClient.get<User>(`/auth/users/${userIdOrMasterKey}`, {
+      return httpClient.get<User>(`/auth/users/${encodeURIComponent(userIdOrMasterKey)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
     },

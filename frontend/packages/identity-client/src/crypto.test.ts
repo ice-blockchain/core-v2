@@ -32,6 +32,27 @@ describe('generateKeyPair', () => {
   });
 });
 
+describe('toBase64Url encoding', () => {
+  it('produces output without padding characters', () => {
+    const kp = generateKeyPair();
+    const result = signForLogin({
+      challenge: 'dGVzdC1jaGFsbGVuZ2U',
+      origin: 'https://example.com',
+      privateKeyPem: kp.privateKeyPem,
+      credentialId: 'cred-1',
+    });
+    expect(result.clientData).not.toContain('=');
+    expect(result.signature).not.toContain('=');
+  });
+});
+
+describe('parseSeedFromPem', () => {
+  it('rejects PEM with unexpected byte length', () => {
+    const invalidPem = '-----BEGIN PRIVATE KEY-----\nYWJj\n-----END PRIVATE KEY-----';
+    expect(() => parseSeedFromPem(invalidPem)).toThrow('expected 48 bytes');
+  });
+});
+
 describe('generateCredentialId', () => {
   it('produces XXXXX-XXXXX-XXXXX-XXXXX-XXXXX format', () => {
     const kp = generateKeyPair();

@@ -12,10 +12,13 @@ export async function logout(
   deps: SessionDeps,
 ): Promise<void> {
   const tokens = await deps.tokenManager.getTokens(username);
-  if (tokens) {
-    await deps.sessionDataSource.logout(tokens.token, username);
+  try {
+    if (tokens) {
+      await deps.sessionDataSource.logout(tokens.token, username);
+    }
+  } finally {
+    await deps.tokenManager.clearTokens(username);
   }
-  await deps.tokenManager.clearTokens(username);
 }
 
 export async function refreshToken(
@@ -30,7 +33,7 @@ export async function refreshToken(
     const result = await deps.sessionDataSource.refreshToken(username, tokens.token, tokens.refreshToken);
     await deps.tokenManager.setTokens(username, {
       token: result.token,
-      refreshToken: tokens.refreshToken,
+      refreshToken: result.refreshToken ?? tokens.refreshToken,
     });
   } catch (error) {
     await deps.tokenManager.clearTokens(username);

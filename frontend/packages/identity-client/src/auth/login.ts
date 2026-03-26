@@ -81,10 +81,13 @@ export async function loginWithPassword(
   if (!cred.encryptedPrivateKey) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Credential missing encrypted private key');
   }
-  const privateKeyPem = await decryptPrivateKey(
-    JSON.parse(cred.encryptedPrivateKey) as EncryptedPrivateKey,
-    input.password,
-  );
+  let encryptedKey: EncryptedPrivateKey;
+  try {
+    encryptedKey = JSON.parse(cred.encryptedPrivateKey) as EncryptedPrivateKey;
+  } catch {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key');
+  }
+  const privateKeyPem = await decryptPrivateKey(encryptedKey, input.password);
   const signed = signForLogin({
     challenge: challenge.challenge,
     origin: deps.origin,

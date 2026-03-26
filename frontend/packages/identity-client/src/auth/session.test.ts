@@ -31,6 +31,12 @@ describe('logout', () => {
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
   });
 
+  it('clears tokens even when server logout fails', async () => {
+    vi.mocked(deps.sessionDataSource.logout).mockRejectedValueOnce(new Error('network error'));
+    await expect(logout('alice', deps)).rejects.toThrow('network error');
+    expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
+  });
+
   it('clears tokens even when no tokens exist', async () => {
     vi.mocked(deps.tokenManager.getTokens).mockResolvedValueOnce(null);
     await logout('alice', deps);
@@ -52,6 +58,18 @@ describe('refreshToken', () => {
     expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice', {
       token: 'new-token',
       refreshToken: 'ref-tok',
+    });
+  });
+
+  it('stores server-provided refresh token when rotated', async () => {
+    vi.mocked(deps.sessionDataSource.refreshToken).mockResolvedValueOnce({
+      token: 'new-token',
+      refreshToken: 'new-ref-tok',
+    });
+    await refreshToken('alice', deps);
+    expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice', {
+      token: 'new-token',
+      refreshToken: 'new-ref-tok',
     });
   });
 

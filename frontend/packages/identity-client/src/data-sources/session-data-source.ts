@@ -1,14 +1,14 @@
 import type { HttpClient } from '@ion/network';
 
 export interface SessionDataSource {
-  refreshToken(username: string, currentToken: string, refreshToken: string): Promise<{ token: string }>;
+  refreshToken(username: string, currentToken: string, refreshToken: string): Promise<{ token: string; refreshToken?: string }>;
   logout(token: string, username: string): Promise<void>;
 }
 
 export function createSessionDataSource(httpClient: HttpClient): SessionDataSource {
   return {
     refreshToken(username, currentToken, refreshToken) {
-      return httpClient.post<{ token: string }>('/auth/login/delegated', {
+      return httpClient.post<{ token: string; refreshToken?: string }>('/auth/login/delegated', {
         body: { username, refreshToken },
         headers: { Authorization: `Bearer ${currentToken}` },
       });
