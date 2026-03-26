@@ -1,0 +1,38 @@
+export class ActionError extends Error {
+  code: string;
+  userMessage: string;
+
+  constructor(code: string, userMessage: string) {
+    super(userMessage);
+    this.code = code;
+    this.userMessage = userMessage;
+    this.name = "ActionError";
+  }
+}
+
+export interface SaveProfileInput {
+  displayName: string;
+  nickname: string;
+  referredBy?: string | undefined;
+}
+
+export interface SaveProfileResult {
+  success: boolean;
+}
+
+export interface UploadAvatarInput {
+  imageUri: string;
+}
+
+export interface UploadAvatarResult {
+  avatarUrl: string;
+}
+
+export interface ValidateNicknameResult {
+  isAvailable: boolean;
+  isReserved: boolean;
+}
+
+export interface ValidateReferralResult {
+  isValid: boolean;
+}

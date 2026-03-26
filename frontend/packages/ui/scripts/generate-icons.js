@@ -87,9 +87,9 @@ function patchGeneratedCode(code, componentName) {
   patched = patched.replace(/\s*\{\.\.\.props\}/g, "");
   patched = patched.replace(/\s*xmlns="[^"]*"/g, "");
 
-  // Replace width/height with size prop
-  patched = patched.replace(/width=\{[\d.]+\}/g, "width={size}");
-  patched = patched.replace(/height=\{[\d.]+\}/g, "height={size}");
+  // Replace width/height with size prop on the root Svg element only
+  patched = patched.replace(/(<Svg\s[^>]*)width=\{[\d.]+\}/, "$1width={size}");
+  patched = patched.replace(/(<Svg\s[^>]*)height=\{[\d.]+\}/, "$1height={size}");
 
   // Clean up the top of the file and rebuild
   patched = patched.replace(/^import.*;\n*/gm, "");
