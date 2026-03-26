@@ -38,6 +38,7 @@ export function ThemeProvider(props: ThemeProviderProps) {
   );
 }
 
+/** @deprecated Use `rem()` from `@ion/ui` for scaling. Access theme tokens directly instead. */
 export function useTheme(): Theme {
   const theme = useContext(ThemeContext);
   if (!theme) {
