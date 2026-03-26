@@ -22,6 +22,16 @@ describe('parseJwtExpiry', () => {
     expect(parseJwtExpiry('not-a-jwt')).toBeNull();
   });
 
+  it('returns null when exp is a string', () => {
+    const token = createJwt({ exp: '1700000000' });
+    expect(parseJwtExpiry(token)).toBeNull();
+  });
+
+  it('returns negative exp as valid number', () => {
+    const token = createJwt({ exp: -100 });
+    expect(parseJwtExpiry(token)).toBe(-100);
+  });
+
   it('returns null for invalid base64 payload', () => {
     expect(parseJwtExpiry('header.!!!invalid!!!.sig')).toBeNull();
   });
