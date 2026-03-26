@@ -155,6 +155,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Fix Hermes permissions
+        run: chmod +x apps/mobile/node_modules/hermes-compiler/hermesc/osx-bin/hermesc
+
       - name: Build Android
         working-directory: frontend/apps/mobile/android
         env:
@@ -261,6 +264,9 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
           working-directory: frontend/apps/mobile
+
+      - name: Fix Hermes permissions
+        run: chmod +x apps/mobile/node_modules/hermes-compiler/hermesc/osx-bin/hermesc
 
       - name: Install CocoaPods
         working-directory: frontend/apps/mobile/ios
