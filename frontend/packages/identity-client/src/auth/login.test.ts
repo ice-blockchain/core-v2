@@ -89,7 +89,7 @@ describe('loginWithPassword', () => {
     const challenge = createMockChallenge(JSON.stringify(encrypted));
     const deps = createMockDeps(challenge);
 
-    const result = await loginWithPassword('bob', 'mypass', deps);
+    const result = await loginWithPassword({ username: 'bob', password: 'mypass' }, deps);
     expect(result).toBe('bob');
     expect(deps.loginDataSource.completeLogin).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -102,7 +102,7 @@ describe('loginWithPassword', () => {
   it('throws when no password credentials exist', async () => {
     const challenge = createMockChallenge();
     const deps = createMockDeps(challenge);
-    await expect(loginWithPassword('bob', 'pass', deps)).rejects.toMatchObject({
+    await expect(loginWithPassword({ username: 'bob', password: 'pass' }, deps)).rejects.toMatchObject({
       code: IdentityErrorCode.INVALID_CREDENTIALS,
     });
   });
@@ -116,7 +116,7 @@ describe('loginWithPassword', () => {
       },
     };
     const deps = createMockDeps(challenge);
-    await expect(loginWithPassword('bob', 'pass', deps)).rejects.toMatchObject({
+    await expect(loginWithPassword({ username: 'bob', password: 'pass' }, deps)).rejects.toMatchObject({
       code: IdentityErrorCode.INVALID_CREDENTIALS,
     });
   });

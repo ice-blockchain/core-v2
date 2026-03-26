@@ -14,7 +14,7 @@ function createMockHttpClient(): HttpClient {
 }
 
 describe('createLoginDataSource', () => {
-  it('posts username to login init endpoint', async () => {
+  it('posts username and empty 2FA codes to login init endpoint', async () => {
     const httpClient = createMockHttpClient();
     vi.mocked(httpClient.post).mockResolvedValueOnce({ challenge: 'ch' });
     const ds = createLoginDataSource(httpClient);
@@ -22,7 +22,19 @@ describe('createLoginDataSource', () => {
     await ds.initLogin('alice');
 
     expect(httpClient.post).toHaveBeenCalledWith('/auth/login/init', {
-      body: { username: 'alice' },
+      body: { username: 'alice', '2FAVerificationCodes': {} },
+    });
+  });
+
+  it('posts 2FA verification codes when provided', async () => {
+    const httpClient = createMockHttpClient();
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ challenge: 'ch' });
+    const ds = createLoginDataSource(httpClient);
+
+    await ds.initLogin('alice', { email: '123456' });
+
+    expect(httpClient.post).toHaveBeenCalledWith('/auth/login/init', {
+      body: { username: 'alice', '2FAVerificationCodes': { email: '123456' } },
     });
   });
 

@@ -14,11 +14,12 @@ interface LoginDeps {
 export async function loginWithPasskey(
   username: string,
   deps: LoginDeps,
+  twoFAVerificationCodes?: Record<string, string>,
 ): Promise<string> {
   if (!isPasskeyAvailable()) {
     throw new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'Passkeys are not supported');
   }
-  const challenge = await deps.loginDataSource.initLogin(username);
+  const challenge = await deps.loginDataSource.initLogin(username, twoFAVerificationCodes);
   const assertion = await getPasskeyAssertion(challenge);
   const tokens = await deps.loginDataSource.completeLogin({
     challengeIdentifier: challenge.challengeIdentifier,
@@ -59,19 +60,24 @@ function buildPasswordAssertion(signed: ReturnType<typeof signForLogin>, challen
   };
 }
 
+interface PasswordLoginInput {
+  username: string;
+  password: string;
+  twoFAVerificationCodes?: Record<string, string> | undefined;
+}
+
 export async function loginWithPassword(
-  username: string,
-  password: string,
+  input: PasswordLoginInput,
   deps: LoginDeps,
 ): Promise<string> {
-  const challenge = await deps.loginDataSource.initLogin(username);
+  const challenge = await deps.loginDataSource.initLogin(input.username, input.twoFAVerificationCodes);
   const cred = extractPasswordCredential(challenge);
   if (!cred.encryptedPrivateKey) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Credential missing encrypted private key');
   }
   const privateKeyPem = await decryptPrivateKey(
     JSON.parse(cred.encryptedPrivateKey) as EncryptedPrivateKey,
-    password,
+    input.password,
   );
   const signed = signForLogin({
     challenge: challenge.challenge,
@@ -81,6 +87,6 @@ export async function loginWithPassword(
   });
   const payload = buildPasswordAssertion(signed, challenge.challengeIdentifier);
   const tokens = await deps.loginDataSource.completeLogin(payload);
-  await deps.tokenManager.setTokens(username, tokens);
-  return username;
+  await deps.tokenManager.setTokens(input.username, tokens);
+  return input.username;
 }
