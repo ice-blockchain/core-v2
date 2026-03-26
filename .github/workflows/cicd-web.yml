@@ -1,6 +1,11 @@
 name: Web Build & Deploy
 
 on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'frontend/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -16,27 +21,32 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.environment }}
+  group: ${{ github.workflow }}-${{ inputs.environment || 'staging' }}
   cancel-in-progress: false
 
 jobs:
-  validate-inputs:
-    name: Validate Inputs
+  resolve-env:
+    name: Resolve Environment
     runs-on: ubuntu-latest
     timeout-minutes: 1
+    outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
     steps:
-      - name: Validate inputs
+      - name: Resolve environment
+        id: resolve
         env:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          if [[ ! "$INPUT_ENVIRONMENT" =~ ^(staging|testnet|production)$ ]]; then
-            echo "::error::Invalid environment: $INPUT_ENVIRONMENT"
+          ENV="${INPUT_ENVIRONMENT:-staging}"
+          if [[ ! "$ENV" =~ ^(staging|testnet|production)$ ]]; then
+            echo "::error::Invalid environment: $ENV"
             exit 1
           fi
+          echo "environment=$ENV" >> "$GITHUB_OUTPUT"
 
   verify:
     name: Verify
-    needs: validate-inputs
+    needs: resolve-env
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -63,10 +73,10 @@ jobs:
 
   build-and-deploy:
     name: Build & Deploy
-    needs: verify
+    needs: [resolve-env, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: ${{ inputs.environment }}
+    environment: ${{ needs.resolve-env.outputs.environment }}
     defaults:
       run:
         working-directory: frontend
@@ -85,7 +95,7 @@ jobs:
       - name: Mask secrets
         working-directory: .
         env:
-          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_ENVIRONMENT: ${{ needs.resolve-env.outputs.environment }}
         run: |
           SECRETS_FILE="frontend/.secrets/frontend/${INPUT_ENVIRONMENT}/web/.env.secrets"
           if [[ -f "$SECRETS_FILE" ]]; then
@@ -100,7 +110,7 @@ jobs:
 
       - name: Setup environment
         env:
-          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_ENVIRONMENT: ${{ needs.resolve-env.outputs.environment }}
         run: ./scripts/setup-env.sh "$INPUT_ENVIRONMENT"
 
       - name: Verify web env
@@ -116,13 +126,13 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
-          name: web-${{ inputs.environment }}
+          name: web-${{ needs.resolve-env.outputs.environment }}
           path: frontend/apps/web/dist/
-          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
+          retention-days: ${{ needs.resolve-env.outputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup SSH and deploy
         env:
-          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_ENVIRONMENT: ${{ needs.resolve-env.outputs.environment }}
         run: |
           # Source web deploy secrets (DEPLOY_SSH_KEY, DEPLOY_USER, DEPLOY_HOST, DEPLOY_PATH)
           SECRETS_FILE=".secrets/frontend/${INPUT_ENVIRONMENT}/web/.env.secrets"
