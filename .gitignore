@@ -3,7 +3,9 @@
 **/node_modules/**
 **/.claude/**
 !**/.claude/settings.json
+!**/.claude/commands/
 !**/.claude/commands/**
+!**/.claude/rules/
 !**/.claude/rules/**
 **/dist/**
 *.env

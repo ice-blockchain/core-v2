@@ -42,7 +42,32 @@ Every screen/component typically has: default, loading, empty, error, and edge-c
 ## React Native Conventions
 
 ### Styling
-- **Use `StyleSheet.create()`** for all styles. No inline style objects. No CSS-in-JS libraries.
+
+#### CRITICAL: Inline styles are prohibited. Use `StyleSheet.create()` for all static styles.
+Inline style objects cause unnecessary re-renders and allocations on every render cycle. Define all styles with `StyleSheet.create()`. Use inline styles **only** for truly dynamic values that depend on runtime state (e.g., animated values, computed positions).
+
+```typescript
+// VIOLATION — static styles passed inline
+<View style={{ flex: 1, backgroundColor: colorPalette.white, padding: 16 }}>
+  <Text style={{ marginBottom: 8 }}>Hello</Text>
+</View>
+
+// CORRECT — static styles in StyleSheet.create
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colorPalette.white, padding: 16 },
+  label: { marginBottom: 8 },
+});
+
+<View style={styles.container}>
+  <Text style={styles.label}>Hello</Text>
+</View>
+
+// ACCEPTABLE — dynamic style that depends on runtime state
+<Animated.View style={[styles.container, { opacity: fadeAnim }]} />
+<View style={[styles.card, { height: calculatedHeight }]} />
+```
+
+- **No CSS-in-JS libraries.**
 - **No magic numbers.** Extract repeated values into theme constants:
 ```typescript
 // BAD
