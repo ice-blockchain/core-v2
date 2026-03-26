@@ -15,7 +15,7 @@ function createMockDeps() {
     clearTokens: vi.fn(() => Promise.resolve()),
     isTokenExpired: vi.fn(() => Promise.resolve(false)),
   };
-  return { sessionDataSource, tokenManager };
+  return { sessionDataSource, tokenManager, refreshLocks: new Map<string, Promise<void>>() };
 }
 
 describe('logout', () => {

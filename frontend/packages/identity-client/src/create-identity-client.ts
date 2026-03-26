@@ -22,7 +22,7 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
 
   const regDeps = { registrationDataSource, tokenManager, origin };
   const loginDeps = { loginDataSource, tokenManager, origin };
-  const sessionDeps = { sessionDataSource, tokenManager };
+  const sessionDeps = { sessionDataSource, tokenManager, refreshLocks: new Map<string, Promise<void>>() };
   const userDeps = { userDataSource, tokenManager };
 
   return {

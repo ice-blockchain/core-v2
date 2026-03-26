@@ -5,9 +5,8 @@ import { IdentityError, IdentityErrorCode } from '../errors';
 interface SessionDeps {
   sessionDataSource: SessionDataSource;
   tokenManager: TokenManager;
+  refreshLocks: Map<string, Promise<void>>;
 }
-
-const refreshLocks = new Map<string, Promise<void>>();
 
 export async function logout(
   username: string,
@@ -27,11 +26,11 @@ export async function refreshToken(
   username: string,
   deps: SessionDeps,
 ): Promise<void> {
-  const existing = refreshLocks.get(username);
+  const existing = deps.refreshLocks.get(username);
   if (existing) { await existing; return; }
   const promise = executeRefresh(username, deps);
-  refreshLocks.set(username, promise);
-  try { await promise; } finally { refreshLocks.delete(username); }
+  deps.refreshLocks.set(username, promise);
+  try { await promise; } finally { deps.refreshLocks.delete(username); }
 }
 
 async function executeRefresh(
