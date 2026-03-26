@@ -27,7 +27,12 @@ function reactNativeWebPlugin(): Plugin {
   return {
     name: 'react-native-web',
     enforce: 'pre',
-    config() {
+    config(_, { command }) {
+      const rnwReplacement =
+        command === 'build'
+          ? path.resolve(__dirname, 'node_modules/react-native-web')
+          : 'react-native-web';
+
       return {
         resolve: {
           extensions: webExtensions,
@@ -38,7 +43,7 @@ function reactNativeWebPlugin(): Plugin {
             },
             {
               find: 'react-native',
-              replacement: 'react-native-web',
+              replacement: rnwReplacement,
             },
           ],
         },
