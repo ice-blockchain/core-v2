@@ -51,6 +51,15 @@ describe('parseSeedFromPem', () => {
     const invalidPem = '-----BEGIN PRIVATE KEY-----\nYWJj\n-----END PRIVATE KEY-----';
     expect(() => parseSeedFromPem(invalidPem)).toThrow('expected 48 bytes');
   });
+
+  it('rejects PEM with correct length but wrong prefix', () => {
+    const wrongPrefix = new Uint8Array(48).fill(0xff);
+    let binary = '';
+    for (const byte of wrongPrefix) binary += String.fromCharCode(byte);
+    const b64 = btoa(binary);
+    const pem = `-----BEGIN PRIVATE KEY-----\n${b64}\n-----END PRIVATE KEY-----`;
+    expect(() => parseSeedFromPem(pem)).toThrow('wrong prefix');
+  });
 });
 
 describe('generateCredentialId', () => {

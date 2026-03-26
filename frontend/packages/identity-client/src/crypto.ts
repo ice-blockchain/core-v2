@@ -97,6 +97,11 @@ export function parseSeedFromPem(pem: string): Uint8Array {
   if (decoded.length !== 48) {
     throw new Error('Invalid Ed25519 PKCS#8 key: expected 48 bytes');
   }
+  for (let i = 0; i < PKCS8_PREFIX.length; i++) {
+    if (decoded[i] !== PKCS8_PREFIX[i]) {
+      throw new Error('Invalid Ed25519 PKCS#8 key: wrong prefix');
+    }
+  }
   return decoded.slice(16, 48);
 }
 
