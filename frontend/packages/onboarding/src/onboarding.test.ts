@@ -5,20 +5,28 @@ import { uploadAvatar } from "./upload-avatar";
 import { saveProfile } from "./save-profile";
 
 describe("onboarding action stubs", () => {
-  it("validateNickname throws not-implemented error", async () => {
-    await expect(validateNickname("test")).rejects.toThrow("not implemented");
+  it("validateNickname returns available for valid nickname", async () => {
+    const result = await validateNickname("test");
+    expect(result).toEqual({ isAvailable: true, isReserved: false });
   });
 
-  it("validateReferral throws not-implemented error", async () => {
-    await expect(validateReferral("ref123")).rejects.toThrow("not implemented");
+  it("validateNickname returns unavailable for invalid nickname", async () => {
+    const result = await validateNickname("INVALID!");
+    expect(result).toEqual({ isAvailable: false, isReserved: false });
+  });
+
+  it("validateReferral returns valid for valid nickname", async () => {
+    const result = await validateReferral("ref123");
+    expect(result).toEqual({ isValid: true });
   });
 
   it("uploadAvatar throws not-implemented error", async () => {
     await expect(uploadAvatar({ imageUri: "file://photo.jpg" })).rejects.toThrow("not implemented");
   });
 
-  it("saveProfile throws not-implemented error", async () => {
+  it("saveProfile returns success", async () => {
     const input = { displayName: "John", nickname: "john" };
-    await expect(saveProfile(input)).rejects.toThrow("not implemented");
+    const result = await saveProfile(input);
+    expect(result).toEqual({ success: true });
   });
 });

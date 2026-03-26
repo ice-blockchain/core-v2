@@ -6,6 +6,7 @@ export interface BottomSheetProps {
   title?: string;
   onBack?: () => void;
   bottomButton?: ReactNode;
+  floatingFooter?: ReactNode;
   children: ReactNode;
   testID?: string;
 }

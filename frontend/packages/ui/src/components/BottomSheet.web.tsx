@@ -21,8 +21,16 @@ function useWebBottomSheetStyles() {
   return { overlayStyle, sheetStyle, handleStyle };
 }
 
+const FLOATING_FOOTER_STYLE = {
+  position: "absolute" as const,
+  bottom: 10,
+  left: 0,
+  right: 0,
+  paddingHorizontal: 44,
+};
+
 export function BottomSheet(props: BottomSheetProps) {
-  const { isVisible, onClose, title, onBack, bottomButton, children, testID } = props;
+  const { isVisible, onClose, title, onBack, bottomButton, floatingFooter, children, testID } = props;
   const { overlayStyle, sheetStyle, handleStyle } = useWebBottomSheetStyles();
   const [titleOpacity, setTitleOpacity] = useState(0);
   const keyboardStyle = useKeyboardContentStyle();
@@ -49,6 +57,7 @@ export function BottomSheet(props: BottomSheetProps) {
           {children}
         </ScrollView>
         {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
+        {floatingFooter ? <View style={FLOATING_FOOTER_STYLE}>{floatingFooter}</View> : null}
       </View>
     </View>
   );

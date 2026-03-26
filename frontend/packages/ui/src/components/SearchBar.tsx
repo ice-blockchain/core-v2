@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { TextInput as RNTextInput, View } from "react-native";
 import type { StyleProp, ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
@@ -12,25 +12,15 @@ export interface SearchBarProps {
   testID?: string;
 }
 
-interface ContainerStyleOptions {
-  scale: (n: number) => number;
-  strokeColor: string;
-  isFocused: boolean;
-  accentColor: string;
-}
-
-function buildContainerStyle(options: ContainerStyleOptions): ViewStyle {
-  const { scale, strokeColor, isFocused, accentColor } = options;
+function buildContainerStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
   return {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: isFocused ? accentColor : strokeColor,
     borderRadius: scale(16),
-    backgroundColor: "white",
-    height: scale(44),
+    backgroundColor,
+    height: scale(40),
     paddingHorizontal: scale(12),
-    gap: scale(8),
+    gap: scale(6),
   };
 }
 
@@ -39,23 +29,20 @@ function buildInputStyle(scale: (n: number) => number, primaryText: string): Tex
     flex: 1,
     fontSize: scale(13),
     fontFamily: "Noto Sans",
-    fontWeight: "400",
+    fontWeight: "600",
     color: primaryText,
     paddingVertical: 0,
     paddingHorizontal: 0,
   };
 }
 
-function useSearchBarStyles(isFocused: boolean) {
+function useSearchBarStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
   const containerStyle = useMemo(
-    () => buildContainerStyle({
-      scale, strokeColor: theme.colors.strokeElements,
-      isFocused, accentColor: theme.colors.primaryAccent,
-    }),
-    [scale, theme.colors, isFocused],
+    () => buildContainerStyle(scale, theme.colors.primaryBackground),
+    [scale, theme.colors.primaryBackground],
   );
 
   const inputStyle = useMemo(
@@ -68,15 +55,11 @@ function useSearchBarStyles(isFocused: boolean) {
 
 export function SearchBar(props: SearchBarProps) {
   const { value, onChangeText, placeholder = "Search", style, testID } = props;
-  const [isFocused, setIsFocused] = useState(false);
-  const { containerStyle, inputStyle, theme, scale } = useSearchBarStyles(isFocused);
-
-  const handleFocus = useCallback(() => setIsFocused(true), []);
-  const handleBlur = useCallback(() => setIsFocused(false), []);
+  const { containerStyle, inputStyle, theme, scale } = useSearchBarStyles();
 
   return (
     <View style={[containerStyle, style]}>
-      <Icon name="search" size={scale(20)} color={theme.colors.tertiaryText} />
+      <Icon name="field-search" size={scale(16)} color={theme.colors.tertiaryText} />
       <RNTextInput
         value={value}
         onChangeText={onChangeText}
@@ -84,8 +67,6 @@ export function SearchBar(props: SearchBarProps) {
         placeholderTextColor={theme.colors.tertiaryText}
         cursorColor={theme.colors.primaryAccent}
         selectionColor={theme.colors.primaryAccent}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         style={inputStyle}
         testID={testID}
       />

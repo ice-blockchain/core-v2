@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from "react-native";
-import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/ThemeProvider";
 import { BottomSheetHeader } from "./BottomSheetHeader";
 import { BottomSheetFooter } from "./BottomSheetFooter";
@@ -20,33 +21,50 @@ function useBottomSheetStyles() {
   return { overlayStyle, sheetStyle, handleStyle };
 }
 
-export function BottomSheet(props: BottomSheetProps) {
-  const { isVisible, onClose, title, onBack, bottomButton, children, testID } = props;
-  const { overlayStyle, sheetStyle, handleStyle } = useBottomSheetStyles();
+function buildFloatingFooterStyle(bottomInset: number): ViewStyle {
+  return {
+    position: "absolute",
+    bottom: bottomInset + 10,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 44,
+  };
+}
+
+function SheetContent(props: BottomSheetProps) {
+  const { title, onBack, bottomButton, floatingFooter, children } = props;
+  const { sheetStyle } = useBottomSheetStyles();
   const [titleOpacity, setTitleOpacity] = useState(0);
+  const insets = useSafeAreaInsets();
+  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(insets.bottom), [insets.bottom]);
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setTitleOpacity(computeTitleOpacity(event.nativeEvent.contentOffset.y));
   }, []);
 
   return (
+    <Pressable style={sheetStyle} onPress={undefined}>
+      <BottomSheetHeader title={title} titleOpacity={titleOpacity} onBack={onBack} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={KEYBOARD_BEHAVIOR}>
+        <ScrollView onScroll={handleScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+          {children}
+        </ScrollView>
+        {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
+      </KeyboardAvoidingView>
+      {floatingFooter ? <View style={floatingFooterStyle}>{floatingFooter}</View> : null}
+    </Pressable>
+  );
+}
+
+export function BottomSheet(props: BottomSheetProps) {
+  const { isVisible, onClose, testID } = props;
+  const { overlayStyle, handleStyle } = useBottomSheetStyles();
+
+  return (
     <Modal visible={isVisible} animationType="slide" transparent onRequestClose={onClose} testID={testID}>
       <Pressable style={overlayStyle} onPress={onClose}>
         <View style={handleStyle} />
-        <Pressable style={sheetStyle} onPress={undefined}>
-          <BottomSheetHeader title={title} titleOpacity={titleOpacity} onBack={onBack} />
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={KEYBOARD_BEHAVIOR}>
-            <ScrollView
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-              keyboardShouldPersistTaps="handled"
-              automaticallyAdjustKeyboardInsets
-            >
-              {children}
-            </ScrollView>
-            {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
-          </KeyboardAvoidingView>
-        </Pressable>
+        <SheetContent {...props} />
       </Pressable>
     </Modal>
   );
