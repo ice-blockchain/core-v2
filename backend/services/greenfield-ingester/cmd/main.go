@@ -53,7 +53,12 @@ func main() {
 	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
 		With().Timestamp().Str("service", "greenfield-ingester").Logger()
 
-	level, err := zerolog.ParseLevel(os.Getenv("LOG_LEVEL"))
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal().Err(err).Msg("load config")
+	}
+
+	level, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil || level == zerolog.NoLevel {
 		level = zerolog.InfoLevel
 	}
@@ -65,11 +70,6 @@ func main() {
 		syscall.SIGTERM,
 	)
 	defer cancel()
-
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal().Err(err).Msg("load config")
-	}
 
 	gfClient, err := greenfieldclient.New(greenfieldclient.Config{
 		RpcURLs:    cfg.GreenfieldRpcURLs,

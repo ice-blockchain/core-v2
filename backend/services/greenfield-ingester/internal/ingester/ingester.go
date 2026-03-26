@@ -106,11 +106,7 @@ func (i *Ingester) processTxEvent(
 
 	var enqueued int
 	for _, job := range jobs {
-		jobID := fmt.Sprintf("%d:%s:%s:%s",
-			txEvent.Height, txEvent.TxHash,
-			sanitizeJobIDComponent(job.bucketName),
-			sanitizeJobIDComponent(job.objectName),
-		)
+		jobID := formatJobID(txEvent.Height, txEvent.TxHash, job.bucketName, job.objectName)
 
 		created, err := i.queue.AddJob(ctx, pipe, job.name, job.data, jobID)
 		if err != nil {
@@ -195,6 +191,14 @@ func (i *Ingester) collectJobs(
 // IsHealthy returns true when the WebSocket subscription is active.
 func (i *Ingester) IsHealthy() bool {
 	return i.client.IsSubscribed()
+}
+
+func formatJobID(height int64, txHash, bucket, object string) string {
+	return fmt.Sprintf("%d:%s:%s:%s",
+		height, txHash,
+		sanitizeJobIDComponent(bucket),
+		sanitizeJobIDComponent(object),
+	)
 }
 
 func sanitizeJobIDComponent(s string) string {

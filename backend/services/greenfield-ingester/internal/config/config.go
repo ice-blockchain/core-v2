@@ -27,9 +27,15 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("GREENFIELD_RPC_URLS is required")
 	}
 
-	urls := strings.Split(rpcURLs, ",")
-	for i := range urls {
-		urls[i] = strings.TrimSpace(urls[i])
+	var urls []string
+	for _, u := range strings.Split(rpcURLs, ",") {
+		u = strings.TrimSpace(u)
+		if u != "" {
+			urls = append(urls, u)
+		}
+	}
+	if len(urls) == 0 {
+		return Config{}, fmt.Errorf("GREENFIELD_RPC_URLS contains no valid URLs")
 	}
 
 	chainID := os.Getenv("GREENFIELD_CHAIN_ID")

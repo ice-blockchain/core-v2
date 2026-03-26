@@ -176,10 +176,6 @@ func TestIngester_JobIDFormat(t *testing.T) {
 	require.Equal(t, "29331798:ABCDEF:my-bucket:my-object", jobID)
 }
 
-func formatJobID(height int64, txHash, bucket, object string) string {
-	return strconv.FormatInt(height, 10) + ":" + txHash + ":" + bucket + ":" + object
-}
-
 func TestIngester_SkipsIrrelevantEvents(t *testing.T) {
 	mr, redisClient := setupTestRedis(t)
 	defer mr.Close()
