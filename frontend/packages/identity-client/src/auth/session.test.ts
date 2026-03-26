@@ -48,7 +48,7 @@ describe('refreshToken', () => {
 
   it('refreshes and stores new access token', async () => {
     await refreshToken('alice', deps);
-    expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledWith('old-tok', 'ref-tok');
+    expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledWith('alice', 'old-tok', 'ref-tok');
     expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice', {
       token: 'new-token',
       refreshToken: 'ref-tok',

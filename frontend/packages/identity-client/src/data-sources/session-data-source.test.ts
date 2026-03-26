@@ -14,15 +14,15 @@ function createMockHttpClient(): HttpClient {
 }
 
 describe('createSessionDataSource', () => {
-  it('posts refresh token with current token as auth header', async () => {
+  it('posts username and refresh token with current token as auth header', async () => {
     const httpClient = createMockHttpClient();
     vi.mocked(httpClient.post).mockResolvedValueOnce({ token: 'new-tok' });
     const ds = createSessionDataSource(httpClient);
 
-    const result = await ds.refreshToken('current-tok', 'refresh-tok');
+    const result = await ds.refreshToken('alice', 'current-tok', 'refresh-tok');
 
     expect(httpClient.post).toHaveBeenCalledWith('/auth/login/delegated', {
-      body: { refreshToken: 'refresh-tok' },
+      body: { username: 'alice', refreshToken: 'refresh-tok' },
       headers: { Authorization: 'Bearer current-tok' },
     });
     expect(result).toEqual({ token: 'new-tok' });

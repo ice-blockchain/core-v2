@@ -27,7 +27,7 @@ export async function refreshToken(
     throw new IdentityError(IdentityErrorCode.UNAUTHENTICATED, 'No tokens found');
   }
   try {
-    const result = await deps.sessionDataSource.refreshToken(tokens.token, tokens.refreshToken);
+    const result = await deps.sessionDataSource.refreshToken(username, tokens.token, tokens.refreshToken);
     await deps.tokenManager.setTokens(username, {
       token: result.token,
       refreshToken: tokens.refreshToken,
