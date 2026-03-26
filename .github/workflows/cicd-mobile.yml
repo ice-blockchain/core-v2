@@ -314,7 +314,11 @@ jobs:
             -configuration "Release-${CONFIG_SUFFIX}" \
             -archivePath build/Ion.xcarchive \
             -destination 'generic/platform=iOS' \
-            CODE_SIGN_STYLE=Manual
+            -jobs 4 \
+            -quiet \
+            CODE_SIGN_STYLE=Manual \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
 
       - name: Generate export options
         working-directory: frontend/apps/mobile/ios
