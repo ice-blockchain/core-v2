@@ -66,19 +66,34 @@ describe('pulse-message-codec', () => {
 
       expect(decoded.topic).toBe('topic-with-emoji-data');
     });
+
+    it('round-trips the from field', () => {
+      const original = createTestMessage({ from: 'peer-abc-123' });
+      const decoded = decodePulseMessage(encodePulseMessage(original));
+
+      expect(decoded.from).toBe('peer-abc-123');
+      expect(decoded.topic).toBe('test-topic');
+    });
+
+    it('returns undefined from when not provided', () => {
+      const original = createTestMessage();
+      const decoded = decodePulseMessage(encodePulseMessage(original));
+
+      expect(decoded.from).toBeUndefined();
+    });
   });
 
   describe('error handling', () => {
     it('throws on bytes too short for header', () => {
-      expect(() => decodePulseMessage(new Uint8Array([0, 1]))).toThrow('too short');
+      expect(() => decodePulseMessage(new Uint8Array([0, 1, 0]))).toThrow('too short');
     });
 
     it('throws on invalid message type byte', () => {
-      expect(() => decodePulseMessage(new Uint8Array([99, 0, 0]))).toThrow('Invalid message type');
+      expect(() => decodePulseMessage(new Uint8Array([99, 0, 0, 0]))).toThrow('Invalid message type');
     });
 
     it('throws on truncated topic', () => {
-      const bytes = new Uint8Array([0, 0, 10, 65]);
+      const bytes = new Uint8Array([0, 0, 0, 10]);
       expect(() => decodePulseMessage(bytes)).toThrow('truncated topic');
     });
   });

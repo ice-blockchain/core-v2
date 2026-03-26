@@ -1,0 +1,123 @@
+services:
+  relay-0:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-0
+      PORT: "3000"
+    ports:
+      - "3100:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  relay-1:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-1
+      PORT: "3000"
+    ports:
+      - "3101:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  relay-2:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-2
+      PORT: "3000"
+    ports:
+      - "3102:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  relay-3:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-3
+      PORT: "3000"
+    ports:
+      - "3103:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  relay-4:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-4
+      PORT: "3000"
+    ports:
+      - "3104:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  relay-5:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-5
+      PORT: "3000"
+    ports:
+      - "3105:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  relay-6:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile
+    environment:
+      PEER_ID: relay-6
+      PORT: "3000"
+    ports:
+      - "3106:3000"
+    networks:
+      - pulse
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+networks:
+  pulse:
+    driver: bridge

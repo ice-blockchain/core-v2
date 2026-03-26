@@ -7,10 +7,18 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "bench": "tsx src/run-benchmark.ts",
+    "bench:docker": "tsx src/docker-benchmark.ts",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d --build",
+    "docker:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "dependencies": {
+    "yjs": "^13.6.30"
   },
   "devDependencies": {
-    "vitest": "^3.1.1",
-    "typescript": "^5.8.2"
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.1"
   }
 }

@@ -5,6 +5,7 @@ import { noise } from '@chainsafe/libp2p-noise';
 import { yamux } from '@chainsafe/libp2p-yamux';
 import { identify } from '@libp2p/identify';
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
+import { bootstrap } from '@libp2p/bootstrap';
 import type { PulseMeshConfig } from './types.js';
 
 const DEFAULT_SERVER_ADDRESSES = ['/ip4/0.0.0.0/tcp/0', '/ip4/0.0.0.0/tcp/0/ws'];
@@ -28,6 +29,9 @@ export function buildServerConfig(config: PulseMeshConfig) {
     addresses: {
       listen: config.listenAddresses ?? DEFAULT_SERVER_ADDRESSES,
     },
+    ...(config.bootstrapPeers?.length
+      ? { peerDiscovery: [bootstrap({ list: config.bootstrapPeers })] }
+      : {}),
   };
 }
 
@@ -46,6 +50,9 @@ export function buildBrowserConfig(config: PulseMeshConfig) {
     addresses: {
       listen: config.listenAddresses ?? [],
     },
+    ...(config.bootstrapPeers?.length
+      ? { peerDiscovery: [bootstrap({ list: config.bootstrapPeers })] }
+      : {}),
   };
 }
 
@@ -64,6 +71,9 @@ export function buildReactNativeConfig(config: PulseMeshConfig) {
     addresses: {
       listen: config.listenAddresses ?? [],
     },
+    ...(config.bootstrapPeers?.length
+      ? { peerDiscovery: [bootstrap({ list: config.bootstrapPeers })] }
+      : {}),
   };
 }
 

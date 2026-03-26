@@ -1,4 +1,5 @@
 export { createPulseGraph } from './pulse-graph.js';
+export type { PulseGraph } from './pulse-graph.js';
 export { createPulseNode, isPulseLink, flattenNestedProperties } from './pulse-node.js';
 export type {
   PulseNode,

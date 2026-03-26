@@ -1,0 +1,15 @@
+**/node_modules
+**/.DS_Store
+**/dist
+**/*.test.ts
+**/*.bench.ts
+**/vitest.config.ts
+bench/docker
+bench/src/run-benchmark.ts
+bench/src/docker-benchmark.ts
+bench/src/docker-worker.ts
+bench/src/docker-relay-client.ts
+vault
+mesh
+lens
+aggregate

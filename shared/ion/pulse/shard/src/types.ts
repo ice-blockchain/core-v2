@@ -21,6 +21,7 @@ export interface PulseShard {
   updatePeerLoad(peerId: string, load: number): void;
   markPeerHealthy(peerId: string): void;
   markPeerDegraded(peerId: string): void;
+  isPeerStale(peerId: string): boolean;
   getHealthyPeers(): string[];
   getAllPeers(): ShardNode[];
   getRingSize(): number;

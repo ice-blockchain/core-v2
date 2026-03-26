@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type { EventType, GeneratedEvent, GeneratorConfig } from './types.js';
 
 const ALL_EVENT_TYPES: EventType[] = ['post', 'message', 'follow', 'reaction', 'media'];
@@ -81,15 +82,16 @@ function buildMediaData(id: string): Record<string, unknown> {
 }
 
 function generateHexId(): string {
-  return Array.from({ length: 8 }, () =>
-    Math.floor(Math.random() * 16).toString(16),
-  ).join('');
+  return randomBytes(4).toString('hex');
 }
 
 function randomBetween(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  const range = max - min + 1;
+  const bytes = randomBytes(4);
+  const value = bytes.readUInt32BE(0);
+  return min + (value % range);
 }
 
 function pickRandom<T>(items: readonly T[]): T {
-  return items[Math.floor(Math.random() * items.length)]!;
+  return items[randomBetween(0, items.length - 1)]!;
 }

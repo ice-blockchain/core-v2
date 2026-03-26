@@ -91,7 +91,8 @@ export function createPulseShard(overrides?: PulseShardConfig): PulseShard {
     if (ring.length === 0) return [];
     const position = hashToPosition(soul);
     const startIndex = findRingPosition(ring, position);
-    return collectDistinctPeers({ ring, startIndex, count: config.minReplicas });
+    const owners = collectDistinctPeers({ ring, startIndex, count: config.minReplicas });
+    return owners.slice(0, config.maxReplicas);
   }
 
   function isLocalShard(soul: string, localPeerId: string): boolean {
@@ -121,6 +122,12 @@ export function createPulseShard(overrides?: PulseShardConfig): PulseShard {
     node.isHealthy = false;
   }
 
+  function isPeerStale(peerId: string): boolean {
+    const node = nodes.get(peerId);
+    if (!node) return true;
+    return Date.now() - node.lastSeen > config.repairThresholdMs;
+  }
+
   function getHealthyPeers(): string[] {
     return [...nodes.values()].filter((n) => n.isHealthy).map((n) => n.peerId);
   }
@@ -147,6 +154,7 @@ export function createPulseShard(overrides?: PulseShardConfig): PulseShard {
     updatePeerLoad,
     markPeerHealthy,
     markPeerDegraded,
+    isPeerStale,
     getHealthyPeers,
     getAllPeers,
     getRingSize,

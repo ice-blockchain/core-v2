@@ -10,17 +10,18 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "libp2p": "^3.1.6",
     "@chainsafe/libp2p-gossipsub": "^14.1.2",
-    "@libp2p/tcp": "^11.0.13",
-    "@libp2p/websockets": "^10.1.6",
+    "@chainsafe/libp2p-noise": "^16.1.5",
+    "@chainsafe/libp2p-yamux": "^7.0.4",
+    "@libp2p/bootstrap": "^12.0.14",
     "@libp2p/circuit-relay-v2": "^4.1.6",
     "@libp2p/identify": "^4.0.13",
-    "@chainsafe/libp2p-noise": "^16.1.5",
-    "@chainsafe/libp2p-yamux": "^7.0.4"
+    "@libp2p/tcp": "^11.0.13",
+    "@libp2p/websockets": "^10.1.6",
+    "libp2p": "^3.1.6"
   },
   "devDependencies": {
-    "vitest": "^3.1.1",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.1.1"
   }
 }
