@@ -1,23 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
 import type { UserActionChallenge } from '../types';
-import { encryptPrivateKey, generateKeyPair } from '../crypto';
-import { loginWithPasskey, loginWithPassword } from './login';
+import { generateKeyPair } from '../crypto/generate-key-pair';
+import { encryptPrivateKey } from '../crypto/encrypt-private-key';
+import { loginWithPassword } from './login-with-password';
 import { IdentityErrorCode } from '../errors';
-
-vi.mock('../passkey', () => ({
-  isPasskeyAvailable: vi.fn(() => true),
-  getPasskeyAssertion: vi.fn(() =>
-    Promise.resolve({
-      credentialId: 'cred-id',
-      clientDataJSON: 'Y2xpZW50RGF0YQ==',
-      authenticatorData: 'YXV0aERhdGE=',
-      signature: 'c2ln',
-      userHandle: 'dXNlcg==',
-    }),
-  ),
-}));
 
 function createMockChallenge(encryptedKey?: string): UserActionChallenge {
   return {
@@ -50,37 +38,6 @@ function createMockDeps(challenge: UserActionChallenge) {
   };
   return { loginDataSource, tokenManager, origin: 'https://example.com' };
 }
-
-describe('loginWithPasskey', () => {
-  let deps: ReturnType<typeof createMockDeps>;
-
-  beforeEach(() => {
-    deps = createMockDeps(createMockChallenge());
-  });
-
-  it('completes passkey login and stores tokens', async () => {
-    const result = await loginWithPasskey('alice', deps);
-    expect(result).toBe('alice');
-    expect(deps.loginDataSource.completeLogin).toHaveBeenCalledWith(
-      expect.objectContaining({
-        challengeIdentifier: 'challenge-id-1',
-        firstFactor: expect.objectContaining({ kind: 'Fido2' }),
-      }),
-    );
-    expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice', {
-      token: 'tok',
-      refreshToken: 'ref',
-    });
-  });
-
-  it('throws when passkeys are not available', async () => {
-    const { isPasskeyAvailable } = await import('../passkey');
-    vi.mocked(isPasskeyAvailable).mockReturnValueOnce(false);
-    await expect(loginWithPasskey('alice', deps)).rejects.toMatchObject({
-      code: IdentityErrorCode.PASSKEY_NOT_AVAILABLE,
-    });
-  });
-});
 
 describe('loginWithPassword', () => {
   it('decrypts key, signs challenge, and stores tokens', async () => {
@@ -137,5 +94,13 @@ describe('loginWithPassword', () => {
     await expect(loginWithPassword({ username: 'bob', password: 'pass' }, deps)).rejects.toMatchObject({
       code: IdentityErrorCode.INVALID_CREDENTIALS,
     });
+  });
+
+  it('preserves original error as cause for malformed JSON', async () => {
+    const challenge = createMockChallenge('not-json{{{');
+    const deps = createMockDeps(challenge);
+    await expect(loginWithPassword({ username: 'bob', password: 'pass' }, deps)).rejects.toSatisfy(
+      (error: Error) => error.cause instanceof Error,
+    );
   });
 });

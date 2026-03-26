@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SessionDataSource } from '../data-sources/session-data-source';
 import type { TokenManager } from '../token/token-manager';
-import { logout, refreshToken, isAuthenticated } from './session';
+import { refreshToken } from './refresh-token';
 import { IdentityErrorCode } from '../errors';
 
 function createMockDeps() {
@@ -18,33 +18,6 @@ function createMockDeps() {
   return { sessionDataSource, tokenManager, refreshLocks: new Map<string, Promise<void>>() };
 }
 
-describe('logout', () => {
-  let deps: ReturnType<typeof createMockDeps>;
-
-  beforeEach(() => {
-    deps = createMockDeps();
-  });
-
-  it('calls server logout and clears tokens', async () => {
-    await logout('alice', deps);
-    expect(deps.sessionDataSource.logout).toHaveBeenCalledWith('old-tok', 'alice');
-    expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
-  });
-
-  it('clears tokens even when server logout fails', async () => {
-    vi.mocked(deps.sessionDataSource.logout).mockRejectedValueOnce(new Error('network error'));
-    await expect(logout('alice', deps)).rejects.toThrow('network error');
-    expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
-  });
-
-  it('clears tokens even when no tokens exist', async () => {
-    vi.mocked(deps.tokenManager.getTokens).mockResolvedValueOnce(null);
-    await logout('alice', deps);
-    expect(deps.sessionDataSource.logout).not.toHaveBeenCalled();
-    expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
-  });
-});
-
 describe('refreshToken', () => {
   let deps: ReturnType<typeof createMockDeps>;
 
@@ -54,7 +27,11 @@ describe('refreshToken', () => {
 
   it('refreshes and stores new access token', async () => {
     await refreshToken('alice', deps);
-    expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledWith('alice', 'old-tok', 'ref-tok');
+    expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledWith({
+      username: 'alice',
+      currentToken: 'old-tok',
+      refreshToken: 'ref-tok',
+    });
     expect(deps.tokenManager.setTokens).toHaveBeenCalledWith('alice', {
       token: 'new-token',
       refreshToken: 'ref-tok',
@@ -97,18 +74,5 @@ describe('refreshToken', () => {
     vi.mocked(deps.sessionDataSource.refreshToken).mockRejectedValueOnce(new Error('expired'));
     await expect(refreshToken('alice', deps)).rejects.toThrow('expired');
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
-  });
-});
-
-describe('isAuthenticated', () => {
-  it('returns true when token is not expired', async () => {
-    const deps = createMockDeps();
-    expect(await isAuthenticated('alice', deps)).toBe(true);
-  });
-
-  it('returns false when token is expired', async () => {
-    const deps = createMockDeps();
-    vi.mocked(deps.tokenManager.isTokenExpired).mockResolvedValueOnce(true);
-    expect(await isAuthenticated('alice', deps)).toBe(false);
   });
 });

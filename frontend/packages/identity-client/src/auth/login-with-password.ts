@@ -1,41 +1,14 @@
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
-import type { EncryptedPrivateKey } from '../crypto';
-import { decryptPrivateKey, signForLogin } from '../crypto';
-import { isPasskeyAvailable, getPasskeyAssertion } from '../passkey';
+import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
+import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import { signForLogin } from '../crypto/sign-for-login';
 import { IdentityError, IdentityErrorCode } from '../errors';
 
-interface LoginDeps {
+interface LoginWithPasswordDeps {
   loginDataSource: LoginDataSource;
   tokenManager: TokenManager;
   origin: string;
-}
-
-export async function loginWithPasskey(
-  username: string,
-  deps: LoginDeps,
-  twoFAVerificationCodes?: Record<string, string>,
-): Promise<string> {
-  if (!isPasskeyAvailable()) {
-    throw new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'Passkeys are not supported');
-  }
-  const challenge = await deps.loginDataSource.initLogin(username, twoFAVerificationCodes);
-  const assertion = await getPasskeyAssertion(challenge);
-  const tokens = await deps.loginDataSource.completeLogin({
-    challengeIdentifier: challenge.challengeIdentifier,
-    firstFactor: {
-      kind: 'Fido2',
-      credentialAssertion: {
-        credId: assertion.credentialId,
-        clientData: assertion.clientDataJSON,
-        authenticatorData: assertion.authenticatorData,
-        signature: assertion.signature,
-        ...(assertion.userHandle != null && { userHandle: assertion.userHandle }),
-      },
-    },
-  });
-  await deps.tokenManager.setTokens(username, tokens);
-  return username;
 }
 
 interface PasswordCredentialSource {
@@ -70,13 +43,13 @@ async function decryptCredentialKey(rawJson: string, password: string): Promise<
   let encryptedKey: EncryptedPrivateKey;
   try {
     encryptedKey = JSON.parse(rawJson) as EncryptedPrivateKey;
-  } catch {
-    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key');
+  } catch (error) {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key', error);
   }
   try {
     return await decryptPrivateKey(encryptedKey, password);
-  } catch {
-    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Incorrect password');
+  } catch (error) {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Incorrect password', error);
   }
 }
 
@@ -88,7 +61,7 @@ interface PasswordLoginInput {
 
 export async function loginWithPassword(
   input: PasswordLoginInput,
-  deps: LoginDeps,
+  deps: LoginWithPasswordDeps,
 ): Promise<string> {
   const challenge = await deps.loginDataSource.initLogin(input.username, input.twoFAVerificationCodes);
   const cred = extractPasswordCredential(challenge);

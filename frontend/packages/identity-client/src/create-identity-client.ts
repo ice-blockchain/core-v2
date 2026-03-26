@@ -5,9 +5,13 @@ import { createSessionDataSource } from './data-sources/session-data-source';
 import { createUserDataSource } from './data-sources/user-data-source';
 import { createTokenManager } from './token/token-manager';
 import { withDefaultHeaders } from './http-client-with-headers';
-import { registerWithPasskey, registerWithPassword } from './auth/registration';
-import { loginWithPasskey, loginWithPassword } from './auth/login';
-import { logout, refreshToken, isAuthenticated } from './auth/session';
+import { registerWithPasskey } from './auth/register-with-passkey';
+import { registerWithPassword } from './auth/register-with-password';
+import { loginWithPasskey } from './auth/login-with-passkey';
+import { loginWithPassword } from './auth/login-with-password';
+import { logout } from './auth/logout';
+import { refreshToken } from './auth/refresh-token';
+import { isAuthenticated } from './auth/is-authenticated';
 import { getLoginCapabilities } from './auth/login-capabilities';
 import { getUser } from './users/get-user';
 
