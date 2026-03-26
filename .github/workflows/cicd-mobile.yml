@@ -162,6 +162,7 @@ jobs:
           INPUT_APP_VERSION: ${{ inputs.app_version }}
           ANDROID_FLAVOR: ${{ needs.verify.outputs.android_flavor }}
           BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
+        shell: bash
         run: |
           if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
             ./gradlew "assemble${ANDROID_FLAVOR^}Release" \
@@ -195,7 +196,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '3.3'
           bundler-cache: true
           working-directory: frontend/apps/mobile
 
@@ -257,7 +258,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '3.3'
           bundler-cache: true
           working-directory: frontend/apps/mobile
 
