@@ -1,0 +1,18 @@
+version: "3.8"
+
+# Pulse Bench - Docker Compose for benchmark scenarios
+# Phase 2: Add real relay and client services
+
+services:
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.relay
+    expose:
+      - "8080"
+    networks:
+      - pulse-bench
+
+networks:
+  pulse-bench:
+    driver: bridge

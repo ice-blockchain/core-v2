@@ -1,0 +1,12 @@
+# Pulse Relay - Benchmark Container
+# Phase 2: Replace with actual relay binary
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Placeholder: real relay binary will be copied here
+RUN echo "Pulse relay placeholder"
+
+EXPOSE 8080
+
+CMD ["echo", "relay-placeholder"]
