@@ -7,6 +7,8 @@ interface SessionDeps {
   tokenManager: TokenManager;
 }
 
+const refreshLocks = new Map<string, Promise<void>>();
+
 export async function logout(
   username: string,
   deps: SessionDeps,
@@ -22,6 +24,17 @@ export async function logout(
 }
 
 export async function refreshToken(
+  username: string,
+  deps: SessionDeps,
+): Promise<void> {
+  const existing = refreshLocks.get(username);
+  if (existing) { await existing; return; }
+  const promise = executeRefresh(username, deps);
+  refreshLocks.set(username, promise);
+  try { await promise; } finally { refreshLocks.delete(username); }
+}
+
+async function executeRefresh(
   username: string,
   deps: SessionDeps,
 ): Promise<void> {

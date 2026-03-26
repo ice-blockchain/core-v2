@@ -80,6 +80,19 @@ describe('refreshToken', () => {
     });
   });
 
+  it('deduplicates concurrent refresh calls into a single request', async () => {
+    let resolveRefresh!: (v: { token: string }) => void;
+    vi.mocked(deps.sessionDataSource.refreshToken).mockReturnValue(
+      new Promise((resolve) => { resolveRefresh = resolve; }),
+    );
+    const p1 = refreshToken('alice', deps);
+    const p2 = refreshToken('alice', deps);
+    const p3 = refreshToken('alice', deps);
+    resolveRefresh({ token: 'new-token' });
+    await Promise.all([p1, p2, p3]);
+    expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledTimes(1);
+  });
+
   it('clears tokens on refresh failure', async () => {
     vi.mocked(deps.sessionDataSource.refreshToken).mockRejectedValueOnce(new Error('expired'));
     await expect(refreshToken('alice', deps)).rejects.toThrow('expired');
