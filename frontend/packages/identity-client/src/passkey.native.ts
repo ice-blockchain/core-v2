@@ -56,7 +56,7 @@ export async function getPasskeyAssertion(
       clientDataJSON: result.response.clientDataJSON,
       authenticatorData: result.response.authenticatorData,
       signature: result.response.signature,
-      userHandle: result.response.userHandle || null,
+      userHandle: result.response.userHandle ?? null,
     };
   } catch (error) {
     throw mapNativePasskeyError(error);

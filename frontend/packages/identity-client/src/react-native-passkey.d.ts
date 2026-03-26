@@ -30,7 +30,7 @@ declare module 'react-native-passkey' {
       clientDataJSON: string;
       authenticatorData: string;
       signature: string;
-      userHandle: string;
+      userHandle: string | undefined;
     };
   }
 
