@@ -72,6 +72,14 @@ Screens are NOT the primary test target. If the actions work correctly, screen t
 
 ## Quality Standards
 
+### CRITICAL: Run all three checks before pushing the code to remote branch:
+Every package change must pass all three in order:
+1. **Lint:** `pnpm --filter @ion/[name] lint` — catches style, import, and size violations
+2. **Type check:** `pnpm --filter @ion/[name] type-check` — catches type errors
+3. **Tests:** `pnpm --filter @ion/[name] test` — catches behavioral regressions
+
+Do not skip lint. Lint errors (max-lines-per-function, consistent-type-imports, no-var-requires) are CI blockers and must be fixed before tests are meaningful.
+
 ### Before submitting a PR, verify:
 - Does it actually work? (Not just build — does it function correctly?)
 - Did I test the integration points?
