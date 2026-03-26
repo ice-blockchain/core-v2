@@ -112,7 +112,9 @@ export function generateCredentialId(publicKey: Uint8Array): string {
   const truncated = hash.slice(0, 16);
   const num = BigInt('0x' + bytesToHex(truncated));
   const raw = num.toString(36).toUpperCase().padStart(25, '0');
-  return raw.match(/.{5}/g)!.join('-');
+  const groups = raw.match(/.{5}/g);
+  if (!groups) throw new Error('Failed to split credential ID into groups');
+  return groups.join('-');
 }
 
 export async function encryptPrivateKey(

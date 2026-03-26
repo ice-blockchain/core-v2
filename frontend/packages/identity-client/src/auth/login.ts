@@ -38,7 +38,13 @@ export async function loginWithPasskey(
   return username;
 }
 
-function extractPasswordCredential(challenge: { allowCredentials: { passwordProtectedKey: Array<{ id: string; encryptedPrivateKey?: string }> | null } }) {
+interface PasswordCredentialSource {
+  allowCredentials: {
+    passwordProtectedKey: Array<{ id: string; encryptedPrivateKey?: string }> | null;
+  };
+}
+
+function extractPasswordCredential(challenge: PasswordCredentialSource) {
   const creds = challenge.allowCredentials.passwordProtectedKey;
   if (!creds?.length) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'No password credentials available');

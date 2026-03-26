@@ -5,6 +5,7 @@ import type {
   PasskeyRegistrationResult,
   PasskeyAuthResult,
 } from './types';
+import { Logger } from '@ion/diagnostics';
 import { IdentityError, IdentityErrorCode } from './errors';
 
 export function isPasskeyAvailable(): boolean {
@@ -64,7 +65,7 @@ export async function getPasskeyAssertion(
 
 function mapNativePasskeyError(error: unknown): IdentityError {
   const message = error instanceof Error ? error.message : String(error);
-  console.error('[Passkey] Native error:', JSON.stringify(error, Object.getOwnPropertyNames(error as object)));
+  Logger.error('Passkey native error', { tag: 'identity', message });
   if (message.includes('cancel') || message.includes('Cancel')) {
     return new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'Passkey operation cancelled', error);
   }
