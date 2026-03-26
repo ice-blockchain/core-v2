@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  relay-1:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile.relay
+    expose:
+      - "9000"
+    environment:
+      RELAY_ID: relay-1
+      SHARD_REPLICAS: "3"
+
+  relay-2:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile.relay
+    expose:
+      - "9000"
+    environment:
+      RELAY_ID: relay-2
+      SHARD_REPLICAS: "3"
+
+  relay-3:
+    build:
+      context: ../..
+      dockerfile: bench/docker/Dockerfile.relay
+    expose:
+      - "9000"
+    environment:
+      RELAY_ID: relay-3
+      SHARD_REPLICAS: "3"
