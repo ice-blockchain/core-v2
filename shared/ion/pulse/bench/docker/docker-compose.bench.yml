@@ -1,18 +1,61 @@
-version: "3.8"
-
-# Pulse Bench - Docker Compose for benchmark scenarios
-# Phase 2: Add real relay and client services
-
 services:
-  relay:
+  relay-1:
     build:
-      context: .
-      dockerfile: Dockerfile.relay
-    expose:
-      - "8080"
+      context: ../../
+      dockerfile: bench/docker/Dockerfile.relay
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      PULSE_RELAY_PORT: "8080"
+      PULSE_PEER_ID: "relay-1"
+      PULSE_BOOTSTRAP_PEERS: "relay-2,relay-3"
     networks:
-      - pulse-bench
+      - pulse-bench-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  relay-2:
+    build:
+      context: ../../
+      dockerfile: bench/docker/Dockerfile.relay
+    ports:
+      - "127.0.0.1:8082:8080"
+    environment:
+      PULSE_RELAY_PORT: "8080"
+      PULSE_PEER_ID: "relay-2"
+      PULSE_BOOTSTRAP_PEERS: "relay-1,relay-3"
+    networks:
+      - pulse-bench-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  relay-3:
+    build:
+      context: ../../
+      dockerfile: bench/docker/Dockerfile.relay
+    ports:
+      - "127.0.0.1:8083:8080"
+    environment:
+      PULSE_RELAY_PORT: "8080"
+      PULSE_PEER_ID: "relay-3"
+      PULSE_BOOTSTRAP_PEERS: "relay-1,relay-2"
+    networks:
+      - pulse-bench-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
 networks:
-  pulse-bench:
+  pulse-bench-net:
     driver: bridge

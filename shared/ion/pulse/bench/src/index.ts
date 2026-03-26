@@ -10,15 +10,19 @@ export {
   stopRelayCluster,
   killRelay,
   restartRelay,
+  waitForRelayHealth,
 } from './relay-container';
-export type { RelayContainerConfig } from './relay-container';
 export {
-  startClientWorker,
+  createClientWorker,
   stopClientWorker,
 } from './client-worker';
-export type { ClientWorkerConfig } from './client-worker';
 export type {
   PulseBenchConfig,
   PulseBenchResult,
   PulseBenchSuite,
+  RelayInstance,
+  RelayClusterConfig,
+  ClientWorkerConfig,
+  ClientWorkerInstance,
+  ClientWorkerMetrics,
 } from './types';

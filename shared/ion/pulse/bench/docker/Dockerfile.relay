@@ -1,12 +1,32 @@
-# Pulse Relay - Benchmark Container
-# Phase 2: Replace with actual relay binary
 FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /app/pulse
 
-# Placeholder: real relay binary will be copied here
-RUN echo "Pulse relay placeholder"
+RUN npm install -g tsx
+
+# Build context must be shared/ion/pulse/ so all modules are available
+COPY graph/ ./graph/
+COPY sync/ ./sync/
+COPY mesh/ ./mesh/
+COPY signal/ ./signal/
+COPY shard/ ./shard/
+COPY cache/ ./cache/
+COPY reaper/ ./reaper/
+COPY bench/ ./bench/
+
+# Install dependencies for all modules that the relay server imports
+RUN cd /app/pulse/graph && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/sync && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/mesh && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/shard && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/cache && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/signal && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/reaper && npm install --ignore-scripts 2>/dev/null; \
+    cd /app/pulse/bench && npm install --ignore-scripts 2>/dev/null; \
+    exit 0
+
+WORKDIR /app/pulse/bench
 
 EXPOSE 8080
 
-CMD ["echo", "relay-placeholder"]
+CMD ["npx", "tsx", "src/relay-server.ts"]
