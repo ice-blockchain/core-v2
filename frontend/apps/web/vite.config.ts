@@ -38,7 +38,7 @@ function reactNativeWebPlugin(): Plugin {
             },
             {
               find: 'react-native',
-              replacement: 'react-native-web',
+              replacement: path.resolve(__dirname, 'node_modules/react-native-web'),
             },
           ],
         },
