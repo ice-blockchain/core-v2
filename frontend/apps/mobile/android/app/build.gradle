@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -21,6 +23,12 @@ apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.grad
 react {
     /* Variants */
     debuggableVariants = ["stagingDebug", "ionTestnetDebug", "productionDebug"]
+
+    /* Hermes compiler — RN 0.84 moved hermesc to hermes-compiler package */
+    def hermescDir = file("../../node_modules/hermes-compiler/hermesc")
+    def osDir = Os.isFamily(Os.FAMILY_WINDOWS) ? "win64-bin" :
+                Os.isFamily(Os.FAMILY_MAC)     ? "osx-bin"   : "linux64-bin"
+    hermesCommand = new File(hermescDir, [osDir, "hermesc"].join(File.separator)).toString()
 
     /* Autolinking */
     autolinkLibrariesWithApp()

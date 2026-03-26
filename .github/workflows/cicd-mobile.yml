@@ -21,14 +21,11 @@ on:
       app_version:
         description: App version (e.g. 1.0.0)
         required: true
+        default: "9.9.9"
         type: string
 
 permissions:
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ inputs.environment }}
-  cancel-in-progress: false
 
 jobs:
   validate-inputs:
@@ -69,7 +66,7 @@ jobs:
       build_number: ${{ steps.resolve.outputs.build_number }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js and pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -110,18 +107,18 @@ jobs:
   build-android:
     name: Build Android
     needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: macos-15
+    timeout-minutes: 45
     environment: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: frontend
     steps:
       - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Checkout secrets
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: ice-blockchain/core-v2-secrets
           ref: master
@@ -153,10 +150,15 @@ jobs:
         run: pnpm turbo build --filter=@ion/mobile...
 
       - name: Setup JDK 17
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           distribution: temurin
           java-version: 17
+
+      - name: Fix Hermes permissions
+        run: |
+          find apps/mobile/node_modules -name "hermesc" -type f -exec chmod +x {} +
+          find apps/mobile/node_modules -name "*.sh" -path "*/react-native/*" -exec chmod +x {} +
 
       - name: Build Android
         working-directory: frontend/apps/mobile/android
@@ -166,45 +168,29 @@ jobs:
           ANDROID_FLAVOR: ${{ needs.verify.outputs.android_flavor }}
           BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
         run: |
+          FLAVOR="$(echo "${ANDROID_FLAVOR:0:1}" | tr '[:lower:]' '[:upper:]')${ANDROID_FLAVOR:1}"
           if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
-            ./gradlew "assemble${ANDROID_FLAVOR^}Release" \
+            ./gradlew "assemble${FLAVOR}Release" \
               -PversionName="$INPUT_APP_VERSION" \
               -PversionCode="$BUILD_NUMBER"
           else
-            ./gradlew "bundle${ANDROID_FLAVOR^}Release" \
+            ./gradlew "bundle${FLAVOR}Release" \
               -PversionName="$INPUT_APP_VERSION" \
               -PversionCode="$BUILD_NUMBER"
           fi
-
-      - name: Find build artifact
-        id: artifact
-        env:
-          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
-        run: |
-          if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
-            ARTIFACT=$(find apps/mobile/android/app/build/outputs/apk -name "*.apk" | head -1)
-          else
-            ARTIFACT=$(find apps/mobile/android/app/build/outputs/bundle -name "*.aab" | head -1)
-          fi
-          echo "path=$ARTIFACT" >> "$GITHUB_OUTPUT"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: android-${{ inputs.environment }}-${{ inputs.deployment_target }}
-          path: frontend/${{ steps.artifact.outputs.path }}
-          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '3.2'
           bundler-cache: true
           working-directory: frontend/apps/mobile
 
       - name: Deploy to Firebase
         if: inputs.deployment_target == 'firebase'
         working-directory: frontend/apps/mobile
+        env:
+          RELEASE_NOTES: "${{ inputs.environment }}_${{ github.head_ref || github.ref_name }}"
         run: bundle exec fastlane android distribute_firebase
 
       - name: Deploy to Play Store
@@ -223,10 +209,10 @@ jobs:
         working-directory: frontend
     steps:
       - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Checkout secrets
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           repository: ice-blockchain/core-v2-secrets
           ref: master
@@ -258,19 +244,48 @@ jobs:
         run: pnpm turbo build --filter=@ion/mobile...
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '3.2'
           bundler-cache: true
           working-directory: frontend/apps/mobile
+
+      - name: Fix Hermes permissions
+        run: |
+          find apps/mobile/node_modules -name "hermesc" -type f -exec chmod +x {} +
+          find apps/mobile/node_modules -name "*.sh" -path "*/react-native/*" -exec chmod +x {} +
 
       - name: Install CocoaPods
         working-directory: frontend/apps/mobile/ios
         run: bundle exec pod install
 
+      - name: Setup signing keychain
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          security create-keychain -p "" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
       - name: Fetch certificates
         working-directory: frontend/apps/mobile
+        env:
+          MATCH_KEYCHAIN_NAME: ${{ runner.temp }}/build.keychain-db
+          MATCH_KEYCHAIN_PASSWORD: ""
         run: bundle exec fastlane ios fetch_certs
+
+      - name: Allow codesign access
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+      - name: Configure code signing
+        working-directory: frontend/apps/mobile
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_DEPLOYMENT_TARGET: ${{ inputs.deployment_target }}
+        run: bundle exec fastlane ios setup_signing
 
       - name: Set app version
         working-directory: frontend/apps/mobile/ios
@@ -299,7 +314,11 @@ jobs:
             -configuration "Release-${CONFIG_SUFFIX}" \
             -archivePath build/Ion.xcarchive \
             -destination 'generic/platform=iOS' \
-            CODE_SIGN_STYLE=Manual
+            -jobs 4 \
+            -hideShellScriptEnvironment \
+            CODE_SIGN_STYLE=Manual \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
 
       - name: Generate export options
         working-directory: frontend/apps/mobile/ios
@@ -308,9 +327,11 @@ jobs:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
           if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
-            METHOD="ad-hoc"
+            METHOD="release-testing"
+            SIGN_TYPE="AdHoc"
           else
             METHOD="app-store"
+            SIGN_TYPE="AppStore"
           fi
 
           case "$INPUT_ENVIRONMENT" in
@@ -318,6 +339,8 @@ jobs:
             testnet)    BUNDLE_ID="io.ion.app.testnet" ;;
             production) BUNDLE_ID="io.ion.app" ;;
           esac
+
+          PROFILE_NAME="match ${SIGN_TYPE} ${BUNDLE_ID}"
 
           cat > build/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -330,6 +353,11 @@ jobs:
             <string>YJJ6X8TG5Y</string>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
             <key>stripSwiftSymbols</key>
             <true/>
             <key>uploadSymbols</key>
@@ -346,16 +374,11 @@ jobs:
             -exportOptionsPlist build/ExportOptions.plist \
             -exportPath build/export
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ios-${{ inputs.environment }}-${{ inputs.deployment_target }}
-          path: frontend/apps/mobile/ios/build/export/*.ipa
-          retention-days: ${{ inputs.environment == 'production' && 30 || 7 }}
-
       - name: Deploy to Firebase
         if: inputs.deployment_target == 'firebase'
         working-directory: frontend/apps/mobile
+        env:
+          RELEASE_NOTES: "${{ inputs.environment }}_${{ github.head_ref || github.ref_name }}"
         run: bundle exec fastlane ios distribute_firebase
 
       - name: Deploy to App Store
