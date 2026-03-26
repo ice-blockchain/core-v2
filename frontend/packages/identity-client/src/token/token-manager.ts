@@ -9,37 +9,34 @@ export interface TokenManager {
   isTokenExpired(username: string): Promise<boolean>;
 }
 
-function tokenKey(username: string): string {
-  return `ion_identity_token:${username}`;
+function storageKey(username: string): string {
+  return `ion_identity_tokens:${username}`;
 }
 
-function refreshKey(username: string): string {
-  return `ion_identity_refresh:${username}`;
+function readTokens(secureStorage: ISecureStorage, username: string): Promise<AuthTokens | null> {
+  return secureStorage.getItem(storageKey(username)).then((raw) => {
+    if (!raw) return null;
+    try { return JSON.parse(raw) as AuthTokens; }
+    catch { return null; }
+  });
 }
 
 export function createTokenManager(secureStorage: ISecureStorage): TokenManager {
   return {
-    async getTokens(username) {
-      const token = await secureStorage.getItem(tokenKey(username));
-      const refreshToken = await secureStorage.getItem(refreshKey(username));
-      if (!token || !refreshToken) return null;
-      return { token, refreshToken };
-    },
+    getTokens: (username) => readTokens(secureStorage, username),
 
     async setTokens(username, tokens) {
-      await secureStorage.setItem(tokenKey(username), tokens.token);
-      await secureStorage.setItem(refreshKey(username), tokens.refreshToken);
+      await secureStorage.setItem(storageKey(username), JSON.stringify(tokens));
     },
 
     async clearTokens(username) {
-      await secureStorage.removeItem(tokenKey(username));
-      await secureStorage.removeItem(refreshKey(username));
+      await secureStorage.removeItem(storageKey(username));
     },
 
     async isTokenExpired(username) {
-      const token = await secureStorage.getItem(tokenKey(username));
-      if (!token) return true;
-      const exp = parseJwtExpiry(token);
+      const tokens = await readTokens(secureStorage, username);
+      if (!tokens) return true;
+      const exp = parseJwtExpiry(tokens.token);
       if (!exp) return true;
       return Date.now() >= exp * 1000;
     },

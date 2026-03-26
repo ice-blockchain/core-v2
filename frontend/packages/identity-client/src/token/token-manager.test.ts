@@ -68,4 +68,14 @@ describe('TokenManager', () => {
   it('reports expired when no token exists', async () => {
     expect(await manager.isTokenExpired('nobody')).toBe(true);
   });
+
+  it('returns null when stored JSON is corrupted', async () => {
+    await storage.setItem('ion_identity_tokens:alice', '{corrupted');
+    expect(await manager.getTokens('alice')).toBeNull();
+  });
+
+  it('stores tokens atomically as a single value', async () => {
+    await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+  });
 });
