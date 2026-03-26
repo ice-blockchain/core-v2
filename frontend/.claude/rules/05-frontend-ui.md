@@ -43,42 +43,43 @@ Every screen/component typically has: default, loading, empty, error, and edge-c
 
 ### Styling
 
-#### CRITICAL: Inline styles are prohibited. Use `StyleSheet.create()` for all static styles.
-Inline style objects cause unnecessary re-renders and allocations on every render cycle. Define all styles with `StyleSheet.create()`. Use inline styles **only** for truly dynamic values that depend on runtime state (e.g., animated values, computed positions).
+#### CRITICAL: All numeric sizes must be scaled with `rem()`. Never use raw pixel values.
+Designs are created for 375pt width. Every size — font sizes, paddings, margins, widths, heights, gaps, border radii — must be wrapped in `rem()` from `@ion/ui` so the UI looks identical on all devices. `rem()` scales the value by `screenWidth / 375` and rounds to half-pixel precision.
 
 ```typescript
-// VIOLATION — static styles passed inline
-<View style={{ flex: 1, backgroundColor: colorPalette.white, padding: 16 }}>
-  <Text style={{ marginBottom: 8 }}>Hello</Text>
-</View>
+import { rem } from '@ion/ui';
 
-// CORRECT — static styles in StyleSheet.create
+// VIOLATION — raw pixel values, breaks on non-375pt screens
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colorPalette.white, padding: 16 },
-  label: { marginBottom: 8 },
+  container: { padding: 16, marginBottom: 24 },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
+  title: { fontSize: 18 },
 });
 
-<View style={styles.container}>
-  <Text style={styles.label}>Hello</Text>
-</View>
-
-// ACCEPTABLE — dynamic style that depends on runtime state
-<Animated.View style={[styles.container, { opacity: fadeAnim }]} />
-<View style={[styles.card, { height: calculatedHeight }]} />
+// CORRECT — all sizes scaled with rem()
+const styles = StyleSheet.create({
+  container: { padding: rem(16), marginBottom: rem(24) },
+  avatar: { width: rem(48), height: rem(48), borderRadius: rem(24) },
+  title: { fontSize: rem(18) },
+});
 ```
 
+The only exceptions are `0`, `1` (hairline borders), and `flex` values — these do not need scaling.
+
+`useTheme()` and `theme.scale.*` are deprecated. Use `rem()` instead.
+
 - **No CSS-in-JS libraries.**
-- **No magic numbers.** Extract repeated values into theme constants:
+- **No magic numbers.** Use theme tokens or scale functions:
 ```typescript
-// BAD
+// BAD — raw values
 paddingHorizontal: 16,
 marginBottom: 8,
 borderRadius: 12,
 
-// GOOD
-paddingHorizontal: spacing.md,
-marginBottom: spacing.xs,
-borderRadius: radii.md,
+// GOOD — theme tokens (already scaled)
+paddingHorizontal: theme.spacing.md,
+marginBottom: theme.spacing.xs,
+borderRadius: theme.radii.medium,
 ```
 
 ### Components
