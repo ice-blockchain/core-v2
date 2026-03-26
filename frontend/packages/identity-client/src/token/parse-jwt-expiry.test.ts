@@ -32,6 +32,14 @@ describe('parseJwtExpiry', () => {
     expect(parseJwtExpiry(token)).toBe(-100);
   });
 
+  it('parses token with base64url-encoded payload', () => {
+    const payload = JSON.stringify({ exp: 1700000000 });
+    const b64url = btoa(payload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const header = btoa(JSON.stringify({ alg: 'HS256' })).replace(/=+$/, '');
+    const token = `${header}.${b64url}.sig`;
+    expect(parseJwtExpiry(token)).toBe(1700000000);
+  });
+
   it('returns null for invalid base64 payload', () => {
     expect(parseJwtExpiry('header.!!!invalid!!!.sig')).toBeNull();
   });
