@@ -1,0 +1,36 @@
+{
+  "name": "@ion/media-upload",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ion/network": "workspace:*",
+    "@ion/storage": "workspace:*",
+    "@ion/diagnostics": "workspace:*"
+  },
+  "peerDependencies": {
+    "@bnb-chain/greenfield-js-sdk": ">=2.2.0",
+    "expo-file-system": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@bnb-chain/greenfield-js-sdk": {
+      "optional": true
+    },
+    "expo-file-system": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
+  }
+}

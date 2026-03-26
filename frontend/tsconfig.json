@@ -12,6 +12,7 @@
     { "path": "packages/network" },
     { "path": "packages/media-viewer" },
     { "path": "packages/localization" },
-    { "path": "packages/identity-client" }
+    { "path": "packages/identity-client" },
+    { "path": "packages/media/media-upload" }
   ]
 }

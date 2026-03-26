@@ -34,7 +34,7 @@
 |---|---|---|
 | `@ion/media-acquisition` | Picker, camera, metadata | Planned |
 | `@ion/media-processing` | Crop, resize, blurhash, compress (image/video/audio/brotli) | Implemented |
-| `@ion/media-upload` | Encrypt, chunk, retry, queue | Planned |
+| `@ion/media-upload` | Greenfield delegated upload, retry, queue | In Progress |
 | `@ion/media-viewer` | Image, video, gif, fullscreen | Planned |
 | `@ion/nsfw-detection` | On-device safety checks | Planned |
 | `@ion/content-labeling` | fastText language/category | Planned |
