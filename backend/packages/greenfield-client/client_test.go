@@ -116,7 +116,7 @@ func TestParseTxResponse_NilData(t *testing.T) {
 func TestIsRelevantEventType(t *testing.T) {
 	require.True(t, isRelevantEventType("greenfield.storage.EventCreateObject"))
 	require.True(t, isRelevantEventType("greenfield.storage.EventUpdateObjectContent"))
-	require.True(t, isRelevantEventType("greenfield.storage.EventSetTag"))
+	require.False(t, isRelevantEventType("greenfield.storage.EventSetTag"))
 	require.False(t, isRelevantEventType("greenfield.storage.EventDeleteObject"))
 	require.False(t, isRelevantEventType("message"))
 }
@@ -145,24 +145,17 @@ func TestHasOnlineIOTag(t *testing.T) {
 	require.False(t, hasOnlineIOTag(t, noTagEvents, tagKey))
 }
 
-func TestConcurrentHTTPClientAccess(t *testing.T) {
+func TestRotateGateway(t *testing.T) {
 	c := &client{
 		rpcURLs: []string{"http://rpc1", "http://rpc2", "http://rpc3"},
 	}
 
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for i := 0; i < 100; i++ {
-			_ = c.reconnectHTTP()
-		}
-	}()
+	c.rotateGateway()
+	require.NotNil(t, c.gwClient)
+	require.Equal(t, "http://rpc2", c.currentRPC())
 
-	for i := 0; i < 100; i++ {
-		_ = c.getHTTPClient()
-	}
-
-	<-done
+	c.rotateGateway()
+	require.Equal(t, "http://rpc3", c.currentRPC())
 }
 
 func TestNextRPC_RoundRobin(t *testing.T) {

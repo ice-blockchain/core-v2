@@ -1,15 +1,20 @@
 package greenfieldclient
 
 import (
+	"context"
 	"fmt"
-	"sync"
+	"net/http"
+	"strconv"
 	"sync/atomic"
+	"time"
 
+	"github.com/akuity/grpc-gateway-client/pkg/grpc/gateway"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/rs/zerolog"
 )
+
+const gatewayTimeout = 30 * time.Second
 
 type client struct {
 	cfg        Config
@@ -19,8 +24,7 @@ type client struct {
 	log        zerolog.Logger
 
 	gnfdClient gnfdclient.IClient
-	httpMu     sync.RWMutex
-	httpClient *rpchttp.HTTP
+	gwClient   gateway.Client
 }
 
 // New creates a new Greenfield client with round-robin RPC support.
@@ -41,18 +45,17 @@ func New(cfg Config) (Client, error) {
 		return nil, fmt.Errorf("create greenfield sdk client: %w", err)
 	}
 
-	httpRPC, err := rpchttp.New(cfg.RpcURLs[0], "/websocket")
-	if err != nil {
-		return nil, fmt.Errorf("create cometbft http client: %w", err)
-	}
-
 	c := &client{
 		cfg:        cfg,
 		rpcURLs:    cfg.RpcURLs,
 		log:        cfg.Logger.With().Str("component", "greenfield-client").Logger(),
 		gnfdClient: gnfd,
-		httpClient: httpRPC,
 	}
+
+	c.gwClient = gateway.NewClient(
+		cfg.RpcURLs[0],
+		gateway.WithHTTPClient(&http.Client{Timeout: gatewayTimeout}),
+	)
 
 	return c, nil
 }
@@ -67,26 +70,21 @@ func (c *client) currentRPC() string {
 	return c.rpcURLs[idx%uint64(len(c.rpcURLs))]
 }
 
-func (c *client) getHTTPClient() *rpchttp.HTTP {
-	c.httpMu.RLock()
-	defer c.httpMu.RUnlock()
-	return c.httpClient
+func (c *client) rotateGateway() {
+	url := c.nextRPC()
+	c.gwClient = gateway.NewClient(
+		url,
+		gateway.WithHTTPClient(&http.Client{Timeout: gatewayTimeout}),
+	)
 }
 
-func (c *client) reconnectHTTP() error {
-	url := c.nextRPC()
-	httpRPC, err := rpchttp.New(url, "/websocket")
+func (c *client) fetchLatestHeight(ctx context.Context) (int64, error) {
+	req := c.gwClient.NewRequest("GET", "/cosmos/base/tendermint/v1beta1/blocks/latest")
+	resp, err := gateway.DoRequest[latestBlockResponse](ctx, req)
 	if err != nil {
-		return fmt.Errorf("reconnect http to %s: %w", url, err)
+		return 0, fmt.Errorf("get latest block: %w", err)
 	}
-	c.httpMu.Lock()
-	old := c.httpClient
-	c.httpClient = httpRPC
-	c.httpMu.Unlock()
-	if old != nil {
-		_ = old.Stop()
-	}
-	return nil
+	return strconv.ParseInt(resp.Block.Header.Height, 10, 64)
 }
 
 // IsSubscribed returns true when the WebSocket subscription is active.
@@ -96,10 +94,5 @@ func (c *client) IsSubscribed() bool {
 
 // Close releases resources held by the client.
 func (c *client) Close() error {
-	c.httpMu.Lock()
-	defer c.httpMu.Unlock()
-	if c.httpClient != nil {
-		return c.httpClient.Stop()
-	}
 	return nil
 }

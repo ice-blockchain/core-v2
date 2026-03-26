@@ -10,11 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akuity/grpc-gateway-client/pkg/grpc/gateway"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
 	sptypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -113,6 +115,59 @@ func TestE2E_SubscribeAndReceiveEvent(t *testing.T) {
 	require.Greater(t, receivedEvent.Height, int64(0))
 	require.NotEmpty(t, receivedEvent.TxHash)
 	t.Logf("received event at height=%d tx=%s", receivedEvent.Height, receivedEvent.TxHash)
+}
+
+const (
+	catchUpTestLCDURL = "https://gnfd-testnet-fullnode-tendermint-ap.bnbchain.org:443"
+	catchUpFromHeight = int64(29369006)
+	catchUpToHeight   = int64(29369067)
+	expectedTxHash1   = "E012E9347D46509E73617F97FA90AEE56387E4DD3AD6D3CFE2BB61887DBC73D2"
+	expectedTxHash2   = "D1C7F9F140D6F09172C015CAA255A675E4E24B6C90E5C0370617D7F7B322B3BA"
+)
+
+func TestE2E_CatchUpBlockRange(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	c := &client{
+		rpcURLs: []string{catchUpTestLCDURL},
+		log:     zerolog.New(zerolog.NewTestWriter(t)),
+	}
+	c.gwClient = gateway.NewClient(catchUpTestLCDURL)
+
+	ch := make(chan *TxEvent, 100)
+	err := c.catchUp(ctx, catchUpFromHeight, catchUpToHeight, ch)
+	close(ch)
+	require.NoError(t, err)
+
+	var events []*TxEvent
+	for ev := range ch {
+		events = append(events, ev)
+	}
+
+	require.Equal(t, 2, len(events), "expected 2 TxEvents in range %d-%d", catchUpFromHeight, catchUpToHeight)
+
+	require.Equal(t, catchUpFromHeight, events[0].Height)
+	require.Equal(t, expectedTxHash1, events[0].TxHash)
+	require.NotEmpty(t, events[0].Events)
+	t.Logf("event[0]: height=%d tx=%s events=%d", events[0].Height, events[0].TxHash, len(events[0].Events))
+
+	require.Equal(t, catchUpToHeight, events[1].Height)
+	require.Equal(t, expectedTxHash2, events[1].TxHash)
+	require.NotEmpty(t, events[1].Events)
+	t.Logf("event[1]: height=%d tx=%s events=%d", events[1].Height, events[1].TxHash, len(events[1].Events))
+
+	for _, ev := range events {
+		hasCreateObject := false
+		for _, e := range ev.Events {
+			if e.Type == eventTypeCreateObject {
+				hasCreateObject = true
+				require.NotEmpty(t, e.Attributes["bucket_name"])
+				require.NotEmpty(t, e.Attributes["object_name"])
+			}
+		}
+		require.True(t, hasCreateObject, "missing EventCreateObject")
+	}
 }
 
 func pickCheapestSP(
