@@ -4,7 +4,7 @@ export function withDefaultHeaders(
   httpClient: HttpClient,
   defaultHeaders: Record<string, string>,
 ): HttpClient {
-  function mergeHeaders(options?: { headers?: Record<string, string> }) {
+  function mergeHeaders(options?: { headers?: Record<string, string> | undefined }) {
     return { ...defaultHeaders, ...options?.headers };
   }
 
