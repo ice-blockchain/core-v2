@@ -17,6 +17,6 @@ Read this file first to find the module you need, then read that module's `ARCHI
 | Pulse Shard | `@ion/pulse-shard` | [shard/](ion/pulse/shard/ARCHITECTURE.md) | Consistent hashing ring, shard routing, replica management |
 | Pulse Reaper | `@ion/pulse-reaper` | [reaper/](ion/pulse/reaper/ARCHITECTURE.md) | TTL expiry, GDPR hard delete, tombstone pruning |
 | Pulse Lens | `@ion/pulse-lens` | [lens/](ion/pulse/lens/ARCHITECTURE.md) | Semantic vector search (LanceDB planned, in-memory current) |
-| Pulse Aggregate | `@ion/pulse-aggregate` | [aggregate/](ion/pulse/aggregate/ARCHITECTURE.md) | Analytics: counting, grouping, time-series (DuckDB planned) |
+| Pulse Aggregate | `@ion/pulse-aggregate` | [aggregate/](ion/pulse/aggregate/ARCHITECTURE.md) | Analytics: counting, grouping, time-series (DuckDB + in-memory) |
 | Pulse Cache | `@ion/pulse-cache` | [cache/](ion/pulse/cache/ARCHITECTURE.md) | Non-authoritative hot data LRU cache with TTL |
 | Pulse Bench | `@ion/pulse-bench` | [bench/](ion/pulse/bench/ARCHITECTURE.md) | Benchmarking, Docker relay clusters, integration scenarios |

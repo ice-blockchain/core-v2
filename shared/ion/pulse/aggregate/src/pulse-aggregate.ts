@@ -65,9 +65,9 @@ function computeTimeSeries(
 
   for (const event of events) {
     if (!matchesFilter(event, query.filter)) continue;
-    const bucket = Math.floor(
-      event.timestamp / query.bucketSizeMs,
-    ) * query.bucketSizeMs;
+    const bucket =
+      Math.floor(event.timestamp / query.bucketSizeMs) *
+      query.bucketSizeMs;
     buckets.set(bucket, (buckets.get(bucket) ?? 0) + 1);
   }
 
@@ -76,39 +76,34 @@ function computeTimeSeries(
     .sort((a, b) => a.bucket - b.bucket);
 }
 
-export function createPulseAggregate(
-  config?: PulseAggregateConfig,
-): PulseAggregateInstance {
+export function createInMemoryAggregate(): PulseAggregateInstance {
   const events: PulseAnalyticsEvent[] = [];
-  void config;
-
-  const ingestEvents = (
-    newEvents: PulseAnalyticsEvent[],
-  ): void => {
-    events.push(...newEvents);
-  };
-
-  const count = (query: PulseCountQuery): PulseCountResult[] => {
-    return computeGroupCounts(events, query);
-  };
-
-  const timeSeries = (
-    query: PulseTimeSeriesQuery,
-  ): PulseTimeSeriesResult[] => {
-    return computeTimeSeries(events, query);
-  };
-
-  const getEventCount = (): number => events.length;
-
-  const clear = (): void => {
-    events.length = 0;
-  };
 
   return {
-    ingestEvents,
-    count,
-    timeSeries,
-    getEventCount,
-    clear,
+    ingestEvents: async (newEvents) => {
+      events.push(...newEvents);
+    },
+    count: async (query) => {
+      return computeGroupCounts(events, query);
+    },
+    timeSeries: async (query) => {
+      return computeTimeSeries(events, query);
+    },
+    getEventCount: async () => events.length,
+    clear: async () => {
+      events.length = 0;
+    },
   };
+}
+
+export async function createPulseAggregate(
+  config?: PulseAggregateConfig,
+): Promise<PulseAggregateInstance> {
+  if (config?.useDuckDb) {
+    const { createDuckDbAggregate } = await import(
+      './pulse-aggregate-duckdb'
+    );
+    return createDuckDbAggregate();
+  }
+  return createInMemoryAggregate();
 }

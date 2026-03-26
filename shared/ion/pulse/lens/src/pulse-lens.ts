@@ -5,6 +5,7 @@ import type {
   PulseSearchResult,
   PulseVectorEntry,
 } from './types';
+import { createLanceDbLens } from './pulse-lens-lancedb';
 
 function computeDotProduct(
   vectorA: number[],
@@ -62,11 +63,8 @@ function rankSearchResults(
   return results.slice(0, limit);
 }
 
-export function createPulseLens(
-  config: PulseLensConfig,
-): PulseLensInstance {
+export function createInMemoryLens(): PulseLensInstance {
   const store = new Map<string, PulseVectorEntry>();
-  void config;
 
   const indexVector = async (
     entry: PulseVectorEntry,
@@ -88,10 +86,14 @@ export function createPulseLens(
     return store.size;
   };
 
-  return {
-    indexVector,
-    search,
-    deleteVector,
-    getVectorCount,
-  };
+  return { indexVector, search, deleteVector, getVectorCount };
+}
+
+export function createPulseLens(
+  config: PulseLensConfig,
+): PulseLensInstance {
+  if (config.useLanceDb) {
+    return createLanceDbLens(config);
+  }
+  return createInMemoryLens();
 }

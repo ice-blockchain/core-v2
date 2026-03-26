@@ -1,5 +1,6 @@
 export interface PulseLensConfig {
   readonly storagePath: string;
+  readonly useLanceDb?: boolean;
 }
 
 export interface PulseVectorMetadata {

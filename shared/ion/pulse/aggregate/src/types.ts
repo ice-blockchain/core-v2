@@ -1,5 +1,6 @@
 export interface PulseAggregateConfig {
   readonly memoryLimitMb?: number;
+  readonly useDuckDb?: boolean;
 }
 
 export interface PulseAnalyticsEvent {
@@ -40,9 +41,16 @@ export interface PulseTimeSeriesResult {
 }
 
 export interface PulseAggregateInstance {
-  readonly ingestEvents: (events: PulseAnalyticsEvent[]) => void;
-  readonly count: (query: PulseCountQuery) => PulseCountResult[];
-  readonly timeSeries: (query: PulseTimeSeriesQuery) => PulseTimeSeriesResult[];
-  readonly getEventCount: () => number;
-  readonly clear: () => void;
+  readonly ingestEvents: (
+    events: PulseAnalyticsEvent[],
+  ) => Promise<void>;
+  readonly count: (
+    query: PulseCountQuery,
+  ) => Promise<PulseCountResult[]>;
+  readonly timeSeries: (
+    query: PulseTimeSeriesQuery,
+  ) => Promise<PulseTimeSeriesResult[]>;
+  readonly getEventCount: () => Promise<number>;
+  readonly clear: () => Promise<void>;
+  readonly close?: () => Promise<void>;
 }

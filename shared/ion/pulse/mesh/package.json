@@ -8,6 +8,18 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "libp2p": "^2.8.0",
+    "@chainsafe/libp2p-gossipsub": "^14.1.2",
+    "@libp2p/tcp": "~10.0.20",
+    "@libp2p/websockets": "~9.2.19",
+    "@libp2p/identify": "~3.0.39",
+    "@libp2p/kad-dht": "~14.2.15",
+    "@libp2p/circuit-relay-v2": "~3.2.24",
+    "@chainsafe/libp2p-noise": "~16.1.5",
+    "@chainsafe/libp2p-yamux": "~7.0.4",
+    "@multiformats/multiaddr": "^12.3.5"
+  },
   "devDependencies": {
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"

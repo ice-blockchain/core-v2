@@ -1,12 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createPulseLens, cosineSimilarity } from './pulse-lens';
+import {
+  createPulseLens,
+  createInMemoryLens,
+  cosineSimilarity,
+} from './pulse-lens';
 import type { PulseLensInstance } from './types';
 
-describe('pulse-lens', () => {
+describe('createInMemoryLens', () => {
   let lens: PulseLensInstance;
 
   beforeEach(() => {
-    lens = createPulseLens({ storagePath: '/tmp/test-lens' });
+    lens = createInMemoryLens();
   });
 
   it('indexes a vector and returns it in search results', async () => {
@@ -94,6 +98,16 @@ describe('pulse-lens', () => {
     });
 
     expect(results).toHaveLength(3);
+  });
+});
+
+describe('createPulseLens factory', () => {
+  it('returns in-memory lens when useLanceDb is false', () => {
+    const lens = createPulseLens({
+      storagePath: '/tmp/test',
+    });
+    expect(lens).toBeDefined();
+    expect(lens.indexVector).toBeTypeOf('function');
   });
 });
 

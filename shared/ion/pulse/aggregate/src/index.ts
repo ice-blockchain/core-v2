@@ -1,4 +1,9 @@
-export { createPulseAggregate, matchesFilter } from './pulse-aggregate';
+export {
+  createPulseAggregate,
+  createInMemoryAggregate,
+  matchesFilter,
+} from './pulse-aggregate';
+export { createDuckDbAggregate } from './pulse-aggregate-duckdb';
 export type {
   PulseAggregateConfig,
   PulseAnalyticsEvent,

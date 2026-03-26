@@ -1,15 +1,19 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createPulseMeshNode, clearMeshRegistry } from './pulse-mesh';
+import {
+  createPulseMeshNode,
+  createInMemoryMeshNode,
+  clearMeshRegistry,
+} from './pulse-mesh';
 import type { PulseMeshMessage } from './types';
 
-describe('pulse-mesh', () => {
+describe('in-memory mesh', () => {
   beforeEach(() => {
     clearMeshRegistry();
   });
 
   it('allows two nodes to publish and subscribe on the same topic', async () => {
-    const nodeA = createPulseMeshNode({});
-    const nodeB = createPulseMeshNode({});
+    const nodeA = createInMemoryMeshNode({});
+    const nodeB = createInMemoryMeshNode({});
     await nodeA.start();
     await nodeB.start();
 
@@ -31,8 +35,8 @@ describe('pulse-mesh', () => {
   });
 
   it('does not deliver messages across different topics', async () => {
-    const nodeA = createPulseMeshNode({});
-    const nodeB = createPulseMeshNode({});
+    const nodeA = createInMemoryMeshNode({});
+    const nodeB = createInMemoryMeshNode({});
     await nodeA.start();
     await nodeB.start();
 
@@ -51,8 +55,8 @@ describe('pulse-mesh', () => {
   });
 
   it('stops receiving messages after unsubscribe', async () => {
-    const nodeA = createPulseMeshNode({});
-    const nodeB = createPulseMeshNode({});
+    const nodeA = createInMemoryMeshNode({});
+    const nodeB = createInMemoryMeshNode({});
     await nodeA.start();
     await nodeB.start();
 
@@ -61,8 +65,7 @@ describe('pulse-mesh', () => {
       received.push(message);
     });
 
-    const data = new TextEncoder().encode('first');
-    await nodeA.publish('chat', data);
+    await nodeA.publish('chat', new TextEncoder().encode('first'));
     expect(received).toHaveLength(1);
 
     unsubscribe();
@@ -75,8 +78,8 @@ describe('pulse-mesh', () => {
   });
 
   it('removes node from mesh after stop', async () => {
-    const nodeA = createPulseMeshNode({});
-    const nodeB = createPulseMeshNode({});
+    const nodeA = createInMemoryMeshNode({});
+    const nodeB = createInMemoryMeshNode({});
     await nodeA.start();
     await nodeB.start();
 
@@ -90,9 +93,9 @@ describe('pulse-mesh', () => {
   });
 
   it('reflects actual peer count from getPeerCount', async () => {
-    const nodeA = createPulseMeshNode({});
-    const nodeB = createPulseMeshNode({});
-    const nodeC = createPulseMeshNode({});
+    const nodeA = createInMemoryMeshNode({});
+    const nodeB = createInMemoryMeshNode({});
+    const nodeC = createInMemoryMeshNode({});
 
     await nodeA.start();
     expect(nodeA.getPeerCount()).toBe(0);
@@ -109,5 +112,12 @@ describe('pulse-mesh', () => {
 
     await nodeA.stop();
     await nodeB.stop();
+  });
+
+  it('defaults to in-memory when no platform is specified', async () => {
+    const node = createPulseMeshNode({});
+    await node.start();
+    expect(node.getPeerId()).toBeTruthy();
+    await node.stop();
   });
 });

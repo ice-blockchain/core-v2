@@ -38,22 +38,18 @@ interface TestEvent {
   readonly timestamp: number;
 }
 
+import { randomBytes } from 'node:crypto';
+
 function generateRandomHex(length: number): string {
-  const characters = '0123456789abcdef';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(
-      Math.floor(Math.random() * characters.length),
-    );
-  }
-  return result;
+  return randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
 }
 
 function generateRandomId(): string {
-  return [
-    Date.now().toString(36),
-    Math.random().toString(36).slice(2, 10),
-  ].join('-');
+  const timestamp = Date.now().toString(36);
+  const entropy = randomBytes(6).toString('hex');
+  return `${timestamp}-${entropy}`;
 }
 
 const EVENT_TYPES = [

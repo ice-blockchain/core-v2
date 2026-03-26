@@ -4,6 +4,7 @@ import type {
   PulseMeshMessageHandler,
   PulseMeshNode,
 } from './types';
+import { createLibp2pMeshNode } from './pulse-mesh-libp2p';
 
 interface MeshRegistryEntry {
   readonly peerId: string;
@@ -26,11 +27,7 @@ function broadcastToTopic(
   data: Uint8Array,
   fromPeerId: string,
 ): void {
-  const message: PulseMeshMessage = {
-    topic,
-    data,
-    from: fromPeerId,
-  };
+  const message: PulseMeshMessage = { topic, data, from: fromPeerId };
 
   for (const [peerId, entry] of meshRegistry) {
     if (peerId === fromPeerId) continue;
@@ -42,7 +39,7 @@ function broadcastToTopic(
   }
 }
 
-function createSubscriptionHandler(
+function createUnsubscribe(
   entry: MeshRegistryEntry,
   topic: string,
   handler: PulseMeshMessageHandler,
@@ -62,67 +59,79 @@ function createSubscriptionHandler(
   };
 }
 
-export function createPulseMeshNode(
-  config: PulseMeshConfig,
-): PulseMeshNode {
+interface InMemoryNodeState {
+  readonly peerId: string;
+  readonly entry: MeshRegistryEntry;
+  readonly maxConnections: number;
+  isRunning: boolean;
+}
+
+function buildInMemoryLifecycle(state: InMemoryNodeState) {
+  return {
+    start: async () => {
+      if (state.isRunning) return;
+      meshRegistry.set(state.peerId, state.entry);
+      state.isRunning = true;
+    },
+    stop: async () => {
+      if (!state.isRunning) return;
+      meshRegistry.delete(state.peerId);
+      state.entry.subscriptions.clear();
+      state.isRunning = false;
+    },
+  };
+}
+
+function buildInMemoryMessaging(state: InMemoryNodeState) {
+  return {
+    publish: async (topic: string, data: Uint8Array) => {
+      if (!state.isRunning) throw new Error('Node is not running');
+      broadcastToTopic(topic, data, state.peerId);
+    },
+    subscribe: (topic: string, handler: PulseMeshMessageHandler) => {
+      if (!state.isRunning) throw new Error('Node is not running');
+      return createUnsubscribe(state.entry, topic, handler);
+    },
+  };
+}
+
+function buildInMemoryNode(config: PulseMeshConfig): PulseMeshNode {
   const peerId = generatePeerId();
-  const maxConnections = config.maxConnections ?? 50;
-  let isRunning = false;
-
-  const entry: MeshRegistryEntry = {
+  const state: InMemoryNodeState = {
     peerId,
-    subscriptions: new Map(),
+    entry: { peerId, subscriptions: new Map() },
+    maxConnections: config.maxConnections ?? 50,
+    isRunning: false,
   };
 
-  const start = async (): Promise<void> => {
-    if (isRunning) return;
-    meshRegistry.set(peerId, entry);
-    isRunning = true;
-  };
-
-  const stop = async (): Promise<void> => {
-    if (!isRunning) return;
-    meshRegistry.delete(peerId);
-    entry.subscriptions.clear();
-    isRunning = false;
-  };
-
-  const publish = async (
-    topic: string,
-    data: Uint8Array,
-  ): Promise<void> => {
-    if (!isRunning) {
-      throw new Error('Node is not running');
-    }
-    broadcastToTopic(topic, data, peerId);
-  };
-
-  const subscribe = (
-    topic: string,
-    handler: PulseMeshMessageHandler,
-  ): (() => void) => {
-    if (!isRunning) {
-      throw new Error('Node is not running');
-    }
-    return createSubscriptionHandler(entry, topic, handler);
-  };
-
-  const getPeerId = (): string => peerId;
-
-  const getPeerCount = (): number => {
-    if (!isRunning) return 0;
-    const otherPeers = meshRegistry.size - 1;
-    return Math.min(otherPeers, maxConnections);
-  };
+  const lifecycle = buildInMemoryLifecycle(state);
+  const messaging = buildInMemoryMessaging(state);
 
   return {
-    start,
-    stop,
-    publish,
-    subscribe,
-    getPeerId,
-    getPeerCount,
+    ...lifecycle,
+    ...messaging,
+    getPeerId: () => state.peerId,
+    getPeerCount: () => {
+      if (!state.isRunning) return 0;
+      return Math.min(meshRegistry.size - 1, state.maxConnections);
+    },
+    getMultiaddrs: () => [],
   };
+}
+
+export function createInMemoryMeshNode(
+  config: PulseMeshConfig = {},
+): PulseMeshNode {
+  return buildInMemoryNode(config);
+}
+
+export function createPulseMeshNode(
+  config: PulseMeshConfig = {},
+): PulseMeshNode {
+  if (!config.platform) {
+    return buildInMemoryNode(config);
+  }
+  return createLibp2pMeshNode(config);
 }
 
 export function clearMeshRegistry(): void {
