@@ -9,11 +9,7 @@ export function createUploadCanceller(deps: UploadDependencies) {
     const wasCancelled = cancellationRegistry.cancel(uploadId);
     if (!wasCancelled) return false;
 
-    const record = await repository.getItem(uploadId);
-    if (record && record.status !== "completed") {
-      await repository.updateStatus(uploadId, "cancelled");
-    }
-
+    await repository.updateStatusIfNotTerminal(uploadId, "cancelled");
     return true;
   }
 

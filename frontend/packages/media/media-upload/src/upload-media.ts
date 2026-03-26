@@ -11,6 +11,7 @@ import { cancellationRegistry } from "./cancellation-registry";
 import { createUploadQueueRepository } from "./upload-queue-repository";
 import { requestDelegation } from "./request-delegation";
 import { greenfieldUpload } from "./greenfield-upload";
+import { validateUploadInput } from "./validate-upload-input";
 
 interface UploadContext {
   deps: UploadDependencies;
@@ -109,6 +110,8 @@ export function createMediaUploader(deps: UploadDependencies) {
     input: UploadInput,
     onProgress?: UploadProgressCallback,
   ): Promise<UploadResult> {
+    validateUploadInput(input);
+
     const uploadId = generateUploadId();
     const controller = cancellationRegistry.register(uploadId);
     const now = Date.now();

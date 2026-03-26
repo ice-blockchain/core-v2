@@ -14,6 +14,10 @@ describe("validateWebUri", () => {
     expect(() => validateWebUri("data:image/png;base64,abc")).not.toThrow();
   });
 
+  it("rejects http: URIs to prevent SSRF and mixed-content", () => {
+    expect(() => validateWebUri("http://example.com/photo.jpg")).toThrow("Unsupported URI scheme");
+  });
+
   it("rejects file: URIs to prevent SSRF", () => {
     expect(() => validateWebUri("file:///etc/passwd")).toThrow("Unsupported URI scheme");
   });

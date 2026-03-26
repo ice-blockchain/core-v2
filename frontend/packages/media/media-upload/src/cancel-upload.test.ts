@@ -52,20 +52,19 @@ describe("cancel-upload", () => {
     expect(result).toBe(false);
   });
 
-  it("updates the database status to cancelled for in-progress upload", async () => {
+  it("issues atomic status update guarded by terminal states", async () => {
     cancellationRegistry.register("upload-2");
 
     const executeSpy = vi.spyOn(deps.database, "execute");
-    const querySpy = vi.spyOn(deps.database, "query").mockResolvedValueOnce(
-      [{ upload_id: "upload-2", status: "uploading" }],
+    vi.spyOn(deps.database, "query").mockResolvedValueOnce(
+      [{ upload_id: "upload-2", status: "cancelled" }],
     );
     const { cancelUpload } = createUploadCanceller(deps);
 
     await cancelUpload("upload-2");
 
-    expect(querySpy).toHaveBeenCalled();
     expect(executeSpy).toHaveBeenCalledWith(
-      expect.stringContaining("status = ?"),
+      expect.stringContaining("status NOT IN"),
       expect.arrayContaining(["cancelled"]),
     );
   });
@@ -82,9 +81,9 @@ describe("cancel-upload", () => {
     const result = await cancelUpload("upload-3");
 
     expect(result).toBe(true);
-    expect(executeSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining("status = ?"),
-      expect.arrayContaining(["cancelled"]),
+    expect(executeSpy).toHaveBeenCalledWith(
+      expect.stringContaining("status NOT IN"),
+      expect.arrayContaining(["cancelled", "completed"]),
     );
   });
 });

@@ -36,11 +36,21 @@ async function getItemsByStatus(db: Database, status: UploadStatus): Promise<Upl
   );
 }
 
+const TERMINAL_STATUSES: UploadStatus[] = ["completed", "cancelled"];
+
 async function updateStatus(db: Database, uploadId: string, status: UploadStatus): Promise<void> {
   await db.execute(
     "UPDATE upload_queue SET status = ?, updated_at = ? WHERE upload_id = ?",
     [status, Date.now(), uploadId],
   );
+}
+
+async function updateStatusIfNotTerminal(db: Database, uploadId: string, status: UploadStatus): Promise<boolean> {
+  const placeholders = TERMINAL_STATUSES.map(() => "?").join(", ");
+  const sql = `UPDATE upload_queue SET status = ?, updated_at = ? WHERE upload_id = ? AND status NOT IN (${placeholders})`;
+  await db.execute(sql, [status, Date.now(), uploadId, ...TERMINAL_STATUSES]);
+  const row = await getItem(db, uploadId);
+  return row?.status === status;
 }
 
 interface DelegationUpdate {
@@ -81,6 +91,7 @@ export function createUploadQueueRepository(database: Database) {
     getAllItems: () => getAllItems(database),
     getItemsByStatus: (status: UploadStatus) => getItemsByStatus(database, status),
     updateStatus: (uploadId: string, status: UploadStatus) => updateStatus(database, uploadId, status),
+    updateStatusIfNotTerminal: (uploadId: string, status: UploadStatus) => updateStatusIfNotTerminal(database, uploadId, status),
     updateDelegation: (uploadId: string, bucketName: string, objectName: string) =>
       updateDelegation(database, { uploadId, bucketName, objectName }),
     updateCompletion: (uploadId: string) => updateCompletion(database, uploadId),
