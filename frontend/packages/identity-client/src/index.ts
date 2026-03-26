@@ -9,8 +9,8 @@ export type {
   User,
   UserAssignedRelay,
   TwoFAOption,
-} from './src/types';
+} from './types';
 
-export { IdentityError, IdentityErrorCode } from './src/errors';
+export { IdentityError, IdentityErrorCode } from './errors';
 
-export { createIdentityClient } from './src/create-identity-client';
+export { createIdentityClient } from './create-identity-client';
