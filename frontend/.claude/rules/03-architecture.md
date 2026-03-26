@@ -22,7 +22,7 @@ Actions (@ion/actions) <- The SDK: simple functions, simple types
   |
 Features              <- push-notifications, deep-links, sharing
   |
-Clients               <- identity-client, ion-connect-client, wallet-client, token-analytics-client
+Clients               <- identity-client, wallet-client, token-analytics-client
   |
 Media                 <- media-acquisition, media-processing, media-upload, media-viewer, nsfw-detection, content-labeling
   |

@@ -8,7 +8,7 @@ paths:
 
 ## Purpose
 
-The 21 packages are the engine. The actions layer is the steering wheel. A new developer should never need to understand relays, encryption, chunking, or token lifecycle. They call one function, it works.
+The packages are the engine. The actions layer is the steering wheel. A new developer should never need to understand relays, encryption, chunking, or token lifecycle. They call one function, it works.
 
 `@ion/actions` sits between screens and packages. It exposes simple, business-oriented functions that orchestrate multiple packages behind a clean API.
 
@@ -26,7 +26,7 @@ All business logic is accessed through the actions layer. Screens never import c
 import { sendMessage } from '@ion/actions';
 
 // VIOLATION — in a screen file
-import { IonConnectClient } from '@ion/ion-connect-client';
+import { IdentityClient } from '@ion/identity-client';
 ```
 
 ### CRITICAL: One action = one file = one exported function.
@@ -42,7 +42,7 @@ Each action is a leaf function. If two actions share logic, extract the shared p
 Actions catch package-level errors and translate them into `ActionError`:
 ```typescript
 try {
-  await IonConnectClient.publishEvent(event);
+  await network.post('/messages', { conversationId, text });
 } catch (error) {
   throw new ActionError(
     'MESSAGE_SEND_FAILED',
@@ -50,7 +50,7 @@ try {
   );
 }
 ```
-Screens never handle `RelayConnectionError` — they handle `ActionError`.
+Screens never handle network or package-level errors — they handle `ActionError`.
 
 ### IMPORTANT: Actions are the test boundary.
 Integration tests are written against actions, not screens and not individual packages. If `sendMessage()` works end-to-end, the screen that calls it is just UI.
@@ -105,27 +105,27 @@ packages/actions/
 
 | Domain | Action | Packages Orchestrated |
 |---|---|---|
-| **Feed** | `createPost(text, media)` | media-processing, media-upload, nsfw-detection, content-labeling, ion-connect-client |
-| | `deletePost(postId)` | ion-connect-client |
-| | `likePost(postId)` | ion-connect-client |
-| | `repostPost(postId, comment?)` | ion-connect-client |
-| | `reportContent(postId, reason)` | ion-connect-client, identity-client |
-| **Chat** | `sendMessage(convId, text, media)` | media-processing, media-upload, nsfw-detection, ion-connect-client |
-| | `deleteMessage(messageId)` | ion-connect-client |
-| | `createConversation(userIds)` | ion-connect-client, identity-client |
-| | `muteConversation(convId)` | ion-connect-client, storage |
+| **Feed** | `createPost(text, media)` | media-processing, media-upload, nsfw-detection, content-labeling, network |
+| | `deletePost(postId)` | network |
+| | `likePost(postId)` | network |
+| | `repostPost(postId, comment?)` | network |
+| | `reportContent(postId, reason)` | network, identity-client |
+| **Chat** | `sendMessage(convId, text, media)` | media-processing, media-upload, nsfw-detection, network |
+| | `deleteMessage(messageId)` | network |
+| | `createConversation(userIds)` | network, identity-client |
+| | `muteConversation(convId)` | network, storage |
 | **Wallet** | `depositFunds(amount, coinId)` | wallet-client, identity-client |
 | | `withdrawFunds(amount, address)` | wallet-client, identity-client |
 | | `swapTokens(from, to, amount)` | wallet-client, token-analytics-client |
 | | `getWalletBalance()` | wallet-client |
-| **Profile** | `updateProfile(name, bio, avatar)` | media-processing, media-upload, identity-client, ion-connect-client |
-| | `followUser(userId)` | ion-connect-client |
-| | `unfollowUser(userId)` | ion-connect-client |
-| | `blockUser(userId)` | ion-connect-client, storage |
+| **Profile** | `updateProfile(name, bio, avatar)` | media-processing, media-upload, identity-client, network |
+| | `followUser(userId)` | network |
+| | `unfollowUser(userId)` | network |
+| | `blockUser(userId)` | network, storage |
 | **Media** | `pickAndUploadMedia(options)` | permissions, media-acquisition, media-processing, nsfw-detection, media-upload |
 | | `capturePhoto()` | permissions, media-acquisition, media-processing |
 | | `captureVideo(maxDuration)` | permissions, media-acquisition, media-processing |
-| **Sharing** | `shareContent(postId)` | sharing, deep-links, ion-connect-client |
+| **Sharing** | `shareContent(postId)` | sharing, deep-links, network |
 | | `handleInboundShare(payload)` | sharing, media-acquisition, media-processing |
 | **Auth** | `login(credentials)` | identity-client, storage, push-notifications, config |
 | | `logout()` | identity-client, storage, push-notifications |

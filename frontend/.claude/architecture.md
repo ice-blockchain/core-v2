@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-03-25
+> Last updated: 2026-03-26
 
 ---
 
@@ -43,7 +43,6 @@
 | Package | Purpose | Status |
 |---|---|---|
 | `@ion/identity-client` | Auth, users API | In Progress |
-| `@ion/ion-connect-client` | Relays, events, NIPs, DVM | In Progress |
 | `@ion/token-analytics-client` | Trades, holders, stats API | Planned |
 | `@ion/wallet-client` | Coins, NFT sync, DFNS | Planned |
 
@@ -59,7 +58,7 @@
 |---|---|---|
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
 
-**Total: 23 packages**
+**Total: 22 packages**
 
 ---
 
