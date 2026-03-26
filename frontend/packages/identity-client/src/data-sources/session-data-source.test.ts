@@ -19,7 +19,11 @@ describe('createSessionDataSource', () => {
     vi.mocked(httpClient.post).mockResolvedValueOnce({ token: 'new-tok' });
     const ds = createSessionDataSource(httpClient);
 
-    const result = await ds.refreshToken('alice', 'current-tok', 'refresh-tok');
+    const result = await ds.refreshToken({
+      username: 'alice',
+      currentToken: 'current-tok',
+      refreshToken: 'refresh-tok',
+    });
 
     expect(httpClient.post).toHaveBeenCalledWith('/auth/login/delegated', {
       body: { username: 'alice', refreshToken: 'refresh-tok' },
