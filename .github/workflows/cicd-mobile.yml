@@ -325,9 +325,11 @@ jobs:
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
           if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
-            METHOD="ad-hoc"
+            METHOD="release-testing"
+            SIGN_TYPE="AdHoc"
           else
             METHOD="app-store"
+            SIGN_TYPE="AppStore"
           fi
 
           case "$INPUT_ENVIRONMENT" in
@@ -335,6 +337,8 @@ jobs:
             testnet)    BUNDLE_ID="io.ion.app.testnet" ;;
             production) BUNDLE_ID="io.ion.app" ;;
           esac
+
+          PROFILE_NAME="match ${SIGN_TYPE} ${BUNDLE_ID}"
 
           cat > build/ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -347,6 +351,11 @@ jobs:
             <string>YJJ6X8TG5Y</string>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
             <key>stripSwiftSymbols</key>
             <true/>
             <key>uploadSymbols</key>
