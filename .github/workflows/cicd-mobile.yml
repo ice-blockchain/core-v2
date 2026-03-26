@@ -162,14 +162,14 @@ jobs:
           INPUT_APP_VERSION: ${{ inputs.app_version }}
           ANDROID_FLAVOR: ${{ needs.verify.outputs.android_flavor }}
           BUILD_NUMBER: ${{ needs.verify.outputs.build_number }}
-        shell: bash
         run: |
+          FLAVOR="$(echo "${ANDROID_FLAVOR:0:1}" | tr '[:lower:]' '[:upper:]')${ANDROID_FLAVOR:1}"
           if [[ "$INPUT_DEPLOYMENT_TARGET" == "firebase" ]]; then
-            ./gradlew "assemble${ANDROID_FLAVOR^}Release" \
+            ./gradlew "assemble${FLAVOR}Release" \
               -PversionName="$INPUT_APP_VERSION" \
               -PversionCode="$BUILD_NUMBER"
           else
-            ./gradlew "bundle${ANDROID_FLAVOR^}Release" \
+            ./gradlew "bundle${FLAVOR}Release" \
               -PversionName="$INPUT_APP_VERSION" \
               -PversionCode="$BUILD_NUMBER"
           fi
