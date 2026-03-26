@@ -120,7 +120,7 @@ export interface PasskeyAuthResult {
   clientDataJSON: string;
   authenticatorData: string;
   signature: string;
-  userHandle: string;
+  userHandle: string | null;
 }
 
 export type TwoFAOption = 'sms' | 'email' | 'totp_authenticator';

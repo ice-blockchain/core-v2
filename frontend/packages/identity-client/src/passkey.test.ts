@@ -146,6 +146,21 @@ describe('getPasskeyAssertion', () => {
     expect(result.signature).toBeTruthy();
   });
 
+  it('returns null userHandle when authenticator omits it', async () => {
+    mocks.mockGet.mockResolvedValueOnce({
+      rawId: new Uint8Array([1]).buffer,
+      response: {
+        clientDataJSON: new Uint8Array([2]).buffer,
+        authenticatorData: new Uint8Array([3]).buffer,
+        signature: new Uint8Array([4]).buffer,
+        userHandle: null,
+      },
+    });
+
+    const result = await getPasskeyAssertion(mockActionChallenge);
+    expect(result.userHandle).toBeNull();
+  });
+
   it('throws PASSKEY_NOT_AVAILABLE when credential is null', async () => {
     mocks.mockGet.mockResolvedValueOnce(null);
 

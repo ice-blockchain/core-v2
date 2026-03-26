@@ -30,7 +30,7 @@ export async function loginWithPasskey(
         clientData: assertion.clientDataJSON,
         authenticatorData: assertion.authenticatorData,
         signature: assertion.signature,
-        userHandle: assertion.userHandle,
+        ...(assertion.userHandle != null && { userHandle: assertion.userHandle }),
       },
     },
   });

@@ -106,7 +106,7 @@ export async function getPasskeyAssertion(
       clientDataJSON: bufferToBase64Url(response.clientDataJSON),
       authenticatorData: bufferToBase64Url(response.authenticatorData),
       signature: bufferToBase64Url(response.signature),
-      userHandle: bufferToBase64Url(response.userHandle ?? new ArrayBuffer(0)),
+      userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
     };
   } catch (error) {
     if (error instanceof IdentityError) throw error;
