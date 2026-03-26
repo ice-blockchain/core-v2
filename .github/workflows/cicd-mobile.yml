@@ -158,6 +158,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Fix Hermes compiler permissions
+        run: chmod +x apps/mobile/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc
+
       - name: Build Android
         working-directory: frontend/apps/mobile/android
         env:
