@@ -8,6 +8,7 @@ import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
+import { ChannelPrivateIcon } from "./generated/ChannelPrivateIcon";
 import { ChatBubbleIcon } from "./generated/ChatBubbleIcon";
 import { ChatOffIcon } from "./generated/ChatOffIcon";
 import { CheckGreenIcon } from "./generated/CheckGreenIcon";
@@ -17,10 +18,13 @@ import { CheckmarkIcon } from "./generated/CheckmarkIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
+import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
+import { KeysErrorIcon } from "./generated/KeysErrorIcon";
+import { KeysSuccessIcon } from "./generated/KeysSuccessIcon";
 import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
@@ -28,6 +32,9 @@ import { NewsIcon } from "./generated/NewsIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
 import { PersonFollowingIcon } from "./generated/PersonFollowingIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
+import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
+import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
+import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SendIcon } from "./generated/SendIcon";
 
@@ -43,6 +50,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "badge-verify": BadgeVerifyIcon,
   "button-receive": ButtonReceiveIcon,
   "camera": CameraIcon,
+  "channel-private": ChannelPrivateIcon,
   "chat-bubble": ChatBubbleIcon,
   "chat-off": ChatOffIcon,
   "check_green": CheckGreenIcon,
@@ -52,10 +60,13 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "clock": ClockIcon,
   "close": CloseIcon,
   "danger_triangle": DangerTriangleIcon,
+  "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
   "field-search": FieldSearchIcon,
+  "keys-error": KeysErrorIcon,
+  "keys-success": KeysSuccessIcon,
   "login-ice-logo": LoginIceLogoIcon,
   "manage": ManageIcon,
   "name-reserved": NameReservedIcon,
@@ -63,6 +74,9 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "person-add": PersonAddIcon,
   "person-following": PersonFollowingIcon,
   "profile-save": ProfileSaveIcon,
+  "recovery-code": RecoveryCodeIcon,
+  "restore-cloud": RestoreCloudIcon,
+  "restore-credentials": RestoreCredentialsIcon,
   "search": SearchIcon,
   "send": SendIcon,
 };

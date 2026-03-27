@@ -2,7 +2,10 @@
 export { GetStartedScreen } from "./get-started-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { RegisterScreen } from "./register-screen";
+export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";
+export { RestoreSuccessModal } from "./restore-success-modal";
+export { SetNewPasswordScreen } from "./set-new-password-screen";
 export { VerifyPasskeyScreen } from "./verify-passkey-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
 

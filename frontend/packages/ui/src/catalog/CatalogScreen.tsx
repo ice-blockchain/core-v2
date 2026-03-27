@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -18,7 +19,12 @@ import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
 import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
 
-function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
+interface CatalogContentProps {
+  onToggleMode: () => void;
+  headerSlot?: ReactNode;
+}
+
+function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
   const theme = useTheme();
 
   return (
@@ -36,6 +42,7 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
             onPress={onToggleMode}
           />
         </View>
+        {headerSlot}
         <ColorCatalogSection />
         <TypographyCatalogSection />
         <IconCatalogSection />
@@ -50,7 +57,7 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
   );
 }
 
-export function CatalogScreen() {
+export function CatalogScreen({ headerSlot }: { headerSlot?: ReactNode }) {
   const [colorMode, setColorMode] = useState<ColorMode>("light");
 
   function toggleColorMode() {
@@ -61,7 +68,7 @@ export function CatalogScreen() {
     <SafeAreaProvider>
       <ThemeProvider colorMode={colorMode}>
         <NotificationBarProvider>
-          <CatalogContent onToggleMode={toggleColorMode} />
+          <CatalogContent onToggleMode={toggleColorMode} headerSlot={headerSlot} />
         </NotificationBarProvider>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -27,80 +27,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - MMKVCore (2.4.0)
-  - NitroMmkv (4.3.0):
-    - hermes-engine
-    - MMKVCore (= 2.4.0)
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - NitroModules (0.35.2):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
-  - NitroTflite (0.0.1):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - TensorFlowLiteC (= 2.17.0)
-    - Yoga
   - RCTDeprecation (0.84.1)
   - RCTRequired (0.84.1)
   - RCTSwiftUI (0.84.1)
@@ -1522,30 +1448,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-create-thumbnail (2.2.0):
-    - React-Core
-  - react-native-image-picker (7.2.3):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - react-native-safe-area-context (5.7.0):
     - hermes-engine
     - RCTRequired
@@ -2113,18 +2015,12 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - TensorFlowLiteC (2.17.0):
-    - TensorFlowLiteC/Core (= 2.17.0)
-  - TensorFlowLiteC/Core (2.17.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - lottie-react-native (from `../node_modules/lottie-react-native`)
-  - NitroMmkv (from `../node_modules/react-native-mmkv`)
-  - NitroModules (from `../node_modules/react-native-nitro-modules`)
-  - NitroTflite (from `../node_modules/react-native-nitro-tflite`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
   - RCTSwiftUI (from `../node_modules/react-native/ReactApple/RCTSwiftUI`)
@@ -2163,8 +2059,6 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-config (from `../node_modules/react-native-config`)
-  - react-native-create-thumbnail (from `../node_modules/react-native-create-thumbnail`)
-  - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-video (from `../node_modules/react-native-video`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2207,8 +2101,6 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - lottie-ios
-    - MMKVCore
-    - TensorFlowLiteC
 
 EXTERNAL SOURCES:
   FBLazyVector:
@@ -2218,12 +2110,6 @@ EXTERNAL SOURCES:
     :tag: hermes-v250829098.0.9
   lottie-react-native:
     :path: "../node_modules/lottie-react-native"
-  NitroMmkv:
-    :path: "../node_modules/react-native-mmkv"
-  NitroModules:
-    :path: "../node_modules/react-native-nitro-modules"
-  NitroTflite:
-    :path: "../node_modules/react-native-nitro-tflite"
   RCTDeprecation:
     :path: "../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation"
   RCTRequired:
@@ -2298,10 +2184,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-config:
     :path: "../node_modules/react-native-config"
-  react-native-create-thumbnail:
-    :path: "../node_modules/react-native-create-thumbnail"
-  react-native-image-picker:
-    :path: "../node_modules/react-native-image-picker"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-video:
@@ -2381,13 +2263,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   FBLazyVector: e97c19a5a442429d1988f182a1940fb08df514da
-  hermes-engine: 31ba32d414d00a43166285abcf1cad2f6288aad2
+  hermes-engine: 33b123449c51b9e09baba8468f80036892e53bbd
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: 6a080b2f109ef611c75c503a33ebb8ea75db0c91
-  MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
-  NitroMmkv: 880dee1e4b343bf2f2bf010fb8c2c68490632cfd
-  NitroModules: 76063cb7bc1a21cf46d11b25abfcf1759bf0be47
-  NitroTflite: 6d1aff7035228a50645cc01d3ce5ee9b1dc908d3
   RCTDeprecation: af44b104091a34482596cd9bd7e8d90c4e9b4bd7
   RCTRequired: bb77b070f75f53398ce43c0aaaa58337cebe2bf6
   RCTSwiftUI: afc0a0a635860da1040a0b894bfd529da06d7810
@@ -2396,7 +2274,7 @@ SPEC CHECKSUMS:
   React: 1ba7d364ade7d883a1ec055bfc3606f35fdee17b
   React-callinvoker: bc2a26f8d84fb01f003fc6de6c9337b64715f95b
   React-Core: 7840d3a80b43a95c5e80ef75146bd70925ebab0f
-  React-Core-prebuilt: 3cb82ed72bd48a174cee916b6b97541f63d66878
+  React-Core-prebuilt: a8468018b194450acd72de557bdb7c46f85c006e
   React-CoreModules: 2eb010400b63b89e53a324ffb3c112e4c7c3ce42
   React-cxxreact: a558e92199d26f145afa9e62c4233cf8e7950efe
   React-debug: 755200a6e7f5e6e0a40ff8d215493d43cce285fc
@@ -2425,8 +2303,6 @@ SPEC CHECKSUMS:
   React-Mapbuffer: f4ee8c62e0ef8359d139124f35a471518a172cd3
   React-microtasksnativemodule: d1956f0eec54c619b63a379520fb4c618a55ccb9
   react-native-config: 530d1344e93c66f9819d0e5b54bd19d0d88e398c
-  react-native-create-thumbnail: c15cedc37f3822777d44e6035be041f7961341ea
-  react-native-image-picker: 168d6972e50ea848defe4ac4c222faa9bc52aea0
   react-native-safe-area-context: ae7587b95fb580d1800c5b0b2a7bd48c2868e67a
   react-native-video: fd30887fff60629061769a21af574fd9dd52b2ff
   React-NativeModulesApple: 5ba0903927f6b8d335a091700e9fda143980f819
@@ -2460,11 +2336,10 @@ SPEC CHECKSUMS:
   React-utils: 8d888b379f0808bfabaea03d85f9e8dd9b8548da
   React-webperformancenativemodule: c10016db7f1bb1153060d4aa9f7dbde2c88c845d
   ReactAppDependencyProvider: e96e93b493d8d86eeaee3e590ba0be53f6abe46f
-  ReactCodegen: 4579f1ab5d6d9c331e4288f13649b8d022902994
+  ReactCodegen: d0162290500178c797ae61ddf3564f3b72b708d8
   ReactCommon: 07572bf9e687c8a52fbe4a3641e9e3a1a477c78e
-  ReactNativeDependencies: a246947d2830f65c44a1713fd44dbe1ffef54b8a
+  ReactNativeDependencies: 9097861cf0f1b3222b4610305f1b116d6504804f
   RNSVG: c69f7709226108f5eb89b5aa8833c17a36345468
-  TensorFlowLiteC: eac6d689a8d391d1b202dc59e3d9165ba64aaf73
   Yoga: c0b3f2c7e8d3e327e450223a2414ca3fa296b9a2
 
 PODFILE CHECKSUM: bbcc6f9caaa3bd2bd48b9b00e46f0a0b73169edc

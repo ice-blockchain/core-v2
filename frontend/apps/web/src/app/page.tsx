@@ -6,7 +6,10 @@ import {
   IdentityKeyNotFoundModal,
   PrimaryButton,
   RegisterScreen,
+  RestoreCredentialsScreen,
   RestoreMenuScreen,
+  RestoreSuccessModal,
+  SetNewPasswordScreen,
   VerifyPasskeyScreen,
   VerifyPasswordBackground,
   VerifyPasswordOverlay,
@@ -22,15 +25,20 @@ type Phase =
   | { name: "get-started" }
   | { name: "register" }
   | { name: "restore-menu" }
-  | { name: "restore-key-not-found" }
+  | { name: "restore-credentials" }
+  | { name: "set-new-password"; identityKeyName: string }
   | { name: "verify-password"; identityKeyName: string }
   | { name: "verify-passkey"; identityKeyName: string };
 
 function usePhaseNavigation() {
   const [phase, setPhase] = useState<Phase>({ name: "splash" });
+  const [keyNotFound, setKeyNotFound] = useState(false);
+  const [restoreSuccess, setRestoreSuccess] = useState<string | null>(null);
 
   return {
     phase,
+    keyNotFound,
+    restoreSuccess,
     goToIntro: useCallback(() => setPhase({ name: "intro" }), []),
     goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), []),
     goToRegister: useCallback(() => setPhase({ name: "register" }), []),
@@ -39,26 +47,52 @@ function usePhaseNavigation() {
       [],
     ),
     goToRestoreMenu: useCallback(() => setPhase({ name: "restore-menu" }), []),
-    goToRestoreKeyNotFound: useCallback(() => setPhase({ name: "restore-key-not-found" }), []),
+    goToRestoreCredentials: useCallback(() => setPhase({ name: "restore-credentials" }), []),
+    goToSetNewPassword: useCallback(
+      (identityKeyName: string) => {
+        setRestoreSuccess(null);
+        setPhase({ name: "set-new-password", identityKeyName });
+      },
+      [],
+    ),
     goToVerifyPasskey: useCallback(
       (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
       [],
     ),
+    showKeyNotFound: useCallback(() => setKeyNotFound(true), []),
+    hideKeyNotFound: useCallback(() => setKeyNotFound(false), []),
+    showRestoreSuccess: useCallback((identityKeyName: string) => setRestoreSuccess(identityKeyName), []),
   };
 }
 
-function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
+type Nav = ReturnType<typeof usePhaseNavigation>;
+
+function AuthSheetContent({ nav }: { nav: Nav }) {
   const loadingElement = <LoadingAnimation variant="onLightBackground" size={30} />;
 
-  if (nav.phase.name === "restore-key-not-found") {
-    return <IdentityKeyNotFoundModal onClose={nav.goToRestoreMenu} />;
-  }
   if (nav.phase.name === "restore-menu") {
     return (
       <RestoreMenuScreen
         onBack={nav.goToGetStarted}
-        onSelectCloudRestore={nav.goToRestoreKeyNotFound}
-        onSelectCredentialRestore={nav.goToGetStarted}
+        onSelectCloudRestore={nav.showKeyNotFound}
+        onSelectCredentialRestore={nav.goToRestoreCredentials}
+      />
+    );
+  }
+  if (nav.phase.name === "restore-credentials") {
+    return (
+      <RestoreCredentialsScreen
+        onBack={nav.goToRestoreMenu}
+        onRestore={(data) => nav.showRestoreSuccess(data.identityKeyName)}
+      />
+    );
+  }
+  if (nav.phase.name === "set-new-password") {
+    return (
+      <SetNewPasswordScreen
+        identityKeyName={nav.phase.identityKeyName}
+        onBack={nav.goToRestoreCredentials}
+        onContinue={() => nav.goToGetStarted()}
       />
     );
   }
@@ -92,7 +126,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
   );
 }
 
-function PasswordOverlay({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
+function PasswordOverlay({ nav }: { nav: Nav }) {
   if (nav.phase.name !== "verify-password") return null;
   const { identityKeyName } = nav.phase;
   return <VerifyPasswordOverlay onConfirm={() => nav.goToVerifyPasskey(identityKeyName)} />;
@@ -117,6 +151,11 @@ export default function SplashPage() {
           <BottomSheet>
             <AuthSheetContent nav={nav} />
           </BottomSheet>
+          <IdentityKeyNotFoundModal visible={nav.keyNotFound} onClose={nav.hideKeyNotFound} />
+          <RestoreSuccessModal
+            visible={nav.restoreSuccess !== null}
+            onLogin={() => nav.goToSetNewPassword(nav.restoreSuccess!)}
+          />
           <PasswordOverlay nav={nav} />
         </>
       )}
