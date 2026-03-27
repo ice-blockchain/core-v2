@@ -4,14 +4,14 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeProvider } from "@ion/ui";
 import { CatalogScreen } from "@ion/ui";
 import { createLocalization, registerTranslations, translate } from "@ion/localization";
-import { ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from "@ion/onboarding-ui";
+import { DiscoverCreatorsScreen, NotificationsScreen, ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from "@ion/onboarding-ui";
 import { authTranslations } from "@ion/auth-ui";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
 
-type OnboardingStep = "profile" | "languages" | null;
+type OnboardingStep = "profile" | "languages" | "discover-creators" | "notifications" | null;
 
 function OnboardingButton({ onPress }: { onPress: () => void }) {
   return (
@@ -36,8 +36,26 @@ function AppContent() {
   if (onboardingStep === "languages") {
     return (
       <SelectLanguagesScreen
-        onContinue={() => setOnboardingStep(null)}
+        onContinue={() => setOnboardingStep("discover-creators")}
         onBack={() => setOnboardingStep("profile")}
+      />
+    );
+  }
+
+  if (onboardingStep === "discover-creators") {
+    return (
+      <DiscoverCreatorsScreen
+        onContinue={() => setOnboardingStep("notifications")}
+        onBack={() => setOnboardingStep("languages")}
+      />
+    );
+  }
+
+  if (onboardingStep === "notifications") {
+    return (
+      <NotificationsScreen
+        onContinue={() => setOnboardingStep(null)}
+        onBack={() => setOnboardingStep("discover-creators")}
       />
     );
   }

@@ -48,3 +48,20 @@ export type FetchLanguagesResult = Language[];
 export interface SaveSelectedLanguagesInput {
   languageCodes: string[];
 }
+
+export interface Creator {
+  id: string;
+  avatarUrl: string;
+  name: string;
+  handle: string;
+  isVerified: boolean;
+}
+
+export interface FetchSuggestedCreatorsInput {
+  page: number;
+}
+
+export interface FetchSuggestedCreatorsResult {
+  creators: Creator[];
+  hasMore: boolean;
+}

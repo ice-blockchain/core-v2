@@ -157,8 +157,8 @@ via `react-native-web` — no platform split required.
 |---|---|---|
 | 1 | Shared UI components in `@ion/ui` | DONE — BottomSheet, TextInput, TextField, SearchBar, HorizontalSeparator, all icons |
 | 2 | Screen 1: Profile Setup | DONE — ProfileSetupScreen, AvatarPicker, NicknameReservedModal, AuthHeader |
-| 3 | Screen 2: Select Languages | DONE — SelectLanguagesScreen, CheckboxRow |
-| 4 | Screen 3: Discover Creators | TODO |
+| 3 | Screen 2: Select Languages | DONE — SelectLanguagesScreen, CheckboxRow, OnboardingScreenTitle |
+| 4 | Screen 3: Discover Creators | DONE — DiscoverCreatorsScreen, CreatorRow, CreatorRowSkeleton |
 | 5 | Screen 4: Notifications | TODO |
 | 6 | Navigation wiring (mobile + web) | TODO |
 
@@ -481,7 +481,9 @@ Encourage the user to enable push notifications with example previews.
 | **NicknameReservedModal** | DONE | `packages/onboarding-ui/src/components/` |
 | **ProfileSetupFields** | DONE | `packages/onboarding-ui/src/screens/` |
 | **CheckboxRow** | DONE | `packages/onboarding-ui/src/components/` |
-| **CreatorRow** | TODO | `packages/onboarding-ui/src/components/` |
+| **CreatorRow** | DONE | `packages/onboarding-ui/src/components/` |
+| **CreatorRowSkeleton** | DONE | `packages/onboarding-ui/src/components/` |
+| **OnboardingScreenTitle** | DONE | `packages/onboarding-ui/src/components/` |
 | **NotificationCard** | TODO | `packages/onboarding-ui/src/components/` |
 | **DescriptionItem** | TODO | `packages/onboarding-ui/src/components/` |
 

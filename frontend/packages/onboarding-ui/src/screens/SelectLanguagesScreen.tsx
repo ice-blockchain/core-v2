@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from "react";
 import { View } from "react-native";
 import type { ViewStyle } from "react-native";
-import { BottomSheet, Button, SearchBar, Text, useTheme } from "@ion/ui";
+import { BottomSheet, Button, SearchBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import type { OnboardingScreenProps } from "../types";
 import { CheckboxRow } from "../components/CheckboxRow";
+import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
 import type { LanguageSelectionActions, LanguageSelectionState } from "./select-languages-hooks";
 import { useLanguageSelection } from "./select-languages-hooks";
-import { buildListSectionStyle, buildScrollContentStyle, buildTitleContainerStyle } from "./select-languages-styles";
+import { buildListSectionStyle, buildScrollContentStyle } from "./select-languages-styles";
 
 function LanguageList({ state, actions, style }: { state: LanguageSelectionState; actions: LanguageSelectionActions; style: ViewStyle }) {
   return (
@@ -31,7 +32,6 @@ export function SelectLanguagesScreen({ onContinue, onBack }: OnboardingScreenPr
   const scale = theme.scale.scaleSize;
   const [state, actions] = useLanguageSelection(onContinue);
 
-  const titleStyle = useMemo(() => buildTitleContainerStyle(scale), [scale]);
   const listSectionStyle = useMemo(() => buildListSectionStyle(scale), [scale]);
   const scrollContentStyle = useMemo(() => buildScrollContentStyle(scale), [scale]);
   const handleClose = useCallback(() => onBack?.(), [onBack]);
@@ -42,10 +42,7 @@ export function SelectLanguagesScreen({ onContinue, onBack }: OnboardingScreenPr
 
   return (
     <BottomSheet isVisible onClose={handleClose} {...(onBack ? { onBack } : {})} floatingFooter={continueButton} testID="select-languages-screen">
-      <View style={titleStyle}>
-        <Text variant="headline1">{translate("onboarding:selectLanguagesTitle")}</Text>
-        <Text variant="body2" color={theme.colors.tertiaryText}>{translate("onboarding:selectLanguagesSubtitle")}</Text>
-      </View>
+      <OnboardingScreenTitle title={translate("onboarding:selectLanguagesTitle")} subtitle={translate("onboarding:selectLanguagesSubtitle")} />
       <View style={listSectionStyle}>
         <SearchBar value={state.searchQuery} onChangeText={actions.setSearchQuery} placeholder={translate("onboarding:searchPlaceholder")} testID="language-search" />
         <LanguageList state={state} actions={actions} style={scrollContentStyle} />
