@@ -1,50 +1,41 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { IKeyValueStorage } from '@ion/storage';
+
+let mockStore = new Map<string, string>();
 
 vi.mock('./device-locale', () => ({
   getDeviceLocale: () => 'fr',
 }));
 
-import { createLocalization, translate, getCurrentLocale } from './create-localization';
+vi.mock('@ion/storage', () => ({
+  createKeyValueStorage: () => ({
+    getString: (key: string) => mockStore.get(key) ?? null,
+    setString: (key: string, value: string) => {
+      mockStore.set(key, value);
+    },
+    removeItem: (key: string) => { mockStore.delete(key); },
+    hasItem: (key: string) => mockStore.has(key),
+    clear: () => { mockStore.clear(); },
+  }),
+}));
 
-function createMockStorage(
-  data: Record<string, string> = {},
-): IKeyValueStorage {
-  const store = new Map(Object.entries(data));
-  return {
-    getString: (key: string) => store.get(key) ?? null,
-    setString: (key: string, value: string) => { store.set(key, value); },
-    getNumber: () => null,
-    setNumber: () => {},
-    getBoolean: () => null,
-    setBoolean: () => {},
-    getObject: () => null,
-    setObject: () => {},
-    removeItem: (key: string) => { store.delete(key); },
-    hasItem: (key: string) => store.has(key),
-    clear: () => { store.clear(); },
-  };
-}
+import { createLocalization, translate, getCurrentLocale } from './create-localization';
 
 describe('createLocalization', () => {
   it('initializes with device locale when no stored preference', () => {
+    mockStore = new Map();
     const instance = createLocalization();
     expect(instance.language).toBe('fr');
   });
 
   it('prefers stored locale over device locale', () => {
-    const storage = createMockStorage({
-      user_preferred_locale: 'de',
-    });
-    const instance = createLocalization({ storage });
+    mockStore = new Map([['user_preferred_locale', 'de']]);
+    const instance = createLocalization();
     expect(instance.language).toBe('de');
   });
 
   it('configures fallback chain correctly', () => {
-    const storage = createMockStorage({
-      user_preferred_locale: 'de',
-    });
-    const instance = createLocalization({ storage });
+    mockStore = new Map([['user_preferred_locale', 'de']]);
+    const instance = createLocalization();
     expect(instance.options.fallbackLng).toEqual([
       'de',
       'en',
@@ -54,6 +45,7 @@ describe('createLocalization', () => {
 
 describe('translate', () => {
   it('translates a registered key', () => {
+    mockStore = new Map();
     const instance = createLocalization();
     instance.addResourceBundle('fr', 'test', { hello: 'Bonjour' });
     expect(translate('test:hello')).toBe('Bonjour');
@@ -73,6 +65,7 @@ describe('translate', () => {
 
 describe('getCurrentLocale', () => {
   it('returns the active locale', () => {
+    mockStore = new Map();
     createLocalization();
     expect(getCurrentLocale()).toBe('fr');
   });
