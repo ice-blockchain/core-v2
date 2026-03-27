@@ -1,32 +1,31 @@
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/ThemeProvider";
 import { BottomSheetHeader } from "./BottomSheetHeader";
 import { BottomSheetFooter } from "./BottomSheetFooter";
 import type { BottomSheetProps } from "./bottom-sheet-types";
 import { buildWebOverlayStyle, buildWebSheetStyle, buildHandleStyle, computeTitleOpacity } from "./bottom-sheet-styles";
-import { useKeyboardContentStyle, useKeyboardInset } from "./bottom-sheet-hooks";
+import { useKeyboardInset } from "./bottom-sheet-hooks";
 
 const BACKDROP_STYLE = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0 };
 
 function useWebBottomSheetStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const keyboardInset = useKeyboardInset();
 
   const overlayStyle = useMemo(() => buildWebOverlayStyle(theme.colors.backgroundSheet), [theme.colors]);
   const sheetStyle = useMemo(() => buildWebSheetStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors]);
   const handleStyle = useMemo(() => buildHandleStyle(scale, theme.colors.sheetLine), [scale, theme.colors]);
-  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(scale, keyboardInset), [scale, keyboardInset]);
 
-  return { overlayStyle, sheetStyle, handleStyle, floatingFooterStyle };
+  return { overlayStyle, sheetStyle, handleStyle, scale };
 }
 
-function buildFloatingFooterStyle(scale: (n: number) => number, keyboardInset: number) {
+function buildFloatingFooterStyle(scale: (n: number) => number, keyboardInset: number, safeAreaBottom: number) {
   return {
     position: "absolute" as const,
-    bottom: scale(10) + keyboardInset,
+    bottom: scale(10) + keyboardInset + safeAreaBottom,
     left: 0,
     right: 0,
     paddingHorizontal: scale(44),
@@ -35,9 +34,15 @@ function buildFloatingFooterStyle(scale: (n: number) => number, keyboardInset: n
 
 function SheetContent(props: BottomSheetProps) {
   const { title, onBack, bottomButton, floatingFooter, children } = props;
-  const { sheetStyle, floatingFooterStyle } = useWebBottomSheetStyles();
+  const { sheetStyle, scale } = useWebBottomSheetStyles();
+  const keyboardInset = useKeyboardInset();
+  const insets = useSafeAreaInsets();
   const [titleOpacity, setTitleOpacity] = useState(0);
-  const keyboardStyle = useKeyboardContentStyle();
+  const keyboardStyle = useMemo(() => (keyboardInset > 0 ? { paddingBottom: keyboardInset } : undefined), [keyboardInset]);
+  const floatingFooterStyle = useMemo(
+    () => buildFloatingFooterStyle(scale, keyboardInset, insets.bottom),
+    [scale, keyboardInset, insets.bottom],
+  );
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setTitleOpacity(computeTitleOpacity(event.nativeEvent.contentOffset.y));
