@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import i18next from 'i18next';
 
 import type { TranslationResource } from './types';

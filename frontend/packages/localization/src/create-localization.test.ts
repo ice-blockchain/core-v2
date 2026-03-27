@@ -1,6 +1,7 @@
+import { describe, it, expect, vi } from 'vitest';
 import type { IKeyValueStorage } from '@ion/storage';
 
-jest.mock('./device-locale', () => ({
+vi.mock('./device-locale', () => ({
   getDeviceLocale: () => 'fr',
 }));
 
@@ -59,13 +60,12 @@ describe('translate', () => {
     expect(translate('test:hello')).toBe('Bonjour');
   });
 
-  it('throws when localization is not initialized', () => {
-    jest.resetModules();
-    jest.mock('./device-locale', () => ({
+  it('throws when localization is not initialized', async () => {
+    vi.resetModules();
+    vi.doMock('./device-locale', () => ({
       getDeviceLocale: () => 'en',
     }));
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fresh = require('./create-localization');
+    const fresh = await import('./create-localization');
     expect(() => fresh.translate('key')).toThrow(
       'Localization not initialized',
     );

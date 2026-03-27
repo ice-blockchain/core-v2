@@ -329,36 +329,12 @@ importers:
         specifier: '>=0.0.27'
         version: 0.0.27(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
     devDependencies:
-      '@babel/preset-env':
-        specifier: ^7.26.0
-        version: 7.29.2(@babel/core@7.29.0)
-      '@babel/preset-typescript':
-        specifier: ^7.27.0
-        version: 7.28.5(@babel/core@7.29.0)
-      '@types/jest':
-        specifier: ^29.5.13
-        version: 29.5.14
-      '@types/node':
-        specifier: ^22.0.0
-        version: 22.19.15
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^7.18.0
-        version: 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^7.18.0
-        version: 7.18.0(eslint@8.57.1)(typescript@5.9.3)
-      babel-jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@babel/core@7.29.0)
-      eslint:
-        specifier: ^8.57.1
-        version: 8.57.1
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@22.19.15)
       typescript:
-        specifier: ^5.8.3
+        specifier: ^5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
   packages/media-viewer:
     dependencies:

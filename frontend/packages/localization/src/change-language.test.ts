@@ -1,7 +1,8 @@
+import { describe, it, expect, vi } from 'vitest';
 import type { IKeyValueStorage } from '@ion/storage';
 
-jest.mock('./restart-application', () => ({
-  restartApplication: jest.fn(),
+vi.mock('./restart-application', () => ({
+  restartApplication: vi.fn(),
 }));
 
 import { changeLanguage } from './change-language';

@@ -1,3 +1,5 @@
+import { describe, it, expect, afterEach } from 'vitest';
+
 import { getDeviceLocale } from './device-locale.web';
 
 describe('getDeviceLocale (web)', () => {
