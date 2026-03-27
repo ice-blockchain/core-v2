@@ -9,7 +9,7 @@ Implementation conversations focus on writing code. Verification conversations (
 
 **Assets:** Download all icons and image assets directly from Figma using the REST API (`https://api.figma.com/v1/images/{fileKey}?ids={nodeId}&format=svg`). Use the Figma API token from MCP config. Never recreate or approximate assets — always pull the exact export from Figma.
 
-**No automatic checks:** Do NOT run lint, type-check, or tests unless explicitly requested by the user. The rules in `08-testing.md` and all other check/quality rules are suspended during implementation — they apply only when the user asks for them. Focus 100% on writing code and downloading assets.
+**Checks and CI:** In these implementation prompts, you don't need to propose or run local lint, type-check, or tests unless the user explicitly asks for them — focus on writing code and downloading assets. However, do not change or disable any existing checks, and assume that all contributions must satisfy the project's normal lint/type-check/test and CI requirements as documented in `frontend/CLAUDE.md` and `08-testing.md`.
 
 Analyze and let's have a plan. Ask clarification questions. 
 

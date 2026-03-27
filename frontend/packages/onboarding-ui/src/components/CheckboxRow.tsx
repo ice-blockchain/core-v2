@@ -44,7 +44,7 @@ export function CheckboxRow({ flag, name, isSelected, onPress, testID }: Checkbo
   const handlePress = useCallback(() => onPress(), [onPress]);
 
   return (
-    <Pressable style={rowStyle} onPress={handlePress} testID={testID}>
+    <Pressable style={rowStyle} onPress={handlePress} testID={testID} accessibilityRole="checkbox" accessibilityState={{ checked: isSelected }} accessibilityLabel={name}>
       <View style={leftStyle}>
         <Text style={flagStyle}>{flag}</Text>
         <Text variant="subtitle2">{name}</Text>

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { ScrollView, View } from "react-native";
+import type { ViewStyle } from "react-native";
 import { BottomSheet, Button, SearchBar, Text, useTheme } from "@ion/ui";
 import type { OnboardingScreenProps } from "../types";
 import { CheckboxRow } from "../components/CheckboxRow";
@@ -7,7 +8,7 @@ import type { LanguageSelectionActions, LanguageSelectionState } from "./select-
 import { useLanguageSelection } from "./select-languages-hooks";
 import { buildListSectionStyle, buildScrollContentStyle, buildTitleContainerStyle } from "./select-languages-styles";
 
-function LanguageList({ state, actions, scrollContentStyle }: { state: LanguageSelectionState; actions: LanguageSelectionActions; scrollContentStyle: object }) {
+function LanguageList({ state, actions, scrollContentStyle }: { state: LanguageSelectionState; actions: LanguageSelectionActions; scrollContentStyle: ViewStyle }) {
   return (
     <ScrollView contentContainerStyle={scrollContentStyle}>
       {state.filteredLanguages.map((lang) => (

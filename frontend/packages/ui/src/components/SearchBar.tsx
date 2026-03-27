@@ -28,7 +28,7 @@ function buildInputStyle(scale: (n: number) => number, primaryText: string): Tex
   return {
     flex: 1,
     fontSize: scale(13),
-    fontFamily: "Noto Sans",
+    fontFamily: "NotoSans-SemiBold",
     fontWeight: "600",
     color: primaryText,
     paddingVertical: 0,

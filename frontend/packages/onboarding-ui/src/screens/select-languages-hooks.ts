@@ -23,11 +23,13 @@ function filterAndSortLanguages(languages: Language[], query: string, selectedCo
     ? languages.filter((lang) => lang.name.toLowerCase().includes(lowerQuery))
     : languages;
 
+  const indexByCode = new Map(languages.map((lang, i) => [lang.code, i]));
+
   return [...filtered].sort((a, b) => {
     const aSelected = selectedCodes.has(a.code);
     const bSelected = selectedCodes.has(b.code);
     if (aSelected !== bSelected) return aSelected ? -1 : 1;
-    return 0;
+    return (indexByCode.get(a.code) ?? 0) - (indexByCode.get(b.code) ?? 0);
   });
 }
 
@@ -55,6 +57,8 @@ function useSaveLanguages(selectedCodes: Set<string>, onContinue: () => void) {
     try {
       await saveSelectedLanguages({ languageCodes: [...selectedCodes] });
       onContinue();
+    } catch {
+      // TODO: surface error to user via error state
     } finally {
       setIsSaving(false);
     }
@@ -71,7 +75,10 @@ export function useLanguageSelection(onContinue: () => void): [LanguageSelection
   const { isSaving, hasSelection, handleSave } = useSaveLanguages(selectedCodes, onContinue);
 
   useEffect(() => {
-    fetchLanguages().then(setLanguages).finally(() => setIsLoading(false));
+    fetchLanguages()
+      .then(setLanguages)
+      .catch(() => setLanguages([]))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const filteredLanguages = useMemo(

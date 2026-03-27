@@ -60,7 +60,7 @@ Language row 2
 
 ### Language List
 
-Source: Flutter app enum at `/Users/user/Development/code/flutter/flutter-app/lib/app/features/core/model/language.dart`
+Source: Flutter app enum at `flutter-app/lib/app/features/core/model/language.dart`
 
 67 languages total. Each entry has:
 - `name`: English name (e.g. "French")
