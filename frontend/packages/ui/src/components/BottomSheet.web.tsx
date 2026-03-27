@@ -17,8 +17,9 @@ function useWebBottomSheetStyles() {
   const overlayStyle = useMemo(() => buildWebOverlayStyle(theme.colors.backgroundSheet), [theme.colors]);
   const sheetStyle = useMemo(() => buildWebSheetStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors]);
   const handleStyle = useMemo(() => buildHandleStyle(scale, theme.colors.sheetLine), [scale, theme.colors]);
+  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(scale), [scale]);
 
-  return { overlayStyle, sheetStyle, handleStyle };
+  return { overlayStyle, sheetStyle, handleStyle, floatingFooterStyle };
 }
 
 function buildFloatingFooterStyle(scale: (n: number) => number) {
@@ -31,11 +32,9 @@ function buildFloatingFooterStyle(scale: (n: number) => number) {
   };
 }
 
-export function BottomSheet(props: BottomSheetProps) {
-  const { isVisible, onClose, title, onBack, bottomButton, floatingFooter, children, testID } = props;
-  const { overlayStyle, sheetStyle, handleStyle } = useWebBottomSheetStyles();
-  const theme = useTheme();
-  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(theme.scale.scaleSize), [theme.scale.scaleSize]);
+function SheetContent(props: BottomSheetProps) {
+  const { title, onBack, bottomButton, floatingFooter, children } = props;
+  const { sheetStyle, floatingFooterStyle } = useWebBottomSheetStyles();
   const [titleOpacity, setTitleOpacity] = useState(0);
   const keyboardStyle = useKeyboardContentStyle();
 
@@ -43,26 +42,29 @@ export function BottomSheet(props: BottomSheetProps) {
     setTitleOpacity(computeTitleOpacity(event.nativeEvent.contentOffset.y));
   }, []);
 
+  return (
+    <View style={sheetStyle}>
+      <BottomSheetHeader title={title} titleOpacity={titleOpacity} onBack={onBack} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={keyboardStyle} onScroll={handleScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
+      {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
+      {floatingFooter ? <View style={floatingFooterStyle}>{floatingFooter}</View> : null}
+    </View>
+  );
+}
+
+export function BottomSheet(props: BottomSheetProps) {
+  const { isVisible, onClose, testID } = props;
+  const { overlayStyle, handleStyle } = useWebBottomSheetStyles();
+
   if (!isVisible) return null;
 
   return (
     <View style={overlayStyle} testID={testID}>
       <Pressable style={BACKDROP_STYLE} onPress={onClose} />
       <View style={handleStyle} />
-      <View style={sheetStyle}>
-        <BottomSheetHeader title={title} titleOpacity={titleOpacity} onBack={onBack} />
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={keyboardStyle}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
-        {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
-        {floatingFooter ? <View style={floatingFooterStyle}>{floatingFooter}</View> : null}
-      </View>
+      <SheetContent {...props} />
     </View>
   );
 }
