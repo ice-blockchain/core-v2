@@ -46,6 +46,7 @@ function isValidEncryptedPrivateKey(value: unknown): value is EncryptedPrivateKe
   if (typeof value !== 'object' || value === null) return false;
   const obj = value as Record<string, unknown>;
   return (
+    (obj.version === undefined || typeof obj.version === 'string') &&
     typeof obj.salt === 'string' && obj.salt.length > 0 &&
     typeof obj.nonce === 'string' && obj.nonce.length > 0 &&
     typeof obj.ciphertext === 'string' && obj.ciphertext.length > 0 &&
@@ -72,10 +73,14 @@ async function decryptCredentialKey(rawJson: string, password: string): Promise<
 
 function verifyDecryptedKeyMatchesCredential(privateKeyPem: string, expectedCredId: string): void {
   const seed = parseSeedFromPem(privateKeyPem);
-  const publicKey = ed25519.getPublicKey(seed);
-  const derivedCredId = generateCredentialId(publicKey);
-  if (derivedCredId !== expectedCredId) {
-    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Decrypted key does not match credential');
+  try {
+    const publicKey = ed25519.getPublicKey(seed);
+    const derivedCredId = generateCredentialId(publicKey);
+    if (derivedCredId !== expectedCredId) {
+      throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Decrypted key does not match credential');
+    }
+  } finally {
+    seed.fill(0);
   }
 }
 
