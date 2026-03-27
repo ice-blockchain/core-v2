@@ -24,6 +24,7 @@ export function useNotificationBarTimers(options: NotificationBarTimersOptions) 
   }, []);
 
   const startGapTimer = useCallback(() => {
+    if (gapRef.current) clearTimeout(gapRef.current);
     gapRef.current = setTimeout(onGapComplete, GAP_DURATION);
   }, [onGapComplete]);
 
