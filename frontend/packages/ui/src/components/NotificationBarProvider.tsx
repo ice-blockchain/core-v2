@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NotificationBarContext } from "./NotificationBarContext";
 import { NotificationBarRenderer } from "./NotificationBarRenderer";
 import { useNotificationBarStack } from "./useNotificationBarStack";
-import { setNotificationBarGlobalRef, clearNotificationBarGlobalRef } from "./notificationBarRef";
+import { setNotificationBarGlobalRef } from "./notificationBarRef";
 
 export function NotificationBarProvider(props: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -15,8 +15,7 @@ export function NotificationBarProvider(props: { children: React.ReactNode }) {
   const actions = useMemo(() => ({ show, hide }), [show, hide]);
 
   useEffect(() => {
-    setNotificationBarGlobalRef(actions);
-    return clearNotificationBarGlobalRef;
+    return setNotificationBarGlobalRef(actions);
   }, [actions]);
 
   return (

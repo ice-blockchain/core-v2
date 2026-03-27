@@ -2,12 +2,11 @@ import type { NotificationBarActions, NotificationBarItem } from "./Notification
 
 let globalRef: NotificationBarActions | null = null;
 
-export function setNotificationBarGlobalRef(ref: NotificationBarActions): void {
+export function setNotificationBarGlobalRef(ref: NotificationBarActions): () => void {
   globalRef = ref;
-}
-
-export function clearNotificationBarGlobalRef(): void {
-  globalRef = null;
+  return () => {
+    if (globalRef === ref) globalRef = null;
+  };
 }
 
 export const notificationBarRef: NotificationBarActions = {
