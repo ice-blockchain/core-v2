@@ -61,54 +61,6 @@ EncryptedPrivateKey { salt: string; nonce: string; ciphertext: string; mac: stri
 -- All fields are base64-encoded. PBKDF2 (100k iterations, SHA256) + AES-GCM-256.
 ```
 
-## Internal Architecture
-
-```
-index.ts                          -- Public API gate
-src/
-  create-identity-client.ts       -- Factory: wires data sources, token manager, auth ops
-  types.ts                        -- All public types
-  errors.ts                       -- IdentityError class + IdentityErrorCode enum
-
-  auth/                           -- Auth operation orchestrators (one export per file)
-    register-with-passkey.ts      -- registerWithPasskey
-    register-with-password.ts     -- registerWithPassword
-    login-with-passkey.ts         -- loginWithPasskey
-    login-with-password.ts        -- loginWithPassword
-    logout.ts                     -- logout
-    refresh-token.ts              -- refreshToken
-    is-authenticated.ts           -- isAuthenticated
-    login-capabilities.ts         -- getLoginCapabilities
-    require-temporary-token.ts    -- requireTemporaryToken (shared helper)
-
-  users/                          -- User operations
-    get-user.ts                   -- getUser (fetch user by ID or master key)
-
-  data-sources/                   -- HTTP layer (one per server endpoint group)
-    registration-data-source.ts   -- POST /auth/registration/delegated, POST /auth/registration/enduser
-    login-data-source.ts          -- POST /auth/login/init, POST /auth/login
-    session-data-source.ts        -- POST /auth/login/delegated (refresh), PUT /auth/logout
-    user-data-source.ts           -- GET /auth/users/{userIdOrMasterKey}
-
-  token/                          -- Token storage and validation
-    token-manager.ts              -- Store/retrieve/clear tokens in ISecureStorage
-    parse-jwt-expiry.ts           -- Extract exp claim from JWT (uses jwt-decode)
-
-  crypto/                         -- Cryptographic operations (one export per file)
-    generate-key-pair.ts          -- Ed25519 key generation, PEM encoding/parsing
-    encrypt-private-key.ts        -- PBKDF2+AES-GCM private key encryption/decryption
-    sign-for-registration.ts      -- Challenge signing for password-based registration
-    sign-for-login.ts             -- Challenge signing for password-based login
-    generate-credential-id.ts     -- SHA256-based credential ID generation
-    build-sorted-json.ts          -- Canonical JSON serialization (uses json-stable-stringify)
-
-  platform/                       -- Platform-specific code (bundler-resolved)
-    passkey.ts                    -- Stub for tsc resolution (throws at runtime)
-    passkey.web.ts                -- Web passkey (WebAuthn navigator.credentials API)
-    passkey.native.ts             -- React Native passkey (react-native-passkey)
-    react-native-passkey.d.ts     -- Type definitions for react-native-passkey
-```
-
 ## Data Flow
 
 ### Registration (password)
