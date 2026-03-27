@@ -1,7 +1,7 @@
 import { NetworkError } from '@ion/network';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { LoginCapabilities } from '../types';
-import { isPasskeyAvailable } from '../passkey';
+import { isPasskeyAvailable } from '../platform/passkey';
 
 export async function getLoginCapabilities(
   username: string,

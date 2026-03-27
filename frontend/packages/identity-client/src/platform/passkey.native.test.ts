@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { UserRegistrationChallenge, UserActionChallenge } from './types';
-import { IdentityErrorCode } from './errors';
+import type { UserRegistrationChallenge, UserActionChallenge } from '../types';
+import { IdentityErrorCode } from '../errors';
 
 const mockPasskeyCreate = vi.fn();
 const mockPasskeyGet = vi.fn();

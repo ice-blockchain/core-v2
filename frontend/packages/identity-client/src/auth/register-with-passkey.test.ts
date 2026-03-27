@@ -5,7 +5,7 @@ import type { UserRegistrationChallenge } from '../types';
 import { registerWithPasskey } from './register-with-passkey';
 import { IdentityErrorCode } from '../errors';
 
-vi.mock('../passkey', () => ({
+vi.mock('../platform/passkey', () => ({
   isPasskeyAvailable: vi.fn(() => true),
   createPasskeyCredential: vi.fn(() =>
     Promise.resolve({
@@ -73,7 +73,7 @@ describe('registerWithPasskey', () => {
   });
 
   it('throws when passkeys are not available', async () => {
-    const { isPasskeyAvailable } = await import('../passkey');
+    const { isPasskeyAvailable } = await import('../platform/passkey');
     vi.mocked(isPasskeyAvailable).mockReturnValueOnce(false);
 
     await expect(registerWithPasskey('alice@example.com', deps)).rejects.toMatchObject({

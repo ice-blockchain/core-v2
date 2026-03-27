@@ -70,11 +70,16 @@ src/
   types.ts                        -- All public types
   errors.ts                       -- IdentityError class + IdentityErrorCode enum
 
-  auth/                           -- Auth operation orchestrators
-    registration.ts               -- registerWithPasskey, registerWithPassword
-    login.ts                      -- loginWithPasskey, loginWithPassword
-    session.ts                    -- logout, refreshToken, isAuthenticated
+  auth/                           -- Auth operation orchestrators (one export per file)
+    register-with-passkey.ts      -- registerWithPasskey
+    register-with-password.ts     -- registerWithPassword
+    login-with-passkey.ts         -- loginWithPasskey
+    login-with-password.ts        -- loginWithPassword
+    logout.ts                     -- logout
+    refresh-token.ts              -- refreshToken
+    is-authenticated.ts           -- isAuthenticated
     login-capabilities.ts         -- getLoginCapabilities
+    require-temporary-token.ts    -- requireTemporaryToken (shared helper)
 
   users/                          -- User operations
     get-user.ts                   -- getUser (fetch user by ID or master key)
@@ -87,11 +92,21 @@ src/
 
   token/                          -- Token storage and validation
     token-manager.ts              -- Store/retrieve/clear tokens in ISecureStorage
-    parse-jwt-expiry.ts           -- Extract exp claim from JWT
+    parse-jwt-expiry.ts           -- Extract exp claim from JWT (uses jwt-decode)
 
-  crypto.ts                       -- Ed25519 key generation, PBKDF2+AES-GCM encryption, challenge signing
-  passkey.ts                      -- Web passkey implementation (WebAuthn navigator.credentials API)
-  passkey.native.ts               -- React Native passkey implementation (react-native-passkey)
+  crypto/                         -- Cryptographic operations (one export per file)
+    generate-key-pair.ts          -- Ed25519 key generation, PEM encoding/parsing
+    encrypt-private-key.ts        -- PBKDF2+AES-GCM private key encryption/decryption
+    sign-for-registration.ts      -- Challenge signing for password-based registration
+    sign-for-login.ts             -- Challenge signing for password-based login
+    generate-credential-id.ts     -- SHA256-based credential ID generation
+    build-sorted-json.ts          -- Canonical JSON serialization (uses json-stable-stringify)
+
+  platform/                       -- Platform-specific code (bundler-resolved)
+    passkey.ts                    -- Stub for tsc resolution (throws at runtime)
+    passkey.web.ts                -- Web passkey (WebAuthn navigator.credentials API)
+    passkey.native.ts             -- React Native passkey (react-native-passkey)
+    react-native-passkey.d.ts     -- Type definitions for react-native-passkey
 ```
 
 ## Data Flow
@@ -156,6 +171,9 @@ logout(username)
 | `@noble/curves` | Ed25519 signatures |
 | `@noble/hashes` | SHA256, PBKDF2 |
 | `@noble/ciphers` | AES-GCM encryption |
+| `@scure/base` | Base64, base64url encoding/decoding |
+| `jwt-decode` | JWT payload extraction |
+| `json-stable-stringify` | Canonical JSON serialization for signing |
 | `react-native-passkey` | Native passkey support (peer, optional) |
 
 ## Design Decisions
@@ -163,7 +181,7 @@ logout(username)
 - **Token storage is opaque.** Tokens are stored via `ISecureStorage`. The package never exposes raw tokens.
 - **Credential signing uses Ed25519 with PEM encoding.** Private keys are encrypted with the user's password using PBKDF2+AES-GCM before sending to the server.
 - **Data sources are thin HTTP wrappers.** No business logic -- they map function calls to HTTP requests. All orchestration lives in `auth/` modules.
-- **Platform-split passkey.** `passkey.ts` (web) and `passkey.native.ts` (React Native) are resolved by bundler platform extensions.
+- **Platform-split passkey.** `platform/passkey.web.ts` and `platform/passkey.native.ts` follow the triple-file pattern (stub + web + native). Bundlers resolve the correct implementation at build time.
 
 ## React Native Requirements
 

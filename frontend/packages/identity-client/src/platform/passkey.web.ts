@@ -4,8 +4,8 @@ import type {
   UserActionChallenge,
   PasskeyRegistrationResult,
   PasskeyAuthResult,
-} from './types';
-import { IdentityError, IdentityErrorCode } from './errors';
+} from '../types';
+import { IdentityError, IdentityErrorCode } from '../errors';
 
 function base64UrlToBuffer(base64url: string): ArrayBuffer {
   return base64urlnopad.decode(base64url).buffer as ArrayBuffer;

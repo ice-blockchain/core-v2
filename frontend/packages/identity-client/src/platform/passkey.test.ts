@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { UserRegistrationChallenge, UserActionChallenge } from './types';
-import { IdentityErrorCode } from './errors';
-import { isPasskeyAvailable, createPasskeyCredential, getPasskeyAssertion } from './passkey';
+import type { UserRegistrationChallenge, UserActionChallenge } from '../types';
+import { IdentityErrorCode } from '../errors';
+import { isPasskeyAvailable, createPasskeyCredential, getPasskeyAssertion } from './passkey.web';
 
 const mockChallenge: UserRegistrationChallenge = {
   temporaryAuthenticationToken: 'tok',

@@ -5,7 +5,7 @@ import type { UserActionChallenge } from '../types';
 import { loginWithPasskey } from './login-with-passkey';
 import { IdentityErrorCode } from '../errors';
 
-vi.mock('../passkey', () => ({
+vi.mock('../platform/passkey', () => ({
   isPasskeyAvailable: vi.fn(() => true),
   getPasskeyAssertion: vi.fn(() =>
     Promise.resolve({
@@ -71,7 +71,7 @@ describe('loginWithPasskey', () => {
   });
 
   it('throws when passkeys are not available', async () => {
-    const { isPasskeyAvailable } = await import('../passkey');
+    const { isPasskeyAvailable } = await import('../platform/passkey');
     vi.mocked(isPasskeyAvailable).mockReturnValueOnce(false);
     await expect(loginWithPasskey('alice', deps)).rejects.toMatchObject({
       code: IdentityErrorCode.PASSKEY_NOT_AVAILABLE,

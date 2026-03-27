@@ -3,7 +3,7 @@ import { NetworkError } from '@ion/network';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import { getLoginCapabilities } from './login-capabilities';
 
-vi.mock('../passkey', () => ({
+vi.mock('../platform/passkey', () => ({
   isPasskeyAvailable: vi.fn(() => true),
 }));
 

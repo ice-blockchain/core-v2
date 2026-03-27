@@ -1,6 +1,6 @@
 import type { RegistrationDataSource } from '../data-sources/registration-data-source';
 import type { TokenManager } from '../token/token-manager';
-import { isPasskeyAvailable, createPasskeyCredential } from '../passkey';
+import { isPasskeyAvailable, createPasskeyCredential } from '../platform/passkey';
 import { IdentityError, IdentityErrorCode } from '../errors';
 import { requireTemporaryToken } from './require-temporary-token';
 

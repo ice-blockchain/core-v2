@@ -1,6 +1,6 @@
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
-import { isPasskeyAvailable, getPasskeyAssertion } from '../passkey';
+import { isPasskeyAvailable, getPasskeyAssertion } from '../platform/passkey';
 import { IdentityError, IdentityErrorCode } from '../errors';
 
 interface LoginWithPasskeyDeps {

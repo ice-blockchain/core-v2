@@ -4,9 +4,9 @@ import type {
   UserActionChallenge,
   PasskeyRegistrationResult,
   PasskeyAuthResult,
-} from './types';
+} from '../types';
 import { Logger } from '@ion/diagnostics';
-import { IdentityError, IdentityErrorCode } from './errors';
+import { IdentityError, IdentityErrorCode } from '../errors';
 
 export function isPasskeyAvailable(): boolean {
   return Passkey.isSupported();
