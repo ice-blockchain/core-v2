@@ -6,26 +6,27 @@ import { BottomSheetHeader } from "./BottomSheetHeader";
 import { BottomSheetFooter } from "./BottomSheetFooter";
 import type { BottomSheetProps } from "./bottom-sheet-types";
 import { buildWebOverlayStyle, buildWebSheetStyle, buildHandleStyle, computeTitleOpacity } from "./bottom-sheet-styles";
-import { useKeyboardContentStyle } from "./bottom-sheet-hooks";
+import { useKeyboardContentStyle, useKeyboardInset } from "./bottom-sheet-hooks";
 
 const BACKDROP_STYLE = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0 };
 
 function useWebBottomSheetStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const keyboardInset = useKeyboardInset();
 
   const overlayStyle = useMemo(() => buildWebOverlayStyle(theme.colors.backgroundSheet), [theme.colors]);
   const sheetStyle = useMemo(() => buildWebSheetStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors]);
   const handleStyle = useMemo(() => buildHandleStyle(scale, theme.colors.sheetLine), [scale, theme.colors]);
-  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(scale), [scale]);
+  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(scale, keyboardInset), [scale, keyboardInset]);
 
   return { overlayStyle, sheetStyle, handleStyle, floatingFooterStyle };
 }
 
-function buildFloatingFooterStyle(scale: (n: number) => number) {
+function buildFloatingFooterStyle(scale: (n: number) => number, keyboardInset: number) {
   return {
     position: "absolute" as const,
-    bottom: scale(10),
+    bottom: scale(10) + keyboardInset,
     left: 0,
     right: 0,
     paddingHorizontal: scale(44),

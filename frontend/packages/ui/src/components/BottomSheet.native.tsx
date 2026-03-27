@@ -52,8 +52,8 @@ function SheetContent(props: BottomSheetProps) {
           {children}
         </ScrollView>
         {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
+        {floatingFooter ? <View style={floatingFooterStyle}>{floatingFooter}</View> : null}
       </KeyboardAvoidingView>
-      {floatingFooter ? <View style={floatingFooterStyle}>{floatingFooter}</View> : null}
     </Pressable>
   );
 }

@@ -113,7 +113,7 @@ Hardcoded in `fetchLanguages` stub for now. Full list ported from the Flutter en
 
 ```text
 SelectLanguagesScreen
-  BottomSheet (isVisible, onClose, onBack, bottomButton)
+  BottomSheet (isVisible, onClose, onBack, floatingFooter)
     View (content)
       Text headline1 — "Select languages"
       Text body2 tertiaryText — subtitle
@@ -121,7 +121,7 @@ SelectLanguagesScreen
       SearchBar (value, onChangeText)
       ScrollView (12px gap)
         CheckboxRow[] (filtered + sorted)
-    bottomButton slot:
+    floatingFooter slot:
       Button "Continue" (hidden if 0 selected)
 ```
 
