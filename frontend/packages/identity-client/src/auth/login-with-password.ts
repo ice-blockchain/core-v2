@@ -39,17 +39,31 @@ function buildPasswordAssertion(signed: ReturnType<typeof signForLogin>, challen
   };
 }
 
+function isValidEncryptedPrivateKey(value: unknown): value is EncryptedPrivateKey {
+  if (typeof value !== 'object' || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.salt === 'string' && obj.salt.length > 0 &&
+    typeof obj.nonce === 'string' && obj.nonce.length > 0 &&
+    typeof obj.ciphertext === 'string' && obj.ciphertext.length > 0 &&
+    typeof obj.mac === 'string' && obj.mac.length > 0
+  );
+}
+
 async function decryptCredentialKey(rawJson: string, password: string): Promise<string> {
-  let encryptedKey: EncryptedPrivateKey;
+  let parsed: unknown;
   try {
-    encryptedKey = JSON.parse(rawJson) as EncryptedPrivateKey;
+    parsed = JSON.parse(rawJson);
   } catch (error) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key', error);
   }
+  if (!isValidEncryptedPrivateKey(parsed)) {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key');
+  }
   try {
-    return await decryptPrivateKey(encryptedKey, password);
+    return await decryptPrivateKey(parsed, password);
   } catch (error) {
-    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Incorrect password', error);
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Failed to decrypt private key', error);
   }
 }
 

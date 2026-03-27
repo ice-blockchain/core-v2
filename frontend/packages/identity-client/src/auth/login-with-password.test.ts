@@ -72,6 +72,15 @@ describe('loginWithPassword', () => {
     });
   });
 
+  it('throws when encrypted private key has missing fields', async () => {
+    const challenge = createMockChallenge(JSON.stringify({ salt: 'abc', nonce: '' }));
+    const deps = createMockDeps(challenge);
+    await expect(loginWithPassword({ username: 'bob', password: 'pass' }, deps)).rejects.toMatchObject({
+      code: IdentityErrorCode.INVALID_CREDENTIALS,
+      message: 'Malformed encrypted private key',
+    });
+  });
+
   it('throws INVALID_CREDENTIALS when password is wrong', async () => {
     const kp = generateKeyPair();
     const encrypted = await encryptPrivateKey(kp.privateKeyPem, 'correct-pass');

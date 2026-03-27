@@ -38,6 +38,8 @@ function mockCredentialsApi() {
     // @ts-expect-error -- stub window for Node test environment
     globalThis.window = {};
   }
+  // @ts-expect-error -- stub PublicKeyCredential for Node test environment
+  globalThis.PublicKeyCredential = class {};
   Object.defineProperty(globalThis, 'navigator', {
     value: { credentials: { create: mockCreate, get: mockGet } },
     writable: true,
@@ -49,9 +51,11 @@ function mockCredentialsApi() {
 describe('isPasskeyAvailable', () => {
   const originalWindow = globalThis.window;
   const originalNavigator = globalThis.navigator;
+  const originalPublicKeyCredential = globalThis.PublicKeyCredential;
 
   afterEach(() => {
     globalThis.window = originalWindow;
+    globalThis.PublicKeyCredential = originalPublicKeyCredential;
     Object.defineProperty(globalThis, 'navigator', {
       value: originalNavigator,
       writable: true,
@@ -59,7 +63,7 @@ describe('isPasskeyAvailable', () => {
     });
   });
 
-  it('returns true when navigator.credentials.create exists', () => {
+  it('returns true when WebAuthn APIs are available', () => {
     mockCredentialsApi();
     expect(isPasskeyAvailable()).toBe(true);
   });
@@ -67,6 +71,13 @@ describe('isPasskeyAvailable', () => {
   it('returns false when window is undefined', () => {
     // @ts-expect-error -- testing no-window environment
     delete globalThis.window;
+    expect(isPasskeyAvailable()).toBe(false);
+  });
+
+  it('returns false when PublicKeyCredential is undefined', () => {
+    mockCredentialsApi();
+    // @ts-expect-error -- removing stub
+    delete globalThis.PublicKeyCredential;
     expect(isPasskeyAvailable()).toBe(false);
   });
 });

@@ -18,7 +18,9 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
 export function isPasskeyAvailable(): boolean {
   return (
     typeof window !== 'undefined' &&
-    typeof navigator.credentials?.create === 'function'
+    typeof PublicKeyCredential !== 'undefined' &&
+    typeof navigator.credentials?.create === 'function' &&
+    typeof navigator.credentials?.get === 'function'
   );
 }
 
