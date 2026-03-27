@@ -1,5 +1,12 @@
 # Testing Rules
 
+## Test Framework
+
+### CRITICAL: Use Vitest, not Jest.
+All tests use Vitest as the test runner. Do not use Jest APIs, Jest config, or Jest-specific globals. Use `vi` for mocking (`vi.fn()`, `vi.spyOn()`, `vi.mock()`), not `jest`.
+
+---
+
 ## Test Location
 
 ### CRITICAL: Tests are colocated with source. Always.
