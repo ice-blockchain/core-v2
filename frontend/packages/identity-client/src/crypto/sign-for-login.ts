@@ -23,15 +23,17 @@ export function signForLogin(input: SignForLoginInput): LoginSignatureResult {
   const { challenge, origin, privateKeyPem, credentialId } = input;
   validateChallengeFormat(challenge);
   const seed = parseSeedFromPem(privateKeyPem);
-
-  const clientData = buildSortedJson({
-    challenge, crossOrigin: false, origin, type: 'key.get',
-  });
-  const signature = base64urlnopad.encode(ed25519.sign(encoder.encode(clientData), seed));
-
-  return {
-    credId: credentialId,
-    clientData: base64urlnopad.encode(encoder.encode(clientData)),
-    signature,
-  };
+  try {
+    const clientData = buildSortedJson({
+      challenge, crossOrigin: false, origin, type: 'key.get',
+    });
+    const signature = base64urlnopad.encode(ed25519.sign(encoder.encode(clientData), seed));
+    return {
+      credId: credentialId,
+      clientData: base64urlnopad.encode(encoder.encode(clientData)),
+      signature,
+    };
+  } finally {
+    seed.fill(0);
+  }
 }

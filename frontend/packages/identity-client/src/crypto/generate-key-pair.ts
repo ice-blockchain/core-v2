@@ -35,7 +35,9 @@ export function parseSeedFromPem(pem: string): Uint8Array {
       throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Invalid Ed25519 PKCS#8 key: wrong prefix');
     }
   }
-  return decoded.slice(16, 48);
+  const seed = decoded.slice(16, 48);
+  decoded.fill(0);
+  return seed;
 }
 
 export function generateKeyPair(): KeyPair {

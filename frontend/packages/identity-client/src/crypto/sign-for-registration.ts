@@ -24,32 +24,32 @@ interface SignForRegistrationInput {
 
 const encoder = new TextEncoder();
 
+function buildAttestationData(clientData: string, keyPair: KeyPair): string {
+  const clientDataHash = bytesToHex(sha256(encoder.encode(clientData)));
+  const fingerprint = buildSortedJson({ clientDataHash, publicKey: keyPair.publicKeyPem });
+  const signatureHex = bytesToHex(ed25519.sign(encoder.encode(fingerprint), keyPair.seed));
+  return buildSortedJson({ publicKey: keyPair.publicKeyPem, signature: signatureHex });
+}
+
 export async function signForRegistration(
   input: SignForRegistrationInput,
 ): Promise<RegistrationSignatureResult> {
   const { challenge, origin, keyPair, password } = input;
   validateChallengeFormat(challenge);
-
-  const clientData = buildSortedJson({
-    challenge, crossOrigin: false, origin, type: 'key.create',
-  });
-  const clientDataHash = bytesToHex(sha256(encoder.encode(clientData)));
-  const fingerprint = buildSortedJson({
-    clientDataHash, publicKey: keyPair.publicKeyPem,
-  });
-  const signatureHex = bytesToHex(
-    ed25519.sign(encoder.encode(fingerprint), keyPair.seed),
-  );
-  const attestationData = buildSortedJson({
-    publicKey: keyPair.publicKeyPem, signature: signatureHex,
-  });
-  const credId = generateCredentialId(keyPair.publicKey);
-  const encrypted = await encryptPrivateKey(keyPair.privateKeyPem, password);
-
-  return {
-    credId,
-    clientData: base64urlnopad.encode(encoder.encode(clientData)),
-    attestationData: base64urlnopad.encode(encoder.encode(attestationData)),
-    encryptedPrivateKey: JSON.stringify(encrypted),
-  };
+  try {
+    const clientData = buildSortedJson({
+      challenge, crossOrigin: false, origin, type: 'key.create',
+    });
+    const attestationData = buildAttestationData(clientData, keyPair);
+    const credId = generateCredentialId(keyPair.publicKey);
+    const encrypted = await encryptPrivateKey(keyPair.privateKeyPem, password);
+    return {
+      credId,
+      clientData: base64urlnopad.encode(encoder.encode(clientData)),
+      attestationData: base64urlnopad.encode(encoder.encode(attestationData)),
+      encryptedPrivateKey: JSON.stringify(encrypted),
+    };
+  } finally {
+    keyPair.seed.fill(0);
+  }
 }
