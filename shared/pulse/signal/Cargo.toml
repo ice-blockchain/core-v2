@@ -1,0 +1,13 @@
+[package]
+name = "pulse-signal"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+pulse-types = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

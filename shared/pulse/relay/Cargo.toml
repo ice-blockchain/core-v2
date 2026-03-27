@@ -1,0 +1,40 @@
+[package]
+name = "pulse-relay"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "pulse-relay"
+path = "src/main.rs"
+
+[dependencies]
+pulse-types = { workspace = true }
+pulse-auth = { workspace = true }
+pulse-transport = { workspace = true }
+pulse-graph = { workspace = true }
+pulse-kv = { workspace = true }
+pulse-vector = { workspace = true }
+pulse-analytics = { workspace = true }
+pulse-sql = { workspace = true }
+pulse-schema = { workspace = true }
+pulse-tenant = { workspace = true }
+pulse-signal = { workspace = true }
+pulse-shard = { workspace = true }
+pulse-federation = { workspace = true }
+pulse-reaper = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+hex = { workspace = true }
+
+[features]
+default = ["graph", "kv", "vector", "analytics", "sql"]
+graph = []
+kv = []
+vector = []
+analytics = []
+sql = []

@@ -1,0 +1,17 @@
+[package]
+name = "pulse-transport"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+pulse-types = { workspace = true }
+pulse-auth = { workspace = true }
+tokio = { workspace = true }
+wtransport = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
+http-body-util = { workspace = true }
+bytes = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
