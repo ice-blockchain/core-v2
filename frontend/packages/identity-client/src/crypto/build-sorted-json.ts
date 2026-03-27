@@ -1,7 +1,7 @@
+import stringify from 'json-stable-stringify';
+
 export function buildSortedJson(obj: Record<string, unknown>): string {
-  const sorted = Object.keys(obj).sort().reduce<Record<string, unknown>>((acc, key) => {
-    acc[key] = obj[key];
-    return acc;
-  }, {});
-  return JSON.stringify(sorted);
+  const result = stringify(obj);
+  if (result === undefined) throw new Error('Failed to serialize object to JSON');
+  return result;
 }

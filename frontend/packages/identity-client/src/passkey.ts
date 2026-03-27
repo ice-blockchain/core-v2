@@ -1,3 +1,4 @@
+import { base64urlnopad } from '@scure/base';
 import type {
   UserRegistrationChallenge,
   UserActionChallenge,
@@ -7,18 +8,11 @@ import type {
 import { IdentityError, IdentityErrorCode } from './errors';
 
 function base64UrlToBuffer(base64url: string): ArrayBuffer {
-  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
+  return base64urlnopad.decode(base64url).buffer as ArrayBuffer;
 }
 
 function bufferToBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return base64urlnopad.encode(new Uint8Array(buffer));
 }
 
 export function isPasskeyAvailable(): boolean {
