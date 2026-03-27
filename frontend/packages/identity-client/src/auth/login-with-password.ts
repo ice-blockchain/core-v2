@@ -1,7 +1,10 @@
+import { ed25519 } from '@noble/curves/ed25519';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
 import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import { parseSeedFromPem } from '../crypto/generate-key-pair';
+import { generateCredentialId } from '../crypto/generate-credential-id';
 import { signForLogin } from '../crypto/sign-for-login';
 import { IdentityError, IdentityErrorCode } from '../errors';
 
@@ -67,6 +70,15 @@ async function decryptCredentialKey(rawJson: string, password: string): Promise<
   }
 }
 
+function verifyDecryptedKeyMatchesCredential(privateKeyPem: string, expectedCredId: string): void {
+  const seed = parseSeedFromPem(privateKeyPem);
+  const publicKey = ed25519.getPublicKey(seed);
+  const derivedCredId = generateCredentialId(publicKey);
+  if (derivedCredId !== expectedCredId) {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Decrypted key does not match credential');
+  }
+}
+
 interface PasswordLoginInput {
   username: string;
   password: string;
@@ -83,6 +95,7 @@ export async function loginWithPassword(
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Credential missing encrypted private key');
   }
   const privateKeyPem = await decryptCredentialKey(cred.encryptedPrivateKey, input.password);
+  verifyDecryptedKeyMatchesCredential(privateKeyPem, cred.id);
   const signed = signForLogin({
     challenge: challenge.challenge,
     origin: deps.origin,

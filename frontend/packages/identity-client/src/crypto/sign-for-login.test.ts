@@ -6,7 +6,7 @@ describe('signForLogin', () => {
   it('produces valid login signature result', () => {
     const kp = generateKeyPair();
     const result = signForLogin({
-      challenge: 'login-challenge',
+      challenge: 'dGVzdC1sb2dpbi1jaGFs',
       origin: 'https://example.com',
       privateKeyPem: kp.privateKeyPem,
       credentialId: 'AAAAA-BBBBB-CCCCC-DDDDD-EEEEE',
@@ -20,7 +20,7 @@ describe('signForLogin', () => {
   it('uses key.get as clientData type', () => {
     const kp = generateKeyPair();
     const result = signForLogin({
-      challenge: 'ch',
+      challenge: 'Y2hhbGxlbmdlLXR5cGU',
       origin: 'https://example.com',
       privateKeyPem: kp.privateKeyPem,
       credentialId: 'ID',

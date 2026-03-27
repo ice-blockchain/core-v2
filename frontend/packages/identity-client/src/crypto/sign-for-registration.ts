@@ -6,6 +6,7 @@ import type { KeyPair } from './generate-key-pair';
 import { encryptPrivateKey } from './encrypt-private-key';
 import { generateCredentialId } from './generate-credential-id';
 import { buildSortedJson } from './build-sorted-json';
+import { validateChallengeFormat } from './validate-challenge';
 
 export interface RegistrationSignatureResult {
   credId: string;
@@ -27,6 +28,7 @@ export async function signForRegistration(
   input: SignForRegistrationInput,
 ): Promise<RegistrationSignatureResult> {
   const { challenge, origin, keyPair, password } = input;
+  validateChallengeFormat(challenge);
 
   const clientData = buildSortedJson({
     challenge, crossOrigin: false, origin, type: 'key.create',

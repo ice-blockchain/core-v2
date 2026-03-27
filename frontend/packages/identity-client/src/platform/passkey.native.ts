@@ -76,5 +76,5 @@ function mapNativePasskeyError(error: unknown): IdentityError {
   if (message.includes('cancel') || message.includes('Cancel')) {
     return new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'Passkey operation cancelled', error);
   }
-  return new IdentityError(IdentityErrorCode.PASSKEY_VALIDATION_FAILED, message, error);
+  return new IdentityError(IdentityErrorCode.PASSKEY_VALIDATION_FAILED, 'Passkey operation failed', error);
 }

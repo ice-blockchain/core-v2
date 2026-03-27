@@ -2,6 +2,7 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { base64urlnopad } from '@scure/base';
 import { parseSeedFromPem } from './generate-key-pair';
 import { buildSortedJson } from './build-sorted-json';
+import { validateChallengeFormat } from './validate-challenge';
 
 export interface LoginSignatureResult {
   credId: string;
@@ -20,6 +21,7 @@ const encoder = new TextEncoder();
 
 export function signForLogin(input: SignForLoginInput): LoginSignatureResult {
   const { challenge, origin, privateKeyPem, credentialId } = input;
+  validateChallengeFormat(challenge);
   const seed = parseSeedFromPem(privateKeyPem);
 
   const clientData = buildSortedJson({

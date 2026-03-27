@@ -6,7 +6,7 @@ describe('signForRegistration', () => {
   it('produces valid registration signature result', async () => {
     const kp = generateKeyPair();
     const result = await signForRegistration({
-      challenge: 'test-challenge-abc',
+      challenge: 'dGVzdC1jaGFsbGVuZ2UtYWJj',
       origin: 'https://example.com',
       keyPair: kp,
       password: 'mypassword',
@@ -21,7 +21,7 @@ describe('signForRegistration', () => {
   it('sorts JSON keys alphabetically in clientData', async () => {
     const kp = generateKeyPair();
     const result = await signForRegistration({
-      challenge: 'ch',
+      challenge: 'Y2hhbGxlbmdlLXNvcnQ',
       origin: 'https://example.com',
       keyPair: kp,
       password: 'pw',

@@ -13,11 +13,20 @@ function storageKey(username: string): string {
   return `ion_identity_tokens:${username}`;
 }
 
+function isAuthTokens(value: unknown): value is AuthTokens {
+  if (typeof value !== 'object' || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return typeof obj.token === 'string' && obj.token.length > 0 &&
+    typeof obj.refreshToken === 'string' && obj.refreshToken.length > 0;
+}
+
 function readTokens(secureStorage: ISecureStorage, username: string): Promise<AuthTokens | null> {
   return secureStorage.getItem(storageKey(username)).then((raw) => {
     if (!raw) return null;
-    try { return JSON.parse(raw) as AuthTokens; }
-    catch { return null; }
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return isAuthTokens(parsed) ? parsed : null;
+    } catch { return null; }
   });
 }
 
