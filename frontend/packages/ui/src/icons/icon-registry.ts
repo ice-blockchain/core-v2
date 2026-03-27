@@ -6,11 +6,13 @@ import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { CameraIcon } from "./generated/CameraIcon";
 import { ChatBubbleIcon } from "./generated/ChatBubbleIcon";
+import { CheckGreenIcon } from "./generated/CheckGreenIcon";
 import { CheckboxOffIcon } from "./generated/CheckboxOffIcon";
 import { CheckboxOnIcon } from "./generated/CheckboxOnIcon";
 import { CheckmarkIcon } from "./generated/CheckmarkIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
+import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
@@ -35,11 +37,13 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "back-arrow": BackArrowIcon,
   "camera": CameraIcon,
   "chat-bubble": ChatBubbleIcon,
+  "check_green": CheckGreenIcon,
   "checkbox-off": CheckboxOffIcon,
   "checkbox-on": CheckboxOnIcon,
   "checkmark": CheckmarkIcon,
   "clock": ClockIcon,
   "close": CloseIcon,
+  "danger_triangle": DangerTriangleIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,

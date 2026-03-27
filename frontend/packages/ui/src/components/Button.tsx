@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import type { SemanticColors } from "../theme/theme-types";
 import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
-import { ButtonSpinner } from "./ButtonSpinner";
+import { IONLoader } from "./IONLoader";
+import type { IONLoaderVariant } from "./IONLoaderTypes";
 
 export type ButtonColor = "primary" | "secondary" | "secondaryB" | "tertiary" | "text";
 export type ButtonIconPosition = "left" | "right" | "center";
@@ -25,18 +26,19 @@ interface ColorSpec {
   background: string;
   textColor: string;
   borderColor: string | undefined;
+  loaderVariant: IONLoaderVariant;
 }
 
 function resolveColorSpec(colors: SemanticColors, color: ButtonColor, isDisabled: boolean): ColorSpec {
   if (isDisabled) {
-    return { background: colors.sheetLine, textColor: colors.onPrimaryAccent, borderColor: undefined };
+    return { background: colors.sheetLine, textColor: colors.onPrimaryAccent, borderColor: undefined, loaderVariant: "dark" };
   }
   const specs: Record<ButtonColor, ColorSpec> = {
-    primary: { background: colors.primaryAccent, textColor: colors.onPrimaryAccent, borderColor: undefined },
-    secondary: { background: colors.tertiaryBackground, textColor: colors.primaryText, borderColor: undefined },
-    secondaryB: { background: colors.tertiaryBackground, textColor: colors.primaryText, borderColor: undefined },
-    tertiary: { background: "transparent", textColor: colors.secondaryText, borderColor: colors.strokeElements },
-    text: { background: "transparent", textColor: colors.secondaryText, borderColor: undefined },
+    primary: { background: colors.primaryAccent, textColor: colors.onPrimaryAccent, borderColor: undefined, loaderVariant: "dark" },
+    secondary: { background: colors.tertiaryBackground, textColor: colors.primaryText, borderColor: undefined, loaderVariant: "light" },
+    secondaryB: { background: colors.tertiaryBackground, textColor: colors.primaryText, borderColor: undefined, loaderVariant: "light" },
+    tertiary: { background: "transparent", textColor: colors.secondaryText, borderColor: colors.strokeElements, loaderVariant: "light" },
+    text: { background: "transparent", textColor: colors.secondaryText, borderColor: undefined, loaderVariant: "light" },
   };
   return specs[color];
 }
@@ -79,11 +81,15 @@ function buildTextStyle(spec: ColorSpec): TextStyle {
   return { color: spec.textColor };
 }
 
+function resolveLoaderSize(height: 44 | 56): number {
+  return height === 56 ? 24 : 20;
+}
+
 function renderContent(props: ButtonProps, spec: ColorSpec, scale: (n: number) => number): React.ReactNode {
-  const { icon, iconPosition = "left", label, isLoading } = props;
+  const { height = 56, icon, iconPosition = "left", label, isLoading } = props;
 
   if (isLoading) {
-    return <ButtonSpinner color={spec.textColor} size={scale(20)} />;
+    return <IONLoader variant={spec.loaderVariant} size={scale(resolveLoaderSize(height))} />;
   }
 
   const isIconOnly = icon && iconPosition === "center" && !label;
