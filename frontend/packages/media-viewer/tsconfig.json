@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
+    "lib": ["ES2022", "DOM"],
     "types": ["jest", "node"]
   },
   "include": ["src", "index.ts"]
