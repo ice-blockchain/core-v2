@@ -21,22 +21,24 @@ function useBottomSheetStyles() {
   return { overlayStyle, sheetStyle, handleStyle };
 }
 
-function buildFloatingFooterStyle(bottomInset: number): ViewStyle {
+function buildFloatingFooterStyle(bottomInset: number, scale: (n: number) => number): ViewStyle {
   return {
     position: "absolute",
-    bottom: bottomInset + 10,
+    bottom: scale(10) + bottomInset,
     left: 0,
     right: 0,
-    paddingHorizontal: 44,
+    paddingHorizontal: scale(44),
   };
 }
 
 function SheetContent(props: BottomSheetProps) {
   const { title, onBack, bottomButton, floatingFooter, children } = props;
   const { sheetStyle } = useBottomSheetStyles();
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
   const [titleOpacity, setTitleOpacity] = useState(0);
   const insets = useSafeAreaInsets();
-  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(insets.bottom), [insets.bottom]);
+  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(insets.bottom, scale), [insets.bottom, scale]);
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setTitleOpacity(computeTitleOpacity(event.nativeEvent.contentOffset.y));
