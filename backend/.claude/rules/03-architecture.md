@@ -102,3 +102,32 @@ No raw `fetch()`, `XMLHttpRequest`, or direct WebSocket outside the network pack
 
 ### CRITICAL: Typed API contracts between app and backend.
 Every endpoint has typed request/response types in `@ion/api-contracts`. Both repos depend on this package. If the backend changes an API shape, the app must fail at compile time. No `any` on API boundaries.
+
+---
+
+## Package-Level Architecture Documentation
+
+### CRITICAL: Every package and module has an `ARCHITECTURE.md` file.
+Each package under `packages/` and each backend service under `services/` must contain an `ARCHITECTURE.md` at its root. This file describes how the module works and contains:
+
+- **Data structures:** Key types, models, and their relationships.
+- **API surface:** Public exports, function signatures, and usage examples.
+- **Dependencies:** Internal packages and external libraries this module depends on, and why.
+- **Config options:** Environment variables, feature flags, or runtime configuration the module uses.
+- **Design decisions:** Why this approach was chosen over alternatives. Trade-offs made.
+
+```
+packages/media-upload/
+  ARCHITECTURE.md            # How media-upload works
+  src/
+    upload-manager.ts
+    ...
+  index.ts
+  package.json
+```
+
+### CRITICAL: Package `ARCHITECTURE.md` files are referenced from root `.claude/architecture.md`.
+The root `.claude/architecture.md` links to each package's `ARCHITECTURE.md`. This creates a navigable documentation tree — root for the big picture, package-level for the details.
+
+### CRITICAL: Update `ARCHITECTURE.md` when you change the module's architecture.
+Any PR that changes a module's data structures, public API, dependencies, config options, or design decisions must update that module's `ARCHITECTURE.md` in the same PR. Stale architecture docs are worse than no docs — they actively mislead.

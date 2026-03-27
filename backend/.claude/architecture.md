@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-03-20
+> Last updated: 2026-03-27
 
 ---
 
@@ -18,15 +18,24 @@
 
 ## ion-backend Services
 
-| Service | Purpose | Status |
-|---|---|---|
-| identity | Auth, users, wallets | Planned |
-| wallet | Coin/NFT operations | Planned |
-| feed | Posts, likes, reposts | Planned |
-| chat | Messaging | Planned |
-| nft-minter | Minter | Planned |
-| token-analytics | Trades, holders, stats | Planned |
-| notifications | Push notification dispatch | Planned |
+| Service | Purpose | Status | Architecture |
+|---|---|---|---|
+| greenfield-ingester | Subscribe to Greenfield blockchain events, enqueue to BullMQ Redis | Active | [ARCHITECTURE.md](../../services/greenfield-ingester/ARCHITECTURE.md) |
+| identity | Auth, users, wallets | Planned | -- |
+| wallet | Coin/NFT operations | Planned | -- |
+| feed | Posts, likes, reposts | Planned | -- |
+| chat | Messaging | Planned | -- |
+| nft-minter | Minter | Planned | -- |
+| token-analytics | Trades, holders, stats | Planned | -- |
+| notifications | Push notification dispatch | Planned | -- |
+
+---
+
+## Packages
+
+| Package | Purpose | Status | Architecture |
+|---|---|---|---|
+| greenfield-client | Go library for Greenfield RPC subscription and object download | Active | [ARCHITECTURE.md](../../packages/greenfield-client/ARCHITECTURE.md) |
 
 ---
 
@@ -53,6 +62,8 @@
 | Actions layer as internal SDK | New dev productivity, clean separation of concerns | 2026-03-20 |
 | React Native (from Flutter) | AI training data, TypeScript type safety, shared types with backend | 2026-03-20 |
 | MMKV + SQLite for storage | MMKV for fast key-value, SQLite for structured/relational data | 2026-03-20 |
+| Go for Greenfield integration | Greenfield SDK is Go-native; avoids FFI/serialization overhead | 2026-03-27 |
+| BullMQ Redis as event bridge | Go ingester writes BullMQ-compatible jobs; Node.js workers consume them | 2026-03-27 |
 
 ---
 
