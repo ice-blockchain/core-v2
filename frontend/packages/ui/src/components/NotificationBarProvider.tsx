@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NotificationBarContext } from "./NotificationBarContext";
 import { NotificationBarRenderer } from "./NotificationBarRenderer";
+import { buildWebFixedContainerStyle, buildWebBarWrapperStyle } from "./NotificationBarStyles";
 import { useNotificationBarStack } from "./useNotificationBarStack";
 import { setNotificationBarGlobalRef } from "./notificationBarRef";
+
+const isWeb = Platform.OS === "web";
+const webFixedContainerStyle = isWeb ? buildWebFixedContainerStyle() : null;
+const webBarWrapperStyle = isWeb ? buildWebBarWrapperStyle() : null;
 
 export function NotificationBarProvider(props: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
@@ -18,9 +23,17 @@ export function NotificationBarProvider(props: { children: React.ReactNode }) {
     return setNotificationBarGlobalRef(actions);
   }, [actions]);
 
+  const renderer = <NotificationBarRenderer activeItem={activeItem} isVisible={isVisible} onHideComplete={onHideComplete} />;
+
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>
-      <NotificationBarRenderer activeItem={activeItem} isVisible={isVisible} onHideComplete={onHideComplete} />
+      {isWeb ? (
+        <View style={webFixedContainerStyle!} pointerEvents="box-none">
+          <View style={webBarWrapperStyle!}>{renderer}</View>
+        </View>
+      ) : (
+        renderer
+      )}
       <NotificationBarContext.Provider value={actions}>
         <View style={{ flex: 1 }}>{props.children}</View>
       </NotificationBarContext.Provider>

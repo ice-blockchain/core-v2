@@ -49,3 +49,22 @@ export function buildNotificationBarTextStyle(options: {
     color: theme.colors.onPrimaryAccent,
   };
 }
+
+export function buildWebFixedContainerStyle(): ViewStyle {
+  return {
+    position: "fixed" as unknown as ViewStyle["position"],
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    alignItems: "center",
+  };
+}
+
+export function buildWebBarWrapperStyle(): ViewStyle {
+  return {
+    maxWidth: 500,
+    width: "100%",
+    overflow: "hidden",
+  };
+}
