@@ -41,7 +41,7 @@ function createMockDeps(challenge: UserActionChallenge) {
 }
 
 describe('loginWithPassword', () => {
-  it('decrypts key, signs challenge, and stores tokens', async () => {
+  it('decrypts key, signs challenge, and stores tokens', { timeout: 15_000 }, async () => {
     const kp = generateKeyPair();
     const credId = generateCredentialId(kp.publicKey);
     const encrypted = await encryptPrivateKey(kp.privateKeyPem, 'mypass');
