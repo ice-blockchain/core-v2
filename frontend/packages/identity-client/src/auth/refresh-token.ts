@@ -8,6 +8,10 @@ interface RefreshTokenDeps {
   refreshLocks: Map<string, Promise<void>>;
 }
 
+// Deduplicates concurrent refresh calls per username. Relies on JS single-threaded
+// execution: the synchronous check-then-set (lines below) cannot be interleaved.
+// If the first refresh fails, waiting callers receive the same rejection and tokens
+// are cleared — this is intentional fail-fast behavior.
 export async function refreshToken(
   username: string,
   deps: RefreshTokenDeps,

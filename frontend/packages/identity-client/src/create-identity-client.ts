@@ -31,9 +31,9 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
 
   return {
     registerWithPasskey: (username, earlyAccessEmail) => registerWithPasskey(username, regDeps, earlyAccessEmail),
-    registerWithPassword: (username, password, earlyAccessEmail) => registerWithPassword({ username, password, earlyAccessEmail }, regDeps),
+    registerWithPassword: (input) => registerWithPassword(input, regDeps),
     loginWithPasskey: (username, twoFAVerificationCodes) => loginWithPasskey(username, loginDeps, twoFAVerificationCodes),
-    loginWithPassword: (username, password, twoFAVerificationCodes) => loginWithPassword({ username, password, twoFAVerificationCodes }, loginDeps),
+    loginWithPassword: (input) => loginWithPassword(input, loginDeps),
     logout: (username) => logout(username, sessionDeps),
     refreshToken: (username) => refreshToken(username, sessionDeps),
     isAuthenticated: (username) => isAuthenticated(username, sessionDeps),

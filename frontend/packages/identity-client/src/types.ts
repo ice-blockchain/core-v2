@@ -7,11 +7,23 @@ export interface IdentityClientConfig {
   appId: string;
 }
 
+export interface PasswordRegistrationInput {
+  username: string;
+  password: string;
+  earlyAccessEmail?: string | undefined;
+}
+
+export interface PasswordLoginInput {
+  username: string;
+  password: string;
+  twoFAVerificationCodes?: Record<string, string> | undefined;
+}
+
 export interface IdentityClient {
   registerWithPasskey(username: string, earlyAccessEmail?: string): Promise<void>;
-  registerWithPassword(username: string, password: string, earlyAccessEmail?: string): Promise<void>;
+  registerWithPassword(input: PasswordRegistrationInput): Promise<void>;
   loginWithPasskey(username: string, twoFAVerificationCodes?: Record<string, string>): Promise<string>;
-  loginWithPassword(username: string, password: string, twoFAVerificationCodes?: Record<string, string>): Promise<string>;
+  loginWithPassword(input: PasswordLoginInput): Promise<string>;
   logout(username: string): Promise<void>;
   refreshToken(username: string): Promise<void>;
   isAuthenticated(username: string): Promise<boolean>;

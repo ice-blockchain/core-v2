@@ -1,6 +1,8 @@
 export type {
   IdentityClient,
   IdentityClientConfig,
+  PasswordRegistrationInput,
+  PasswordLoginInput,
   LoginCapabilities,
   UserRegistrationChallenge,
   UserActionChallenge,
