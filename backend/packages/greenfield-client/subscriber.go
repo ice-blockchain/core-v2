@@ -182,15 +182,11 @@ func (c *client) processEvents(
 }
 
 func parseTxResult(result ctypes.ResultEvent) (*TxEvent, error) {
-	raw, err := json.Marshal(result)
-	if err != nil {
-		return nil, fmt.Errorf("marshal result event: %w", err)
-	}
-	return ParseTxResponse(raw, result)
+	return ParseTxResponse(result)
 }
 
-// ParseTxResponse parses a raw websocket JSON-RPC response into a TxEvent.
-func ParseTxResponse(rawJSON []byte, result ctypes.ResultEvent) (*TxEvent, error) {
+// ParseTxResponse parses a websocket ResultEvent into a TxEvent.
+func ParseTxResponse(result ctypes.ResultEvent) (*TxEvent, error) {
 	txEvent := &TxEvent{}
 
 	if txHash, ok := result.Events["tx.hash"]; ok && len(txHash) > 0 {

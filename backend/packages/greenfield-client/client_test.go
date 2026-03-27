@@ -84,8 +84,7 @@ func TestParseTxResponse_FullPayload(t *testing.T) {
 		Data:   dataInterface,
 	}
 
-	rawJSON, _ := json.Marshal(result)
-	txEvent, err := ParseTxResponse(rawJSON, result)
+	txEvent, err := ParseTxResponse(result)
 	require.NoError(t, err)
 	require.NotNil(t, txEvent)
 
@@ -109,8 +108,7 @@ func TestParseTxResponse_NilData(t *testing.T) {
 		Events: map[string][]string{},
 	}
 
-	rawJSON, _ := json.Marshal(result)
-	txEvent, err := ParseTxResponse(rawJSON, result)
+	txEvent, err := ParseTxResponse(result)
 	require.NoError(t, err)
 	require.Nil(t, txEvent)
 }

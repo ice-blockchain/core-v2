@@ -64,7 +64,10 @@ func buildTxEventsFromBlock(height int64, resp *blockWithTxsResponse) ([]*TxEven
 		if err != nil {
 			return nil, fmt.Errorf("tx %d: %w", i, err)
 		}
-		relevantEvents := extractEventsFromMessages(tx.Body.Messages)
+		relevantEvents, err := extractEventsFromMessages(tx.Body.Messages)
+		if err != nil {
+			return nil, fmt.Errorf("tx %d: %w", i, err)
+		}
 
 		if len(relevantEvents) == 0 {
 			continue
@@ -88,13 +91,13 @@ func computeTxHash(rawTxs [][]byte, index int) (string, error) {
 	return fmt.Sprintf("%X", hash[:]), nil
 }
 
-func extractEventsFromMessages(messages []json.RawMessage) []ABCIEvent {
+func extractEventsFromMessages(messages []json.RawMessage) ([]ABCIEvent, error) {
 	var events []ABCIEvent
 
 	for _, raw := range messages {
 		var msg txMessage
 		if err := json.Unmarshal(raw, &msg); err != nil {
-			continue
+			return nil, fmt.Errorf("unmarshal tx message: %w", err)
 		}
 
 		abciEvent, ok := messageToABCIEvent(msg)
@@ -104,7 +107,7 @@ func extractEventsFromMessages(messages []json.RawMessage) []ABCIEvent {
 		events = append(events, abciEvent)
 	}
 
-	return events
+	return events, nil
 }
 
 func messageToABCIEvent(msg txMessage) (ABCIEvent, bool) {
