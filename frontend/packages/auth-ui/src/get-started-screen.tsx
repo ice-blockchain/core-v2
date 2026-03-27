@@ -30,6 +30,7 @@ function GetStartedHeader() {
 interface GetStartedScreenProps {
   onNavigateToRegister: () => void;
   onNavigateToVerifyPasskey: (identityKeyName: string) => void;
+  onNavigateToRestore: () => void;
 }
 
 export function GetStartedScreen(props: GetStartedScreenProps) {
@@ -53,7 +54,7 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
       </View>
       <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
       <SecondaryButton label={translate("auth:registerButton")} onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<RestoreKeyIcon />} />
+      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<RestoreKeyIcon />} onPress={props.onNavigateToRestore} />
       <View style={styles.footer}>
         <SecuredByFooter />
         <TermsFooter />

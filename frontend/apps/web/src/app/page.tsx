@@ -3,8 +3,10 @@
 import { useCallback, useState } from "react";
 import {
   GetStartedScreen,
+  IdentityKeyNotFoundModal,
   PrimaryButton,
   RegisterScreen,
+  RestoreMenuScreen,
   VerifyPasskeyScreen,
   VerifyPasswordBackground,
   VerifyPasswordOverlay,
@@ -19,6 +21,8 @@ type Phase =
   | { name: "intro" }
   | { name: "get-started" }
   | { name: "register" }
+  | { name: "restore-menu" }
+  | { name: "restore-key-not-found" }
   | { name: "verify-password"; identityKeyName: string }
   | { name: "verify-passkey"; identityKeyName: string };
 
@@ -34,6 +38,8 @@ function usePhaseNavigation() {
       (identityKeyName: string) => setPhase({ name: "verify-password", identityKeyName }),
       [],
     ),
+    goToRestoreMenu: useCallback(() => setPhase({ name: "restore-menu" }), []),
+    goToRestoreKeyNotFound: useCallback(() => setPhase({ name: "restore-key-not-found" }), []),
     goToVerifyPasskey: useCallback(
       (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
       [],
@@ -44,6 +50,18 @@ function usePhaseNavigation() {
 function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> }) {
   const loadingElement = <LoadingAnimation variant="onLightBackground" size={30} />;
 
+  if (nav.phase.name === "restore-key-not-found") {
+    return <IdentityKeyNotFoundModal onClose={nav.goToRestoreMenu} />;
+  }
+  if (nav.phase.name === "restore-menu") {
+    return (
+      <RestoreMenuScreen
+        onBack={nav.goToGetStarted}
+        onSelectCloudRestore={nav.goToRestoreKeyNotFound}
+        onSelectCredentialRestore={nav.goToGetStarted}
+      />
+    );
+  }
   if (nav.phase.name === "register") {
     return (
       <RegisterScreen
@@ -69,6 +87,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
     <GetStartedScreen
       onNavigateToRegister={nav.goToRegister}
       onNavigateToVerifyPasskey={nav.goToVerifyPassword}
+      onNavigateToRestore={nav.goToRestoreMenu}
     />
   );
 }
