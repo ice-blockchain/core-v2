@@ -70,7 +70,7 @@ Each consumer package owns its translations in `src/translations/`:
 
 ## Dependencies
 
-- **Downstream**: `@ion/storage` (Foundation peer — language preference persistence)
+- **Downstream**: `@ion/storage` (Foundation — language preference persistence via internal `createKeyValueStorage({ id: 'ion-localization' })`)
 - **Production**: `i18next`
 - **Peer**: `react-native` (optional), `react-native-restart` (optional)
 - **Upstream consumers**: all UI packages, app shells

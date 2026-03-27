@@ -2,25 +2,18 @@ import i18next from 'i18next';
 import type { i18n } from 'i18next';
 
 import { Logger } from '@ion/diagnostics';
-import type { IKeyValueStorage } from '@ion/storage';
+import { createKeyValueStorage } from '@ion/storage';
 import type { SupportedLocale } from './types';
 import { getDeviceLocale } from './device-locale';
 import { buildFallbackChain } from './fallback-chain';
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from './supported-locales';
 
 const LANGUAGE_PREFERENCE_KEY = 'user_preferred_locale';
+const storage = createKeyValueStorage({ id: 'ion-localization' });
 
 let instance: i18n | null = null;
-let storageRef: IKeyValueStorage | null = null;
 
-interface CreateLocalizationOptions {
-  readonly storage?: IKeyValueStorage;
-}
-
-export function createLocalization(
-  options?: CreateLocalizationOptions,
-): i18n {
-  storageRef = options?.storage ?? null;
+export function createLocalization(): i18n {
   instance = i18next.createInstance();
 
   const locale = resolveLocale();
@@ -44,7 +37,7 @@ export function createLocalization(
 }
 
 function resolveLocale(): string {
-  const stored = storageRef?.getString(LANGUAGE_PREFERENCE_KEY);
+  const stored = storage.getString(LANGUAGE_PREFERENCE_KEY);
   if (stored && SUPPORTED_LOCALES.includes(stored as SupportedLocale)) {
     Logger.debug('Locale resolved from stored preference', {
       tag: 'localization',

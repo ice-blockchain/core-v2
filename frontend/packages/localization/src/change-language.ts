@@ -1,20 +1,17 @@
 import { Logger } from '@ion/diagnostics';
-import type { IKeyValueStorage } from '@ion/storage';
+import { createKeyValueStorage } from '@ion/storage';
 
 import type { SupportedLocale } from './types';
 import { LANGUAGE_PREFERENCE_KEY } from './create-localization';
 import { restartApplication } from './restart-application';
 
-interface ChangeLanguageInput {
-  readonly locale: SupportedLocale;
-  readonly storage: IKeyValueStorage;
-}
+const storage = createKeyValueStorage({ id: 'ion-localization' });
 
-export function changeLanguage(input: ChangeLanguageInput): void {
+export function changeLanguage(locale: SupportedLocale): void {
   Logger.info('Language changed', {
     tag: 'localization',
-    data: { locale: input.locale },
+    data: { locale },
   });
-  input.storage.setString(LANGUAGE_PREFERENCE_KEY, input.locale);
+  storage.setString(LANGUAGE_PREFERENCE_KEY, locale);
   restartApplication();
 }
