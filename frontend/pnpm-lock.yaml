@@ -339,10 +339,10 @@ importers:
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
+      react-native-passkey:
+        specifier: '>=3.0.0'
+        version: 3.3.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
     devDependencies:
-      '@types/json-stable-stringify':
-        specifier: ^1.2.0
-        version: 1.2.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -2826,10 +2826,6 @@ packages:
 
   '@types/jsdom@20.0.1':
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
-
-  '@types/json-stable-stringify@1.2.0':
-    resolution: {integrity: sha512-PEHY3ohqolHqAzDyB1+31tFaAMnoLN7x/JgdcGmNZ2uvtEJ6rlFCUYNQc0Xe754xxCYLNGZbLUGydSE6tS4S9A==}
-    deprecated: This is a stub types definition. json-stable-stringify provides its own type definitions, so you do not need this installed.
 
   '@types/node@22.19.15':
     resolution: {integrity: sha512-F0R/h2+dsy5wJAUe3tAU6oqa2qbWY5TpNfL/RGmo1y38hiyO1w3x2jPtt76wmuaJI4DQnOBu21cNXQ2STIUUWg==}
@@ -5807,6 +5803,12 @@ packages:
 
   react-native-nitro-modules@0.35.2:
     resolution: {integrity: sha512-97cZcCh3ZAuWAfutel2Q3qLfc45XXh7F9Ei5tEjahP0kV3q8hQelwLIulKXmjN+f0JI5Zf/wCsfwwdVWYU2tKA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  react-native-passkey@3.3.2:
+    resolution: {integrity: sha512-YgXERrBlgVHAYkxGPpncB0zoiRQfZyMMMlWfNTYMyKvOS6muFMlhzk6w5lG4FyEEVrvXHGV4AS6twbmt2Rv8GA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -9454,10 +9456,6 @@ snapshots:
       '@types/node': 22.19.15
       '@types/tough-cookie': 4.0.5
       parse5: 7.3.0
-
-  '@types/json-stable-stringify@1.2.0':
-    dependencies:
-      json-stable-stringify: 1.3.0
 
   '@types/node@22.19.15':
     dependencies:
@@ -13215,6 +13213,11 @@ snapshots:
       react-native-nitro-modules: 0.35.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
 
   react-native-nitro-modules@0.35.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
+
+  react-native-passkey@3.3.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4):
     dependencies:
       react: 19.2.4
       react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
