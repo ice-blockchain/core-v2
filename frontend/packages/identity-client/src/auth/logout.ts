@@ -10,8 +10,9 @@ export async function logout(
   username: string,
   deps: LogoutDeps,
 ): Promise<void> {
-  const tokens = await deps.tokenManager.getTokens(username);
+  let tokens: Awaited<ReturnType<TokenManager['getTokens']>> = null;
   try {
+    tokens = await deps.tokenManager.getTokens(username);
     if (tokens) {
       await deps.sessionDataSource.logout(tokens.token, username);
     }

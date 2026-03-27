@@ -6,7 +6,7 @@ Off-chain account management client for the ION Identity service. Handles user r
 
 Factory: `createIdentityClient(config)` returns `IdentityClient`.
 
-```
+```text
 IdentityClientConfig {
   httpClient: HttpClient       -- from @ion/network
   secureStorage: ISecureStorage -- from @ion/storage
@@ -64,7 +64,7 @@ EncryptedPrivateKey { salt: string; nonce: string; ciphertext: string; mac: stri
 ## Data Flow
 
 ### Registration (password)
-```
+```text
 registerWithPassword(username, password)
   -> POST /auth/registration/delegated { email: username }
   <- UserRegistrationChallenge { challenge, temporaryAuthenticationToken }
@@ -77,7 +77,7 @@ registerWithPassword(username, password)
 ```
 
 ### Registration (passkey)
-```
+```text
 registerWithPasskey(username)
   -> POST /auth/registration/delegated { email: username }
   <- UserRegistrationChallenge (includes rp, user, challenge, pubKeyCredParams)
@@ -87,7 +87,7 @@ registerWithPasskey(username)
 ```
 
 ### Login (password)
-```
+```text
 loginWithPassword(username, password)
   -> POST /auth/login/init { username }
   <- UserActionChallenge { challenge, challengeIdentifier, allowCredentials.passwordProtectedKey[].encryptedPrivateKey }
@@ -98,7 +98,7 @@ loginWithPassword(username, password)
 ```
 
 ### Login (passkey)
-```
+```text
 loginWithPasskey(username)
   -> POST /auth/login/init { username }
   <- UserActionChallenge (includes allowCredentials.webauthn)
@@ -108,7 +108,7 @@ loginWithPasskey(username)
 ```
 
 ### Logout
-```
+```text
 logout(username)
   -> PUT /auth/logout (Authorization: Bearer {token}, X-Username: {username})
   -> tokenManager.clearTokens(username)
