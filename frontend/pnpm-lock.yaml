@@ -44,6 +44,9 @@ importers:
       '@ion/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../../packages/localization
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
@@ -165,6 +168,9 @@ importers:
       '@ion/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../../packages/localization
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
@@ -214,6 +220,9 @@ importers:
 
   packages/auth-ui:
     dependencies:
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
@@ -306,6 +315,31 @@ importers:
       '@ion/storage':
         specifier: workspace:*
         version: link:../storage
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+
+  packages/localization:
+    dependencies:
+      '@ion/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
+      '@ion/storage':
+        specifier: workspace:*
+        version: link:../storage
+      i18next:
+        specifier: ^24.0.0
+        version: 24.2.3(typescript@5.9.3)
+      react-native:
+        specifier: '>=0.84'
+        version: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
+      react-native-restart:
+        specifier: '>=0.0.27'
+        version: 0.0.27(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -456,6 +490,9 @@ importers:
 
   packages/onboarding-ui:
     dependencies:
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@ion/onboarding':
         specifier: workspace:*
         version: link:../onboarding
@@ -4348,6 +4385,14 @@ packages:
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
 
+  i18next@24.2.3:
+    resolution: {integrity: sha512-lfbf80OzkocvX7nmZtu7nSTNbrTYR52sLWxPtlXX1zAhVw8WEnFk4puUkCR4B1dNQwbSpEHHHemcZu//7EcB7A==}
+    peerDependencies:
+      typescript: ^5
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
@@ -5706,6 +5751,12 @@ packages:
       react: '*'
       react-native: 0.80 - 0.84
       react-native-worklets: 0.7 - 0.8
+
+  react-native-restart@0.0.27:
+    resolution: {integrity: sha512-8KScVICrXwcTSJ1rjWkqVTHyEKQIttm5AIMGSK1QG1+RS5owYlE4z/1DykOTdWfVl9l16FIk0w9Xzk9ZO6jxlA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
 
   react-native-safe-area-context@5.7.0:
     resolution: {integrity: sha512-/9/MtQz8ODphjsLdZ+GZAIcC/RtoqW9EeShf7Uvnfgm/pzYrJ75y3PV/J1wuAV1T5Dye5ygq4EAW20RoBq0ABQ==}
@@ -11275,6 +11326,12 @@ snapshots:
 
   hyphenate-style-name@1.1.0: {}
 
+  i18next@24.2.3(typescript@5.9.3):
+    dependencies:
+      '@babel/runtime': 7.29.2
+    optionalDependencies:
+      typescript: 5.9.3
+
   iconv-lite@0.4.24:
     dependencies:
       safer-buffer: 2.1.2
@@ -13067,6 +13124,11 @@ snapshots:
       react-native-is-edge-to-edge: 1.3.1(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       react-native-worklets: 0.8.1(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       semver: 7.7.4
+
+  react-native-restart@0.0.27(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
 
   react-native-safe-area-context@5.7.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3):
     dependencies:

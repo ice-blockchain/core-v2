@@ -2,15 +2,21 @@ import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { environmentConfig } from '@ion/config';
 import { Button, CatalogScreen, ThemeProvider } from '@ion/ui';
-import { ProfileSetupScreen, SelectLanguagesScreen } from '@ion/onboarding-ui';
+import { createLocalization, registerTranslations, translate } from '@ion/localization';
+import { ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from '@ion/onboarding-ui';
+import { authTranslations } from '@ion/auth-ui';
 import SplashPage from './app/page';
+
+const i18n = createLocalization();
+registerTranslations(i18n, onboardingTranslations);
+registerTranslations(i18n, authTranslations);
 
 type OnboardingStep = 'profile' | 'languages';
 
 function OnboardingButton({ onPress }: { onPress: () => void }) {
   return (
     <button onClick={onPress} style={{ padding: '12px 24px', backgroundColor: '#0166FF', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: 'pointer', margin: 16 }}>
-      Onboarding
+      {translate('onboarding:continueButton')}
     </button>
   );
 }

@@ -1,3 +1,5 @@
+import { translate } from "@ion/localization";
+
 interface PasswordRule {
   label: string;
   isMet: boolean;
@@ -7,14 +9,14 @@ export type { PasswordRule };
 
 export function buildPasswordRules(password: string): PasswordRule[] {
   return [
-    { label: "Must be over 8 characters", isMet: password.length > 8 },
-    { label: "Must contain 1 number", isMet: /\d/.test(password) },
+    { label: translate("auth:passwordRuleLength"), isMet: password.length > 8 },
+    { label: translate("auth:passwordRuleNumber"), isMet: /\d/.test(password) },
     {
-      label: "Uppercase and lowercase letters",
+      label: translate("auth:passwordRuleCase"),
       isMet: /[a-z]/.test(password) && /[A-Z]/.test(password),
     },
     {
-      label: "Must contain 1 special character",
+      label: translate("auth:passwordRuleSpecial"),
       isMet: /[^a-zA-Z0-9]/.test(password),
     },
   ];

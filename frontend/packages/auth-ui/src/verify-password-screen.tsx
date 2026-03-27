@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { TextField } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { PasswordIcon } from "./password-icon";
 import { EyeIcon } from "./eye-icon";
 import { VerifyPasskeyIcon } from "./verify-passkey-icon";
@@ -18,9 +19,9 @@ export function VerifyPasswordBackground({ loadingElement }: VerifyPasswordBackg
       <View style={styles.iconContainer}>
         <VerifyPasskeyIcon />
       </View>
-      <Text style={styles.title}>Verify with password</Text>
+      <Text style={styles.title}>{translate("auth:verifyPasswordTitle")}</Text>
       <Text style={styles.subtitle}>
-        Your device will ask your password to confirm
+        {translate("auth:verifyPasswordSubtitle")}
       </Text>
       <View style={styles.loader}>{loadingElement}</View>
       <View style={styles.footer}>
@@ -36,9 +37,9 @@ function InnerSheetHeader() {
       <View style={styles.innerIconContainer}>
         <VerifyPasswordIcon />
       </View>
-      <Text style={styles.innerTitle}>Verify with password</Text>
+      <Text style={styles.innerTitle}>{translate("auth:verifyPasswordTitle")}</Text>
       <Text style={styles.innerSubtitle}>
-        Please confirm your password to continue.
+        {translate("auth:verifyPasswordConfirmSubtitle")}
       </Text>
     </>
   );
@@ -55,7 +56,7 @@ function InnerSheetForm({ onConfirm }: { onConfirm: () => void }) {
       <InnerSheetHeader />
       <View style={styles.innerInput}>
         <TextField
-          label="Password"
+          label={translate("auth:passwordLabel")}
           value={password}
           onChangeText={setPassword}
           prefixIcon={<PasswordIcon />}
@@ -67,7 +68,7 @@ function InnerSheetForm({ onConfirm }: { onConfirm: () => void }) {
         />
       </View>
       <Pressable style={styles.confirmButton} onPress={onConfirm}>
-        <Text style={styles.confirmLabel}>Confirm</Text>
+        <Text style={styles.confirmLabel}>{translate("auth:confirmButton")}</Text>
       </Pressable>
     </View>
   );

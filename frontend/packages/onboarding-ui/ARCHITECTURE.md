@@ -157,7 +157,7 @@ via `react-native-web` — no platform split required.
 |---|---|---|
 | 1 | Shared UI components in `@ion/ui` | DONE — BottomSheet, TextInput, TextField, SearchBar, HorizontalSeparator, all icons |
 | 2 | Screen 1: Profile Setup | DONE — ProfileSetupScreen, AvatarPicker, NicknameReservedModal, AuthHeader |
-| 3 | Screen 2: Select Languages | TODO |
+| 3 | Screen 2: Select Languages | DONE — SelectLanguagesScreen, CheckboxRow |
 | 4 | Screen 3: Discover Creators | TODO |
 | 5 | Screen 4: Notifications | TODO |
 | 6 | Navigation wiring (mobile + web) | TODO |
@@ -296,7 +296,7 @@ All profile inputs share a consistent design:
 ## Screen 2: Select Languages
 
 **Figma node:** `21632:117234`
-**Status:** TODO
+**Status:** DONE
 
 ### Purpose
 Let the user choose which language(s) they want content displayed in.
@@ -480,7 +480,7 @@ Encourage the user to enable push notifications with example previews.
 | **AuthHeader** | DONE | `packages/onboarding-ui/src/screens/` |
 | **NicknameReservedModal** | DONE | `packages/onboarding-ui/src/components/` |
 | **ProfileSetupFields** | DONE | `packages/onboarding-ui/src/screens/` |
-| **CheckboxRow** | TODO | `packages/onboarding-ui/src/components/` |
+| **CheckboxRow** | DONE | `packages/onboarding-ui/src/components/` |
 | **CreatorRow** | TODO | `packages/onboarding-ui/src/components/` |
 | **NotificationCard** | TODO | `packages/onboarding-ui/src/components/` |
 | **DescriptionItem** | TODO | `packages/onboarding-ui/src/components/` |

@@ -1,5 +1,12 @@
 # Testing Rules
 
+## Test Framework
+
+### CRITICAL: Use Vitest for all new and updated tests.
+Vitest is the standard test runner for this repo. New tests, and any tests you touch or create in a PR, must use Vitest and `vi` for mocking (`vi.fn()`, `vi.spyOn()`, `vi.mock()`), not `jest`. Some legacy packages still have Jest-based `test` scripts — do not add new Jest tests or expand Jest usage there; instead, migrate those tests to Vitest when you modify them.
+
+---
+
 ## Test Location
 
 ### CRITICAL: Tests are colocated with source. Always.

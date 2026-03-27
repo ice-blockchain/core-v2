@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { translate } from "@ion/localization";
 
 function ShieldIcon() {
   return (
@@ -22,7 +23,7 @@ function ShieldIcon() {
 export function SecuredByFooter() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Secured by</Text>
+      <Text style={styles.text}>{translate("auth:securedByLabel")}</Text>
       <ShieldIcon />
       <Text style={styles.brand}>Identity.io</Text>
     </View>

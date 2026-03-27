@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { translate } from "@ion/localization";
 import { FingerprintIcon } from "./fingerprint-icon";
 import { DeviceIcon } from "./device-icon";
 import { SafeAccountIcon } from "./safe-account-icon";
@@ -8,6 +9,10 @@ interface BenefitRowProps {
   icon: ReactNode;
   title: string;
   subtitle: string;
+}
+
+interface BenefitItem extends BenefitRowProps {
+  id: string;
 }
 
 function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
@@ -24,30 +29,36 @@ function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
   );
 }
 
-const BENEFITS: BenefitRowProps[] = [
-  {
-    icon: <FingerprintIcon />,
-    title: "No password to remember",
-    subtitle: "With passkey, you can use things like your fingerprint or face to login",
-  },
-  {
-    icon: <DeviceIcon />,
-    title: "Works on all of your devices",
-    subtitle: "Passkey will automatically be available across your synced devices",
-  },
-  {
-    icon: <SafeAccountIcon />,
-    title: "Keep your account safer",
-    subtitle: "Passkey offer state-of-the-art phishing resistance",
-  },
-];
+function buildBenefits(): BenefitItem[] {
+  return [
+    {
+      id: "no-password",
+      icon: <FingerprintIcon />,
+      title: translate("auth:noPasswordBenefitTitle"),
+      subtitle: translate("auth:noPasswordBenefitSubtitle"),
+    },
+    {
+      id: "works-on-devices",
+      icon: <DeviceIcon />,
+      title: translate("auth:worksOnDevicesTitle"),
+      subtitle: translate("auth:worksOnDevicesSubtitle"),
+    },
+    {
+      id: "keep-account-safer",
+      icon: <SafeAccountIcon />,
+      title: translate("auth:keepAccountSaferTitle"),
+      subtitle: translate("auth:keepAccountSaferSubtitle"),
+    },
+  ];
+}
 
 export function PasskeyBenefitList() {
+  const benefits = buildBenefits();
   return (
     <View style={styles.container}>
-      {BENEFITS.map((benefit) => (
+      {benefits.map((benefit) => (
         <BenefitRow
-          key={benefit.title}
+          key={benefit.id}
           icon={benefit.icon}
           title={benefit.title}
           subtitle={benefit.subtitle}

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { View } from "react-native";
 import { BottomSheet, Button, Icon, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { saveProfile } from "@ion/onboarding";
 import type { OnboardingScreenProps } from "../types";
 import { AvatarPicker } from "../components/AvatarPicker";
@@ -35,12 +36,12 @@ export function ProfileSetupScreen({ onContinue, onBack }: OnboardingScreenProps
   const handleClose = useCallback(() => { onBack?.(); }, [onBack]);
 
   const saveButton = (
-    <Button label="Save" icon={<Icon name="profile-save" size={scale(24)} color={theme.colors.onPrimaryAccent} />} iconPosition="left" height={56} isDisabled={!formState.isFormValid} isLoading={formState.isSubmitting} onPress={handleSave} />
+    <Button label={translate("onboarding:saveButton")} icon={<Icon name="profile-save" size={scale(24)} color={theme.colors.onPrimaryAccent} />} iconPosition="left" height={56} isDisabled={!formState.isFormValid} isLoading={formState.isSubmitting} onPress={handleSave} />
   );
 
   return (
     <>
-      <BottomSheet isVisible onClose={handleClose} title="Your profile" {...(onBack ? { onBack } : {})} bottomButton={saveButton} testID="profile-setup-screen">
+      <BottomSheet isVisible onClose={handleClose} title={translate("onboarding:yourProfileTitle")} {...(onBack ? { onBack } : {})} bottomButton={saveButton} testID="profile-setup-screen">
         <View style={contentStyle}>
           <AuthHeader />
           <View style={avatarStyle}>

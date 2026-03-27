@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { View } from "react-native";
 import { BottomSheet, Icon, Text, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
 
 export interface NicknameReservedModalProps {
   isVisible: boolean;
@@ -27,9 +28,9 @@ export function NicknameReservedModal({ isVisible, onClose }: NicknameReservedMo
         <View style={iconStyle}>
           <Icon name="name-reserved" size={scale(32)} color={theme.colors.onPrimaryAccent} />
         </View>
-        <Text variant="headline1" style={{ textAlign: "center" }}>Nickname is reserved</Text>
+        <Text variant="headline1" style={{ textAlign: "center" }}>{translate("onboarding:nicknameReservedTitle")}</Text>
         <Text variant="body2" color={theme.colors.secondaryText} style={{ textAlign: "center" }}>
-          This nickname is reserved. To claim it, email hi@ice.io from your company email address.
+          {translate("onboarding:nicknameReservedDescription")}
         </Text>
       </View>
     </BottomSheet>

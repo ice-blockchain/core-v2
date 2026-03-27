@@ -18,6 +18,7 @@
   "dependencies": {
     "@ion/auth-ui": "workspace:*",
     "@ion/config": "workspace:*",
+    "@ion/localization": "workspace:*",
     "@ion/onboarding-ui": "workspace:*",
     "@ion/ui": "workspace:*",
     "lottie-react-native": "^7.3.6",

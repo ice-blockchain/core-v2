@@ -13,6 +13,7 @@
   "dependencies": {
     "@ion/auth-ui": "workspace:*",
     "@ion/config": "workspace:*",
+    "@ion/localization": "workspace:*",
     "@ion/onboarding-ui": "workspace:*",
     "@ion/ui": "workspace:*",
     "lottie-react": "^2.4.1",
