@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import type { ViewStyle } from "react-native";
 import { BottomSheet, Button, SearchBar, Text, useTheme } from "@ion/ui";
 import type { OnboardingScreenProps } from "../types";
@@ -8,9 +8,9 @@ import type { LanguageSelectionActions, LanguageSelectionState } from "./select-
 import { useLanguageSelection } from "./select-languages-hooks";
 import { buildListSectionStyle, buildScrollContentStyle, buildTitleContainerStyle } from "./select-languages-styles";
 
-function LanguageList({ state, actions, scrollContentStyle }: { state: LanguageSelectionState; actions: LanguageSelectionActions; scrollContentStyle: ViewStyle }) {
+function LanguageList({ state, actions, style }: { state: LanguageSelectionState; actions: LanguageSelectionActions; style: ViewStyle }) {
   return (
-    <ScrollView contentContainerStyle={scrollContentStyle}>
+    <View style={style}>
       {state.filteredLanguages.map((lang) => (
         <CheckboxRow
           key={lang.code}
@@ -21,7 +21,7 @@ function LanguageList({ state, actions, scrollContentStyle }: { state: LanguageS
           testID={`language-${lang.code}`}
         />
       ))}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -47,7 +47,7 @@ export function SelectLanguagesScreen({ onContinue, onBack }: OnboardingScreenPr
       </View>
       <View style={listSectionStyle}>
         <SearchBar value={state.searchQuery} onChangeText={actions.setSearchQuery} placeholder="Search" testID="language-search" />
-        <LanguageList state={state} actions={actions} scrollContentStyle={scrollContentStyle} />
+        <LanguageList state={state} actions={actions} style={scrollContentStyle} />
       </View>
     </BottomSheet>
   );

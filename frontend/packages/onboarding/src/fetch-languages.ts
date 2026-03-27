@@ -74,5 +74,5 @@ const LANGUAGES: Language[] = [
 ];
 
 export async function fetchLanguages(): Promise<Language[]> {
-  return LANGUAGES;
+  return LANGUAGES.map((lang) => ({ ...lang }));
 }

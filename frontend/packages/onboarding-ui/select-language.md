@@ -19,7 +19,7 @@
 
 ### Vertical Spacing (user-confirmed, pixel-perfect)
 
-```
+```text
 Sheet Header bottom
   | 16px
 "Select languages" (headline1)
@@ -111,7 +111,7 @@ Hardcoded in `fetchLanguages` stub for now. Full list ported from the Flutter en
 
 ## Component Architecture
 
-```
+```text
 SelectLanguagesScreen
   BottomSheet (isVisible, onClose, onBack, bottomButton)
     View (content)
@@ -127,7 +127,7 @@ SelectLanguagesScreen
 
 ### Hook: `useLanguageSelection`
 
-```
+```text
 State:
   - languages: Language[]        (fetched on mount)
   - selectedIds: Set<string>     (toggled by tap)

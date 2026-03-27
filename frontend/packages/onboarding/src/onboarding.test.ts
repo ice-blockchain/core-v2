@@ -17,7 +17,7 @@ describe("onboarding action stubs", () => {
     expect(result).toEqual({ isAvailable: false, isReserved: false });
   });
 
-  it("validateReferral returns valid for valid nickname", async () => {
+  it("validateReferral returns valid for valid referral", async () => {
     const result = await validateReferral("ref123");
     expect(result).toEqual({ isValid: true });
   });
