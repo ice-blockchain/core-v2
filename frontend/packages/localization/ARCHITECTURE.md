@@ -29,7 +29,7 @@ export type { LocalizationConfig, TranslationResource, SupportedLocale } from '.
 ## Data Structures
 
 ```typescript
-type SupportedLocale = 'en' | 'pt' | 'pt-BR' | 'es' | 'fr' | 'de';
+type SupportedLocale = 'en' | 'fr' | 'de';
 
 interface TranslationResource {
   readonly namespace: string;         // e.g. 'auth-ui'
@@ -55,7 +55,7 @@ interface TranslationResource {
 
 Each consumer package owns its translations in `src/translations/`:
 - `en.ts` — canonical English keys (`as const`)
-- `pt.ts`, `es.ts`, etc. — typed as `Record<EnglishKey, string>` (compile-time completeness)
+- `fr.ts`, `de.ts`, etc. — typed as `Record<EnglishKey, string>` (compile-time completeness)
 - `index.ts` — exports namespace constant + `TranslationResource[]`
 
 `registerTranslations()` validates at runtime that every `SUPPORTED_LOCALE` is covered. Missing locales crash the app at startup (fail-fast).

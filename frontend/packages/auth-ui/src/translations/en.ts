@@ -1,7 +1,7 @@
 export const authEN = {
   getStartedTitle: 'Get started',
   getStartedSubtitle:
-    'Enter your identity key name to log in into your account',
+    'Enter your identity key name to log in to your account',
   identityKeyNameLabel: 'Identity key name',
   continueButton: 'Continue',
   orDivider: 'or',
@@ -36,10 +36,11 @@ export const authEN = {
     'Passkey will automatically be available across your synced devices',
   keepAccountSaferTitle: 'Keep your account safer',
   keepAccountSaferSubtitle:
-    'Passkey offer state-of-the-art phishing resistance',
+    'Passkeys offer state-of-the-art phishing resistance',
   securedByLabel: 'Secured by',
   termsAgreementPrefix:
     'By continuing, you are agreeing to our ',
   termsOfServiceLink: 'Terms of Service',
   privacyPolicyLink: 'Privacy Policy',
+  termsSeparator: ' & ',
 } as const;

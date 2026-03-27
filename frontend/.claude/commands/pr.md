@@ -2,7 +2,7 @@ Create a Pull Request for the current branch based on our conversation.
 
 ## Instructions
 
-1. **Determine the changes**: Review the git diff against the main branch to understand what was done.
+1. **Determine the changes**: Review the git diff against the repository default branch to understand what was done.
 
 2. **Generate a PR title** following **Conventional Commits** format:
    - `feat: ...` for new features
@@ -31,13 +31,16 @@ Create a Pull Request for the current branch based on our conversation.
    ```
 
 4. **Create the PR** using the GitHub CLI:
-   ```
-   gh pr create --title "<title>" --body "<body>"
+   ```bash
+   gh pr create --title "<title>" --body-file <(cat <<'EOF'
+   <body>
+   EOF
+   )
    ```
 
 5. After creating the PR, display the PR URL.
 
 ## Important
-- Base the PR against the main branch.
+- Base the PR against the repository default branch (currently `master`).
 - Keep the title under 72 characters.
 - Derive the description from the actual work done in this conversation and the git diff — do not make things up.

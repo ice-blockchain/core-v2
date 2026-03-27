@@ -3,6 +3,7 @@ import type { i18n } from 'i18next';
 
 import { Logger } from '@ion/diagnostics';
 import type { IKeyValueStorage } from '@ion/storage';
+import type { SupportedLocale } from './types';
 import { getDeviceLocale } from './device-locale';
 import { buildFallbackChain } from './fallback-chain';
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from './supported-locales';
@@ -44,12 +45,18 @@ export function createLocalization(
 
 function resolveLocale(): string {
   const stored = storageRef?.getString(LANGUAGE_PREFERENCE_KEY);
-  if (stored) {
+  if (stored && SUPPORTED_LOCALES.includes(stored as SupportedLocale)) {
     Logger.debug('Locale resolved from stored preference', {
       tag: 'localization',
       data: { locale: stored },
     });
     return stored;
+  }
+  if (stored) {
+    Logger.info('Stored locale not supported, falling back to device locale', {
+      tag: 'localization',
+      data: { stored },
+    });
   }
 
   const deviceLocale = getDeviceLocale();

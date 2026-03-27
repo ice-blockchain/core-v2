@@ -6,7 +6,7 @@ export function TermsFooter() {
     <Text style={styles.container}>
       {translate("auth:termsAgreementPrefix")}
       <Text style={styles.link}>{translate("auth:termsOfServiceLink")}</Text>
-      {" & "}
+      {translate("auth:termsSeparator")}
       <Text style={styles.link}>{translate("auth:privacyPolicyLink")}</Text>
     </Text>
   );

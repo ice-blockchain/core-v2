@@ -6,6 +6,7 @@ import { DeviceIcon } from "./device-icon";
 import { SafeAccountIcon } from "./safe-account-icon";
 
 interface BenefitRowProps {
+  id: string;
   icon: ReactNode;
   title: string;
   subtitle: string;
@@ -28,16 +29,19 @@ function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
 function buildBenefits(): BenefitRowProps[] {
   return [
     {
+      id: "no-password",
       icon: <FingerprintIcon />,
       title: translate("auth:noPasswordBenefitTitle"),
       subtitle: translate("auth:noPasswordBenefitSubtitle"),
     },
     {
+      id: "works-on-devices",
       icon: <DeviceIcon />,
       title: translate("auth:worksOnDevicesTitle"),
       subtitle: translate("auth:worksOnDevicesSubtitle"),
     },
     {
+      id: "keep-account-safer",
       icon: <SafeAccountIcon />,
       title: translate("auth:keepAccountSaferTitle"),
       subtitle: translate("auth:keepAccountSaferSubtitle"),
@@ -51,7 +55,7 @@ export function PasskeyBenefitList() {
     <View style={styles.container}>
       {benefits.map((benefit) => (
         <BenefitRow
-          key={benefit.title}
+          key={benefit.id}
           icon={benefit.icon}
           title={benefit.title}
           subtitle={benefit.subtitle}

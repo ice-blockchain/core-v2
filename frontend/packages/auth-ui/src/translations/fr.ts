@@ -44,4 +44,5 @@ export const authFR: Record<keyof typeof authEN, string> = {
   termsAgreementPrefix: 'En continuant, vous acceptez nos ',
   termsOfServiceLink: 'Conditions d\'utilisation',
   privacyPolicyLink: 'Politique de confidentialité',
+  termsSeparator: ' et ',
 };

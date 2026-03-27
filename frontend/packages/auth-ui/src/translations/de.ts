@@ -45,4 +45,5 @@ export const authDE: Record<keyof typeof authEN, string> = {
   termsAgreementPrefix: 'Durch Fortfahren stimmst du unseren ',
   termsOfServiceLink: 'Nutzungsbedingungen',
   privacyPolicyLink: 'Datenschutzrichtlinie',
+  termsSeparator: ' und ',
 };

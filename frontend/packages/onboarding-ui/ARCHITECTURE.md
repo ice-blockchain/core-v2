@@ -296,7 +296,7 @@ All profile inputs share a consistent design:
 ## Screen 2: Select Languages
 
 **Figma node:** `21632:117234`
-**Status:** TODO
+**Status:** DONE
 
 ### Purpose
 Let the user choose which language(s) they want content displayed in.

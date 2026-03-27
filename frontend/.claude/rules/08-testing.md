@@ -2,8 +2,8 @@
 
 ## Test Framework
 
-### CRITICAL: Use Vitest, not Jest.
-All tests use Vitest as the test runner. Do not use Jest APIs, Jest config, or Jest-specific globals. Use `vi` for mocking (`vi.fn()`, `vi.spyOn()`, `vi.mock()`), not `jest`.
+### CRITICAL: Use Vitest for all new and updated tests.
+Vitest is the standard test runner for this repo. New tests, and any tests you touch or create in a PR, must use Vitest and `vi` for mocking (`vi.fn()`, `vi.spyOn()`, `vi.mock()`), not `jest`. Some legacy packages still have Jest-based `test` scripts — do not add new Jest tests or expand Jest usage there; instead, migrate those tests to Vitest when you modify them.
 
 ---
 
