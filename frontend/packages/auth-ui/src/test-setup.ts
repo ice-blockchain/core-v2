@@ -6,5 +6,9 @@ for (const [key, value] of Object.entries(authEN)) {
 }
 
 jest.mock("@ion/localization", () => ({
-  translate: (key: string) => translations[key] ?? key,
+  ...jest.requireActual("@ion/localization"),
+  translate: (
+    key: string,
+    _options?: Record<string, unknown>,
+  ) => translations[key] ?? key,
 }));

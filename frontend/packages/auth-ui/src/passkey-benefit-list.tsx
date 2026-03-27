@@ -6,10 +6,13 @@ import { DeviceIcon } from "./device-icon";
 import { SafeAccountIcon } from "./safe-account-icon";
 
 interface BenefitRowProps {
-  id: string;
   icon: ReactNode;
   title: string;
   subtitle: string;
+}
+
+interface BenefitItem extends BenefitRowProps {
+  id: string;
 }
 
 function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
@@ -26,7 +29,7 @@ function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
   );
 }
 
-function buildBenefits(): BenefitRowProps[] {
+function buildBenefits(): BenefitItem[] {
   return [
     {
       id: "no-password",
