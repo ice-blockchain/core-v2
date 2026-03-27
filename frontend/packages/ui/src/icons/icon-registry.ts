@@ -16,6 +16,7 @@ import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
+import { FieldSearchIcon } from "./generated/FieldSearchIcon";
 import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
@@ -46,6 +47,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
+  "field-search": FieldSearchIcon,
   "login-ice-logo": LoginIceLogoIcon,
   "manage": ManageIcon,
   "name-reserved": NameReservedIcon,
