@@ -100,7 +100,7 @@ Redis (BullMQ format)  -- consumed by downstream Node.js workers
 | Go (not TypeScript) | Greenfield SDK is Go-native; blockchain type handling is simpler without serialization boundaries |
 | BullMQ-compatible Redis format | Downstream workers are Node.js; BullMQ is already the queue standard in the ION backend |
 | Deterministic job IDs (`height:txHash:bucket:object`) | Enables at-most-once delivery without external dedup store; survives restarts |
-| Redis pipeline for height + jobs | Atomic writes ensure height tracking and job enqueueing are consistent |
+| Redis pipeline for height + jobs | Atomic writes ensure height tracking and job enqueueing are consistent; EXISTS dedup is outside the pipeline because Lua scripts cannot run inside a Redis MULTI/EXEC transaction pipeline -- single-instance ingester makes this safe |
 | Last-height persistence in Redis | Enables seamless restart with catch-up from last processed block |
 | Health check reflects subscription status | Kubernetes liveness probe can restart the pod if WebSocket drops |
 | Event filtering by type | Only EventCreateObject and EventUpdateObjectContent are relevant; reduces noise |

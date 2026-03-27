@@ -70,7 +70,11 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 		errCh <- ing.Run(ingCtx)
 	}()
 
-	time.Sleep(3 * time.Second)
+	select {
+	case err := <-errCh:
+		t.Fatalf("ingester exited early: %v", err)
+	case <-time.After(3 * time.Second):
+	}
 
 	account, err := gnfdtypes.NewAccountFromPrivateKey("e2e-test", privateKey)
 	require.NoError(t, err)
@@ -122,6 +126,8 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 
 	for {
 		select {
+		case err := <-errCh:
+			t.Fatalf("ingester exited while waiting for job: %v", err)
 		case <-timeout:
 			t.Fatal("timed out waiting for job in Redis")
 		case <-ticker.C:

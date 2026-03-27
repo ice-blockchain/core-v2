@@ -54,14 +54,16 @@ func TestBuildTxEventsFromBlock_EmptyBlock(t *testing.T) {
 
 func TestComputeTxHash(t *testing.T) {
 	rawTx := []byte("test transaction bytes")
-	hash := computeTxHash([][]byte{rawTx}, 0)
+	hash, err := computeTxHash([][]byte{rawTx}, 0)
+	require.NoError(t, err)
 	require.Len(t, hash, 64)
 	require.Regexp(t, `^[A-F0-9]{64}$`, hash)
 }
 
 func TestComputeTxHash_OutOfBounds(t *testing.T) {
-	hash := computeTxHash([][]byte{}, 0)
-	require.Empty(t, hash)
+	_, err := computeTxHash([][]byte{}, 0)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "out of range")
 }
 
 func buildTestBlockResponse(t *testing.T) *blockWithTxsResponse {

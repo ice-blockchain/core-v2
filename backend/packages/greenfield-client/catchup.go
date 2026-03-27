@@ -60,7 +60,10 @@ func buildTxEventsFromBlock(height int64, resp *blockWithTxsResponse) ([]*TxEven
 	var txEvents []*TxEvent
 
 	for i, tx := range resp.Txs {
-		txHash := computeTxHash(resp.Block.Data.Txs, i)
+		txHash, err := computeTxHash(resp.Block.Data.Txs, i)
+		if err != nil {
+			return nil, fmt.Errorf("tx %d: %w", i, err)
+		}
 		relevantEvents := extractEventsFromMessages(tx.Body.Messages)
 
 		if len(relevantEvents) == 0 {
@@ -77,12 +80,12 @@ func buildTxEventsFromBlock(height int64, resp *blockWithTxsResponse) ([]*TxEven
 	return txEvents, nil
 }
 
-func computeTxHash(rawTxs [][]byte, index int) string {
+func computeTxHash(rawTxs [][]byte, index int) (string, error) {
 	if index >= len(rawTxs) {
-		return ""
+		return "", fmt.Errorf("tx index %d out of range (have %d raw txs)", index, len(rawTxs))
 	}
 	hash := sha256.Sum256(rawTxs[index])
-	return fmt.Sprintf("%X", hash[:])
+	return fmt.Sprintf("%X", hash[:]), nil
 }
 
 func extractEventsFromMessages(messages []json.RawMessage) []ABCIEvent {

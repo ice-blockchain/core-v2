@@ -51,10 +51,9 @@ func (i *Ingester) Run(ctx context.Context) error {
 		return fmt.Errorf("load last height: %w", err)
 	}
 
-	subscribeHeight := lastHeight + 1
-	if lastHeight == 0 {
-		subscribeHeight = 0
-	}
+	// Pass lastHeight (not lastHeight+1) so catchUpFromLastHeight replays
+	// from lastHeight+1. Deterministic job IDs ensure idempotent processing.
+	subscribeHeight := lastHeight
 
 	i.log.Info().Int64("height", subscribeHeight).Msg("starting ingester")
 

@@ -206,7 +206,9 @@ func ParseTxResponse(rawJSON []byte, result ctypes.ResultEvent) (*TxEvent, error
 	}
 
 	if result.Data != nil {
-		parseEventData(result.Data, txEvent)
+		if err := parseEventData(result.Data, txEvent); err != nil {
+			return nil, fmt.Errorf("parse event data at height %d: %w", txEvent.Height, err)
+		}
 	}
 
 	if txEvent.Height == 0 && len(txEvent.Events) == 0 {
@@ -216,10 +218,10 @@ func ParseTxResponse(rawJSON []byte, result ctypes.ResultEvent) (*TxEvent, error
 	return txEvent, nil
 }
 
-func parseEventData(data interface{}, txEvent *TxEvent) {
+func parseEventData(data interface{}, txEvent *TxEvent) error {
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
-		return
+		return fmt.Errorf("marshal event data: %w", err)
 	}
 
 	var txData struct {
@@ -236,7 +238,7 @@ func parseEventData(data interface{}, txEvent *TxEvent) {
 	}
 
 	if err := json.Unmarshal(dataJSON, &txData); err != nil {
-		return
+		return fmt.Errorf("unmarshal event data: %w", err)
 	}
 
 	if txData.Height != 0 && txEvent.Height == 0 {
@@ -257,4 +259,5 @@ func parseEventData(data interface{}, txEvent *TxEvent) {
 			Attributes: attrs,
 		})
 	}
+	return nil
 }

@@ -68,9 +68,9 @@ No internal ION package dependencies. This is a standalone library.
 | `PrivateKey` | `string` | Yes | Hex-encoded private key for SDK authentication |
 | `Logger` | `zerolog.Logger` | Yes | Structured logger instance |
 
-`SenderTagKey()` returns `"onlineioEnv"` -- used to filter events by ION environment tag.
+`SenderTagKey()` returns `"onlineioEnv"` -- the tag key attached to Greenfield transactions to identify the ION environment.
 
-`DefaultQuery()` returns the Tendermint event query string for filtering `EventCreateObject` and `EventUpdateObjectContent` events.
+`DefaultQuery(env)` constructs a Tendermint WebSocket query that filters transactions by environment tag: `tm.event='Tx' AND greenfield.storage.EventSetTag.tags CONTAINS '<env>'`. This is a coarse filter -- it selects all transactions whose `MsgSetTag` event contains the environment value, regardless of event type. Fine-grained filtering by event type (`EventCreateObject`, `EventUpdateObjectContent`) happens downstream in the ingester's parser layer (`parser.ExtractCreateObjectEvent` / `parser.ExtractUpdateObjectContentEvent`).
 
 ---
 
