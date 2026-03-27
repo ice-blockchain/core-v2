@@ -44,4 +44,6 @@ type txMessage struct {
 	ContentType     string   `json:"content_type"`
 	PayloadSize     string   `json:"payload_size"`
 	ExpectChecksums []string `json:"expect_checksums"`
+	CreateAt        string   `json:"create_at"`
+	Version         string   `json:"version"`
 }

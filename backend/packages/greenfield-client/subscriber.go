@@ -53,7 +53,7 @@ func (c *client) subscribeLoop(
 			return
 		}
 
-		err := c.runSubscription(ctx, query, lastHeight, ch)
+		err := c.runSubscription(ctx, query, lastHeight, ch, &backoff)
 		if ctx.Err() != nil {
 			return
 		}
@@ -70,7 +70,6 @@ func (c *client) subscribeLoop(
 
 		backoff = min(backoff*2, maxBackoff)
 		c.rotateGateway()
-		backoff = initialBackoff
 	}
 }
 
@@ -79,6 +78,7 @@ func (c *client) runSubscription(
 	query string,
 	lastHeight *atomic.Int64,
 	ch chan<- *TxEvent,
+	backoff *time.Duration,
 ) error {
 	url := c.currentRPC()
 	wsClient, err := rpchttp.New(url, "/websocket")
@@ -100,6 +100,7 @@ func (c *client) runSubscription(
 
 	c.subscribed.Store(true)
 	defer c.subscribed.Store(false)
+	*backoff = initialBackoff
 
 	// Catch-up AFTER websocket is subscribed. Events arriving during catch-up
 	// are buffered in resCh. Duplicates are safe -- the ingester deduplicates
@@ -167,7 +168,9 @@ func (c *client) processEvents(
 				Int("events", len(txEvent.Events)).
 				Msg("received ws event")
 
-			lastHeight.Store(txEvent.Height)
+			if txEvent.Height > lastHeight.Load() {
+				lastHeight.Store(txEvent.Height)
+			}
 
 			select {
 			case ch <- txEvent:
@@ -254,16 +257,4 @@ func parseEventData(data interface{}, txEvent *TxEvent) {
 			Attributes: attrs,
 		})
 	}
-}
-
-func isRelevantEventType(eventType string) bool {
-	return eventType == eventTypeCreateObject ||
-		eventType == eventTypeUpdateObjectContent
-}
-
-func min(a, b time.Duration) time.Duration {
-	if a < b {
-		return a
-	}
-	return b
 }

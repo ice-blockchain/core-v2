@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -23,6 +24,8 @@ type client struct {
 	subscribed atomic.Bool
 	log        zerolog.Logger
 
+	account    *gnfdtypes.Account
+	clientsMu  sync.RWMutex
 	gnfdClient gnfdclient.IClient
 	gwClient   gateway.Client
 }
@@ -49,6 +52,7 @@ func New(cfg Config) (Client, error) {
 		cfg:        cfg,
 		rpcURLs:    cfg.RpcURLs,
 		log:        cfg.Logger.With().Str("component", "greenfield-client").Logger(),
+		account:    account,
 		gnfdClient: gnfd,
 	}
 
@@ -72,14 +76,41 @@ func (c *client) currentRPC() string {
 
 func (c *client) rotateGateway() {
 	url := c.nextRPC()
-	c.gwClient = gateway.NewClient(
+	gwClient := gateway.NewClient(
 		url,
 		gateway.WithHTTPClient(&http.Client{Timeout: gatewayTimeout}),
 	)
+
+	gnfd, err := gnfdclient.New(c.cfg.ChainID, url, gnfdclient.Option{
+		DefaultAccount: c.account,
+	})
+
+	c.clientsMu.Lock()
+	c.gwClient = gwClient
+	if err == nil {
+		c.gnfdClient = gnfd
+	}
+	c.clientsMu.Unlock()
+
+	if err != nil {
+		c.log.Error().Err(err).Str("url", url).Msg("failed to rotate greenfield client")
+	}
+}
+
+func (c *client) getGnfdClient() gnfdclient.IClient {
+	c.clientsMu.RLock()
+	defer c.clientsMu.RUnlock()
+	return c.gnfdClient
+}
+
+func (c *client) getGwClient() gateway.Client {
+	c.clientsMu.RLock()
+	defer c.clientsMu.RUnlock()
+	return c.gwClient
 }
 
 func (c *client) fetchLatestHeight(ctx context.Context) (int64, error) {
-	req := c.gwClient.NewRequest("GET", "/cosmos/base/tendermint/v1beta1/blocks/latest")
+	req := c.getGwClient().NewRequest("GET", "/cosmos/base/tendermint/v1beta1/blocks/latest")
 	resp, err := gateway.DoRequest[latestBlockResponse](ctx, req)
 	if err != nil {
 		return 0, fmt.Errorf("get latest block: %w", err)

@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	greenfieldclient "github.com/AudiusProject/ion/packages/greenfield-client"
 )
@@ -138,5 +139,5 @@ func parseChecksums(raw string) []string {
 	if raw == "" {
 		return nil
 	}
-	return []string{raw}
+	return strings.Split(raw, ",")
 }

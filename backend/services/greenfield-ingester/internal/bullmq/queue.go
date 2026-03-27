@@ -51,11 +51,14 @@ func (q *Queue) AddJob(
 	}
 
 	now := time.Now().UnixMilli()
-	opts, _ := json.Marshal(map[string]interface{}{
+	opts, err := json.Marshal(map[string]interface{}{
 		"jobId":    jobID,
 		"attempts": 0,
 		"delay":    0,
 	})
+	if err != nil {
+		return false, fmt.Errorf("marshal job opts: %w", err)
+	}
 
 	pipe.HSet(ctx, jobKey, map[string]interface{}{
 		"name":         jobName,

@@ -160,6 +160,8 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 			require.Equal(t, objectName, jobData["object_name"])
 			require.Equal(t, bucketName, jobData["bucket_name"])
 			require.Equal(t, "application/json", jobData["content_type"])
+			require.NotNil(t, jobData["create_at"], "job data should include create_at")
+			require.NotNil(t, jobData["version"], "job data should include version")
 			t.Logf("verified job: name=%s bucket=%s object=%s content_type=%s",
 				fields["name"], jobData["bucket_name"], jobData["object_name"], jobData["content_type"])
 

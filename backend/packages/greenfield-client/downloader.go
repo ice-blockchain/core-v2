@@ -18,7 +18,7 @@ func (c *client) GetObject(
 		Range: opts.Range,
 	}
 
-	reader, stat, err := c.gnfdClient.GetObject(ctx, bucketName, objectName, sdkOpts)
+	reader, stat, err := c.getGnfdClient().GetObject(ctx, bucketName, objectName, sdkOpts)
 	if err != nil {
 		return nil, ObjectStat{}, fmt.Errorf("get object %s/%s: %w", bucketName, objectName, err)
 	}
@@ -40,7 +40,7 @@ func (c *client) FGetObject(
 		Range: opts.Range,
 	}
 
-	err := c.gnfdClient.FGetObject(ctx, bucketName, objectName, filePath, sdkOpts)
+	err := c.getGnfdClient().FGetObject(ctx, bucketName, objectName, filePath, sdkOpts)
 	if err != nil {
 		return fmt.Errorf("fget object %s/%s to %s: %w", bucketName, objectName, filePath, err)
 	}
@@ -58,7 +58,7 @@ func (c *client) FGetObjectResumable(
 		Range: opts.Range,
 	}
 
-	err := c.gnfdClient.FGetObjectResumable(ctx, bucketName, objectName, filePath, sdkOpts)
+	err := c.getGnfdClient().FGetObjectResumable(ctx, bucketName, objectName, filePath, sdkOpts)
 	if err != nil {
 		return fmt.Errorf("fget resumable %s/%s to %s: %w", bucketName, objectName, filePath, err)
 	}

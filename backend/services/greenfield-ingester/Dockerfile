@@ -14,8 +14,12 @@ RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w -extldflags '-static'" -o 
 
 FROM alpine:3.21
 
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates \
+    && addgroup -S ingester \
+    && adduser -S ingester -G ingester
 
 COPY --from=builder /greenfield-ingester /usr/local/bin/greenfield-ingester
+
+USER ingester
 
 ENTRYPOINT ["greenfield-ingester"]

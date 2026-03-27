@@ -114,6 +114,7 @@ func TestExtractUpdateObjectContentEvent(t *testing.T) {
 	require.Equal(t, "updated.json", result.ObjectName)
 	require.Equal(t, uint64(2048), result.PayloadSize)
 	require.Equal(t, int64(3), result.Version)
+	require.Equal(t, []string{"def456"}, result.Checksums)
 }
 
 func TestExtractUpdateObjectContentEvent_MissingRequired(t *testing.T) {
@@ -132,6 +133,21 @@ func TestExtractUpdateObjectContentEvent_MissingRequired(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "missing object_name")
+}
+
+func TestParseChecksumsMultiple(t *testing.T) {
+	result := parseChecksums("abc123,def456,ghi789")
+	require.Equal(t, []string{"abc123", "def456", "ghi789"}, result)
+}
+
+func TestParseChecksumsSingle(t *testing.T) {
+	result := parseChecksums("abc123")
+	require.Equal(t, []string{"abc123"}, result)
+}
+
+func TestParseChecksumsEmpty(t *testing.T) {
+	result := parseChecksums("")
+	require.Nil(t, result)
 }
 
 func TestParseOptionalInt64_EmptyValue(t *testing.T) {

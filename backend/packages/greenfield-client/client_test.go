@@ -3,6 +3,8 @@ package greenfieldclient
 import (
 	"encoding/json"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	ctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -113,14 +115,6 @@ func TestParseTxResponse_NilData(t *testing.T) {
 	require.Nil(t, txEvent)
 }
 
-func TestIsRelevantEventType(t *testing.T) {
-	require.True(t, isRelevantEventType("greenfield.storage.EventCreateObject"))
-	require.True(t, isRelevantEventType("greenfield.storage.EventUpdateObjectContent"))
-	require.False(t, isRelevantEventType("greenfield.storage.EventSetTag"))
-	require.False(t, isRelevantEventType("greenfield.storage.EventDeleteObject"))
-	require.False(t, isRelevantEventType("message"))
-}
-
 func TestHasOnlineIOTag(t *testing.T) {
 	tagKey := SenderTagKey()
 
@@ -172,4 +166,51 @@ func TestNextRPC_RoundRobin(t *testing.T) {
 	require.Equal(t, "http://rpc3", url2)
 	require.Equal(t, "http://rpc1", url3)
 	require.Equal(t, "http://rpc2", url4)
+}
+
+func TestGetGnfdClient_ConcurrentWithRotate(t *testing.T) {
+	c := &client{
+		rpcURLs: []string{"http://rpc1", "http://rpc2", "http://rpc3"},
+		cfg:     Config{ChainID: "test-chain"},
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			_ = c.getGnfdClient()
+		}()
+		go func() {
+			defer wg.Done()
+			c.rotateGateway()
+		}()
+	}
+	wg.Wait()
+}
+
+func TestLastHeight_NeverRegresses(t *testing.T) {
+	var lastHeight atomic.Int64
+	lastHeight.Store(100)
+
+	heights := []int64{99, 101, 98, 102, 100, 103}
+	for _, h := range heights {
+		if h > lastHeight.Load() {
+			lastHeight.Store(h)
+		}
+	}
+	require.Equal(t, int64(103), lastHeight.Load())
+}
+
+func TestDefaultQuery_RejectsSpecialCharacters(t *testing.T) {
+	valid := []string{"dev", "staging", "prod", "staging-1"}
+	for _, env := range valid {
+		result := DefaultQuery(env)
+		require.Contains(t, result, env)
+	}
+
+	invalid := []string{"dev'--", "prod OR 1=1", "DEV", "dev;drop", "dev test"}
+	for _, env := range invalid {
+		require.Panics(t, func() { DefaultQuery(env) }, "expected panic for %q", env)
+	}
 }

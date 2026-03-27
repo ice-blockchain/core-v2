@@ -45,7 +45,7 @@ func (c *client) catchUp(
 }
 
 func (c *client) catchUpBlock(ctx context.Context, height int64) ([]*TxEvent, error) {
-	req := c.gwClient.NewRequest("GET", "/cosmos/tx/v1beta1/txs/block/{height}")
+	req := c.getGwClient().NewRequest("GET", "/cosmos/tx/v1beta1/txs/block/{height}")
 	req.SetPathParam("height", fmt.Sprintf("%d", height))
 
 	resp, err := gateway.DoRequest[blockWithTxsResponse](ctx, req)
@@ -115,6 +115,8 @@ func messageToABCIEvent(msg txMessage) (ABCIEvent, bool) {
 		attrs["content_type"] = msg.ContentType
 		attrs["payload_size"] = msg.PayloadSize
 		attrs["checksums"] = joinChecksums(msg.ExpectChecksums)
+		attrs["create_at"] = msg.CreateAt
+		attrs["version"] = msg.Version
 		return ABCIEvent{Type: eventTypeCreateObject, Attributes: attrs}, true
 
 	case msgTypeUpdateObjectContent:
@@ -123,6 +125,7 @@ func messageToABCIEvent(msg txMessage) (ABCIEvent, bool) {
 		attrs["operator"] = msg.Operator
 		attrs["payload_size"] = msg.PayloadSize
 		attrs["checksums"] = joinChecksums(msg.ExpectChecksums)
+		attrs["version"] = msg.Version
 		return ABCIEvent{Type: eventTypeUpdateObjectContent, Attributes: attrs}, true
 
 	default:

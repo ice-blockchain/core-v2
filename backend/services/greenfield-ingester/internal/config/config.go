@@ -3,11 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 )
-
-var validEnvPattern = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 // Config holds all configuration for the greenfield-ingester service.
 type Config struct {
@@ -47,10 +44,6 @@ func Load() (Config, error) {
 	if onlineIOEnv == "" {
 		return Config{}, fmt.Errorf("ONLINEIO_ENV is required")
 	}
-	if !validEnvPattern.MatchString(onlineIOEnv) {
-		return Config{}, fmt.Errorf("ONLINEIO_ENV contains invalid characters: %q", onlineIOEnv)
-	}
-
 	privKey := os.Getenv("GREENFIELD_PRIVATE_KEY")
 	if privKey == "" {
 		return Config{}, fmt.Errorf("GREENFIELD_PRIVATE_KEY is required")

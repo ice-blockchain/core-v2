@@ -104,3 +104,50 @@ Redis (BullMQ format)  -- consumed by downstream Node.js workers
 | Last-height persistence in Redis | Enables seamless restart with catch-up from last processed block |
 | Health check reflects subscription status | Kubernetes liveness probe can restart the pod if WebSocket drops |
 | Event filtering by type | Only EventCreateObject and EventUpdateObjectContent are relevant; reduces noise |
+| Environment-based event filtering via SetTag | See section below |
+
+---
+
+## Event Filtering via SetTag
+
+The ingester only receives transactions that belong to its environment (`ONLINEIO_ENV`). Filtering happens at the Greenfield WebSocket level using a Tendermint query:
+
+```
+tm.event='Tx' AND greenfield.storage.EventSetTag.tags CONTAINS '<ONLINEIO_ENV>'
+```
+
+This query (built by `greenfield-client.DefaultQuery(env)`) instructs the Greenfield RPC node to deliver only transactions where an `EventSetTag` event has a `tags` attribute containing the environment value (e.g. `"dev"`, `"staging"`, `"prod"`).
+
+### How it works
+
+1. **Tag key:** `onlineioEnv` (returned by `greenfield-client.SenderTagKey()`)
+2. **At transaction time**, the sender must attach a `MsgSetTag` message to the Greenfield transaction with a `ResourceTags` entry `{Key: "onlineioEnv", Value: "<env>"}`. Without this tag, the transaction will not match the WebSocket query and the ingester will never see it.
+3. **The WebSocket filter** checks `greenfield.storage.EventSetTag.tags CONTAINS '<env>'` -- this is a substring match on the serialized tags JSON, so the value must appear literally in the tags payload.
+
+### Example: tagging a bucket and object for `dev`
+
+From the e2e tests (`e2e_test.go`):
+
+```go
+onlineIOTags := &storagetypes.ResourceTags{
+    Tags: []storagetypes.ResourceTags_Tag{
+        {Key: "onlineioEnv", Value: "dev"},
+    },
+}
+
+// Attach tags when creating the bucket
+sdkClient.CreateBucket(ctx, bucketName, primarySP, gnfdtypes.CreateBucketOptions{
+    Tags: onlineIOTags,
+})
+
+// Attach tags when creating the object
+sdkClient.CreateObject(ctx, bucketName, objectName, reader, gnfdtypes.CreateObjectOptions{
+    Tags: onlineIOTags,
+})
+```
+
+Both `CreateBucket` and `CreateObject` include the `onlineioEnv` tag. The resulting on-chain `MsgSetTag` event causes the transaction to match the ingester's WebSocket query for the corresponding environment.
+
+### Environment isolation
+
+Each environment (`dev`, `staging`, `prod`) runs its own ingester instance with a different `ONLINEIO_ENV` value. Transactions tagged for `dev` are invisible to the `prod` ingester and vice versa. This provides namespace isolation on a shared Greenfield chain without separate chains per environment.

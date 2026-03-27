@@ -68,8 +68,7 @@ func setupTestRedis(t *testing.T) (*miniredis.Miniredis, *redis.Client) {
 }
 
 func TestIngester_ProcessCreateObjectEvent(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -106,8 +105,7 @@ func TestIngester_ProcessCreateObjectEvent(t *testing.T) {
 }
 
 func TestIngester_LoadsLastHeight(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	ctx := context.Background()
 	redisClient.Set(ctx, heightKey, "12345", 0)
@@ -121,8 +119,7 @@ func TestIngester_LoadsLastHeight(t *testing.T) {
 }
 
 func TestIngester_LoadsLastHeight_NotSet(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	mock := &mockClient{events: nil}
 	ingester := New(mock, redisClient, "test-queue", "dev", testLogger())
@@ -133,8 +130,7 @@ func TestIngester_LoadsLastHeight_NotSet(t *testing.T) {
 }
 
 func TestIngester_UpdateObjectContentEvent(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -177,8 +173,7 @@ func TestIngester_JobIDFormat(t *testing.T) {
 }
 
 func TestIngester_SkipsIrrelevantEvents(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -222,8 +217,7 @@ func TestJobDataSerialization(t *testing.T) {
 }
 
 func TestIngester_AtomicHeightAndJobWrite(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -263,8 +257,7 @@ func TestIngester_AtomicHeightAndJobWrite(t *testing.T) {
 }
 
 func TestIngester_SanitizesSpecialCharsInJobID(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -300,8 +293,7 @@ func TestIngester_SanitizesSpecialCharsInJobID(t *testing.T) {
 }
 
 func TestIngester_PartialFailureDoesNotUpdateHeight(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -338,8 +330,7 @@ func TestSanitizeJobIDComponent(t *testing.T) {
 }
 
 func TestIngester_MultiEventTransaction_AtomicWrite(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	events := []*greenfieldclient.TxEvent{
 		{
@@ -399,8 +390,7 @@ func TestIngester_MultiEventTransaction_AtomicWrite(t *testing.T) {
 }
 
 func TestIngester_DuplicateEventDoesNotCreateDuplicateJob(t *testing.T) {
-	mr, redisClient := setupTestRedis(t)
-	defer mr.Close()
+	_, redisClient := setupTestRedis(t)
 
 	event := &greenfieldclient.TxEvent{
 		Height: 1000,

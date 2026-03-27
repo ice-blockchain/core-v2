@@ -164,6 +164,8 @@ func TestE2E_CatchUpBlockRange(t *testing.T) {
 				hasCreateObject = true
 				require.NotEmpty(t, e.Attributes["bucket_name"])
 				require.NotEmpty(t, e.Attributes["object_name"])
+				require.NotEmpty(t, e.Attributes["create_at"], "missing create_at in catch-up event")
+				require.NotEmpty(t, e.Attributes["version"], "missing version in catch-up event")
 			}
 		}
 		require.True(t, hasCreateObject, "missing EventCreateObject")
