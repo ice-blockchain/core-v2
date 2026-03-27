@@ -29,6 +29,14 @@ export type { SearchBarProps } from "./components/SearchBar";
 export { HorizontalSeparator } from "./components/HorizontalSeparator";
 export type { HorizontalSeparatorProps } from "./components/HorizontalSeparator";
 
+export { IONLoader } from "./components/IONLoader";
+export type { IONLoaderProps, IONLoaderVariant } from "./components/IONLoaderTypes";
+
+export { NotificationBarProvider } from "./components/NotificationBarProvider";
+export { useNotificationBar } from "./components/useNotificationBar";
+export { notificationBarRef } from "./components/notificationBarRef";
+export type { NotificationBarItem, NotificationBarActions } from "./components/NotificationBarTypes";
+
 // Icons
 export { Icon } from "./icons/Icon";
 export type { IconProps, IconName } from "./icons/Icon";

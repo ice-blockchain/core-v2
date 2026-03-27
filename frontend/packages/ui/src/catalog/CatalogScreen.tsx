@@ -14,12 +14,15 @@ import { IconCatalogSection } from "./IconCatalogSection";
 import { ButtonCatalogSection } from "./ButtonCatalogSection";
 import { SmallButtonCatalogSection } from "./SmallButtonCatalogSection";
 import { TextFieldCatalogSection } from "./TextFieldCatalogSection";
+import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
+import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
+import { NotificationBarProvider } from "../components/NotificationBarProvider";
 
 function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.primaryBackground }}>
+    <SafeAreaView edges={["bottom", "left", "right"]} style={{ flex: 1, backgroundColor: theme.colors.primaryBackground }}>
     <ScrollView
       contentContainerStyle={{ padding: theme.spacing.lg, alignItems: "center" }}
     >
@@ -39,6 +42,8 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
         <ButtonCatalogSection />
         <SmallButtonCatalogSection />
         <TextFieldCatalogSection />
+        <NotificationBarCatalogSection />
+        <IONLoaderCatalogSection />
       </View>
     </ScrollView>
     </SafeAreaView>
@@ -55,7 +60,9 @@ export function CatalogScreen() {
   return (
     <SafeAreaProvider>
       <ThemeProvider colorMode={colorMode}>
-        <CatalogContent onToggleMode={toggleColorMode} />
+        <NotificationBarProvider>
+          <CatalogContent onToggleMode={toggleColorMode} />
+        </NotificationBarProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import type { SemanticColors } from "../theme/theme-types";
 import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
-import { ButtonSpinner } from "./ButtonSpinner";
+import { IONLoader } from "./IONLoader";
+import type { IONLoaderVariant } from "./IONLoaderTypes";
 
 export type SmallButtonColor = "primary" | "primaryOutlined" | "danger" | "dangerOutlined";
 export type SmallButtonIconPosition = "left" | "right" | "center";
@@ -24,17 +25,18 @@ interface ColorSpec {
   background: string;
   textColor: string;
   borderColor: string | undefined;
+  loaderVariant: IONLoaderVariant;
 }
 
 function resolveColorSpec(colors: SemanticColors, color: SmallButtonColor, isDisabled: boolean): ColorSpec {
   if (isDisabled) {
-    return { background: colors.sheetLine, textColor: colors.onPrimaryAccent, borderColor: undefined };
+    return { background: colors.sheetLine, textColor: colors.onPrimaryAccent, borderColor: undefined, loaderVariant: "dark" };
   }
   const specs: Record<SmallButtonColor, ColorSpec> = {
-    primary: { background: colors.primaryAccent, textColor: colors.onPrimaryAccent, borderColor: colors.primaryAccent },
-    primaryOutlined: { background: "transparent", textColor: colors.primaryAccent, borderColor: colors.primaryAccent },
-    danger: { background: colors.attentionRed, textColor: colors.onPrimaryAccent, borderColor: colors.attentionRed },
-    dangerOutlined: { background: "transparent", textColor: colors.attentionRed, borderColor: colors.attentionRed },
+    primary: { background: colors.primaryAccent, textColor: colors.onPrimaryAccent, borderColor: colors.primaryAccent, loaderVariant: "dark" },
+    primaryOutlined: { background: "transparent", textColor: colors.primaryAccent, borderColor: colors.primaryAccent, loaderVariant: "light" },
+    danger: { background: colors.attentionRed, textColor: colors.onPrimaryAccent, borderColor: colors.attentionRed, loaderVariant: "dark" },
+    dangerOutlined: { background: "transparent", textColor: colors.attentionRed, borderColor: colors.attentionRed, loaderVariant: "light" },
   };
   return specs[color];
 }
@@ -76,7 +78,7 @@ function renderContent(props: SmallButtonProps, spec: ColorSpec, scale: (n: numb
   const { icon, iconPosition = "left", label, isLoading } = props;
 
   if (isLoading) {
-    return <ButtonSpinner color={spec.textColor} size={scale(14)} />;
+    return <IONLoader variant={spec.loaderVariant} size={scale(16)} />;
   }
 
   const isIconOnly = icon && iconPosition === "center" && !label;
