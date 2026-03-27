@@ -32,10 +32,10 @@ describe("select-languages-styles", () => {
     expect(style.gap).toBe(12);
   });
 
-  it("builds scroll content with 12px gap and 88px bottom padding", () => {
+  it("builds scroll content with 12px gap and 104px bottom padding", () => {
     const style = buildScrollContentStyle(identity);
     expect(style.gap).toBe(12);
-    expect(style.paddingBottom).toBe(88);
+    expect(style.paddingBottom).toBe(104);
   });
 
   it("scales dimensions with provided function", () => {

@@ -1,12 +1,16 @@
 import type { ReactNode } from "react";
 
-export interface BottomSheetProps {
+interface BottomSheetBaseProps {
   isVisible: boolean;
   onClose: () => void;
   title?: string;
   onBack?: () => void;
-  bottomButton?: ReactNode;
-  floatingFooter?: ReactNode;
   children: ReactNode;
   testID?: string;
 }
+
+type BottomSheetFooterProps =
+  | { bottomButton?: ReactNode; floatingFooter?: never }
+  | { floatingFooter?: ReactNode; bottomButton?: never };
+
+export type BottomSheetProps = BottomSheetBaseProps & BottomSheetFooterProps;

@@ -15,7 +15,7 @@
 - `BottomSheet` with `onBack`, NO title in header (title is hidden/opacity 0 in the sheet header)
 - Headline: "Select languages" — `headline1` (Bold 28px)
 - Subtitle: "You'll be shown content in the selected language" — `body2` (Regular 13px), `tertiaryText`
-- `SearchBar` — height 42px, `primaryBackground` bg, 16px radius (already in `@ion/ui`)
+- `SearchBar` — height 40px (`height: scale(40)`), `primaryBackground` bg, 16px radius (already in `@ion/ui`)
 
 ### Vertical Spacing (user-confirmed, pixel-perfect)
 
@@ -49,7 +49,7 @@ Language row 2
 
 ### Continue Button
 
-- `Button` in `bottomButton` slot
+- `Button` rendered via `floatingFooter` prop (replaces legacy `bottomButton` slot)
 - Label: "Continue"
 - Height: 56px (default)
 - Hidden when no languages selected
@@ -62,7 +62,7 @@ Language row 2
 
 Source: Flutter app enum at `flutter-app/lib/app/features/core/model/language.dart`
 
-67 languages total. Each entry has:
+69 languages total. Each entry has:
 - `name`: English name (e.g. "French")
 - `localName`: Optional native name (e.g. "français")
 - `flag`: Emoji flag (e.g. "🇫🇷")

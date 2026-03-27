@@ -17,9 +17,10 @@ export function buildListSectionStyle(scale: (n: number) => number): ViewStyle {
   };
 }
 
+// 104px = button (56) + gap (10) + max safe-area inset (34) + buffer (4)
 export function buildScrollContentStyle(scale: (n: number) => number): ViewStyle {
   return {
     gap: scale(12),
-    paddingBottom: scale(88),
+    paddingBottom: scale(104),
   };
 }
