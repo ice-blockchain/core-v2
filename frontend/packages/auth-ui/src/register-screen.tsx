@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { TextField } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { SheetHeader } from "./sheet-header";
 import { PrimaryButton } from "./primary-button";
 import { RegisterHeader } from "./register-header";
@@ -77,7 +78,7 @@ function IdentityKeyField({ form }: { form: FormState }) {
     : {};
   return (
     <TextField
-      label="Identity key name"
+      label={translate("auth:identityKeyNameLabel")}
       value={form.identityKeyName}
       onChangeText={form.setIdentityKeyName}
       prefixIcon={<IdentityKeyIcon />}
@@ -94,14 +95,14 @@ function RegisterFormFields({ form }: { form: FormState }) {
     <View style={styles.formContainer}>
       <IdentityKeyField form={form} />
       <PasswordField
-        label="Password"
+        label={translate("auth:passwordLabel")}
         value={form.password}
         onChangeText={form.setPassword}
         show={form.showPassword}
         onToggle={form.toggleShowPassword}
       />
       <PasswordField
-        label="Confirm password"
+        label={translate("auth:confirmPasswordLabel")}
         value={form.confirmPassword}
         onChangeText={form.setConfirmPassword}
         show={form.showConfirm}
@@ -124,17 +125,17 @@ export function RegisterScreen({ onBack, onContinue }: RegisterScreenProps) {
       <SheetHeader title="" onBack={onBack} />
       <RegisterHeader
         icon={<RegisterPasswordIcon />}
-        title="Register"
-        subtitle="Choose a strong password to create an account"
+        title={translate("auth:registerTitle")}
+        subtitle={translate("auth:registerSubtitle")}
       />
       <RegisterFormFields form={form} />
       <View style={styles.checklist}>
         <PasswordStrengthChecklist
-          rules={[...form.passwordRules, { label: "Passwords match", isMet: form.isPasswordMatch }]}
+          rules={[...form.passwordRules, { label: translate("auth:passwordsMatchLabel"), isMet: form.isPasswordMatch }]}
         />
       </View>
       <View style={styles.continueWrapper}>
-        <PrimaryButton label="Continue" onPress={handleContinue} disabled={!form.isFormValid} />
+        <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} disabled={!form.isFormValid} />
       </View>
       <View style={styles.footer}>
         <SecuredByFooter />

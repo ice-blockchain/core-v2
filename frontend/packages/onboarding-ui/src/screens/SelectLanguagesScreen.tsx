@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { View } from "react-native";
 import type { ViewStyle } from "react-native";
 import { BottomSheet, Button, SearchBar, Text, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
 import type { OnboardingScreenProps } from "../types";
 import { CheckboxRow } from "../components/CheckboxRow";
 import type { LanguageSelectionActions, LanguageSelectionState } from "./select-languages-hooks";
@@ -36,17 +37,17 @@ export function SelectLanguagesScreen({ onContinue, onBack }: OnboardingScreenPr
   const handleClose = useCallback(() => onBack?.(), [onBack]);
 
   const continueButton = state.hasSelection
-    ? <Button label="Continue" isLoading={state.isSaving} onPress={actions.handleSave} />
+    ? <Button label={translate("onboarding:continueButton")} isLoading={state.isSaving} onPress={actions.handleSave} />
     : undefined;
 
   return (
     <BottomSheet isVisible onClose={handleClose} {...(onBack ? { onBack } : {})} floatingFooter={continueButton} testID="select-languages-screen">
       <View style={titleStyle}>
-        <Text variant="headline1">Select languages</Text>
-        <Text variant="body2" color={theme.colors.tertiaryText}>You'll be shown content in the selected language</Text>
+        <Text variant="headline1">{translate("onboarding:selectLanguagesTitle")}</Text>
+        <Text variant="body2" color={theme.colors.tertiaryText}>{translate("onboarding:selectLanguagesSubtitle")}</Text>
       </View>
       <View style={listSectionStyle}>
-        <SearchBar value={state.searchQuery} onChangeText={actions.setSearchQuery} placeholder="Search" testID="language-search" />
+        <SearchBar value={state.searchQuery} onChangeText={actions.setSearchQuery} placeholder={translate("onboarding:searchPlaceholder")} testID="language-search" />
         <LanguageList state={state} actions={actions} style={scrollContentStyle} />
       </View>
     </BottomSheet>

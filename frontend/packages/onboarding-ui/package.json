@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ion/localization": "workspace:*",
     "@ion/ui": "workspace:*",
     "@ion/onboarding": "workspace:*"
   },

@@ -27,6 +27,9 @@ export { validateIdentityKeyName, useIdentityKeyValidation } from "./identity-ke
 export { buildPasswordRules, areAllPasswordRulesMet } from "./password-rules";
 export type { PasswordRule } from "./password-rules";
 
+// Translations
+export { authTranslations, AUTH_NAMESPACE } from "./translations";
+
 // Icons
 export { ArrowIcon } from "./arrow-icon";
 export { BackArrowIcon } from "./back-arrow-icon";

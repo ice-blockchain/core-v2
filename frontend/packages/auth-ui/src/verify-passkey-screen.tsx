@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { translate } from "@ion/localization";
 import { SecuredByFooter } from "./secured-by-footer";
 import { VerifyPasskeyIcon } from "./verify-passkey-icon";
 
@@ -24,10 +25,9 @@ export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskey
       <View style={styles.iconContainer}>
         <VerifyPasskeyIcon />
       </View>
-      <Text style={styles.title}>Verify with a passkey</Text>
+      <Text style={styles.title}>{translate("auth:verifyPasskeyTitle")}</Text>
       <Text style={styles.subtitle}>
-        Your device will prompt you to confirm this action using your
-        fingerprint, face, or screen lock
+        {translate("auth:verifyPasskeySubtitle")}
       </Text>
       <View style={styles.loader}>
         {loadingElement}

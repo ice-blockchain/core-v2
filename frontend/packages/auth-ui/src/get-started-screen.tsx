@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { TextField } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
@@ -18,9 +19,9 @@ function GetStartedHeader() {
       <View style={styles.iconCircle}>
         <IceLogoIcon />
       </View>
-      <Text style={styles.title}>Get started</Text>
+      <Text style={styles.title}>{translate("auth:getStartedTitle")}</Text>
       <Text style={styles.subtitle}>
-        Enter your identity key name to log in into your account
+        {translate("auth:getStartedSubtitle")}
       </Text>
     </>
   );
@@ -38,7 +39,7 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
     <View style={styles.page}>
       <GetStartedHeader />
       <TextField
-        label="Identity key name"
+        label={translate("auth:identityKeyNameLabel")}
         value={identity.value}
         onChangeText={identity.setValue}
         prefixIcon={<IdentityKeyIcon />}
@@ -48,11 +49,11 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
         style={styles.field}
       />
       <View style={styles.continueWrapper}>
-        <PrimaryButton label="Continue" onPress={() => identity.validate() && props.onNavigateToVerifyPasskey(identity.value)} />
+        <PrimaryButton label={translate("auth:continueButton")} onPress={() => identity.validate() && props.onNavigateToVerifyPasskey(identity.value)} />
       </View>
-      <Text style={styles.orText}>or</Text>
-      <SecondaryButton label="Register" onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label="Restore identity key" leftIcon={<RestoreKeyIcon />} />
+      <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
+      <SecondaryButton label={translate("auth:registerButton")} onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />
+      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<RestoreKeyIcon />} />
       <View style={styles.footer}>
         <SecuredByFooter />
         <TermsFooter />

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { translate } from "@ion/localization";
 import { FormInput } from "./form-input";
 import { IdentityKeyIcon } from "./identity-key-icon";
 import { InfoIcon } from "./info-icon";
@@ -17,7 +18,7 @@ function useIdentityKeyFormState(onValidChange: (v: boolean) => void) {
 
   const errorMessage = useMemo(() => {
     if (!touched && !submitted) return null;
-    if (identityKeyName.length === 0) return submitted ? "Enter identity key name" : null;
+    if (identityKeyName.length === 0) return submitted ? translate("auth:enterIdentityKeyNameError") : null;
     return validateIdentityKeyName(identityKeyName);
   }, [identityKeyName, touched, submitted]);
 
@@ -48,7 +49,7 @@ export function RegisterForm({ onValidChange, onIdentityKeyChange, submitted }: 
   return (
     <View style={styles.form}>
       <FormInput
-        placeholder="Identity key name"
+        placeholder={translate("auth:identityKeyNameLabel")}
         value={state.identityKeyName}
         onChange={state.setIdentityKeyName}
         leftIcon={<IdentityKeyIcon />}

@@ -44,6 +44,9 @@ importers:
       '@ion/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../../packages/localization
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
@@ -110,7 +113,7 @@ importers:
         version: 0.84.1
       '@react-native/eslint-config':
         specifier: 0.84.1
-        version: 0.84.1(eslint@8.57.1)(jest@29.7.0)(prettier@2.8.8)(typescript@5.9.3)
+        version: 0.84.1(eslint@8.57.1)(jest@29.7.0(@types/node@25.5.0))(prettier@2.8.8)(typescript@5.9.3)
       '@react-native/gradle-plugin':
         specifier: 0.84.1
         version: 0.84.1
@@ -146,7 +149,7 @@ importers:
         version: 250829098.0.9
       jest:
         specifier: ^29.6.3
-        version: 29.7.0
+        version: 29.7.0(@types/node@25.5.0)
       prettier:
         specifier: 2.8.8
         version: 2.8.8
@@ -165,6 +168,9 @@ importers:
       '@ion/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../../packages/localization
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
@@ -214,6 +220,9 @@ importers:
 
   packages/auth-ui:
     dependencies:
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
@@ -235,10 +244,10 @@ importers:
         version: 19.2.14
       jest:
         specifier: ^29.6.3
-        version: 29.7.0
+        version: 29.7.0(@types/node@25.5.0)
       ts-jest:
         specifier: ^29.1.1
-        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0)(typescript@5.9.3)
+        version: 29.4.6(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0(@types/node@25.5.0))(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -481,6 +490,9 @@ importers:
 
   packages/onboarding-ui:
     dependencies:
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../localization
       '@ion/onboarding':
         specifier: workspace:*
         version: link:../onboarding
@@ -8891,7 +8903,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@react-native/eslint-config@0.84.1(eslint@8.57.1)(jest@29.7.0)(prettier@2.8.8)(typescript@5.9.3)':
+  '@react-native/eslint-config@0.84.1(eslint@8.57.1)(jest@29.7.0(@types/node@25.5.0))(prettier@2.8.8)(typescript@5.9.3)':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/eslint-parser': 7.28.6(@babel/core@7.29.0)(eslint@8.57.1)
@@ -8902,7 +8914,7 @@ snapshots:
       eslint-config-prettier: 8.10.2(eslint@8.57.1)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.57.1)
       eslint-plugin-ft-flow: 2.0.3(@babel/eslint-parser@7.28.6(@babel/core@7.29.0)(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-jest: 29.15.0(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(jest@29.7.0)(typescript@5.9.3)
+      eslint-plugin-jest: 29.15.0(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(jest@29.7.0(@types/node@25.5.0))(typescript@5.9.3)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 7.0.1(eslint@8.57.1)
       eslint-plugin-react-native: 5.0.0(eslint@8.57.1)
@@ -8935,7 +8947,9 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -10225,21 +10239,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  create-jest@29.7.0:
-    dependencies:
-      '@jest/types': 29.6.3
-      chalk: 4.1.2
-      exit: 0.1.2
-      graceful-fs: 4.2.11
-      jest-config: 29.7.0
-      jest-util: 29.7.0
-      prompts: 2.4.2
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - supports-color
-      - ts-node
-
   create-jest@29.7.0(@types/node@22.19.15):
     dependencies:
       '@jest/types': 29.6.3
@@ -10269,7 +10268,6 @@ snapshots:
       - babel-plugin-macros
       - supports-color
       - ts-node
-    optional: true
 
   cross-fetch@3.2.0:
     dependencies:
@@ -10674,13 +10672,13 @@ snapshots:
       lodash: 4.17.23
       string-natural-compare: 3.0.1
 
-  eslint-plugin-jest@29.15.0(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(jest@29.7.0)(typescript@5.9.3):
+  eslint-plugin-jest@29.15.0(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(jest@29.7.0(@types/node@25.5.0))(typescript@5.9.3):
     dependencies:
       '@typescript-eslint/utils': 8.57.1(eslint@8.57.1)(typescript@5.9.3)
       eslint: 8.57.1
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 8.57.1(@typescript-eslint/parser@8.57.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      jest: 29.7.0
+      jest: 29.7.0(@types/node@25.5.0)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -11612,25 +11610,6 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-cli@29.7.0:
-    dependencies:
-      '@jest/core': 29.7.0
-      '@jest/test-result': 29.7.0
-      '@jest/types': 29.6.3
-      chalk: 4.1.2
-      create-jest: 29.7.0
-      exit: 0.1.2
-      import-local: 3.2.0
-      jest-config: 29.7.0
-      jest-util: 29.7.0
-      jest-validate: 29.7.0
-      yargs: 17.7.2
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - supports-color
-      - ts-node
-
   jest-cli@29.7.0(@types/node@22.19.15):
     dependencies:
       '@jest/core': 29.7.0
@@ -11668,35 +11647,6 @@ snapshots:
       - babel-plugin-macros
       - supports-color
       - ts-node
-    optional: true
-
-  jest-config@29.7.0:
-    dependencies:
-      '@babel/core': 7.29.0
-      '@jest/test-sequencer': 29.7.0
-      '@jest/types': 29.6.3
-      babel-jest: 29.7.0(@babel/core@7.29.0)
-      chalk: 4.1.2
-      ci-info: 3.9.0
-      deepmerge: 4.3.1
-      glob: 7.2.3
-      graceful-fs: 4.2.11
-      jest-circus: 29.7.0
-      jest-environment-node: 29.7.0
-      jest-get-type: 29.6.3
-      jest-regex-util: 29.6.3
-      jest-resolve: 29.7.0
-      jest-runner: 29.7.0
-      jest-util: 29.7.0
-      jest-validate: 29.7.0
-      micromatch: 4.0.8
-      parse-json: 5.2.0
-      pretty-format: 29.7.0
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
 
   jest-config@29.7.0(@types/node@22.19.15):
     dependencies:
@@ -12002,18 +11952,6 @@ snapshots:
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  jest@29.7.0:
-    dependencies:
-      '@jest/core': 29.7.0
-      '@jest/types': 29.6.3
-      import-local: 3.2.0
-      jest-cli: 29.7.0
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - supports-color
-      - ts-node
-
   jest@29.7.0(@types/node@22.19.15):
     dependencies:
       '@jest/core': 29.7.0
@@ -12037,7 +11975,6 @@ snapshots:
       - babel-plugin-macros
       - supports-color
       - ts-node
-    optional: true
 
   jimp-compact@0.16.1: {}
 
@@ -13999,12 +13936,12 @@ snapshots:
       babel-jest: 29.7.0(@babel/core@7.29.0)
       jest-util: 29.7.0
 
-  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0)(typescript@5.9.3):
+  ts-jest@29.4.6(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0(@types/node@25.5.0))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       handlebars: 4.7.9
-      jest: 29.7.0
+      jest: 29.7.0(@types/node@25.5.0)
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6

@@ -1,12 +1,13 @@
 import { StyleSheet, Text } from "react-native";
+import { translate } from "@ion/localization";
 
 export function TermsFooter() {
   return (
     <Text style={styles.container}>
-      By continuing, you are agreeing to our{" "}
-      <Text style={styles.link}>Terms of Service</Text>
+      {translate("auth:termsAgreementPrefix")}
+      <Text style={styles.link}>{translate("auth:termsOfServiceLink")}</Text>
       {" & "}
-      <Text style={styles.link}>Privacy Policy</Text>
+      <Text style={styles.link}>{translate("auth:privacyPolicyLink")}</Text>
     </Text>
   );
 }
