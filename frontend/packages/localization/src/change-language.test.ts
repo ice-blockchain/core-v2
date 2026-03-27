@@ -31,9 +31,9 @@ function createMockStorage(): IKeyValueStorage & {
 describe('changeLanguage', () => {
   it('persists the locale to storage and restarts', () => {
     const storage = createMockStorage();
-    changeLanguage({ locale: 'pt-BR', storage });
+    changeLanguage({ locale: 'fr', storage });
 
-    expect(storage.store.get('user_preferred_locale')).toBe('pt-BR');
+    expect(storage.store.get('user_preferred_locale')).toBe('fr');
     expect(restartApplication).toHaveBeenCalledTimes(1);
   });
 });

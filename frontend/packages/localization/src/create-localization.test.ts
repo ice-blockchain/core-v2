@@ -42,12 +42,11 @@ describe('createLocalization', () => {
 
   it('configures fallback chain correctly', () => {
     const storage = createMockStorage({
-      user_preferred_locale: 'pt-BR',
+      user_preferred_locale: 'de',
     });
     const instance = createLocalization({ storage });
     expect(instance.options.fallbackLng).toEqual([
-      'pt-BR',
-      'pt',
+      'de',
       'en',
     ]);
   });

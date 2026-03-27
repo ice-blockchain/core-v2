@@ -31,8 +31,8 @@ describe('registerTranslations', () => {
     expect(instance.getResourceBundle('en', 'auth-ui')).toEqual({
       greeting: 'hello-en',
     });
-    expect(instance.getResourceBundle('pt', 'auth-ui')).toEqual({
-      greeting: 'hello-pt',
+    expect(instance.getResourceBundle('fr', 'auth-ui')).toEqual({
+      greeting: 'hello-fr',
     });
   });
 
@@ -56,11 +56,10 @@ describe('registerTranslations', () => {
     const instance = createInstance();
     const partial: TranslationResource[] = [
       { namespace: 'x', locale: 'en', translations: {} },
-      { namespace: 'x', locale: 'pt', translations: {} },
     ];
 
     expect(() => registerTranslations(instance, partial)).toThrow(
-      'pt-BR, es, fr, de',
+      'fr, de',
     );
   });
 });
