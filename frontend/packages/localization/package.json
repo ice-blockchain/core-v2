@@ -18,7 +18,8 @@
   "peerDependencies": {
     "react-native": ">=0.84",
     "react-native-restart": ">=0.0.27",
-    "@ion/storage": "workspace:*"
+    "@ion/storage": "workspace:*",
+    "@ion/diagnostics": "workspace:*"
   },
   "peerDependenciesMeta": {
     "react-native": {

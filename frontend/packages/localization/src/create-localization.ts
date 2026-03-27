@@ -1,6 +1,7 @@
 import i18next from 'i18next';
 import type { i18n } from 'i18next';
 
+import { Logger } from '@ion/diagnostics';
 import type { IKeyValueStorage } from '@ion/storage';
 import { getDeviceLocale } from './device-locale';
 import { buildFallbackChain } from './fallback-chain';
@@ -33,14 +34,29 @@ export function createLocalization(
     initAsync: false,
   });
 
+  Logger.info('Localization initialized', {
+    tag: 'localization',
+    data: { locale, fallback },
+  });
+
   return instance;
 }
 
 function resolveLocale(): string {
   const stored = storageRef?.getString(LANGUAGE_PREFERENCE_KEY);
-  if (stored) return stored;
+  if (stored) {
+    Logger.debug('Locale resolved from stored preference', {
+      tag: 'localization',
+      data: { locale: stored },
+    });
+    return stored;
+  }
 
   const deviceLocale = getDeviceLocale();
+  Logger.debug('Locale resolved from device', {
+    tag: 'localization',
+    data: { locale: deviceLocale },
+  });
   return deviceLocale;
 }
 

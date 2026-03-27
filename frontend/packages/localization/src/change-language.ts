@@ -1,3 +1,4 @@
+import { Logger } from '@ion/diagnostics';
 import type { IKeyValueStorage } from '@ion/storage';
 
 import type { SupportedLocale } from './types';
@@ -10,6 +11,10 @@ interface ChangeLanguageInput {
 }
 
 export function changeLanguage(input: ChangeLanguageInput): void {
+  Logger.info('Language changed', {
+    tag: 'localization',
+    data: { locale: input.locale },
+  });
   input.storage.setString(LANGUAGE_PREFERENCE_KEY, input.locale);
   restartApplication();
 }

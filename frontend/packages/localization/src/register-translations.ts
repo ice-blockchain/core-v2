@@ -1,5 +1,6 @@
 import type { i18n } from 'i18next';
 
+import { Logger } from '@ion/diagnostics';
 import type { TranslationResource } from './types';
 import { SUPPORTED_LOCALES } from './supported-locales';
 
@@ -21,6 +22,14 @@ export function registerTranslations(
       false,
     );
   }
+
+  Logger.debug('Translations registered', {
+    tag: 'localization',
+    data: {
+      namespace,
+      locales: resources.map((r) => r.locale),
+    },
+  });
 }
 
 function validateLocaleCoverage(
