@@ -1,6 +1,6 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm generate:icons`.
 
-import Svg, { Path, Rect } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 
 interface CheckboxOffIconProps {
   size?: number;
@@ -8,5 +8,5 @@ interface CheckboxOffIconProps {
 }
 
 export function CheckboxOffIcon({ size = 24, color }: CheckboxOffIconProps) {
-  return <Svg width={size} height={size} fill="none" viewBox="0 0 24 24"><Rect width={18.8} height={18.8} x={2.6} y={2.6} stroke={color} strokeWidth={1.2} rx={3.4} /></Svg>;
+  return <Svg width={size} height={size} fill="none" viewBox="0 0 24 24"><Path stroke={color} strokeWidth={1.4} d="M12 3.7002C15.5742 3.7002 17.5502 4.17848 18.6855 5.31348C19.8209 6.4487 20.2998 8.42502 20.2998 12C20.2998 15.575 19.8209 17.5513 18.6855 18.6865C17.5502 19.8215 15.5742 20.2998 12 20.2998C8.4258 20.2998 6.44984 19.8215 5.31445 18.6865C4.17913 17.5513 3.7002 15.575 3.7002 12C3.7002 8.42502 4.17913 6.4487 5.31445 5.31348C6.44984 4.17848 8.4258 3.7002 12 3.7002Z" /></Svg>;
 }

@@ -3,7 +3,9 @@ import { StatusBar, View, Pressable, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeProvider } from "@ion/ui";
 import { CatalogScreen } from "@ion/ui";
-import { ProfileSetupScreen } from "@ion/onboarding-ui";
+import { ProfileSetupScreen, SelectLanguagesScreen } from "@ion/onboarding-ui";
+
+type OnboardingStep = "profile" | "languages" | null;
 
 function OnboardingButton({ onPress }: { onPress: () => void }) {
   return (
@@ -14,13 +16,22 @@ function OnboardingButton({ onPress }: { onPress: () => void }) {
 }
 
 function AppContent() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>(null);
 
-  if (showOnboarding) {
+  if (onboardingStep === "profile") {
     return (
       <ProfileSetupScreen
-        onContinue={() => setShowOnboarding(false)}
-        onBack={() => setShowOnboarding(false)}
+        onContinue={() => setOnboardingStep("languages")}
+        onBack={() => setOnboardingStep(null)}
+      />
+    );
+  }
+
+  if (onboardingStep === "languages") {
+    return (
+      <SelectLanguagesScreen
+        onContinue={() => setOnboardingStep(null)}
+        onBack={() => setOnboardingStep("profile")}
       />
     );
   }
@@ -28,7 +39,7 @@ function AppContent() {
   return (
     <View style={{ flex: 1 }}>
       <CatalogScreen />
-      <OnboardingButton onPress={() => setShowOnboarding(true)} />
+      <OnboardingButton onPress={() => setOnboardingStep("profile")} />
     </View>
   );
 }

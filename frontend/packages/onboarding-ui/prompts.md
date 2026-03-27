@@ -5,64 +5,13 @@ Implementation conversations focus on writing code. Verification conversations (
 
 ---
 
-## Conversation 3: Screen 2 — Select Languages
-```
-Read `packages/onboarding-ui/onboarding.md` — specifically "Screen 2: Select Languages".
+## Global Rules for All Prompts
 
-Before writing code:
-1. Read `packages/onboarding-ui/src/` to see the existing screen and component patterns from Screen 1
-2. Read `packages/ui/src/components/SearchBar.tsx` — already implemented, props: `value`, `onChangeText`, `placeholder?`
-3. Read `packages/ui/src/components/BottomSheet.tsx` and `packages/ui/src/components/bottom-sheet-types.ts` — props: `isVisible`, `onClose`, `title?`, `onBack?`, `bottomButton?`, `children`
+**Assets:** Download all icons and image assets directly from Figma using the REST API (`https://api.figma.com/v1/images/{fileKey}?ids={nodeId}&format=svg`). Use the Figma API token from MCP config. Never recreate or approximate assets — always pull the exact export from Figma.
 
-Implement in `packages/onboarding-ui/`:
+**Checks and CI:** In these implementation prompts, you don't need to propose or run local lint, type-check, or tests unless the user explicitly asks for them — focus on writing code and downloading assets. However, do not change or disable any existing checks, and assume that all contributions must satisfy the project's normal lint/type-check/test and CI requirements as documented in `frontend/CLAUDE.md` and `08-testing.md`.
 
-**Screen: `SelectLanguagesScreen.tsx`**
-- Props: `OnboardingScreenProps` (`onContinue`, `onBack`)
-- Uses `BottomSheet` with `onBack` and `title="Select languages"`
-- Subtitle: "You'll be shown content in the selected language" (use `Text` variant="body2" color={colors.tertiaryText})
-- `SearchBar` from `@ion/ui` for filtering
-- Language list: scrollable, selected items sort to top, search filters in real-time
-- `Button` from `@ion/ui` in `bottomButton` slot: "Continue", `isLoading` during save, hidden when no selection
-
-**Component (onboarding-local):**
-- `CheckboxRow.tsx` — height 44px, `primaryBackground` background, 12px radius. Flag emoji + 16px gap + language name (`subtitle2`) + `Icon` name="checkbox-on"/"checkbox-off". Full-width `Pressable` tap target.
-
-**Actions needed (stub with TODO if not yet implemented):**
-- `fetchLanguages`, `saveSelectedLanguages`
-
-Colocated tests for screen and CheckboxRow. Test behavior, not implementation.
-Run lint, type-check, and tests before done.
-
-Figma reference: use `get_design_context` on node `21632:117234` (file key `3TnZngoFeklOVC8TexlR1D`).
-```
-
----
-
-## Conversation V3: Verify Screen 2 — Select Languages
-
-```
-Read `packages/onboarding-ui/onboarding.md` for design specs.
-
-Visual QA only. Compare the implemented Select Languages screen against Figma and fix diffs.
-
-Steps:
-1. Start the web dev server via `preview_start`
-2. Navigate to the languages onboarding screen
-3. `preview_screenshot` the rendered screen
-4. `get_screenshot` on Figma node `21632:117234` (file key `3TnZngoFeklOVC8TexlR1D`)
-5. Compare: CheckboxRow height/radius/colors, search bar styling, spacing between items, button placement
-6. `preview_inspect` to verify computed CSS values against tokens
-
-Test interactions:
-- Search filters the list in real-time
-- Selecting a language shows green checkbox, item sorts to top
-- Deselecting removes green checkbox
-- Continue button appears only when at least one language selected
-- Continue button shows loading spinner during save
-- Back arrow navigates back
-
-Fix every diff until the screen matches Figma.
-```
+Analyze and let's have a plan. Ask clarification questions. 
 
 ---
 
@@ -95,10 +44,9 @@ Implement in `packages/onboarding-ui/`:
 **Actions needed (stub with TODO if not yet implemented):**
 - `fetchSuggestedCreators`, `followCreator`, `unfollowCreator`, `completeOnboarding`
 
-Colocated tests for screen and CreatorRow.
-Run lint, type-check, and tests before done.
-
 Figma reference: use `get_design_context` on the Discover Creators frame within node `50256:221731` (file key `3TnZngoFeklOVC8TexlR1D`).
+Download all icons/assets from Figma REST API — do not approximate.
+Figma link for the screen - @https://www.figma.com/design/3TnZngoFeklOVC8TexlR1D/%F0%9F%A7%8A-ICE-Cloud?node-id=21632-117234&m=dev
 ```
 
 ---
@@ -157,10 +105,8 @@ Implement in `packages/onboarding-ui/`:
 **Actions needed (stub with TODO if not yet implemented):**
 - `requestNotificationPermission`
 
-Colocated tests for screen, NotificationCard, and DescriptionItem.
-Run lint, type-check, and tests before done.
-
 Figma reference: use `get_design_context` on node `22042:47917` (file key `3TnZngoFeklOVC8TexlR1D`).
+Download all icons/assets (notification avatars, benefit icons) from Figma REST API — do not approximate.
 ```
 
 ---
@@ -224,6 +170,5 @@ Now wire them into both app shells:
 4. `onBack` navigates to the previous route
 5. Final screen redirects to `/` (main app)
 
-Test the navigation flow on both platforms.
-Run lint and type-check before done.
+Test the navigation flow on both platforms only if explicitly requested.
 ```

@@ -21,7 +21,7 @@ function getWindowInnerHeight(): number {
   return (globalThis as any).innerHeight ?? 0;
 }
 
-function useKeyboardInset(): number {
+export function useKeyboardInset(): number {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {

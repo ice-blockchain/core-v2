@@ -36,3 +36,15 @@ export interface ValidateNicknameResult {
 export interface ValidateReferralResult {
   isValid: boolean;
 }
+
+export interface Language {
+  code: string;
+  name: string;
+  flag: string;
+}
+
+export type FetchLanguagesResult = Language[];
+
+export interface SaveSelectedLanguagesInput {
+  languageCodes: string[];
+}
