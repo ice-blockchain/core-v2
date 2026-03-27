@@ -6,6 +6,7 @@ import type {
   PasskeyAuthResult,
 } from '../types';
 import { IdentityError, IdentityErrorCode } from '../errors';
+import { validateChallengeFormat } from '../crypto/validate-challenge';
 
 function base64UrlToBuffer(base64url: string): ArrayBuffer {
   return base64urlnopad.decode(base64url).buffer as ArrayBuffer;
@@ -51,6 +52,7 @@ function buildCreationOptions(challenge: UserRegistrationChallenge): PublicKeyCr
 export async function createPasskeyCredential(
   challenge: UserRegistrationChallenge,
 ): Promise<PasskeyRegistrationResult> {
+  validateChallengeFormat(challenge.challenge);
   try {
     const credential = (await navigator.credentials.create({
       publicKey: buildCreationOptions(challenge),
@@ -89,6 +91,7 @@ function buildRequestOptions(challenge: UserActionChallenge): PublicKeyCredentia
 export async function getPasskeyAssertion(
   challenge: UserActionChallenge,
 ): Promise<PasskeyAuthResult> {
+  validateChallengeFormat(challenge.challenge);
   try {
     const credential = (await navigator.credentials.get({
       publicKey: buildRequestOptions(challenge),

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NetworkError } from '@ion/network';
 import type { SessionDataSource } from '../data-sources/session-data-source';
 import type { TokenManager } from '../token/token-manager';
 import { refreshToken } from './refresh-token';
@@ -70,9 +71,16 @@ describe('refreshToken', () => {
     expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledTimes(1);
   });
 
-  it('clears tokens on refresh failure', async () => {
-    vi.mocked(deps.sessionDataSource.refreshToken).mockRejectedValueOnce(new Error('expired'));
-    await expect(refreshToken('alice', deps)).rejects.toThrow('expired');
+  it('clears tokens on 401 auth failure', async () => {
+    const authError = new NetworkError({ code: 'CLIENT_ERROR', message: 'Unauthorized', status: 401 });
+    vi.mocked(deps.sessionDataSource.refreshToken).mockRejectedValueOnce(authError);
+    await expect(refreshToken('alice', deps)).rejects.toThrow('Unauthorized');
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
+  });
+
+  it('preserves tokens on transient network failure', async () => {
+    vi.mocked(deps.sessionDataSource.refreshToken).mockRejectedValueOnce(new Error('timeout'));
+    await expect(refreshToken('alice', deps)).rejects.toThrow('timeout');
+    expect(deps.tokenManager.clearTokens).not.toHaveBeenCalled();
   });
 });

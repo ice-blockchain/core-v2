@@ -25,7 +25,7 @@ const mockRegistrationChallenge: UserRegistrationChallenge = {
   temporaryAuthenticationToken: 'tok',
   rp: { id: 'example.com', name: 'Example' },
   user: { id: 'dXNlci0x', name: 'alice', displayName: 'Alice' },
-  challenge: 'Y2hhbGxlbmdl',
+  challenge: 'Y2hhbGxlbmdlLXBhc3NrZXk',
   attestation: 'direct',
   pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
   excludeCredentials: [],
@@ -35,7 +35,7 @@ const mockRegistrationChallenge: UserRegistrationChallenge = {
 };
 
 const mockActionChallenge: UserActionChallenge = {
-  challenge: 'Y2hhbGxlbmdl',
+  challenge: 'Y2hhbGxlbmdlLXBhc3NrZXk',
   challengeIdentifier: 'ci-1',
   rp: { id: 'example.com', name: 'Example' },
   allowCredentials: {

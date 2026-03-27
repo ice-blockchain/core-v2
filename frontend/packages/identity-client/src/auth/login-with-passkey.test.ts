@@ -20,7 +20,7 @@ vi.mock('../platform/passkey', () => ({
 
 function createMockChallenge(): UserActionChallenge {
   return {
-    challenge: 'login-challenge',
+    challenge: 'bG9naW4tY2hhbGxlbmdl',
     challengeIdentifier: 'challenge-id-1',
     rp: { id: 'example.com', name: 'Example' },
     allowCredentials: {

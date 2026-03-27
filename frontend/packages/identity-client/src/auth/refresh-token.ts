@@ -1,3 +1,4 @@
+import { NetworkError } from '@ion/network';
 import type { SessionDataSource } from '../data-sources/session-data-source';
 import type { TokenManager } from '../token/token-manager';
 import { IdentityError, IdentityErrorCode } from '../errors';
@@ -6,6 +7,12 @@ interface RefreshTokenDeps {
   sessionDataSource: SessionDataSource;
   tokenManager: TokenManager;
   refreshLocks: Map<string, Promise<void>>;
+}
+
+function isPermanentAuthFailure(error: unknown): boolean {
+  return error instanceof NetworkError &&
+    error.status !== undefined &&
+    (error.status === 401 || error.status === 403);
 }
 
 // Deduplicates concurrent refresh calls per username. Relies on JS single-threaded
@@ -42,7 +49,9 @@ async function executeRefresh(
       refreshToken: result.refreshToken ?? tokens.refreshToken,
     });
   } catch (error) {
-    await deps.tokenManager.clearTokens(username);
+    if (isPermanentAuthFailure(error)) {
+      await deps.tokenManager.clearTokens(username);
+    }
     throw error;
   }
 }

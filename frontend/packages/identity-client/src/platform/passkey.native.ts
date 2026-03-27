@@ -7,6 +7,7 @@ import type {
 } from '../types';
 import { Logger } from '@ion/diagnostics';
 import { IdentityError, IdentityErrorCode } from '../errors';
+import { validateChallengeFormat } from '../crypto/validate-challenge';
 
 export function isPasskeyAvailable(): boolean {
   return Passkey.isSupported();
@@ -15,6 +16,7 @@ export function isPasskeyAvailable(): boolean {
 export async function createPasskeyCredential(
   challenge: UserRegistrationChallenge,
 ): Promise<PasskeyRegistrationResult> {
+  validateChallengeFormat(challenge.challenge);
   try {
     const request: Parameters<typeof Passkey.create>[0] = {
       challenge: challenge.challenge,
@@ -41,6 +43,7 @@ export async function createPasskeyCredential(
 export async function getPasskeyAssertion(
   challenge: UserActionChallenge,
 ): Promise<PasskeyAuthResult> {
+  validateChallengeFormat(challenge.challenge);
   try {
     const request: Parameters<typeof Passkey.get>[0] = {
       challenge: challenge.challenge,
