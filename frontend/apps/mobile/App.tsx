@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { Pressable, StatusBar, Text } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ThemeProvider, CatalogScreen } from "@ion/ui";
+import { ThemeProvider, CatalogScreen, FullscreenPortalHost } from "@ion/ui";
 import { createLocalization, registerTranslations } from "@ion/localization";
 import { DiscoverCreatorsScreen, NotificationsScreen, ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from "@ion/onboarding-ui";
 import { authTranslations } from "@ion/auth-ui";
@@ -260,12 +261,16 @@ function AppContent() {
 
 function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <StatusBar barStyle="light-content" />
-        <AppContent />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <FullscreenPortalHost>
+            <StatusBar barStyle="light-content" />
+            <AppContent />
+          </FullscreenPortalHost>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

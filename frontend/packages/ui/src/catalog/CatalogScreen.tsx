@@ -18,6 +18,7 @@ import { TextFieldCatalogSection } from "./TextFieldCatalogSection";
 import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
 import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
+import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
 
 interface CatalogContentProps {
   onToggleMode: () => void;
@@ -51,6 +52,7 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
         <TextFieldCatalogSection />
         <NotificationBarCatalogSection />
         <IONLoaderCatalogSection />
+        <BottomSheetCatalogSection />
       </View>
     </ScrollView>
     </SafeAreaView>

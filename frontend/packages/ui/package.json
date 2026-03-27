@@ -27,6 +27,7 @@
     "lottie-react": { "optional": true }
   },
   "devDependencies": {
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@svgr/cli": "^8.1.0",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
@@ -34,6 +35,8 @@
     "@testing-library/jest-native": "5.4.3",
     "@testing-library/react-native": "13.3.3",
     "@types/react": "^19.0.0",
+    "react-native-gesture-handler": "^2.30.0",
+    "react-native-reanimated": "^4.3.0",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-svg": "^15.15.4",
     "react-test-renderer": "19.2.3",

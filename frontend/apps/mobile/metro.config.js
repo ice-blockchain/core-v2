@@ -8,7 +8,14 @@ const mobileModules = path.resolve(projectRoot, 'node_modules');
 
 // Pre-resolve singleton modules to the mobile app's copies.
 // This prevents duplicate instances in pnpm monorepos.
-const singletonNames = ['react', 'react-native', 'react-native-safe-area-context', 'react-native-svg'];
+const singletonNames = [
+  'react',
+  'react-native',
+  'react-native-safe-area-context',
+  'react-native-svg',
+  'react-native-gesture-handler',
+  'react-native-reanimated',
+];
 const singletonPaths = {};
 for (const name of singletonNames) {
   singletonPaths[name] = path.resolve(require.resolve(name, { paths: [mobileModules] }));
