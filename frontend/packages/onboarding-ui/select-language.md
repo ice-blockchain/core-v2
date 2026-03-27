@@ -76,7 +76,7 @@ Hardcoded in `fetchLanguages` stub for now. Full list ported from the Flutter en
 | Question | Decision | Reason |
 |----------|----------|--------|
 | Flag rendering | Emoji flags | Matches Flutter app, zero assets, cross-platform |
-| Language list | Hardcoded 67 languages from Flutter enum | Single source of truth across apps |
+| Language list | Hardcoded 69 languages from Flutter enum | Single source of truth across apps |
 | Row background | `tertiaryBackground` | Matches Figma (source of visual truth) |
 
 ---
