@@ -42,7 +42,7 @@
 ### Client Layer
 | Package | Purpose | Status |
 |---|---|---|
-| `@ion/identity-client` | Auth, users API | Planned |
+| `@ion/identity-client` | Auth, users API | In Progress |
 | `@ion/ion-connect-client` | Relays, events, NIPs, DVM | In Progress |
 | `@ion/token-analytics-client` | Trades, holders, stats API | Planned |
 | `@ion/wallet-client` | Coins, NFT sync, DFNS | Planned |
