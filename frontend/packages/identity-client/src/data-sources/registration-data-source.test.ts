@@ -13,10 +13,28 @@ function createMockHttpClient(): HttpClient {
   };
 }
 
+const validRegChallenge = {
+  challenge: 'abc123',
+  rp: { id: 'example.com', name: 'Example' },
+  user: { id: 'u1', name: 'alice', displayName: 'Alice' },
+  temporaryAuthenticationToken: 'tok',
+  attestation: 'direct',
+  pubKeyCredParams: [],
+  excludeCredentials: [],
+  authenticatorSelection: null,
+  supportedCredentialKinds: null,
+  allowedRecoveryCredentials: null,
+};
+
+const validRegResult = {
+  authentication: { token: 't', refreshToken: 'r' },
+  user: { id: 'u1' },
+};
+
 describe('createRegistrationDataSource', () => {
   it('posts email to delegated registration endpoint', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ challenge: 'ch' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegChallenge);
     const ds = createRegistrationDataSource(httpClient);
 
     await ds.initRegistration('alice@example.com');
@@ -28,7 +46,7 @@ describe('createRegistrationDataSource', () => {
 
   it('includes earlyAccessEmail in registration init when provided', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ challenge: 'ch' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegChallenge);
     const ds = createRegistrationDataSource(httpClient);
 
     await ds.initRegistration('alice@example.com', 'early@example.com');
@@ -40,7 +58,7 @@ describe('createRegistrationDataSource', () => {
 
   it('posts credential to enduser registration endpoint with temp token', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ authentication: {}, user: {} });
+    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegResult);
     const ds = createRegistrationDataSource(httpClient);
     const credential = {
       firstFactorCredential: {
@@ -59,7 +77,7 @@ describe('createRegistrationDataSource', () => {
 
   it('includes earlyAccessEmail in registration complete when provided', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ authentication: {}, user: {} });
+    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegResult);
     const ds = createRegistrationDataSource(httpClient);
     const credential = {
       firstFactorCredential: {
@@ -74,5 +92,13 @@ describe('createRegistrationDataSource', () => {
       body: { ...credential, earlyAccessEmail: 'early@example.com' },
       headers: { Authorization: 'Bearer temp-token' },
     });
+  });
+
+  it('rejects malformed registration challenge from server', async () => {
+    const httpClient = createMockHttpClient();
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ bad: 'data' });
+    const ds = createRegistrationDataSource(httpClient);
+
+    await expect(ds.initRegistration('alice@example.com')).rejects.toThrow('missing or empty challenge');
   });
 });

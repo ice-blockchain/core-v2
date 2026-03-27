@@ -1,5 +1,6 @@
 import type { HttpClient } from '@ion/network';
 import type { UserActionChallenge, AuthTokens } from '../types';
+import { validateActionChallengeResponse, validateAuthTokensResponse } from './validate-response';
 
 export interface LoginDataSource {
   initLogin(username: string, twoFAVerificationCodes?: Record<string, string>): Promise<UserActionChallenge>;
@@ -16,16 +17,20 @@ export interface LoginPayload {
 
 export function createLoginDataSource(httpClient: HttpClient): LoginDataSource {
   return {
-    initLogin(username, twoFAVerificationCodes) {
-      return httpClient.post<UserActionChallenge>('/auth/login/init', {
+    async initLogin(username, twoFAVerificationCodes) {
+      const response = await httpClient.post<UserActionChallenge>('/auth/login/init', {
         body: { username, '2FAVerificationCodes': twoFAVerificationCodes ?? {} },
       });
+      validateActionChallengeResponse(response);
+      return response;
     },
 
-    completeLogin(payload) {
-      return httpClient.post<AuthTokens>('/auth/login', {
+    async completeLogin(payload) {
+      const response = await httpClient.post<AuthTokens>('/auth/login', {
         body: payload,
       });
+      validateAuthTokensResponse(response);
+      return response;
     },
   };
 }

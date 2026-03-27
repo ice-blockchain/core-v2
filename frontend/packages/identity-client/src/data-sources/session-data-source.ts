@@ -1,4 +1,5 @@
 import type { HttpClient } from '@ion/network';
+import { validateRefreshTokenResponse } from './validate-response';
 
 export interface RefreshTokenInput {
   username: string;
@@ -13,11 +14,13 @@ export interface SessionDataSource {
 
 export function createSessionDataSource(httpClient: HttpClient): SessionDataSource {
   return {
-    refreshToken(input) {
-      return httpClient.post<{ token: string; refreshToken?: string }>('/auth/login/delegated', {
+    async refreshToken(input) {
+      const response = await httpClient.post<{ token: string; refreshToken?: string }>('/auth/login/delegated', {
         body: { username: input.username, refreshToken: input.refreshToken },
         headers: { Authorization: `Bearer ${input.currentToken}` },
       });
+      validateRefreshTokenResponse(response);
+      return response;
     },
 
     async logout(token, username) {

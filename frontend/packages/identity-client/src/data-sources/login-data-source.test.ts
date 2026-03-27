@@ -13,10 +13,21 @@ function createMockHttpClient(): HttpClient {
   };
 }
 
+const validActionChallenge = {
+  challenge: 'abc123',
+  challengeIdentifier: 'ci-1',
+  rp: { id: 'example.com', name: 'Example' },
+  allowCredentials: { webauthn: [], passwordProtectedKey: [] },
+  supportedCredentialKinds: [],
+  attestation: 'direct',
+  userVerification: 'preferred',
+  externalAuthenticationUrl: '',
+};
+
 describe('createLoginDataSource', () => {
   it('posts username and empty 2FA codes to login init endpoint', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ challenge: 'ch' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce(validActionChallenge);
     const ds = createLoginDataSource(httpClient);
 
     await ds.initLogin('alice');
@@ -28,7 +39,7 @@ describe('createLoginDataSource', () => {
 
   it('posts 2FA verification codes when provided', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ challenge: 'ch' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce(validActionChallenge);
     const ds = createLoginDataSource(httpClient);
 
     await ds.initLogin('alice', { email: '123456' });
@@ -55,5 +66,13 @@ describe('createLoginDataSource', () => {
     expect(httpClient.post).toHaveBeenCalledWith('/auth/login', {
       body: payload,
     });
+  });
+
+  it('rejects malformed login challenge from server', async () => {
+    const httpClient = createMockHttpClient();
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ bad: 'data' });
+    const ds = createLoginDataSource(httpClient);
+
+    await expect(ds.initLogin('alice')).rejects.toThrow('missing or empty challenge');
   });
 });
