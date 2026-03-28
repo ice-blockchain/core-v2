@@ -12,8 +12,9 @@
     { "path": "packages/media-viewer" },
     { "path": "packages/localization" },
     { "path": "packages/identity-client" },
-    { "path": "packages/media-upload" },
+    { "path": "packages/media/media-upload" },
     { "path": "packages/media-processing" },
-    { "path": "packages/nsfw-detection" }
+    { "path": "packages/nsfw-detection" },
+    { "path": "packages/auth" }
   ]
 }
