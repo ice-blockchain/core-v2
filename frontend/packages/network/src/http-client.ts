@@ -189,8 +189,13 @@ function parseResponseData<T>(response: AxiosResponse): T {
   const contentType: string = response.headers['content-type'] ?? '';
   rejectNonJsonContentType(contentType, response.data);
   if (typeof response.data === 'string') {
-    const suffix = contentType ? ` (content-type: ${contentType})` : '';
-    throw new NetworkError({ code: 'PARSE_ERROR', message: `Failed to parse response as JSON${suffix}`, rawBody: response.data });
+    if (response.data.length === 0) return undefined as T;
+    try {
+      return JSON.parse(response.data) as T;
+    } catch {
+      const suffix = contentType ? ` (content-type: ${contentType})` : '';
+      throw new NetworkError({ code: 'PARSE_ERROR', message: `Failed to parse response as JSON${suffix}`, rawBody: response.data });
+    }
   }
   if (contentType && !contentType.includes('application/json')) {
     Logger.warning('Unexpected content type, attempting JSON parse', { tag: 'network', data: { contentType } });
