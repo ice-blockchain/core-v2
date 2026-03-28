@@ -44,6 +44,7 @@
     "react-native-mmkv": "^4.3.0",
     "react-native-nitro-modules": "^0.35.2",
     "react-native-nitro-tflite": "^0.0.1",
+    "react-native-passkey": "^3.3.2",
     "react-native-reanimated": "^4.3.0",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "4.24.0",
