@@ -28,13 +28,28 @@ function iterationsForVersion(version: string): number {
   return iterations;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const g = typeof globalThis !== 'undefined' ? (globalThis as any) : ({} as any);
+
+function hasNativePbkdf2(): boolean {
+  return typeof g.__nativePbkdf2Sync === 'function';
+}
+
+async function deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
+  if (hasNativePbkdf2()) {
+    const buf = g.__nativePbkdf2Sync(password, new Uint8Array(salt), iterations, 32, 'sha256');
+    return buf instanceof Uint8Array ? new Uint8Array(buf) : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  }
+  return pbkdf2Async(sha256, password, salt, { c: iterations, dkLen: 32 });
+}
+
 export async function encryptPrivateKey(
   privateKeyPem: string,
   password: string,
 ): Promise<EncryptedPrivateKey> {
   const iterations = iterationsForVersion(CURRENT_VERSION);
   const salt = randomBytes(16);
-  const key = await pbkdf2Async(sha256, password, salt, { c: iterations, dkLen: 32 });
+  const key = await deriveKey(password, salt, iterations);
   const nonce = randomBytes(12);
   const encrypted = gcm(key, nonce).encrypt(encoder.encode(privateKeyPem));
   return {
@@ -53,7 +68,7 @@ export async function decryptPrivateKey(
   const version = encrypted.version ?? 'v1';
   const iterations = iterationsForVersion(version);
   const salt = base64.decode(encrypted.salt);
-  const key = await pbkdf2Async(sha256, password, salt, { c: iterations, dkLen: 32 });
+  const key = await deriveKey(password, salt, iterations);
   const nonce = base64.decode(encrypted.nonce);
   const combined = concatBytes(base64.decode(encrypted.ciphertext), base64.decode(encrypted.mac));
   const decrypted = gcm(key, nonce).decrypt(combined);
