@@ -71,7 +71,7 @@ describe('useAuthFlow', () => {
     vi.mocked(config.identityClient.loginWithPasskey).mockResolvedValue('token');
     const { result } = renderHook(() => useAuthFlow(config));
 
-    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPasskey('bob'));
+    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('bob'));
 
     expect(result.current.state.phase).toBe('verify-passkey');
     expect(config.onAuthSuccess).toHaveBeenCalledWith('bob');
@@ -87,7 +87,7 @@ describe('useAuthFlow', () => {
     );
     const { result } = renderHook(() => useAuthFlow(config));
 
-    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPasskey('carol'));
+    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('carol'));
 
     expect(result.current.state.phase).toBe('verify-password');
     expect(result.current.state.identityKeyName).toBe('carol');
@@ -101,7 +101,7 @@ describe('useAuthFlow', () => {
     vi.mocked(config.identityClient.loginWithPassword).mockResolvedValue('token');
     const { result } = renderHook(() => useAuthFlow(config));
 
-    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPasskey('dave'));
+    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('dave'));
     expect(result.current.state.phase).toBe('verify-password');
 
     await act(() => result.current.screenProps.verifyPassword.overlayProps.onConfirm('P@ss1234'));
@@ -115,7 +115,7 @@ describe('useAuthFlow', () => {
     });
     const { result } = renderHook(() => useAuthFlow(config));
 
-    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPasskey('nobody'));
+    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('nobody'));
 
     expect(result.current.state.phase).toBe('get-started');
     expect(result.current.state.error).not.toBeNull();
@@ -161,7 +161,7 @@ describe('useAuthFlow', () => {
     vi.mocked(config.identityClient.loginWithPasskey).mockResolvedValue('token');
     const { result } = renderHook(() => useAuthFlow(config));
 
-    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPasskey('eve'));
+    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('eve'));
 
     expect(result.current.screenProps.verifyPasskey.identityKeyName).toBe('eve');
     expect(result.current.screenProps.verifyPasskey.loadingElement).toBe(config.loadingElement);

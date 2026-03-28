@@ -36,7 +36,8 @@ export type AuthFlowAction =
 
 export interface GetStartedCallbacks {
   onNavigateToRegister: () => void;
-  onNavigateToVerifyPasskey: (identityKeyName: string) => void;
+  onNavigateToVerifyPassword: (identityKeyName: string) => void;
+  onNavigateToRestore: () => void;
 }
 
 export interface RegisterCallbacks {

@@ -41,7 +41,8 @@ function buildScreenProps(
   return {
     getStarted: {
       onNavigateToRegister: () => deps.dispatch({ type: 'GO_TO_REGISTER' }),
-      onNavigateToVerifyPasskey: (name: string) => handleLoginAttempt(deps, name),
+      onNavigateToVerifyPassword: (name: string) => handleLoginAttempt(deps, name),
+      onNavigateToRestore: () => { /* TODO: wire restore flow */ },
     },
     register: {
       onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
