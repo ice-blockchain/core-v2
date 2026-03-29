@@ -1,6 +1,6 @@
 import type { AppEnvironment, EnvironmentConfig, LogLevel } from './types';
 
-const REQUIRED_KEYS = ['APP_ENV', 'API_BASE_URL', 'RELAY_URL', 'LOG_LEVEL'] as const;
+const REQUIRED_KEYS = ['APP_ENV', 'API_BASE_URL', 'IDENTITY_API_URL', 'IDENTITY_APP_ID', 'RELAY_URL', 'LOG_LEVEL'] as const;
 
 const VALID_ENVIRONMENTS: AppEnvironment[] = ['staging', 'testnet', 'production'];
 const VALID_LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
@@ -45,5 +45,8 @@ export function validateEnvironmentConfig(
   validateUrl(apiBaseUrl, 'API_BASE_URL', 'https');
   validateUrl(relayUrl, 'RELAY_URL', 'wss');
 
-  return { appEnvironment, apiBaseUrl, relayUrl, logLevel };
+  const identityApiUrl = config.IDENTITY_API_URL as string;
+  const identityAppId = config.IDENTITY_APP_ID as string;
+
+  return { appEnvironment, apiBaseUrl, identityApiUrl, identityAppId, relayUrl, logLevel };
 }
