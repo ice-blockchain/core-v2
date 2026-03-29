@@ -25,39 +25,22 @@ export function isPasskeyAvailable(): boolean {
   );
 }
 
-function stringToBuffer(str: string): ArrayBuffer {
-  return new TextEncoder().encode(str).buffer as ArrayBuffer;
-}
-
-function safeBase64UrlToBuffer(value: string): ArrayBuffer {
-  try {
-    return base64UrlToBuffer(value);
-  } catch {
-    return stringToBuffer(value);
-  }
-}
-
 function buildCreationOptions(challenge: UserRegistrationChallenge): PublicKeyCredentialCreationOptions {
-  // WebAuthn requires rp.id to match the page origin.
-  // On localhost, override the server-provided rp.id for local testing.
-  const rp = globalThis.location?.hostname === 'localhost'
-    ? { ...challenge.rp, id: 'localhost' }
-    : challenge.rp;
   return {
-    rp,
+    rp: challenge.rp,
     user: {
-      id: safeBase64UrlToBuffer(challenge.user.id),
+      id: base64UrlToBuffer(challenge.user.id),
       name: challenge.user.name,
       displayName: challenge.user.displayName,
     },
-    challenge: safeBase64UrlToBuffer(challenge.challenge),
+    challenge: base64UrlToBuffer(challenge.challenge),
     pubKeyCredParams: challenge.pubKeyCredParams.map((p) => ({
       type: 'public-key' as const,
       alg: p.alg,
     })),
     excludeCredentials: challenge.excludeCredentials.map((c) => ({
       type: 'public-key' as const,
-      id: safeBase64UrlToBuffer(c.id),
+      id: base64UrlToBuffer(c.id),
     })),
     ...(challenge.authenticatorSelection != null && {
       authenticatorSelection: challenge.authenticatorSelection as AuthenticatorSelectionCriteria,
@@ -91,18 +74,15 @@ export async function createPasskeyCredential(
 
 function buildRequestOptions(challenge: UserActionChallenge): PublicKeyCredentialRequestOptions {
   const webauthn = challenge.allowCredentials.webauthn;
-  const rpId = globalThis.location?.hostname === 'localhost'
-    ? 'localhost'
-    : challenge.rp.id;
   const options: PublicKeyCredentialRequestOptions = {
-    challenge: safeBase64UrlToBuffer(challenge.challenge),
-    rpId,
+    challenge: base64UrlToBuffer(challenge.challenge),
+    rpId: challenge.rp.id,
     userVerification: challenge.userVerification as UserVerificationRequirement,
   };
   if (webauthn) {
     options.allowCredentials = webauthn.map((c) => ({
       type: 'public-key' as const,
-      id: safeBase64UrlToBuffer(c.id),
+      id: base64UrlToBuffer(c.id),
     }));
   }
   return options;
