@@ -2,4 +2,3 @@ packages:
   - "apps/*"
   - "apps/shared/*"
   - "packages/*"
-  - "packages/media/*"

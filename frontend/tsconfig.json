@@ -9,9 +9,11 @@
     { "path": "packages/permissions" },
     { "path": "packages/platform" },
     { "path": "packages/network" },
-    { "path": "packages/media/media-viewer" },
+    { "path": "packages/media-viewer" },
     { "path": "packages/localization" },
     { "path": "packages/identity-client" },
-    { "path": "packages/media/media-upload" }
+    { "path": "packages/media-upload" },
+    { "path": "packages/media-processing" },
+    { "path": "packages/nsfw-detection" }
   ]
 }
