@@ -178,7 +178,7 @@ function AuthSheetContent({ nav }: { nav: Nav }) {
   return (
     <GetStartedScreen
       onNavigateToRegister={nav.goToRegister}
-      onNavigateToVerifyPasskey={nav.goToVerifyPassword}
+      onNavigateToVerifyPassword={nav.goToVerifyPassword}
       onNavigateToRestore={nav.goToRestoreMenu}
     />
   );

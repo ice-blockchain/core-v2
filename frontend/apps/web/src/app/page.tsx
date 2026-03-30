@@ -106,7 +106,7 @@ function AuthSheetContent({ nav }: { nav: Nav }) {
   return renderRestorePhase(nav) ?? renderAuthPhase(nav) ?? (
     <GetStartedScreen
       onNavigateToRegister={nav.goToRegister}
-      onNavigateToVerifyPasskey={nav.goToVerifyPassword}
+      onNavigateToVerifyPassword={nav.goToVerifyPassword}
       onNavigateToRestore={nav.goToRestoreMenu}
     />
   );
@@ -140,7 +140,7 @@ export default function SplashPage() {
           <IdentityKeyNotFoundModal visible={nav.keyNotFound} onClose={nav.hideKeyNotFound} />
           <RestoreSuccessModal
             visible={nav.restoreSuccess !== null}
-            onLogin={() => nav.goToSetNewPassword(nav.restoreSuccess!)}
+            onLogin={() => { if (nav.restoreSuccess) nav.goToSetNewPassword(nav.restoreSuccess); }}
           />
           <PasswordOverlay nav={nav} />
         </>

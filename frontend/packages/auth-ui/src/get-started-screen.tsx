@@ -28,7 +28,7 @@ function GetStartedHeader() {
 
 interface GetStartedScreenProps {
   onNavigateToRegister: () => void;
-  onNavigateToVerifyPasskey: (identityKeyName: string) => void;
+  onNavigateToVerifyPassword: (identityKeyName: string) => void;
   onNavigateToRestore: () => void;
 }
 
@@ -49,7 +49,7 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
         style={styles.field}
       />
       <View style={styles.continueWrapper}>
-        <PrimaryButton label={translate("auth:continueButton")} onPress={() => identity.validate() && props.onNavigateToVerifyPasskey(identity.value)} />
+        <PrimaryButton label={translate("auth:continueButton")} onPress={() => identity.validate() && props.onNavigateToVerifyPassword(identity.value)} />
       </View>
       <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
       <SecondaryButton label={translate("auth:registerButton")} onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />

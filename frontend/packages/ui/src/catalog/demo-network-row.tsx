@@ -1,4 +1,4 @@
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import { Text } from "../components/Text";
 import { useTheme } from "../theme/ThemeProvider";
 import type { MockNetwork } from "./demo-mock-data";
@@ -27,7 +27,7 @@ function NetworkPill({ label }: { label: string }) {
 export function DemoNetworkRow({ network }: { network: MockNetwork }) {
   const theme = useTheme();
   return (
-    <Pressable
+    <View
       style={{
         flexDirection: "row",
         alignItems: "center",
@@ -51,6 +51,6 @@ export function DemoNetworkRow({ network }: { network: MockNetwork }) {
         <Text variant="body">{network.amount}</Text>
         <Text variant="caption3" color={theme.colors.secondaryText}>{network.dollarValue}</Text>
       </View>
-    </Pressable>
+    </View>
   );
 }
