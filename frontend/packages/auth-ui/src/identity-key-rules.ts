@@ -10,8 +10,11 @@ export function isValidIdentityKeyName(value: string): boolean {
 
 export function validateIdentityKeyName(value: string): string | null {
   if (value.length === 0) return null;
-  if (!IDENTITY_KEY_PATTERN.test(value) || value.length > IDENTITY_KEY_MAX_LENGTH) {
+  if (!IDENTITY_KEY_PATTERN.test(value)) {
     return translate("auth:identityKeyCharactersError");
+  }
+  if (value.length > IDENTITY_KEY_MAX_LENGTH) {
+    return translate("auth:identityKeyMaxLengthError");
   }
   return null;
 }
