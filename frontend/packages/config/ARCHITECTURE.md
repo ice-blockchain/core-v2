@@ -6,8 +6,8 @@ Typed environment configuration manager and remote config service. Loads, valida
 
 ```typescript
 // Environment config
-export { environmentConfig } from './src/environment';
-export type { AppEnvironment, EnvironmentConfig, LogLevel } from './src/types';
+export { environmentConfig } from './src/environment/environment';
+export type { AppEnvironment, EnvironmentConfig, LogLevel } from './src/environment/types';
 
 // Remote config
 export { createRemoteConfig } from './src/remote-config/create-remote-config';
@@ -36,9 +36,9 @@ interface EnvironmentConfig {
 
 | File | Platform | Source |
 |------|----------|--------|
-| `environment.native.ts` | React Native | `react-native-config` (`APP_ENV`, `API_BASE_URL`, `RELAY_URL`, `LOG_LEVEL`) |
-| `environment.web.ts` | Web (Vite) | `import.meta.env` (`VITE_APP_ENV`, `VITE_API_BASE_URL`, `VITE_RELAY_URL`, `VITE_LOG_LEVEL`) |
-| `environment.ts` | Stub | Throws at runtime -- bundler must resolve `.native` or `.web` |
+| `environment/environment.native.ts` | React Native | `react-native-config` (`APP_ENV`, `API_BASE_URL`, `RELAY_URL`, `LOG_LEVEL`) |
+| `environment/environment.web.ts` | Web (Vite) | `process.env` (`VITE_APP_ENV`, `VITE_API_BASE_URL`, `VITE_RELAY_URL`, `VITE_LOG_LEVEL`) |
+| `environment/environment.ts` | Stub | Throws at runtime -- bundler must resolve `.native` or `.web` |
 
 Both platforms share `validateEnvironmentConfig()` which enforces:
 - All 4 keys present
@@ -50,26 +50,34 @@ Both platforms share `validateEnvironmentConfig()` which enforces:
 
 ### Overview
 
-`createRemoteConfig(options)` returns a `RemoteConfigService` that fetches named configs from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 5-step fallback chain.
+`createRemoteConfig<T>(options)` returns a typed `RemoteConfigService<T>` bound to a single config name. It fetches from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 5-step fallback chain.
 
 ### Dependencies
 
-- **`@ion/network`** — uses `HttpClient.getRaw()` for fetching configs with raw response access (status, headers, body)
-- **`@ion/storage`** — uses `IKeyValueStorage` for persistent cache (raw config data, version numbers, timestamps)
-- **`@ion/diagnostics`** — uses `Logger` for error/warning logging on cache and network failures
+- **`@ion/network`** — `HttpClient.getRaw()` for raw response access (status, headers, body). Optional — defaults to `createHttpClient({ baseUrl: environmentConfig.apiBaseUrl })`
+- **`@ion/storage`** — `IKeyValueStorage` for persistent cache. Optional — defaults to `createKeyValueStorage({ id: 'remote-config' })`
+- **`@ion/diagnostics`** — `Logger` for error/warning logging on cache and network failures
 
 ```typescript
-const service = createRemoteConfig({
-  httpClient,                       // HttpClient from @ion/network
-  storage: keyValueStorage,         // IKeyValueStorage from @ion/storage
-  defaultTimeToLiveMs: 300_000,     // 5 min default
-});
-
-const config = await service.getConfig({
+// Minimal — uses default httpClient and storage
+const multiswap = createRemoteConfig({
   configName: 'multiswap',
-  parser: (raw) => JSON.parse(raw),
+  parser: (raw) => JSON.parse(raw) as MultiswapConfig,
   checkVersion: true,
 });
+
+const config = await multiswap.getConfig();
+
+// Custom dependencies
+const service = createRemoteConfig({
+  configName: 'feature-flags',
+  parser: (raw) => JSON.parse(raw) as FeatureFlags,
+  httpClient: customHttpClient,
+  storage: customStorage,
+  timeToLiveMs: 60_000,
+});
+
+const flags = await service.getConfig({ timeToLiveMs: 10_000 });
 ```
 
 ### Fallback Chain
@@ -86,7 +94,7 @@ const config = await service.getConfig({
 
 ### Concurrency
 
-Per-config-name mutex serializes concurrent `getConfig` calls for the same config. Different config names are fetched concurrently.
+Per-config-name mutex serializes concurrent `getConfig` calls. Each `RemoteConfigService<T>` instance is bound to one config name.
 
 ### Cache Storage Keys
 
@@ -104,7 +112,9 @@ When `checkVersion = true`, the service sends `?version={cachedVersion}` and exp
 - **Singleton**: `environmentConfig` is created once on module load -- no runtime re-reads.
 - **Shared validation**: One `validateEnvironmentConfig()` function used by both platforms.
 - **Peer deps only for env config**: `react-native-config` is optional.
-- **`getRaw` on HttpClient**: Remote config uses `HttpClient.getRaw()` which returns raw status, headers, and body string — unlike `get<T>()` which parses JSON.
+- **`getRaw` on HttpClient**: Remote config uses `HttpClient.getRaw()` which returns raw status, headers, and body string -- unlike `get<T>()` which parses JSON.
+- **Defaults for httpClient and storage**: Both are optional. When omitted, the service creates an `HttpClient` using `environmentConfig.apiBaseUrl` and a `KeyValueStorage` with id `remote-config`.
+- **One service per config**: Each `createRemoteConfig` call binds `configName`, `parser`, and `checkVersion` at creation time. Consumers call `getConfig()` with no args (or an optional `timeToLiveMs` override).
 
 ## Dependencies
 
@@ -115,22 +125,23 @@ When `checkVersion = true`, the service sends `?version={cachedVersion}` and exp
 
 ```
 src/
-  types.ts                      # AppEnvironment, EnvironmentConfig, LogLevel
-  environment.ts                # Stub (bundler resolves .web/.native)
-  environment.web.ts            # Vite env vars
-  environment.native.ts         # react-native-config
-  validate-environment.ts       # Shared validation logic
-  validate-environment.test.ts
-  environment.test.ts
-  environment.web.test.ts
+  environment/
+    types.ts                      # AppEnvironment, EnvironmentConfig, LogLevel
+    environment.ts                # Stub (bundler resolves .web/.native)
+    environment.web.ts            # Vite env vars
+    environment.native.ts         # react-native-config
+    validate-environment.ts       # Shared validation logic
+    validate-environment.test.ts
+    environment.test.ts
+    environment.web.test.ts
   remote-config/
-    remote-config-types.ts      # All interfaces and types
-    remote-config-error.ts      # ConfigError, ConfigErrorCode
-    config-mutex.ts             # Per-key promise serialization
-    config-cache.ts             # Cache read/write/expiry helpers
-    read-cached-config.ts       # Step 1: fresh cache lookup
-    fetch-config-from-network.ts # Step 2: network fetch + 200/204 handling
-    read-stale-cache.ts         # Step 3: stale fallback (ignore TTL)
-    force-fetch-config.ts       # Step 4: force fetch with version=0
-    create-remote-config.ts     # Factory + orchestrator
+    remote-config-types.ts        # All interfaces and types
+    remote-config-error.ts        # ConfigError, ConfigErrorCode
+    config-mutex.ts               # Per-key promise serialization
+    config-cache.ts               # Cache read/write/expiry helpers
+    read-cached-config.ts         # Step 1: fresh cache lookup
+    fetch-config-from-network.ts  # Step 2: network fetch + 200/204 handling
+    read-stale-cache.ts           # Step 3: stale fallback (ignore TTL)
+    force-fetch-config.ts         # Step 4: force fetch with version=0
+    create-remote-config.ts       # Factory + orchestrator
 ```
