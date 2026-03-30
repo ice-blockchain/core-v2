@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ion/auth-ui": "workspace:*",
     "@ion/identity-client": "workspace:*"
   },
   "peerDependencies": {

@@ -2,7 +2,7 @@ import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
 import type { AuthFlowAction } from './types';
 import { mapIdentityError } from './error-messages';
-import { isValidIdentityKeyName } from './validate-identity-key-name';
+import { isValidIdentityKeyName } from '@ion/auth-ui';
 
 interface HandleLoginAttemptDeps {
   identityClient: IdentityClient;
@@ -14,30 +14,36 @@ export async function handleLoginAttempt(
   deps: HandleLoginAttemptDeps,
   identityKeyName: string,
 ): Promise<void> {
-  const { identityClient, dispatch } = deps;
   if (!isValidIdentityKeyName(identityKeyName)) {
-    dispatch({ type: 'SET_ERROR', error: mapIdentityError(buildUserNotFoundError()) });
+    deps.dispatch({ type: 'SET_ERROR', error: mapIdentityError(buildUserNotFoundError()) });
     return;
   }
-  dispatch({ type: 'SET_LOADING', isLoading: true });
+  deps.dispatch({ type: 'SET_LOADING', isLoading: true });
   try {
-    const capabilities = await identityClient.getLoginCapabilities(identityKeyName);
-    if (!capabilities.identityFound) {
-      dispatch({ type: 'SET_ERROR', error: mapIdentityError(buildUserNotFoundError()) });
-      return;
-    }
-    if (capabilities.supportsPasskey) {
-      dispatch({ type: 'GO_TO_VERIFY_PASSKEY', identityKeyName });
-      await attemptPasskeyLogin(deps, identityKeyName, capabilities.supportsPassword);
-      return;
-    }
-    if (capabilities.supportsPassword) {
-      dispatch({ type: 'GO_TO_VERIFY_PASSWORD', identityKeyName });
-    }
+    await resolveLoginRoute(deps, identityKeyName);
   } catch (error) {
-    dispatch({ type: 'SET_ERROR', error: mapIdentityError(error) });
+    deps.dispatch({ type: 'SET_ERROR', error: mapIdentityError(error) });
   } finally {
-    dispatch({ type: 'SET_LOADING', isLoading: false });
+    deps.dispatch({ type: 'SET_LOADING', isLoading: false });
+  }
+}
+
+async function resolveLoginRoute(
+  deps: HandleLoginAttemptDeps,
+  identityKeyName: string,
+): Promise<void> {
+  const capabilities = await deps.identityClient.getLoginCapabilities(identityKeyName);
+  if (!capabilities.identityFound) {
+    deps.dispatch({ type: 'SET_ERROR', error: mapIdentityError(buildUserNotFoundError()) });
+    return;
+  }
+  if (capabilities.supportsPasskey) {
+    deps.dispatch({ type: 'GO_TO_VERIFY_PASSKEY', identityKeyName });
+    await attemptPasskeyLogin(deps, identityKeyName, capabilities.supportsPassword);
+    return;
+  }
+  if (capabilities.supportsPassword) {
+    deps.dispatch({ type: 'GO_TO_VERIFY_PASSWORD', identityKeyName });
   }
 }
 

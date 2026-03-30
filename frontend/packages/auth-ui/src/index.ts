@@ -31,7 +31,7 @@ export { PasskeyBenefitList } from "./passkey-benefit-list";
 export { PasswordStrengthChecklist } from "./password-strength-checklist";
 
 // Validation
-export { validateIdentityKeyName, useIdentityKeyValidation } from "./identity-key-rules";
+export { isValidIdentityKeyName, validateIdentityKeyName, useIdentityKeyValidation } from "./identity-key-rules";
 export { buildPasswordRules, areAllPasswordRulesMet } from "./password-rules";
 export type { PasswordRule } from "./password-rules";
 

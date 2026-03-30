@@ -15,6 +15,7 @@
     { "path": "packages/media/media-upload" },
     { "path": "packages/media-processing" },
     { "path": "packages/nsfw-detection" },
-    { "path": "packages/auth" }
+    { "path": "packages/auth" },
+    { "path": "packages/auth-ui" }
   ]
 }

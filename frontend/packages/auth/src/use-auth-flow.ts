@@ -31,8 +31,9 @@ export function useAuthFlow(config: AuthFlowConfig): UseAuthFlowResult {
 }
 
 type AsyncAction = () => Promise<void>;
+type GuardFn = (action: AsyncAction) => Promise<void>;
 
-function createInFlightGuard(ref: React.RefObject<boolean>): (action: AsyncAction) => Promise<void> {
+function createInFlightGuard(ref: React.RefObject<boolean>): GuardFn {
   return async (action) => {
     if (ref.current) return;
     ref.current = true;
@@ -54,17 +55,21 @@ interface BuildScreenPropsInput {
   deps: FlowDeps;
   state: AuthFlowState;
   loadingElement: AuthFlowConfig['loadingElement'];
-  guard: (action: AsyncAction) => Promise<void>;
+  guard: GuardFn;
+}
+
+function buildGetStartedProps(deps: FlowDeps, guard: GuardFn): AuthScreenProps['getStarted'] {
+  return {
+    onNavigateToRegister: () => deps.dispatch({ type: 'GO_TO_REGISTER' }),
+    onNavigateToVerifyPassword: (name: string) => guard(() => handleLoginAttempt(deps, name)),
+    onNavigateToRestore: () => { /* TODO: wire restore flow */ },
+  };
 }
 
 function buildScreenProps(input: BuildScreenPropsInput): AuthScreenProps {
   const { deps, state, loadingElement, guard } = input;
   return {
-    getStarted: {
-      onNavigateToRegister: () => deps.dispatch({ type: 'GO_TO_REGISTER' }),
-      onNavigateToVerifyPassword: (name: string) => guard(() => handleLoginAttempt(deps, name)),
-      onNavigateToRestore: () => { /* TODO: wire restore flow */ },
-    },
+    getStarted: buildGetStartedProps(deps, guard),
     register: {
       onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
       onContinue: (data) => guard(() => handleRegister(deps, data)),

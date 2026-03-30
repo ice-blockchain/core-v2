@@ -4,6 +4,10 @@ import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
 import { handleLoginAttempt } from './handle-login-attempt';
 import type { AuthFlowAction } from './types';
 
+vi.mock('@ion/auth-ui', () => ({
+  isValidIdentityKeyName: (v: string) => /^[a-z0-9._-]+$/.test(v) && v.length > 0 && v.length <= 64,
+}));
+
 function createMockClient(): IdentityClient {
   return {
     getLoginCapabilities: vi.fn(),

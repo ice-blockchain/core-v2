@@ -2,10 +2,15 @@ import { useCallback, useMemo, useState } from "react";
 import { translate } from "@ion/localization";
 
 const IDENTITY_KEY_PATTERN = /^[a-z0-9._-]+$/;
+const IDENTITY_KEY_MAX_LENGTH = 64;
+
+export function isValidIdentityKeyName(value: string): boolean {
+  return value.length > 0 && value.length <= IDENTITY_KEY_MAX_LENGTH && IDENTITY_KEY_PATTERN.test(value);
+}
 
 export function validateIdentityKeyName(value: string): string | null {
   if (value.length === 0) return null;
-  if (!IDENTITY_KEY_PATTERN.test(value)) {
+  if (!IDENTITY_KEY_PATTERN.test(value) || value.length > IDENTITY_KEY_MAX_LENGTH) {
     return translate("auth:identityKeyCharactersError");
   }
   return null;
