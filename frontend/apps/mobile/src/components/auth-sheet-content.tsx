@@ -11,10 +11,10 @@ import {
   VerifyPasswordOverlay,
 } from "@ion/auth-ui";
 import type { Nav } from "../hooks/use-phase-navigation";
-import { LoadingAnimation } from "./loading-animation";
+import { IONLoader } from "@ion/ui";
 
 const loadingElement = (
-  <LoadingAnimation variant="onLightBackground" size={30} />
+  <IONLoader variant="light" size={30} />
 );
 
 function renderRestorePhase(nav: Nav) {

@@ -12,7 +12,7 @@ import { CatalogScreen } from "@ion/ui";
 import { SplashVideo } from "./splash-video";
 import { IntroVideo } from "./intro-video";
 import { BottomSheet } from "./bottom-sheet";
-import { LoadingAnimation } from "./loading-animation";
+import { IONLoader } from "@ion/ui";
 
 type Phase =
   | { name: "splash" }
@@ -55,7 +55,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
   if (nav.phase.name === "verify-password") {
     return (
       <VerifyPasswordBackground
-        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
+        loadingElement={<IONLoader variant="light" size={30} />}
       />
     );
   }
@@ -65,7 +65,7 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
         identityKeyName={nav.phase.identityKeyName}
         onBack={nav.goToRegister}
         onDismiss={nav.goToGetStarted}
-        loadingElement={<LoadingAnimation variant="onLightBackground" size={30} />}
+        loadingElement={<IONLoader variant="light" size={30} />}
       />
     );
   }
