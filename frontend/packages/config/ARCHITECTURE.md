@@ -86,7 +86,7 @@ type FeatureFlagName = keyof FeatureFlags;
 
 ### Overview
 
-`remoteConfigRepository(options?)` returns a `RemoteConfigService` that fetches named configs from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 5-step fallback chain.
+`remoteConfigRepository(options?)` returns a `RemoteConfigService` that fetches named configs from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 4-step fallback chain.
 
 ### Dependencies
 
@@ -119,14 +119,14 @@ const flags = await customRepository.getConfig({
 
 ### Fallback Chain
 
-```
+```text
 1. Fresh cache (memory -> storage, respecting timeToLiveMs)
 2. Network fetch (with ?version= if checkVersion)
    - 200 -> parse, save, return
    - 204 -> continue to step 3
-3. Stale cache (ignore timeToLiveMs, refresh timestamp)
+3. Stale cache (ignore timeToLiveMs)
 4. Force fetch (?version=0)
-5. Throw CONFIG_NOT_FOUND
+   - If all steps fail -> throw CONFIG_NOT_FOUND
 ```
 
 ### Concurrency

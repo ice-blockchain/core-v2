@@ -21,7 +21,7 @@ import type {
 import { createKeyValueStorage } from '@ion/storage';
 
 const DEFAULT_REFRESH_INTERVAL = 300_000; // 5 minutes
-const VALID_CONFIG_NAME = /^[a-zA-Z0-9_-]+$/;
+const VALID_CONFIG_NAME = /^[a-zA-Z0-9-]+$/;
 
 function validateConfigName(configName: string): void {
   if (!VALID_CONFIG_NAME.test(configName)) {
@@ -96,7 +96,7 @@ async function tryNetworkFetch<T>(
   try {
     return await fetchConfigFromNetwork(deps, identity, version);
   } catch (error) {
-    if (error instanceof ConfigError) throw error;
+    if (error instanceof ConfigError && error.code !== ConfigErrorCode.CONFIG_FETCH_FAILED) throw error;
     Logger.error('Network fetch failed for remote config, falling back to cache', {
       tag: 'remote-config',
       data: { configName: identity.configName },

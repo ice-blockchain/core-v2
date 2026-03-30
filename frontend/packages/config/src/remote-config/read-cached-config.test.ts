@@ -75,6 +75,7 @@ describe('readCachedConfig', () => {
   it('returns null when storage entry is expired', () => {
     const storage = createMockStorage();
     storage.setString('remote_config:data:cfg', '{"value":2}');
+    storage.setNumber('remote_config:version:cfg', 1);
     storage.setNumber('remote_config:timestamp:cfg', Date.now() - 120_000);
     const deps = createDeps({ storage });
 

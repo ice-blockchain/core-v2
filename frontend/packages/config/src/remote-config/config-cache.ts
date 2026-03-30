@@ -29,7 +29,7 @@ export function readFromMemoryCache(
 
 export function readFromStorage(storage: IKeyValueStorage, configName: string): CachedEntry | null {
   const raw = storage.getString(dataKey(configName));
-  if (!raw) return null;
+  if (raw === null) return null;
 
   const version = storage.getNumber(versionKey(configName)) ?? 0;
   const fetchedAtMs = storage.getNumber(timestampKey(configName)) ?? 0;
