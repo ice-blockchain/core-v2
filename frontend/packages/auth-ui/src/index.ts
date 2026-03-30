@@ -1,6 +1,11 @@
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
+export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { RegisterScreen } from "./register-screen";
+export { RestoreCredentialsScreen } from "./restore-credentials-screen";
+export { RestoreMenuScreen } from "./restore-menu-screen";
+export { RestoreSuccessModal } from "./restore-success-modal";
+export { SetNewPasswordScreen } from "./set-new-password-screen";
 export { VerifyPasskeyScreen } from "./verify-passkey-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
 
@@ -16,6 +21,9 @@ export { SheetHeader } from "./sheet-header";
 // Footers
 export { SecuredByFooter } from "./secured-by-footer";
 export { TermsFooter } from "./terms-footer";
+
+// Cards
+export { RestoreOptionCard } from "./restore-option-card";
 
 // Forms
 export { RegisterForm } from "./register-form";

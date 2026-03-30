@@ -9,7 +9,8 @@ export default function GetStartedPage() {
   return (
     <GetStartedScreen
       onNavigateToRegister={() => router.push("/register")}
-      onNavigateToVerifyPasskey={() => router.push("/verify-passkey")}
+      onNavigateToVerifyPassword={(identityKeyName) => router.push(`/verify-password?key=${encodeURIComponent(identityKeyName)}`)}
+      onNavigateToRestore={() => router.push("/restore-menu")}
     />
   );
 }

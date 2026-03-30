@@ -20,6 +20,9 @@ export type { TextFieldProps } from "./components/TextField";
 export { BottomSheet } from "./components/BottomSheet";
 export type { BottomSheetProps } from "./components/bottom-sheet-types";
 
+export { FullscreenBottomSheet } from "./components/FullscreenBottomSheet";
+export type { FullscreenBottomSheetProps, FullscreenBottomSheetRef } from "./components/fullscreen-bottom-sheet-types";
+
 export { TextInput } from "./components/TextInput";
 export type { TextInputProps, TextInputState } from "./components/text-input-types";
 

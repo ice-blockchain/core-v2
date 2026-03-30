@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -17,25 +18,38 @@ import { TextFieldCatalogSection } from "./TextFieldCatalogSection";
 import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
 import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
+import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
 
-function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
+function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
+  const theme = useTheme();
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.xxl }}>
+      <Text variant="headline1">UI Kit Catalog</Text>
+      <Button
+        height={44}
+        color="secondary"
+        label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"}
+        onPress={onToggleMode}
+      />
+    </View>
+  );
+}
+
+interface CatalogContentProps {
+  onToggleMode: () => void;
+  headerSlot?: ReactNode;
+}
+
+function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
   const theme = useTheme();
 
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={{ flex: 1, backgroundColor: theme.colors.primaryBackground }}>
-    <ScrollView
-      contentContainerStyle={{ padding: theme.spacing.lg, alignItems: "center" }}
-    >
+    <ScrollView contentContainerStyle={{ padding: theme.spacing.lg, alignItems: "center" }}>
       <View style={{ maxWidth: 420, width: "100%" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.xxl }}>
-          <Text variant="headline1">UI Kit Catalog</Text>
-          <Button
-            height={44}
-            color="secondary"
-            label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"}
-            onPress={onToggleMode}
-          />
-        </View>
+        <CatalogHeader onToggleMode={onToggleMode} />
+        {headerSlot}
         <ColorCatalogSection />
         <TypographyCatalogSection />
         <IconCatalogSection />
@@ -44,13 +58,14 @@ function CatalogContent({ onToggleMode }: { onToggleMode: () => void }) {
         <TextFieldCatalogSection />
         <NotificationBarCatalogSection />
         <IONLoaderCatalogSection />
+        <BottomSheetCatalogSection />
       </View>
     </ScrollView>
     </SafeAreaView>
   );
 }
 
-export function CatalogScreen() {
+export function CatalogScreen({ headerSlot }: { headerSlot?: ReactNode }) {
   const [colorMode, setColorMode] = useState<ColorMode>("light");
 
   function toggleColorMode() {
@@ -61,7 +76,7 @@ export function CatalogScreen() {
     <SafeAreaProvider>
       <ThemeProvider colorMode={colorMode}>
         <NotificationBarProvider>
-          <CatalogContent onToggleMode={toggleColorMode} />
+          <CatalogContent onToggleMode={toggleColorMode} headerSlot={headerSlot} />
         </NotificationBarProvider>
       </ThemeProvider>
     </SafeAreaProvider>

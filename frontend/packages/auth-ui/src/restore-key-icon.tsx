@@ -13,8 +13,8 @@ const CLIP_PATH = "M15.472 3a3.851 3.851 0 1 1 0 7.702 3.851 3.851 0 0 1 0-7.702
 export function RestoreKeyIcon() {
   return (
     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-      {PATHS.map((d) => <Path key={d.slice(0, 10)} fill="#494949" d={d} />)}
-      <Path fillRule="evenodd" clipRule="evenodd" fill="#494949" d={CLIP_PATH} />
+      {PATHS.map((d) => <Path key={d.slice(0, 10)} fill="white" d={d} />)}
+      <Path fillRule="evenodd" clipRule="evenodd" fill="white" d={CLIP_PATH} />
     </Svg>
   );
 }

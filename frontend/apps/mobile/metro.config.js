@@ -8,7 +8,14 @@ const mobileModules = path.resolve(projectRoot, 'node_modules');
 
 // Pre-resolve singleton modules to the mobile app's copies.
 // This prevents duplicate instances in pnpm monorepos.
-const singletonNames = ['react', 'react-native', 'react-native-safe-area-context', 'react-native-svg'];
+const singletonNames = [
+  'react',
+  'react-native',
+  'react-native-safe-area-context',
+  'react-native-svg',
+  'react-native-gesture-handler',
+  'react-native-reanimated',
+];
 const singletonPaths = {};
 for (const name of singletonNames) {
   singletonPaths[name] = path.resolve(require.resolve(name, { paths: [mobileModules] }));
@@ -53,6 +60,18 @@ function getWorkspaceAssetPath(url) {
   };
 }
 
+// Packages that need directory-level singleton (complex packages with internal imports).
+// Maps to the package directory so Metro resolves internal files correctly.
+const directorySingletonNames = [
+  '@gorhom/bottom-sheet',
+  '@gorhom/portal',
+];
+const directorySingletons = {};
+for (const name of directorySingletonNames) {
+  const pkgJson = require.resolve(name + '/package.json', { paths: [mobileModules] });
+  directorySingletons[name] = path.dirname(pkgJson);
+}
+
 const config = {
   watchFolders: [workspaceRoot],
   resolver: {
@@ -72,6 +91,15 @@ const config = {
         if (moduleName.startsWith(name + '/')) {
           return context.resolveRequest(
             { ...context, originModulePath: path.join(mobileModules, '.placeholder.js') },
+            moduleName,
+            platform,
+          );
+        }
+      }
+      for (const [pkgName, pkgDir] of Object.entries(directorySingletons)) {
+        if (moduleName === pkgName || moduleName.startsWith(pkgName + '/')) {
+          return context.resolveRequest(
+            { ...context, originModulePath: path.join(pkgDir, 'index.js') },
             moduleName,
             platform,
           );

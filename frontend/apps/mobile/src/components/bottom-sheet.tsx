@@ -20,7 +20,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
         <KeyboardAvoidingView
           style={styles.content}
           behavior={Platform.select({ ios: "padding", android: "height" })}
-          keyboardVerticalOffset={Platform.select({ ios: 150, android: 0 })}
+          keyboardVerticalOffset={Platform.select({ ios: 74, android: 0 })}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}

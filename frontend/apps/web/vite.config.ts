@@ -59,6 +59,22 @@ function reactNativeWebPlugin(): Plugin {
               find: /^react-native-safe-area-context$/,
               replacement: path.join(stubsDir, 'react-native-safe-area-context.tsx'),
             },
+            {
+              find: /^@gorhom\/bottom-sheet$/,
+              replacement: path.join(stubsDir, 'gorhom-bottom-sheet.tsx'),
+            },
+            {
+              find: /^react-native-gesture-handler$/,
+              replacement: path.join(stubsDir, 'react-native-gesture-handler.tsx'),
+            },
+            {
+              find: /^react-native-reanimated$/,
+              replacement: path.join(stubsDir, 'react-native-reanimated.ts'),
+            },
+            {
+              find: /^@gorhom\/portal$/,
+              replacement: path.join(stubsDir, 'gorhom-portal.tsx'),
+            },
           ],
         },
         optimizeDeps: {
@@ -67,6 +83,10 @@ function reactNativeWebPlugin(): Plugin {
             'react-native',
             'react-native-svg',
             'react-native-safe-area-context',
+            '@gorhom/bottom-sheet',
+            '@gorhom/portal',
+            'react-native-gesture-handler',
+            'react-native-reanimated',
           ],
           resolve: {
             extensions: webExtensions,
