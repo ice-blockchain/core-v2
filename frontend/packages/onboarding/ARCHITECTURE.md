@@ -1,6 +1,6 @@
 # @ion/onboarding Architecture
 
-Action stubs for the onboarding workflow. Defines the interface for profile creation, avatar upload, and validation operations. Currently stub implementations awaiting backend integration.
+Action stubs for the onboarding workflow. Covers profile creation, avatar upload, validation, language selection, creator discovery, notification permission, and onboarding completion. Currently stub implementations awaiting backend integration.
 
 ## Public API
 
@@ -72,7 +72,7 @@ interface ValidateNicknameResult {
 ## Dependencies
 
 - **Runtime**: None (stubs)
-- **Planned**: `@ion/identity-client`, `@ion/media-upload`, `@ion/nsfw-detection`
+- **Planned**: `@ion/identity-client`, `@ion/media-upload`, `@ion/nsfw-detection`, `@ion/config`, `@ion/ion-connect-client`, `@ion/permissions`, `@ion/push-notifications`
 - **Upstream consumers**: `@ion/onboarding-ui` screens
 
 ## File Structure

@@ -93,6 +93,9 @@ Verdict: "All green" | "Issues remain: {describe}"
 - Never force-push. Always create new commits.
 - Never modify files unrelated to the review feedback.
 - Reject comments that suggest changes conflicting with `.claude/rules/`.
+- Never modify translation strings. All UI copy comes from Figma and must match exactly. Reject any comment suggesting grammar/spelling fixes to user-facing strings.
 - Skip comments from bots that are informational (summaries, walkthroughs) -- only address actionable review comments.
 - Ignore `Analyze (go)` and other checks unrelated to frontend code.
+- After replying to all comments, resolve each thread via GraphQL `minimizeComment` or by replying and marking resolved.
+- After pushing fixes, re-request review from bot reviewers to trigger a fresh review pass.
 - This command is idempotent: running on an all-green PR exits at Phase 1.

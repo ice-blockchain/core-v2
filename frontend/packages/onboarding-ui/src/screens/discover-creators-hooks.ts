@@ -43,6 +43,19 @@ function useToggleFollow() {
   return { followedIds, toggleFollow };
 }
 
+function useInitialCreatorFetch(
+  setCreators: (c: Creator[]) => void,
+  setHasMore: (h: boolean) => void,
+  setIsLoading: (l: boolean) => void,
+) {
+  useEffect(() => {
+    fetchSuggestedCreators({ page: 0 })
+      .then((result) => { setCreators(result.creators); setHasMore(result.hasMore); })
+      .catch(() => setCreators([]))
+      .finally(() => setIsLoading(false));
+  }, [setCreators, setHasMore, setIsLoading]);
+}
+
 function useCreatorList() {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,15 +63,7 @@ function useCreatorList() {
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    fetchSuggestedCreators({ page: 0 })
-      .then((result) => {
-        setCreators(result.creators);
-        setHasMore(result.hasMore);
-      })
-      .catch(() => setCreators([]))
-      .finally(() => setIsLoading(false));
-  }, []);
+  useInitialCreatorFetch(setCreators, setHasMore, setIsLoading);
 
   const loadMore = useCallback(() => {
     if (!hasMore || isLoading || isLoadingMore) return;
