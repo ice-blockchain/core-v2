@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"ion-greenfield-proxy/internal/middleware"
 	"ion-greenfield-proxy/internal/stun"
 
+	"github.com/alitto/pond/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/xssnick/tonutils-go/adnl"
@@ -35,6 +37,7 @@ type Listener struct {
 	gate           *adnl.Gateway
 	cancel         context.CancelFunc
 	payloads       *xsync.Map[string, *spooledPayload]
+	pool           pond.Pool
 	externalAddr   string
 	tmpDir         string
 	port           int
@@ -50,6 +53,7 @@ func NewListener(cfg *config.Config, key *Key, engine *gin.Engine, logger *slog.
 		engine:         engine,
 		logger:         logger,
 		payloads:       xsync.NewMap[string, *spooledPayload](),
+		pool:           pond.NewPool(runtime.NumCPU() * 5),
 		maxPendingSize: defaultMaxPendingSize,
 	}
 }
@@ -147,6 +151,9 @@ func (l *Listener) Stop() error {
 	if l.cancel != nil {
 		l.cancel()
 	}
+	if l.pool != nil {
+		l.pool.Stop().Wait()
+	}
 	l.payloads.Range(func(key string, sp *spooledPayload) bool {
 		sp.Close()
 		l.payloads.Delete(key)
@@ -182,8 +189,21 @@ func (l *Listener) handlePeer(peer adnl.Peer) error {
 			// and fetchRequestBody sends RLDP queries back to the client that
 			// need this same goroutine to process their responses.
 			go func() {
-				if err := l.handleHTTPRequest(rl, query, transferID, req, peerAddr); err != nil {
-					l.logger.Error("adnl: handle request", "error", err)
+				if !l.submitRequest(func() {
+					if err := l.handleHTTPRequest(rl, query, transferID, req, peerAddr); err != nil {
+						l.logger.Error("adnl: handle request", "error", err)
+					}
+				}) {
+					l.logger.Warn("worker pool full, rejecting request", "peer", peerAddr)
+					resp := Response{
+						Version:    "HTTP/1.1",
+						StatusCode: int32(http.StatusServiceUnavailable),
+						Reason:     http.StatusText(http.StatusServiceUnavailable),
+						NoPayload:  true,
+					}
+					if err := rl.SendAnswer(l.ctx, query.MaxAnswerSize, query.Timeout, query.ID, transferID, &resp); err != nil {
+						l.logger.Error("adnl: send 503", "error", err)
+					}
 				}
 			}()
 			return nil
@@ -368,6 +388,27 @@ const (
 	payloadTTL            = 5 * time.Minute
 	defaultMaxPendingSize = 5 << 30 // 5 GB total pending payload cap
 )
+
+func (l *Listener) submitRequest(task func()) bool {
+	const maxAttempts = 10
+
+	for attempt := range maxAttempts {
+		if l.ctx.Err() != nil {
+			return false
+		}
+
+		if _, ok := l.pool.TrySubmit(task); ok {
+			return true
+		}
+
+		select {
+		case <-l.ctx.Done():
+			return false
+		case <-time.After(time.Duration(50*(attempt+1)) * time.Millisecond):
+		}
+	}
+	return false
+}
 
 // reapStalePayloads periodically removes payloads that have not been fully
 // fetched within payloadTTL (e.g. because the client disconnected).
