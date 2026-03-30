@@ -58,7 +58,7 @@ function createFallbackBackend(id: string): KeyValueBackend {
 
 function createBackend(options: KeyValueStorageOptions): KeyValueBackend {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const { createMMKV } = require("react-native-mmkv") as { createMMKV: (config: Record<string, unknown>) => KeyValueBackend };
     return createMMKV({ id: options.id, ...(options.encryptionKey ? { encryptionKey: options.encryptionKey } : {}) });
   } catch {

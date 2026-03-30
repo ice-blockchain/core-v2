@@ -4,7 +4,7 @@ import type { ISecureStorage } from "../types";
 type SecureStoreModule = typeof ExpoSecureStoreType;
 
 function getSecureStore(): SecureStoreModule {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   return require("expo-secure-store") as SecureStoreModule;
 }
 
