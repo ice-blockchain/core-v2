@@ -58,7 +58,7 @@ function useReservedNicknames() {
   const reservedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     fetchReservedNicknames()
-      .then((result) => { reservedRef.current = result.reservedNicknames; })
+      .then((result) => { reservedRef.current = new Set(result.reservedNicknames); })
       .catch(() => { /* reserved list unavailable, validation continues without it */ });
   }, []);
   return reservedRef;

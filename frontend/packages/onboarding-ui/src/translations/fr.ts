@@ -16,4 +16,5 @@ export const onboardingFR: Record<keyof typeof onboardingEN, string> = {
   nicknameReservedModalTitle: 'Information',
   nicknameReservedDescription:
     'Si vous souhaitez utiliser ce pseudo, veuillez envoyer un e-mail à hi@ice.io depuis l\'adresse e-mail officielle de votre entreprise. Nous examinerons votre demande et vous contacterons dès que possible.',
+  closeModal: 'Fermer',
 };

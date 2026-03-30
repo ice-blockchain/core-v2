@@ -67,5 +67,5 @@ export interface FetchSuggestedCreatorsResult {
 }
 
 export interface FetchReservedNicknamesResult {
-  reservedNicknames: Set<string>;
+  reservedNicknames: string[];
 }

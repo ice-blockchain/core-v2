@@ -31,11 +31,11 @@ describe("onboarding action stubs", () => {
     expect(result).toEqual({ isAvailable: true, isReserved: false });
   });
 
-  it("fetchReservedNicknames returns a set containing ion and hades", async () => {
+  it("fetchReservedNicknames returns an array containing ion and hades", async () => {
     const result = await fetchReservedNicknames();
-    expect(result.reservedNicknames).toBeInstanceOf(Set);
-    expect(result.reservedNicknames.has("ion")).toBe(true);
-    expect(result.reservedNicknames.has("hades")).toBe(true);
+    expect(Array.isArray(result.reservedNicknames)).toBe(true);
+    expect(result.reservedNicknames).toContain("ion");
+    expect(result.reservedNicknames).toContain("hades");
   });
 
   it("validateReferral returns valid for valid referral", async () => {

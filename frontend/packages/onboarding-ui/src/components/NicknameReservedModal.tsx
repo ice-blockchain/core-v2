@@ -45,7 +45,7 @@ function SheetBody({ onClose }: { onClose: () => void }) {
       <View style={headerStyle}>
         <View style={{ width: scale(24) }} />
         <Text variant="subtitle">{translate("onboarding:nicknameReservedModalTitle")}</Text>
-        <Pressable onPress={onClose} hitSlop={8}>
+        <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={translate("onboarding:closeModal")} accessibilityRole="button">
           <Icon name="sheet-close" size={scale(24)} color={theme.colors.tertiaryText} />
         </Pressable>
       </View>
