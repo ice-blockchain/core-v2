@@ -65,6 +65,18 @@ const config = {
       if (singletonPaths[moduleName]) {
         return { type: 'sourceFile', filePath: singletonPaths[moduleName] };
       }
+      // Subpath match: e.g. 'react-native/Libraries/...'
+      // Resolve from the mobile app's node_modules to prevent pnpm
+      // from bundling duplicate react-native instances.
+      for (const name of singletonNames) {
+        if (moduleName.startsWith(name + '/')) {
+          return context.resolveRequest(
+            { ...context, originModulePath: path.join(mobileModules, '.placeholder.js') },
+            moduleName,
+            platform,
+          );
+        }
+      }
       return context.resolveRequest(context, moduleName, platform);
     },
   },
