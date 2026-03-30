@@ -9,16 +9,18 @@ import { RestoreKeyIcon } from "./restore-key-icon";
 
 interface RestoreMenuScreenProps {
   onBack: () => void;
+  onSelectCloudRestore: () => void;
   onSelectCredentialRestore: () => void;
 }
 
-function RestoreOptions({ onSelectCredentials }: { onSelectCredentials: () => void }) {
+function RestoreOptions({ onSelectCloud, onSelectCredentials }: { onSelectCloud: () => void; onSelectCredentials: () => void }) {
   return (
     <View style={styles.options}>
       <RestoreOptionCard
         icon={<Icon name="restore-cloud" size={48} color="" />}
         title="Restore from iCloud"
         description="Restore your identity key from an iCloud backup"
+        onPress={onSelectCloud}
       />
       <RestoreOptionCard
         icon={<Icon name="restore-credentials" size={48} color="" />}
@@ -30,7 +32,7 @@ function RestoreOptions({ onSelectCredentials }: { onSelectCredentials: () => vo
   );
 }
 
-export function RestoreMenuScreen({ onBack, onSelectCredentialRestore }: RestoreMenuScreenProps) {
+export function RestoreMenuScreen({ onBack, onSelectCloudRestore, onSelectCredentialRestore }: RestoreMenuScreenProps) {
   return (
     <View style={styles.page}>
       <SheetHeader title="" onBack={onBack} />
@@ -39,7 +41,7 @@ export function RestoreMenuScreen({ onBack, onSelectCredentialRestore }: Restore
         title="Restore identity key"
         subtitle="Select the type of identity key recovery"
       />
-      <RestoreOptions onSelectCredentials={onSelectCredentialRestore} />
+      <RestoreOptions onSelectCloud={onSelectCloudRestore} onSelectCredentials={onSelectCredentialRestore} />
       <View style={styles.footer}>
         <SecuredByFooter />
         <TermsFooter />

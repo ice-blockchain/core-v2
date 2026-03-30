@@ -20,6 +20,22 @@ import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
 import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
 
+function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
+  const theme = useTheme();
+
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.xxl }}>
+      <Text variant="headline1">UI Kit Catalog</Text>
+      <Button
+        height={44}
+        color="secondary"
+        label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"}
+        onPress={onToggleMode}
+      />
+    </View>
+  );
+}
+
 interface CatalogContentProps {
   onToggleMode: () => void;
   headerSlot?: ReactNode;
@@ -30,19 +46,9 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
 
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={{ flex: 1, backgroundColor: theme.colors.primaryBackground }}>
-    <ScrollView
-      contentContainerStyle={{ padding: theme.spacing.lg, alignItems: "center" }}
-    >
+    <ScrollView contentContainerStyle={{ padding: theme.spacing.lg, alignItems: "center" }}>
       <View style={{ maxWidth: 420, width: "100%" }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.xxl }}>
-          <Text variant="headline1">UI Kit Catalog</Text>
-          <Button
-            height={44}
-            color="secondary"
-            label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"}
-            onPress={onToggleMode}
-          />
-        </View>
+        <CatalogHeader onToggleMode={onToggleMode} />
         {headerSlot}
         <ColorCatalogSection />
         <TypographyCatalogSection />

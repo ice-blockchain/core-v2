@@ -30,46 +30,34 @@ type Phase =
   | { name: "verify-password"; identityKeyName: string }
   | { name: "verify-passkey"; identityKeyName: string };
 
+function usePhaseCallbacks(setPhase: (p: Phase) => void, setRestoreSuccess: (s: string | null) => void, setKeyNotFound: (b: boolean) => void) {
+  return {
+    goToIntro: useCallback(() => setPhase({ name: "intro" }), [setPhase]),
+    goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), [setPhase]),
+    goToRegister: useCallback(() => setPhase({ name: "register" }), [setPhase]),
+    goToVerifyPassword: useCallback((identityKeyName: string) => setPhase({ name: "verify-password", identityKeyName }), [setPhase]),
+    goToRestoreMenu: useCallback(() => setPhase({ name: "restore-menu" }), [setPhase]),
+    goToRestoreCredentials: useCallback(() => setPhase({ name: "restore-credentials" }), [setPhase]),
+    goToSetNewPassword: useCallback((identityKeyName: string) => { setRestoreSuccess(null); setPhase({ name: "set-new-password", identityKeyName }); }, [setPhase, setRestoreSuccess]),
+    goToVerifyPasskey: useCallback((identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }), [setPhase]),
+    showKeyNotFound: useCallback(() => setKeyNotFound(true), [setKeyNotFound]),
+    hideKeyNotFound: useCallback(() => setKeyNotFound(false), [setKeyNotFound]),
+    showRestoreSuccess: useCallback((identityKeyName: string) => setRestoreSuccess(identityKeyName), [setRestoreSuccess]),
+  };
+}
+
 function usePhaseNavigation() {
   const [phase, setPhase] = useState<Phase>({ name: "splash" });
   const [keyNotFound, setKeyNotFound] = useState(false);
   const [restoreSuccess, setRestoreSuccess] = useState<string | null>(null);
+  const callbacks = usePhaseCallbacks(setPhase, setRestoreSuccess, setKeyNotFound);
 
-  return {
-    phase,
-    keyNotFound,
-    restoreSuccess,
-    goToIntro: useCallback(() => setPhase({ name: "intro" }), []),
-    goToGetStarted: useCallback(() => setPhase({ name: "get-started" }), []),
-    goToRegister: useCallback(() => setPhase({ name: "register" }), []),
-    goToVerifyPassword: useCallback(
-      (identityKeyName: string) => setPhase({ name: "verify-password", identityKeyName }),
-      [],
-    ),
-    goToRestoreMenu: useCallback(() => setPhase({ name: "restore-menu" }), []),
-    goToRestoreCredentials: useCallback(() => setPhase({ name: "restore-credentials" }), []),
-    goToSetNewPassword: useCallback(
-      (identityKeyName: string) => {
-        setRestoreSuccess(null);
-        setPhase({ name: "set-new-password", identityKeyName });
-      },
-      [],
-    ),
-    goToVerifyPasskey: useCallback(
-      (identityKeyName: string) => setPhase({ name: "verify-passkey", identityKeyName }),
-      [],
-    ),
-    showKeyNotFound: useCallback(() => setKeyNotFound(true), []),
-    hideKeyNotFound: useCallback(() => setKeyNotFound(false), []),
-    showRestoreSuccess: useCallback((identityKeyName: string) => setRestoreSuccess(identityKeyName), []),
-  };
+  return { phase, keyNotFound, restoreSuccess, ...callbacks };
 }
 
 type Nav = ReturnType<typeof usePhaseNavigation>;
 
-function AuthSheetContent({ nav }: { nav: Nav }) {
-  const loadingElement = <LoadingAnimation variant="onLightBackground" size={30} />;
-
+function renderRestorePhase(nav: Nav) {
   if (nav.phase.name === "restore-menu") {
     return (
       <RestoreMenuScreen
@@ -96,28 +84,26 @@ function AuthSheetContent({ nav }: { nav: Nav }) {
       />
     );
   }
+  return null;
+}
+
+function renderAuthPhase(nav: Nav) {
+  const loadingElement = <LoadingAnimation variant="onLightBackground" size={30} />;
+
   if (nav.phase.name === "register") {
-    return (
-      <RegisterScreen
-        onBack={nav.goToGetStarted}
-        onContinue={({ identityKeyName }) => nav.goToVerifyPassword(identityKeyName)}
-      />
-    );
+    return <RegisterScreen onBack={nav.goToGetStarted} onContinue={({ identityKeyName }) => nav.goToVerifyPassword(identityKeyName)} />;
   }
   if (nav.phase.name === "verify-password") {
     return <VerifyPasswordBackground loadingElement={loadingElement} />;
   }
   if (nav.phase.name === "verify-passkey") {
-    return (
-      <VerifyPasskeyScreen
-        identityKeyName={nav.phase.identityKeyName}
-        onBack={nav.goToRegister}
-        onDismiss={nav.goToGetStarted}
-        loadingElement={loadingElement}
-      />
-    );
+    return <VerifyPasskeyScreen identityKeyName={nav.phase.identityKeyName} onBack={nav.goToRegister} onDismiss={nav.goToGetStarted} loadingElement={loadingElement} />;
   }
-  return (
+  return null;
+}
+
+function AuthSheetContent({ nav }: { nav: Nav }) {
+  return renderRestorePhase(nav) ?? renderAuthPhase(nav) ?? (
     <GetStartedScreen
       onNavigateToRegister={nav.goToRegister}
       onNavigateToVerifyPasskey={nav.goToVerifyPassword}

@@ -3,7 +3,7 @@ import { Pressable, StatusBar, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { ThemeProvider, CatalogScreen, FullscreenPortalHost } from "@ion/ui";
+import { ThemeProvider, CatalogScreen } from "@ion/ui";
 import { createLocalization, registerTranslations } from "@ion/localization";
 import { DiscoverCreatorsScreen, NotificationsScreen, ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from "@ion/onboarding-ui";
 import { authTranslations } from "@ion/auth-ui";
