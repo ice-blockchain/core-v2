@@ -55,7 +55,9 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
   const maxResponseSizeBytes = config.maxResponseSizeBytes ?? DEFAULT_MAX_RESPONSE_SIZE;
   const maxRequestBodySizeBytes = config.maxRequestBodySizeBytes ?? DEFAULT_MAX_REQUEST_BODY_SIZE;
   const validateHttps = createHttpsValidator({ allowlist: config.httpsAllowlist ?? [], isProduction });
-  validateHttps(config.baseUrl);
+  if (config.baseUrl) {
+    validateHttps(config.baseUrl);
+  }
   const instance = axios.create({
     baseURL: config.baseUrl,
     validateStatus: (status) => !(status >= 500 || status === 429),
