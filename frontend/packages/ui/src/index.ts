@@ -16,6 +16,7 @@ export type { SmallButtonProps, SmallButtonColor, SmallButtonIconPosition } from
 
 export { TextField } from "./components/TextField";
 export type { TextFieldProps } from "./components/TextField";
+export type { TextFieldTextVariant } from "./components/TextFieldStyles";
 
 export { BottomSheet } from "./components/BottomSheet";
 export type { BottomSheetProps } from "./components/bottom-sheet-types";

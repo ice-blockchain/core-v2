@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import type { Theme } from "../theme/theme-types";
 
@@ -43,7 +44,7 @@ export function buildNotificationBarTextStyle(options: {
   return {
     fontFamily: variant.fontFamily,
     fontSize: variant.fontSize,
-    fontWeight: variant.fontWeight,
+    fontWeight: Platform.OS === "web" ? variant.fontWeight : undefined,
     lineHeight: variant.lineHeight,
     letterSpacing: variant.letterSpacing,
     color: theme.colors.onPrimaryAccent,

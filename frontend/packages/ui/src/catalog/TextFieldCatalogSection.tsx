@@ -125,6 +125,24 @@ function SecureDemo() {
   );
 }
 
+function LargeTextDefaultDemo() {
+  const [value, setValue] = useState("");
+  return (
+    <DemoRow label="Large text (empty)">
+      <TextField label="USDT amount" value={value} onChangeText={setValue} textVariant="large" />
+    </DemoRow>
+  );
+}
+
+function LargeTextFilledDemo() {
+  const [value, setValue] = useState("350.00");
+  return (
+    <DemoRow label="Large text (filled)">
+      <TextField label="USDT amount" value={value} onChangeText={setValue} textVariant="large" />
+    </DemoRow>
+  );
+}
+
 function MultilineDemo() {
   const [value, setValue] = useState("");
   return (
@@ -156,6 +174,8 @@ export function TextFieldCatalogSection() {
       <ClearableDemo />
       <UncontrolledDemo />
       <SecureDemo />
+      <LargeTextDefaultDemo />
+      <LargeTextFilledDemo />
       <MultilineDemo />
       <MinLinesDemo />
     </CatalogSection>

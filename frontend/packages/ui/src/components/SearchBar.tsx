@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Platform, TextInput as RNTextInput, View } from "react-native";
+import { TextInput as RNTextInput, View } from "react-native";
 import type { StyleProp, ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { Icon } from "../icons/Icon";
@@ -29,7 +29,6 @@ function buildInputStyle(scale: (n: number) => number, primaryText: string): Tex
     flex: 1,
     fontSize: scale(13),
     fontFamily: "NotoSans-SemiBold",
-    ...(Platform.OS !== "ios" && { fontWeight: "600" as const }),
     color: primaryText,
     paddingVertical: 0,
     paddingHorizontal: 0,

@@ -1,8 +1,10 @@
+import { Platform } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import type { SemanticColors, ThemeTypography } from "../theme/theme-types";
 import type { ScaleFunctions } from "../scaling/scaling-types";
 
 export type TextFieldState = "default" | "focused" | "filled" | "error" | "verified" | "disabled";
+export type TextFieldTextVariant = "default" | "large";
 
 export interface TextFieldColorSpec {
   borderColor: string;
@@ -37,11 +39,11 @@ export function resolveTextFieldColorSpec(colors: SemanticColors, state: TextFie
   };
 }
 
-const BASE_HEIGHT = 56;
+const BASE_HEIGHT = 58;
 const HORIZONTAL_PADDING = 16;
 const BORDER_RADIUS = 16;
 const BODY_LINE_HEIGHT = 18;
-const FLOATING_LABEL_PADDING = 14;
+const FLOATING_LABEL_PADDING = 18;
 const MULTILINE_PADDING_TOP = 24;
 const MULTILINE_PADDING_BOTTOM = 8;
 
@@ -87,27 +89,49 @@ interface InputStyleOptions {
   maxLines: number;
   typography: ThemeTypography;
   scale: ScaleFunctions;
+  textVariant?: TextFieldTextVariant;
 }
 
-function buildFontStyle(typography: ThemeTypography, scale: ScaleFunctions, color: string): TextStyle {
+interface FontStyleOptions {
+  typography: ThemeTypography;
+  scale: ScaleFunctions;
+  color: string;
+  textVariant?: TextFieldTextVariant | undefined;
+}
+
+function buildFontStyle(options: FontStyleOptions): TextStyle {
+  const { typography, scale, color, textVariant = "default" } = options;
+  if (textVariant === "large") {
+    return {
+      fontFamily: typography.subtitle2.fontFamily,
+      fontSize: scale.scaleFont(15),
+      fontWeight: Platform.OS === "web" ? "500" : undefined,
+      lineHeight: scale.scaleFont(18),
+      letterSpacing: 0,
+      color,
+    };
+  }
   const body = typography.body;
   return {
     fontFamily: body.fontFamily,
     fontSize: scale.scaleFont(body.fontSize),
-    fontWeight: body.fontWeight,
+    fontWeight: Platform.OS === "web" ? body.fontWeight : undefined,
     lineHeight: body.lineHeight ? scale.scaleFont(body.lineHeight) : undefined,
     letterSpacing: body.letterSpacing,
     color,
   };
 }
 
+// @ts-expect-error outlineStyle is a web-only CSS property not in RN TextStyle
+const WEB_INPUT_RESET: TextStyle = { outlineStyle: "none" };
+
 export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle {
-  const { spec, isFloating, isMultiline, maxLines, typography, scale } = options;
-  const font = buildFontStyle(typography, scale, spec.valueColor);
+  const { spec, isFloating, isMultiline, maxLines, typography, scale, textVariant } = options;
+  const font = buildFontStyle({ typography, scale, color: spec.valueColor, textVariant });
 
   if (!isMultiline) {
     const labelPadding = scale.scaleSize(FLOATING_LABEL_PADDING);
-    return { ...font, flex: 1, paddingTop: isFloating ? labelPadding : 0, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
+    return { ...font, ...WEB_INPUT_RESET, flex: 1, paddingTop: isFloating ? labelPadding : 0, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
   }
 
   const lineHeight = scale.scaleFont(BODY_LINE_HEIGHT);
@@ -115,6 +139,7 @@ export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle 
   const paddingBottom = scale.scaleSize(MULTILINE_PADDING_BOTTOM);
   return {
     ...font,
+    ...WEB_INPUT_RESET,
     maxHeight: paddingTop + lineHeight * maxLines + paddingBottom,
     paddingTop: isFloating ? paddingTop : 0,
     paddingBottom,

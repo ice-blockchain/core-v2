@@ -16,7 +16,7 @@ import {
   deriveTextFieldState,
   resolveTextFieldColorSpec,
 } from "./TextFieldStyles";
-import type { TextFieldColorSpec } from "./TextFieldStyles";
+import type { TextFieldColorSpec, TextFieldTextVariant } from "./TextFieldStyles";
 
 export interface TextFieldProps {
   label: string;
@@ -26,6 +26,7 @@ export interface TextFieldProps {
   state?: "error" | "verified" | "disabled";
   errorMessage?: string;
   isSecureTextEntry?: boolean;
+  textVariant?: TextFieldTextVariant;
   minLines?: number;
   maxLines?: number;
   prefixIcon?: React.ReactNode;
@@ -88,8 +89,9 @@ function useTextFieldStyles(options: {
   hasValue: boolean;
   minLines: number;
   maxLines: number;
+  textVariant?: TextFieldTextVariant;
 }) {
-  const { theme, explicitState, isFocused, hasValue, minLines, maxLines } = options;
+  const { theme, explicitState, isFocused, hasValue, minLines, maxLines, textVariant = "default" } = options;
   const isMultiline = maxLines > 1 || minLines > 1;
 
   const derivedState = useMemo(
@@ -108,8 +110,8 @@ function useTextFieldStyles(options: {
   );
 
   const inputStyle = useMemo(
-    () => buildTextFieldInputStyle({ spec, isFloating: isFocused || hasValue, isMultiline, maxLines: Math.max(maxLines, minLines), typography: theme.typography, scale: theme.scale }),
-    [spec, isFocused, hasValue, isMultiline, maxLines, minLines, theme.typography, theme.scale],
+    () => buildTextFieldInputStyle({ spec, isFloating: isFocused || hasValue, isMultiline, maxLines: Math.max(maxLines, minLines), typography: theme.typography, scale: theme.scale, textVariant }),
+    [spec, isFocused, hasValue, isMultiline, maxLines, minLines, theme.typography, theme.scale, textVariant],
   );
 
   return { derivedState, spec, containerStyle, inputStyle, isMultiline };
@@ -212,7 +214,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     const hasValue = currentValue.length > 0;
 
     const { derivedState, spec, containerStyle, inputStyle, isMultiline } = useTextFieldStyles({
-      theme, explicitState, isFocused, hasValue, minLines, maxLines,
+      theme, explicitState, isFocused, hasValue, minLines, maxLines, textVariant: props.textVariant ?? "default",
     });
 
     const displayLabel = derivedState === "error" && errorMessage ? errorMessage : label;

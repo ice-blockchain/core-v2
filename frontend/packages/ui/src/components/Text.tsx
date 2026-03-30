@@ -1,4 +1,4 @@
-import { Platform, Text as RNText } from "react-native";
+import { Text as RNText } from "react-native";
 import type { TextProps as RNTextProps, TextStyle } from "react-native";
 import { useMemo } from "react";
 import type { TypographyVariantName, TypographyVariant } from "../theme/theme-types";
@@ -12,7 +12,6 @@ export interface TextProps extends RNTextProps {
 function buildVariantStyle(variant: TypographyVariant, color: string): TextStyle {
   return {
     fontFamily: variant.fontFamily,
-    ...(Platform.OS !== "ios" && { fontWeight: variant.fontWeight }),
     fontSize: variant.fontSize,
     lineHeight: variant.lineHeight,
     letterSpacing: variant.letterSpacing,

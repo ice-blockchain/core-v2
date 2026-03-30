@@ -55,7 +55,7 @@ function buildContainerStyle(options: { height: 44 | 56; spec: ColorSpec; isIcon
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: scale(9),
+    gap: height === 44 ? scale(8) : scale(9),
   };
 
   if (spec.borderColor) {
