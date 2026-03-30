@@ -114,12 +114,13 @@ function AuthSheetContent({ nav }: { nav: Nav }) {
   );
 
   if (nav.phase.name === "restore-key-not-found") {
-    return <IdentityKeyNotFoundModal onClose={nav.goToRestoreMenu} />;
+    return <IdentityKeyNotFoundModal visible={true} onClose={nav.goToRestoreMenu} />;
   }
   if (nav.phase.name === "restore-success") {
     const { identityKeyName } = nav.phase;
     return (
       <RestoreSuccessModal
+        visible={true}
         onLogin={() => nav.goToSetNewPassword(identityKeyName)}
       />
     );
@@ -221,9 +222,11 @@ function AppContent() {
   const nav = usePhaseNavigation();
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>(null);
 
-  if (nav.phase.name === "onboarding" || onboardingStep) {
-    if (!onboardingStep) setOnboardingStep("profile");
-    if (onboardingStep) return <OnboardingFlow step={onboardingStep} setStep={(s) => { setOnboardingStep(s); if (!s) nav.goToCatalog(); }} />;
+  if (nav.phase.name === "onboarding" && !onboardingStep) {
+    return <OnboardingFlow step="profile" setStep={(s) => { setOnboardingStep(s); if (!s) nav.goToCatalog(); }} />;
+  }
+  if (onboardingStep) {
+    return <OnboardingFlow step={onboardingStep} setStep={(s) => { setOnboardingStep(s); if (!s) nav.goToCatalog(); }} />;
   }
 
   if (nav.phase.name === "splash") {

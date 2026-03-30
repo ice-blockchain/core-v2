@@ -17,13 +17,13 @@ function RestoreOptions({ onSelectCloud, onSelectCredentials }: { onSelectCloud:
   return (
     <View style={styles.options}>
       <RestoreOptionCard
-        icon={<Icon name="restore-cloud" size={48} color="" />}
+        icon={<Icon name="restore-cloud" size={48} />}
         title="Restore from iCloud"
         description="Restore your identity key from an iCloud backup"
         onPress={onSelectCloud}
       />
       <RestoreOptionCard
-        icon={<Icon name="restore-credentials" size={48} color="" />}
+        icon={<Icon name="restore-credentials" size={48} />}
         title="Restore using recovery credentials"
         description="Restore with Recovery code and Recovery key ID"
         onPress={onSelectCredentials}

@@ -11,7 +11,7 @@ export function RestoreSuccessModal({ visible, onLogin }: RestoreSuccessModalPro
   return (
     <BottomSheet isVisible={visible} onClose={onLogin}>
       <View style={styles.container}>
-        <Icon name="keys-success" size={80} color="" />
+        <Icon name="keys-success" size={80} color="#FFFFFF" />
         <View style={styles.textContainer}>
           <Text style={styles.title}>Congratulations</Text>
           <Text style={styles.description}>

@@ -66,7 +66,7 @@ export function RestoreCredentialsScreen({ onBack, onRestore, isLoading }: Resto
 
   const handleRestore = useCallback(() => {
     if (!form.isFormValid) return;
-    onRestore({ identityKeyName: form.identityKeyName, recoveryKeyId: form.recoveryKeyId, recoveryCode: form.recoveryCode });
+    onRestore({ identityKeyName: form.identityKeyName.trim(), recoveryKeyId: form.recoveryKeyId.trim(), recoveryCode: form.recoveryCode.trim() });
   }, [form.isFormValid, form.identityKeyName, form.recoveryKeyId, form.recoveryCode, onRestore]);
 
   return (

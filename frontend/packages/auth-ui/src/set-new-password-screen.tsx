@@ -70,7 +70,6 @@ function DisabledIdentityKeyField({ identityKeyName }: { identityKeyName: string
     <TextField
       label="Identity key name"
       value={identityKeyName}
-      onChangeText={() => {}}
       prefixIcon={<IdentityKeyIcon />}
       hasPrefixDivider
       state="disabled"

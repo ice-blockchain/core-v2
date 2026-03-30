@@ -11,7 +11,7 @@ export function IdentityKeyNotFoundModal({ visible, onClose }: IdentityKeyNotFou
   return (
     <BottomSheet isVisible={visible} onClose={onClose}>
       <View style={styles.container}>
-        <Icon name="keys-error" size={80} color="" />
+        <Icon name="keys-error" size={80} />
         <View style={styles.textContainer}>
           <Text style={styles.title}>Identity key was not found</Text>
           <Text style={styles.description}>

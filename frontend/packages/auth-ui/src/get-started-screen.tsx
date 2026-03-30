@@ -53,7 +53,7 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
       </View>
       <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
       <SecondaryButton label={translate("auth:registerButton")} onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} color="" />} onPress={props.onNavigateToRestore} />
+      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} />} onPress={props.onNavigateToRestore} />
       <View style={styles.footer}>
         <SecuredByFooter />
         <TermsFooter />
