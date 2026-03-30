@@ -15,7 +15,7 @@ export function IdentityKeyNotFoundModal({ visible, onClose }: IdentityKeyNotFou
         <View style={styles.textContainer}>
           <Text style={styles.title}>Identity key was not found</Text>
           <Text style={styles.description}>
-            The identification key for recovery was not found.
+            The identity key for recovery was not found.
           </Text>
         </View>
         <View style={styles.buttonWrapper}>
