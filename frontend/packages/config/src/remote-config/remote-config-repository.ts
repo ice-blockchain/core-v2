@@ -9,7 +9,7 @@ import { fetchConfigFromNetwork } from './fetch-config-from-network';
 import { forceFetchConfig } from './force-fetch-config';
 import { readCachedConfig } from './read-cached-config';
 import { readStaleCache } from './read-stale-cache';
-import { ConfigError } from './remote-config-error';
+import { ConfigError, ConfigErrorCode } from './remote-config-error';
 import type {
   CachedEntry,
   ConfigIdentity,
@@ -21,6 +21,16 @@ import type {
 import { createKeyValueStorage } from '@ion/storage';
 
 const DEFAULT_REFRESH_INTERVAL = 300_000; // 5 minutes
+const VALID_CONFIG_NAME = /^[a-zA-Z0-9_-]+$/;
+
+function validateConfigName(configName: string): void {
+  if (!VALID_CONFIG_NAME.test(configName)) {
+    throw new ConfigError(
+      ConfigErrorCode.CONFIG_FETCH_FAILED,
+      `Invalid configName "${configName}": must match ${VALID_CONFIG_NAME}`,
+    );
+  }
+}
 
 export function remoteConfigRepository(options?: RemoteConfigOptions): RemoteConfigService {
   const mutex = createConfigMutex();
@@ -34,6 +44,7 @@ export function remoteConfigRepository(options?: RemoteConfigOptions): RemoteCon
 
   return {
     getConfig: <T>(getOptions: GetConfigOptions<T>) => {
+      validateConfigName(getOptions.configName);
       const identity: ConfigIdentity<T> = {
         configName: getOptions.configName,
         parser: getOptions.parser,
