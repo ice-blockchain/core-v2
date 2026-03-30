@@ -4,7 +4,7 @@ vi.mock('./restart-application', () => ({
   restartApplication: vi.fn(),
 }));
 
-vi.mock('@ion/storage', () => {
+vi.mock('@ion/storage/key-value-storage', () => {
   const store = new Map<string, string>();
   return {
     createKeyValueStorage: () => ({
@@ -22,7 +22,7 @@ vi.mock('@ion/storage', () => {
 
 import { changeLanguage } from './change-language';
 import { restartApplication } from './restart-application';
-import { createKeyValueStorage } from '@ion/storage';
+import { createKeyValueStorage } from '@ion/storage/key-value-storage';
 
 describe('changeLanguage', () => {
   it('persists the locale to storage and restarts', () => {

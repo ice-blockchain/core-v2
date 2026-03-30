@@ -6,7 +6,7 @@ vi.mock('./device-locale', () => ({
   getDeviceLocale: () => 'fr',
 }));
 
-vi.mock('@ion/storage', () => ({
+vi.mock('@ion/storage/key-value-storage', () => ({
   createKeyValueStorage: () => ({
     getString: (key: string) => mockStore.get(key) ?? null,
     setString: (key: string, value: string) => {
