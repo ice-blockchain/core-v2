@@ -56,7 +56,7 @@
 ### Actions Layer
 | Package | Purpose | Status |
 |---|---|---|
-| `@ion/auth` | Auth flow orchestrator | Implemented |
+| `@ion/auth` | Auth flow orchestrator | In Progress |
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
 
 **Total: 24 packages**
