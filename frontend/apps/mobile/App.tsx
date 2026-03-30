@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Pressable, StatusBar, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ThemeProvider, CatalogScreen, FullscreenPortalHost } from "@ion/ui";
 import { createLocalization, registerTranslations } from "@ion/localization";
 import { DiscoverCreatorsScreen, NotificationsScreen, ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from "@ion/onboarding-ui";
@@ -264,10 +265,10 @@ function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <FullscreenPortalHost>
+          <BottomSheetModalProvider>
             <StatusBar barStyle="light-content" />
             <AppContent />
-          </FullscreenPortalHost>
+          </BottomSheetModalProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

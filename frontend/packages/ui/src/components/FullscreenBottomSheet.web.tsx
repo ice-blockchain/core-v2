@@ -5,8 +5,9 @@ import type { FullscreenBottomSheetProps, FullscreenBottomSheetRef } from "./ful
 export const FullscreenBottomSheet = forwardRef<FullscreenBottomSheetRef, FullscreenBottomSheetProps>(
   function FullscreenBottomSheet({ isVisible, onClose, children }, ref) {
     useImperativeHandle(ref, () => ({
+      present: () => {},
+      dismiss: onClose,
       snapToIndex: () => {},
-      close: onClose,
     }), [onClose]);
 
     return (

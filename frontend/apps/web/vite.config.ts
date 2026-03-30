@@ -71,6 +71,10 @@ function reactNativeWebPlugin(): Plugin {
               find: /^react-native-reanimated$/,
               replacement: path.join(stubsDir, 'react-native-reanimated.ts'),
             },
+            {
+              find: /^@gorhom\/portal$/,
+              replacement: path.join(stubsDir, 'gorhom-portal.tsx'),
+            },
           ],
         },
         optimizeDeps: {
@@ -80,6 +84,7 @@ function reactNativeWebPlugin(): Plugin {
             'react-native-svg',
             'react-native-safe-area-context',
             '@gorhom/bottom-sheet',
+            '@gorhom/portal',
             'react-native-gesture-handler',
             'react-native-reanimated',
           ],

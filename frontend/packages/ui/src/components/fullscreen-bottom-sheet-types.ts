@@ -10,6 +10,7 @@ export interface FullscreenBottomSheetProps {
 }
 
 export interface FullscreenBottomSheetRef {
+  present: () => void;
+  dismiss: () => void;
   snapToIndex: (index: number) => void;
-  close: () => void;
 }

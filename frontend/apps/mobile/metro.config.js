@@ -60,6 +60,18 @@ function getWorkspaceAssetPath(url) {
   };
 }
 
+// Packages that need directory-level singleton (complex packages with internal imports).
+// Maps to the package directory so Metro resolves internal files correctly.
+const directorySingletonNames = [
+  '@gorhom/bottom-sheet',
+  '@gorhom/portal',
+];
+const directorySingletons = {};
+for (const name of directorySingletonNames) {
+  const pkgJson = require.resolve(name + '/package.json', { paths: [mobileModules] });
+  directorySingletons[name] = path.dirname(pkgJson);
+}
+
 const config = {
   watchFolders: [workspaceRoot],
   resolver: {
@@ -79,6 +91,15 @@ const config = {
         if (moduleName.startsWith(name + '/')) {
           return context.resolveRequest(
             { ...context, originModulePath: path.join(mobileModules, '.placeholder.js') },
+            moduleName,
+            platform,
+          );
+        }
+      }
+      for (const [pkgName, pkgDir] of Object.entries(directorySingletons)) {
+        if (moduleName === pkgName || moduleName.startsWith(pkgName + '/')) {
+          return context.resolveRequest(
+            { ...context, originModulePath: path.join(pkgDir, 'index.js') },
             moduleName,
             platform,
           );

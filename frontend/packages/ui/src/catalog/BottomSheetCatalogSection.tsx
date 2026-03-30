@@ -6,6 +6,7 @@ import { CatalogSection } from "./CatalogSection";
 import { BottomSheetNavigationDemo } from "./BottomSheetNavigationDemo";
 import { BottomSheetScrollableDemo } from "./BottomSheetScrollableDemo";
 import { BottomSheetKeyboardDemo } from "./BottomSheetKeyboardDemo";
+import { BottomSheetStackedDemo } from "./BottomSheetStackedDemo";
 
 function DemoButton({ label, onPress }: { label: string; onPress: () => void }) {
   const theme = useTheme();
@@ -26,9 +27,11 @@ export function BottomSheetCatalogSection() {
       <DemoButton label="Navigation Demo" onPress={() => open("nav")} />
       <DemoButton label="Scrollable List Demo" onPress={() => open("scroll")} />
       <DemoButton label="Keyboard Demo" onPress={() => open("keyboard")} />
+      <DemoButton label="Stacked Sheets Demo" onPress={() => open("stacked")} />
       <BottomSheetNavigationDemo isVisible={!!visible.nav} onClose={() => close("nav")} />
       <BottomSheetScrollableDemo isVisible={!!visible.scroll} onClose={() => close("scroll")} />
       <BottomSheetKeyboardDemo isVisible={!!visible.keyboard} onClose={() => close("keyboard")} />
+      <BottomSheetStackedDemo isVisible={!!visible.stacked} onClose={() => close("stacked")} />
     </CatalogSection>
   );
 }
