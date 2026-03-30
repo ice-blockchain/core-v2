@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { TextField } from "@ion/ui";
+import { Icon, TextField } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
@@ -10,7 +10,6 @@ import { IceLogoIcon } from "./ice-logo-icon";
 import { IdentityKeyIcon } from "./identity-key-icon";
 import { InfoIcon } from "./info-icon";
 import { CreateAccountIcon } from "./create-account-icon";
-import { RestoreKeyIcon } from "./restore-key-icon";
 import { useIdentityKeyValidation } from "./identity-key-rules";
 
 function GetStartedHeader() {
@@ -54,7 +53,7 @@ export function GetStartedScreen(props: GetStartedScreenProps) {
       </View>
       <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
       <SecondaryButton label={translate("auth:registerButton")} onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<RestoreKeyIcon />} onPress={props.onNavigateToRestore} />
+      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} color="" />} onPress={props.onNavigateToRestore} />
       <View style={styles.footer}>
         <SecuredByFooter />
         <TermsFooter />

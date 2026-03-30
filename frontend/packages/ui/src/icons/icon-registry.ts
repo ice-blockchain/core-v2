@@ -35,6 +35,7 @@ import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
 import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
 import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
 import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
+import { RestoreKeyIcon } from "./generated/RestoreKeyIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SendIcon } from "./generated/SendIcon";
 
@@ -77,6 +78,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "recovery-code": RecoveryCodeIcon,
   "restore-cloud": RestoreCloudIcon,
   "restore-credentials": RestoreCredentialsIcon,
+  "restore-key": RestoreKeyIcon,
   "search": SearchIcon,
   "send": SendIcon,
 };

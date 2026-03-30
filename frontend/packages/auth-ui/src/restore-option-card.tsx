@@ -5,7 +5,7 @@ interface RestoreOptionCardProps {
   icon: ReactNode;
   title: string;
   description: string;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 export function RestoreOptionCard({ icon, title, description, onPress }: RestoreOptionCardProps) {
