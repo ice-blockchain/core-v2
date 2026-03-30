@@ -1,7 +1,7 @@
 MODULE   := ion-greenfield-proxy
 BINARY   := ion-greenfield-proxy
 
-.PHONY: build test clean fmt vet
+.PHONY: build test clean fmt vet up
 
 build:
 	CGO_ENABLED=0 go build -v -o $(BINARY) ./cmd/server
@@ -17,3 +17,6 @@ fmt:
 
 clean:
 	rm -f $(BINARY)
+
+up:
+	go get -v -u ./...

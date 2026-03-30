@@ -25,8 +25,9 @@ func StartDHTPublisher(
 	cfg *config.Config, key *Key, listener *Listener,
 	logger *slog.Logger, lc fx.Lifecycle,
 ) {
+	ctx, cancel := context.WithCancel(context.Background())
 	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
+		OnStart: func(context.Context) error {
 			gate := listener.Gateway()
 			if gate == nil {
 				logger.Warn("DHT publish skipped — ADNL gateway not started")
@@ -43,7 +44,8 @@ func StartDHTPublisher(
 			go publishLoop(ctx, dhtClient, key, listener, logger)
 			return nil
 		},
-		OnStop: func(_ context.Context) error {
+		OnStop: func(context.Context) error {
+			cancel()
 			return nil
 		},
 	})

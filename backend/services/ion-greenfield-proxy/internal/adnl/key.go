@@ -14,9 +14,9 @@ import (
 
 // Key holds the Ed25519 key pair and the derived ADNL address.
 type Key struct {
+	Address string // hex-encoded ADNL address
 	Private ed25519.PrivateKey
 	Public  ed25519.PublicKey
-	Address string // hex-encoded ADNL address
 }
 
 // LoadKey parses a hex-encoded Ed25519 private key (32-byte seed)
