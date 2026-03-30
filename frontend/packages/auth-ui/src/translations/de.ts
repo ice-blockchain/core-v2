@@ -26,6 +26,7 @@ export const authDE: Record<keyof typeof authEN, string> = {
   confirmButton: 'Bestätigen',
   identityKeyCharactersError:
     'Nur Kleinbuchstaben, Zahlen, Punkte und Bindestriche',
+  identityKeyMaxLengthError: 'Name des Identitätsschlüssels ist zu lang',
   enterIdentityKeyNameError:
     'Gib den Namen des Identitätsschlüssels ein',
   passwordRuleLength: 'Muss mehr als 8 Zeichen haben',

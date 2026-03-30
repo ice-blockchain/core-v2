@@ -23,6 +23,7 @@ export const authEN = {
   confirmButton: 'Confirm',
   identityKeyCharactersError:
     'Lowercase, numbers, dots, hyphens only',
+  identityKeyMaxLengthError: 'Identity key name is too long',
   enterIdentityKeyNameError: 'Enter identity key name',
   passwordRuleLength: 'Must be over 8 characters',
   passwordRuleNumber: 'Must contain 1 number',

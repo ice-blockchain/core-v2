@@ -26,6 +26,7 @@ export const authFR: Record<keyof typeof authEN, string> = {
   confirmButton: 'Confirmer',
   identityKeyCharactersError:
     'Minuscules, chiffres, points et tirets uniquement',
+  identityKeyMaxLengthError: 'Le nom de la clé d\'identité est trop long',
   enterIdentityKeyNameError: 'Entrez le nom de la clé d\'identité',
   passwordRuleLength: 'Doit contenir plus de 8 caractères',
   passwordRuleNumber: 'Doit contenir 1 chiffre',
