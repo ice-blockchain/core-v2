@@ -27,7 +27,7 @@ const validActionChallenge = {
 describe('createLoginDataSource', () => {
   it('posts username and empty 2FA codes to login init endpoint', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(validActionChallenge);
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: validActionChallenge });
     const ds = createLoginDataSource(httpClient);
 
     await ds.initLogin('alice');
@@ -39,7 +39,7 @@ describe('createLoginDataSource', () => {
 
   it('posts 2FA verification codes when provided', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(validActionChallenge);
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: validActionChallenge });
     const ds = createLoginDataSource(httpClient);
 
     await ds.initLogin('alice', { email: '123456' });
@@ -51,7 +51,7 @@ describe('createLoginDataSource', () => {
 
   it('posts login payload to login endpoint', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ token: 't', refreshToken: 'r' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: { token: 't', refreshToken: 'r' } });
     const ds = createLoginDataSource(httpClient);
     const payload = {
       challengeIdentifier: 'ci',
@@ -70,7 +70,7 @@ describe('createLoginDataSource', () => {
 
   it('rejects malformed login challenge from server', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ bad: 'data' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: { bad: 'data' } });
     const ds = createLoginDataSource(httpClient);
 
     await expect(ds.initLogin('alice')).rejects.toThrow('missing or empty challenge');

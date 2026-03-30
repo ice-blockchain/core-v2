@@ -18,19 +18,19 @@ export interface LoginPayload {
 export function createLoginDataSource(httpClient: HttpClient): LoginDataSource {
   return {
     async initLogin(username, twoFAVerificationCodes) {
-      const response = await httpClient.post<UserActionChallenge>('/auth/login/init', {
+      const { body } = await httpClient.post<UserActionChallenge>('/auth/login/init', {
         body: { username, '2FAVerificationCodes': twoFAVerificationCodes ?? {} },
       });
-      validateActionChallengeResponse(response);
-      return response;
+      validateActionChallengeResponse(body);
+      return body;
     },
 
     async completeLogin(payload) {
-      const response = await httpClient.post<AuthTokens>('/auth/login', {
+      const { body } = await httpClient.post<AuthTokens>('/auth/login', {
         body: payload,
       });
-      validateAuthTokensResponse(response);
-      return response;
+      validateAuthTokensResponse(body);
+      return body;
     },
   };
 }

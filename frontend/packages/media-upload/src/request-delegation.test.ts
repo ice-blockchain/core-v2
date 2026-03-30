@@ -5,7 +5,7 @@ import { requestDelegation } from "./request-delegation";
 function createMockHttpClient(response: unknown): HttpClient {
   return {
     get: vi.fn(),
-    post: vi.fn().mockResolvedValue(response),
+    post: vi.fn().mockResolvedValue({ status: 200, headers: {}, body: response }),
     put: vi.fn(),
     patch: vi.fn(),
     delete: vi.fn(),

@@ -34,7 +34,9 @@ describe('createHttpClient GET requests', () => {
     mockRequest.mockResolvedValue(mockAxiosResponse({ id: 1, name: 'Alice' }));
     const client = createHttpClient({ baseUrl: 'https://api.example.com' });
     const result = await client.get<{ id: number; name: string }>('/users/1');
-    expect(result).toEqual({ id: 1, name: 'Alice' });
+    expect(result.body).toEqual({ id: 1, name: 'Alice' });
+    expect(result.status).toBe(200);
+    expect(result.headers['content-type']).toBe('application/json');
   });
 
   it('interpolates path params', async () => {
@@ -52,7 +54,7 @@ describe('createHttpClient POST requests', () => {
     mockRequest.mockResolvedValue(mockAxiosResponse({ created: true }));
     const client = createHttpClient({ baseUrl: 'https://api.example.com' });
     const result = await client.post<{ created: boolean }>('/users', { body: { name: 'Bob' } });
-    expect(result).toEqual({ created: true });
+    expect(result.body).toEqual({ created: true });
   });
 });
 
@@ -195,5 +197,32 @@ describe('createHttpClient HTTPS enforcement', () => {
       isProduction: true,
       httpsAllowlist: ['localhost'],
     })).toThrow('HTTPS allowlist must be empty in production');
+  });
+});
+
+describe('createHttpClient HttpResponse wrapper', () => {
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
+
+  it('includes status and headers in response', async () => {
+    mockRequest.mockResolvedValue({
+      status: 200,
+      data: { key: 'value' },
+      headers: { 'content-type': 'application/json', 'x-version': '5' },
+      config: { url: 'https://api.example.com/v1/config/test' },
+    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    const result = await client.get<{ key: string }>('/v1/config/test');
+
+    expect(result.status).toBe(200);
+    expect(result.headers['x-version']).toBe('5');
+    expect(result.body).toEqual({ key: 'value' });
+  });
+
+  it('passes query params to axios', async () => {
+    mockRequest.mockResolvedValue(mockAxiosResponse({ ok: true }));
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    await client.get('/v1/config/test', { query: { version: '3' } });
+
+    expect(mockRequest.mock.calls[0]![0].params).toEqual({ version: '3' });
   });
 });

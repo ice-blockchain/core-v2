@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosProgressEvent, AxiosResponse } from 'axios';
 import axiosRetry from 'axios-retry';
 import { Logger } from '@ion/diagnostics';
-import type { HttpClient, HttpClientConfig, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
+import type { HttpClient, HttpClientConfig, HttpResponse, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
 import type { InterceptedRequest, InterceptedResponse } from './interceptor-types';
 import type { UploadProgress } from './shared-types';
 import type { RequestQueue } from './queue-types';
@@ -53,7 +53,9 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
   const maxResponseSizeBytes = config.maxResponseSizeBytes ?? DEFAULT_MAX_RESPONSE_SIZE;
   const maxRequestBodySizeBytes = config.maxRequestBodySizeBytes ?? DEFAULT_MAX_REQUEST_BODY_SIZE;
   const validateHttps = createHttpsValidator({ allowlist: config.httpsAllowlist ?? [], isProduction });
-  validateHttps(config.baseUrl);
+  if (config.baseUrl) {
+    validateHttps(config.baseUrl);
+  }
   const instance = axios.create({
     baseURL: config.baseUrl,
     validateStatus: (status) => !(status >= 500 || status === 429),
@@ -89,7 +91,7 @@ function configureRetry(instance: AxiosInstance, retryConfig: RetryConfig): void
   });
 }
 
-async function executeRequest<T>(context: RequestContext): Promise<T> {
+async function executeRequest<T>(context: RequestContext): Promise<HttpResponse<T>> {
   const { internals, options } = context;
   const path = interpolatePathParams(context.url, options?.params);
   validateRequestBodySize(options?.body, internals.config.maxRequestBodySizeBytes);
@@ -103,7 +105,7 @@ async function executeRequest<T>(context: RequestContext): Promise<T> {
   }
 }
 
-async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
+async function executeSingleRequest<T>(context: RequestContext): Promise<HttpResponse<T>> {
   const { internals, options } = context;
   const interceptedReq = await buildInterceptedRequest(context);
   const timeoutMs = options?.timeoutMs ?? internals.config.timeoutMs;
@@ -120,10 +122,7 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
       ...(context.onProgress ? { onUploadProgress: buildProgressHandler(context.onProgress) } : {}),
       'axios-retry': { retryCondition: buildRetryCondition(context.method, options?.retryable) },
     });
-    const parsedBody = parseResponseData<T>(response);
-    const interceptedResp = await buildInterceptedResponse(internals, response, parsedBody);
-    throwOnErrorStatus(response.status, interceptedResp);
-    return interceptedResp.body as T;
+    return await buildHttpResponse<T>(internals, response);
   } catch (error) {
     const handled = await handleError(internals, error);
     if (handled.shouldRetry && !context.authRetried) {
@@ -131,6 +130,18 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
     }
     throw handled;
   }
+}
+
+
+async function buildHttpResponse<T>(internals: ClientInternals, response: AxiosResponse): Promise<HttpResponse<T>> {
+  const parsedBody = parseResponseData<T>(response);
+  const interceptedResp = await buildInterceptedResponse(internals, response, parsedBody);
+  throwOnErrorStatus(interceptedResp.status, interceptedResp);
+  return {
+    status: interceptedResp.status,
+    headers: interceptedResp.headers,
+    body: interceptedResp.body as T,
+  };
 }
 
 function buildRetryCondition(method: string, retryable?: boolean): (error: AxiosError) => boolean {

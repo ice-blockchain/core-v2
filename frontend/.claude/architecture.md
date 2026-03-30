@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-03-26
+> Last updated: 2026-03-30
 
 ---
 
@@ -25,7 +25,7 @@
 | `@ion/network` | HTTP, long polling, auth, retry, offline queue | Implemented |
 | `@ion/diagnostics` | Sentry, on-device logs | Implemented |
 | `@ion/permissions` | Camera, photos, microphone, notifications, cloud permissions (iOS, Android, Web) | Implemented |
-| `@ion/config` | Remote config, env, feature flags | Planned |
+| `@ion/config` | Remote config, env, feature flags | Implemented |
 | `@ion/localization` | i18n, plurals, fallback, device locale, language persistence | Implemented |
 | `@ion/auth-ui` | Shared auth screens, forms, buttons, icons, validation | Implemented |
 

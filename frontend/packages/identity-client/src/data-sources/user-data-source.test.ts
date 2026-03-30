@@ -16,7 +16,7 @@ function createMockHttpClient(): HttpClient {
 describe('createUserDataSource', () => {
   it('fetches user by ID with auth header', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.get).mockResolvedValueOnce({ masterPubKey: 'pk' });
+    vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: { masterPubKey: 'pk' } });
     const ds = createUserDataSource(httpClient);
 
     const result = await ds.getUser('user-123', 'my-token');
@@ -29,7 +29,7 @@ describe('createUserDataSource', () => {
 
   it('encodes path-traversal characters in user ID', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.get).mockResolvedValueOnce({ masterPubKey: 'pk' });
+    vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: { masterPubKey: 'pk' } });
     const ds = createUserDataSource(httpClient);
 
     await ds.getUser('../admin', 'tok');
@@ -41,7 +41,7 @@ describe('createUserDataSource', () => {
 
   it('fetches user by master key', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.get).mockResolvedValueOnce({ masterPubKey: 'pk' });
+    vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: { masterPubKey: 'pk' } });
     const ds = createUserDataSource(httpClient);
 
     await ds.getUser('npub1abc', 'tok');

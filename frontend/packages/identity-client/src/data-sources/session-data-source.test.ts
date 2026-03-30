@@ -16,7 +16,7 @@ function createMockHttpClient(): HttpClient {
 describe('createSessionDataSource', () => {
   it('posts username and refresh token with current token as auth header', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ token: 'new-tok' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: { token: 'new-tok' } });
     const ds = createSessionDataSource(httpClient);
 
     const result = await ds.refreshToken({
@@ -34,7 +34,7 @@ describe('createSessionDataSource', () => {
 
   it('sends PUT to logout endpoint with auth and username headers', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.put).mockResolvedValueOnce(undefined);
+    vi.mocked(httpClient.put).mockResolvedValueOnce({ status: 204, headers: {}, body: undefined });
     const ds = createSessionDataSource(httpClient);
 
     await ds.logout('my-token', 'alice');

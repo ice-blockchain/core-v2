@@ -84,7 +84,7 @@ function reactNativeWebPlugin(): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const fileEnv = loadEnv(mode, process.cwd(), 'VITE_');
   const env: Record<string, string> = {};
   for (const key of REQUIRED_ENV_VARS) {
@@ -99,9 +99,13 @@ export default defineConfig(({ mode }) => {
     );
   }
 
+  const isDev = command === 'serve';
   const define: Record<string, string> = {};
   for (const key of REQUIRED_ENV_VARS) {
     define[`process.env.${key}`] = JSON.stringify(env[key]);
+  }
+  if (isDev) {
+    define['process.env.VITE_API_BASE_URL'] = JSON.stringify('');
   }
 
   return {
@@ -124,5 +128,13 @@ export default defineConfig(({ mode }) => {
       dedupe: ['react', 'react-dom'],
     },
     define,
+    server: {
+      proxy: {
+        '/v1': {
+          target: env.VITE_API_BASE_URL,
+          changeOrigin: true,
+        },
+      },
+    },
   };
 });

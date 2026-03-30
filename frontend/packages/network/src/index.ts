@@ -8,6 +8,7 @@ export type { NetworkEvent, NetworkEventListener, NetworkStateProvider } from '.
 export type {
   HttpClient,
   HttpClientConfig,
+  HttpResponse,
   RequestOptions,
   RequestOptionsWithBody,
   UploadOptions,

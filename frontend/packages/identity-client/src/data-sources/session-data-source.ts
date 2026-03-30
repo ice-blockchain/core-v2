@@ -15,12 +15,12 @@ export interface SessionDataSource {
 export function createSessionDataSource(httpClient: HttpClient): SessionDataSource {
   return {
     async refreshToken(input) {
-      const response = await httpClient.post<{ token: string; refreshToken?: string }>('/auth/login/delegated', {
+      const { body } = await httpClient.post<{ token: string; refreshToken?: string }>('/auth/login/delegated', {
         body: { username: input.username, refreshToken: input.refreshToken },
         headers: { Authorization: `Bearer ${input.currentToken}` },
       });
-      validateRefreshTokenResponse(response);
-      return response;
+      validateRefreshTokenResponse(body);
+      return body;
     },
 
     async logout(token, username) {

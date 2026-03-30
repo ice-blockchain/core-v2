@@ -33,15 +33,21 @@ export interface UploadOptions extends RequestOptions {
   onProgress?: (progress: UploadProgress) => void;
 }
 
+export interface HttpResponse<T> {
+  status: number;
+  headers: Record<string, string>;
+  body: T;
+}
+
 export interface HttpClient {
-  get<T>(url: string, options?: RequestOptions): Promise<T>;
-  post<T>(url: string, options?: RequestOptionsWithBody): Promise<T>;
-  put<T>(url: string, options?: RequestOptionsWithBody): Promise<T>;
-  patch<T>(url: string, options?: RequestOptionsWithBody): Promise<T>;
-  delete<T>(url: string, options?: RequestOptions): Promise<T>;
+  get<T>(url: string, options?: RequestOptions): Promise<HttpResponse<T>>;
+  post<T>(url: string, options?: RequestOptionsWithBody): Promise<HttpResponse<T>>;
+  put<T>(url: string, options?: RequestOptionsWithBody): Promise<HttpResponse<T>>;
+  patch<T>(url: string, options?: RequestOptionsWithBody): Promise<HttpResponse<T>>;
+  delete<T>(url: string, options?: RequestOptions): Promise<HttpResponse<T>>;
   upload<T>(
     url: string,
     formData: FormData,
     options?: UploadOptions,
-  ): Promise<T>;
+  ): Promise<HttpResponse<T>>;
 }

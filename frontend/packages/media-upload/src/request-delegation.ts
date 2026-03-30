@@ -11,10 +11,10 @@ export async function requestDelegation(
   apiBaseUrl: string,
   input: DelegationInput,
 ): Promise<DelegationResponse> {
-  const response = await httpClient.post<DelegationResponse>(
+  const { body } = await httpClient.post<DelegationResponse>(
     `${apiBaseUrl}/uploads/delegate`,
     { body: { mimeType: input.mimeType, fileSize: input.fileSize } },
   );
 
-  return response;
+  return body;
 }
