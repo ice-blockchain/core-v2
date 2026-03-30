@@ -35,6 +35,12 @@ export function LoadingAnimation({
     : mapProgressToFrame(progress) / TOTAL_FRAMES;
 
   return (
-    null
+    <LottieView
+      source={resolveAnimationData(variant)}
+      autoPlay={isIndeterminate}
+      loop={isIndeterminate}
+      progress={normalizedProgress}
+      style={{ width: size, height: size }}
+    />
   );
 }

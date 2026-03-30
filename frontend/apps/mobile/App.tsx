@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { StatusBar, View, Pressable, Text } from "react-native";
-import { remoteConfigRepository } from "@ion/config";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeProvider } from "@ion/ui";
 import { CatalogScreen } from "@ion/ui";
@@ -41,28 +40,6 @@ function OnboardingButton({ onPress }: { onPress: () => void }) {
 
 function AppContent() {
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>(null);
-
-  useEffect(() => {
-    const repo = remoteConfigRepository();
-    repo.getConfig({
-      configName: 'service_pubkeys',
-      parser: (raw) => JSON.parse(raw) as string[],
-      checkVersion: true,
-    }).then((pubkeys) => {
-      console.log('[remote-config] service_pubkeys:', pubkeys);
-      repo.getConfig({
-        configName: 'service_pubkeys',
-        parser: (raw) => JSON.parse(raw) as string[],
-        checkVersion: true,
-      }).then((pubkeys) => {
-        console.log('[remote-config] service_pubkeys:', pubkeys);
-      }).catch((error) => {
-        console.error('[remote-config] failed:', error);
-      });
-    }).catch((error) => {
-      console.error('[remote-config] failed:', error);
-    });
-  }, []);
 
   if (onboardingStep) return <OnboardingFlow step={onboardingStep} setStep={setOnboardingStep} />;
 
