@@ -67,7 +67,7 @@ function InnerSheetForm({ onConfirm }: { onConfirm: (password: string) => void }
           style={styles.fieldWidth}
         />
       </View>
-      <Pressable style={styles.confirmButton} onPress={() => onConfirm(password)}>
+      <Pressable style={styles.confirmButton} onPress={() => { if (password.trim()) onConfirm(password); }}>
         <Text style={styles.confirmLabel}>{translate("auth:confirmButton")}</Text>
       </Pressable>
     </View>
