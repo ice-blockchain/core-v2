@@ -16,6 +16,7 @@ for (const name of singletonNames) {
 const config = {
   watchFolders: [workspaceRoot],
   resolver: {
+    assetExts: [...getDefaultConfig(__dirname).resolver.assetExts, 'tflite'],
     nodeModulesPaths: [
       mobileModules,
       path.resolve(workspaceRoot, 'node_modules'),

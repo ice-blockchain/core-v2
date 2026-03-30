@@ -1,0 +1,40 @@
+{
+  "name": "@ion/nsfw-detection",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ion/diagnostics": "workspace:*",
+    "jpeg-js": "^0.4.4"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs": ">=4",
+    "react-native-create-thumbnail": ">=2",
+    "react-native-nitro-tflite": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-native-nitro-tflite": {
+      "optional": true
+    },
+    "@tensorflow/tfjs": {
+      "optional": true
+    },
+    "react-native-create-thumbnail": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
+  }
+}
