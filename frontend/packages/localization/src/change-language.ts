@@ -1,5 +1,5 @@
 import { Logger } from '@ion/diagnostics';
-import { createKeyValueStorage } from '@ion/storage';
+import { createKeyValueStorage } from '@ion/storage/key-value-storage';
 
 import type { SupportedLocale } from './types';
 import { LANGUAGE_PREFERENCE_KEY } from './create-localization';
