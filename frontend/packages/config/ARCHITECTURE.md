@@ -1,6 +1,6 @@
 # @ion/config Architecture
 
-Typed environment configuration manager and remote config service. Loads, validates, and exposes a singleton `EnvironmentConfig` for the entire application. Provides a generic, type-safe remote configuration client with multi-layer caching and version-aware conditional fetching.
+Typed environment configuration manager, feature flags, and remote config service. Loads, validates, and exposes a singleton `EnvironmentConfig` for the entire application. Provides async feature flag management and a generic, type-safe remote configuration client with multi-layer caching and version-aware conditional fetching.
 
 ## Public API
 
@@ -8,6 +8,13 @@ Typed environment configuration manager and remote config service. Loads, valida
 // Environment config
 export { environmentConfig } from './src/environment/environment';
 export type { AppEnvironment, EnvironmentConfig, LogLevel } from './src/environment/types';
+
+// Feature flags
+export {
+  getFeatureFlag, getAllFeatureFlags, setFeatureFlags, resetFeatureFlags,
+} from './src/feature-flags/feature-flag-store';
+export { defaultFeatureFlags } from './src/feature-flags/feature-flag-defaults';
+export type { FeatureFlags, FeatureFlagName } from './src/feature-flags/feature-flag-types';
 
 // Remote config
 export { remoteConfigRepository } from './src/remote-config/remote-config-repository';
@@ -45,6 +52,35 @@ Both platforms share `validateEnvironmentConfig()` which enforces:
 - Enum membership for `appEnvironment` and `logLevel`
 - Valid URL format via `new URL()`
 - `https://` protocol for API, `wss://` for relay
+
+## Feature Flags
+
+Simple async key-value store for boolean feature flags. All methods are async to allow future backing by remote config or persistent storage.
+
+```typescript
+import { getFeatureFlag, setFeatureFlags, resetFeatureFlags } from '@ion/config';
+
+await setFeatureFlags({ debugMenuEnabled: true });
+const enabled = await getFeatureFlag('debugMenuEnabled'); // true
+await resetFeatureFlags(); // back to defaults (all false)
+```
+
+### Data Structure
+
+```typescript
+interface FeatureFlags {
+  readonly debugMenuEnabled: boolean;
+}
+type FeatureFlagName = keyof FeatureFlags;
+```
+
+### Design Decisions
+
+- **Async API**: All methods return promises. Currently in-memory, but the async contract allows swapping in remote config or persistent storage without changing call sites.
+- **Immutable snapshots**: `getAllFeatureFlags()` returns a copy, not the internal state.
+- **Partial overrides**: `setFeatureFlags()` merges partial updates, preserving unset flags.
+
+---
 
 ## Remote Config
 
@@ -135,6 +171,11 @@ src/
     validate-environment.test.ts
     environment.test.ts
     environment.web.test.ts
+  feature-flags/
+    feature-flag-types.ts         # FeatureFlags, FeatureFlagName
+    feature-flag-defaults.ts      # Default values (all false)
+    feature-flag-store.ts         # Async get/set/reset API
+    feature-flag-store.test.ts
   remote-config/
     remote-config-types.ts        # All interfaces and types
     remote-config-error.ts        # ConfigError, ConfigErrorCode
