@@ -43,4 +43,28 @@ export const authEN = {
   termsOfServiceLink: 'Terms of Service',
   privacyPolicyLink: 'Privacy Policy',
   termsSeparator: ' & ',
+  restoreMenuTitle: 'Restore identity key',
+  restoreMenuSubtitle: 'Select the type of identity key recovery',
+  restoreFromCloudTitle: 'Restore from iCloud',
+  restoreFromCloudDescription:
+    'Restore your identity key from an iCloud backup',
+  restoreUsingCredentialsTitle: 'Restore using recovery credentials',
+  restoreUsingCredentialsDescription:
+    'Restore with Recovery code and Recovery key ID',
+  restoreSuccessTitle: 'Congratulations',
+  restoreSuccessDescription:
+    'Your identity key has been restored. You can now access your account securely.',
+  loginButton: 'Log in',
+  setNewPasswordTitle: 'Set a new password',
+  setNewPasswordSubtitle:
+    "Choose a strong password you haven't used before.",
+  restoreCredentialsSubtitle:
+    'Please enter your recovery credentials below',
+  recoveryKeyIdPlaceholder: 'Recovery key ID',
+  recoveryCodePlaceholder: 'Recovery code',
+  restoreButton: 'Restore',
+  identityKeyNotFoundTitle: 'Identity key was not found',
+  identityKeyNotFoundDescription:
+    'The identity key for recovery was not found.',
+  closeButton: 'Close',
 } as const;

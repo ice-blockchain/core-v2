@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { translate } from "@ion/localization";
 import { BottomSheet, Icon } from "@ion/ui";
 import { PrimaryButton } from "./primary-button";
 
@@ -13,13 +14,13 @@ export function IdentityKeyNotFoundModal({ visible, onClose }: IdentityKeyNotFou
       <View style={styles.container}>
         <Icon name="keys-error" size={80} />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Identity key was not found</Text>
+          <Text style={styles.title}>{translate("auth:identityKeyNotFoundTitle")}</Text>
           <Text style={styles.description}>
-            The identity key for recovery was not found.
+            {translate("auth:identityKeyNotFoundDescription")}
           </Text>
         </View>
         <View style={styles.buttonWrapper}>
-          <PrimaryButton label="Close" onPress={onClose} showArrow={false} style={styles.button} />
+          <PrimaryButton label={translate("auth:closeButton")} onPress={onClose} showArrow={false} style={styles.button} />
         </View>
       </View>
     </BottomSheet>

@@ -46,4 +46,31 @@ export const authDE: Record<keyof typeof authEN, string> = {
   termsOfServiceLink: 'Nutzungsbedingungen',
   privacyPolicyLink: 'Datenschutzrichtlinie',
   termsSeparator: ' und ',
+  restoreMenuTitle: 'Identitätsschlüssel wiederherstellen',
+  restoreMenuSubtitle:
+    'Wähle die Art der Wiederherstellung des Identitätsschlüssels',
+  restoreFromCloudTitle: 'Aus iCloud wiederherstellen',
+  restoreFromCloudDescription:
+    'Stelle deinen Identitätsschlüssel aus einem iCloud-Backup wieder her',
+  restoreUsingCredentialsTitle:
+    'Mit Wiederherstellungsdaten wiederherstellen',
+  restoreUsingCredentialsDescription:
+    'Mit Wiederherstellungscode und Wiederherstellungsschlüssel-ID wiederherstellen',
+  restoreSuccessTitle: 'Herzlichen Glückwunsch',
+  restoreSuccessDescription:
+    'Dein Identitätsschlüssel wurde wiederhergestellt. Du kannst jetzt sicher auf dein Konto zugreifen.',
+  loginButton: 'Anmelden',
+  setNewPasswordTitle: 'Neues Passwort festlegen',
+  setNewPasswordSubtitle:
+    'Wähle ein starkes Passwort, das du noch nicht verwendet hast.',
+  restoreCredentialsSubtitle:
+    'Bitte gib unten deine Wiederherstellungsdaten ein',
+  recoveryKeyIdPlaceholder: 'Wiederherstellungsschlüssel-ID',
+  recoveryCodePlaceholder: 'Wiederherstellungscode',
+  restoreButton: 'Wiederherstellen',
+  identityKeyNotFoundTitle:
+    'Identitätsschlüssel wurde nicht gefunden',
+  identityKeyNotFoundDescription:
+    'Der Identitätsschlüssel zur Wiederherstellung wurde nicht gefunden.',
+  closeButton: 'Schließen',
 };

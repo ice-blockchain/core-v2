@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { translate } from "@ion/localization";
 import { TextField } from "@ion/ui";
 import { SheetHeader } from "./sheet-header";
 import { PrimaryButton } from "./primary-button";
@@ -68,7 +69,7 @@ function PasswordField({ label, value, onChangeText, show, onToggle }: PasswordF
 function DisabledIdentityKeyField({ identityKeyName }: { identityKeyName: string }) {
   return (
     <TextField
-      label="Identity key name"
+      label={translate("auth:identityKeyNameLabel")}
       value={identityKeyName}
       prefixIcon={<IdentityKeyIcon />}
       hasPrefixDivider
@@ -83,14 +84,14 @@ function FormFields({ form, identityKeyName }: { form: FormState; identityKeyNam
     <View style={styles.formContainer}>
       <DisabledIdentityKeyField identityKeyName={identityKeyName} />
       <PasswordField
-        label="Password"
+        label={translate("auth:passwordLabel")}
         value={form.password}
         onChangeText={form.setPassword}
         show={form.showPassword}
         onToggle={form.toggleShowPassword}
       />
       <PasswordField
-        label="Confirm password"
+        label={translate("auth:confirmPasswordLabel")}
         value={form.confirmPassword}
         onChangeText={form.setConfirmPassword}
         show={form.showConfirm}
@@ -109,17 +110,17 @@ function ScreenContent({ form, identityKeyName, onContinue }: {
     <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
       <RegisterHeader
         icon={<RegisterPasswordIcon />}
-        title="Set a new password"
-        subtitle="Choose a strong password you haven't used before."
+        title={translate("auth:setNewPasswordTitle")}
+        subtitle={translate("auth:setNewPasswordSubtitle")}
       />
       <FormFields form={form} identityKeyName={identityKeyName} />
       <View style={styles.checklist}>
         <PasswordStrengthChecklist
-          rules={[...form.passwordRules, { label: "Passwords match", isMet: form.isPasswordMatch }]}
+          rules={[...form.passwordRules, { label: translate("auth:passwordsMatchLabel"), isMet: form.isPasswordMatch }]}
         />
       </View>
       <View style={styles.continueWrapper}>
-        <PrimaryButton label="Continue" onPress={onContinue} disabled={!form.isFormValid} />
+        <PrimaryButton label={translate("auth:continueButton")} onPress={onContinue} disabled={!form.isFormValid} />
       </View>
     </ScrollView>
   );

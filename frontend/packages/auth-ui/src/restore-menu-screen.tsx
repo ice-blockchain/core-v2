@@ -1,4 +1,5 @@
 import { StyleSheet, View } from "react-native";
+import { translate } from "@ion/localization";
 import { Icon } from "@ion/ui";
 import { SheetHeader } from "./sheet-header";
 import { RegisterHeader } from "./register-header";
@@ -18,14 +19,14 @@ function RestoreOptions({ onSelectCloud, onSelectCredentials }: { onSelectCloud:
     <View style={styles.options}>
       <RestoreOptionCard
         icon={<Icon name="restore-cloud" size={48} />}
-        title="Restore from iCloud"
-        description="Restore your identity key from an iCloud backup"
+        title={translate("auth:restoreFromCloudTitle")}
+        description={translate("auth:restoreFromCloudDescription")}
         onPress={onSelectCloud}
       />
       <RestoreOptionCard
         icon={<Icon name="restore-credentials" size={48} />}
-        title="Restore using recovery credentials"
-        description="Restore with Recovery code and Recovery key ID"
+        title={translate("auth:restoreUsingCredentialsTitle")}
+        description={translate("auth:restoreUsingCredentialsDescription")}
         onPress={onSelectCredentials}
       />
     </View>
@@ -38,8 +39,8 @@ export function RestoreMenuScreen({ onBack, onSelectCloudRestore, onSelectCreden
       <SheetHeader title="" onBack={onBack} />
       <RegisterHeader
         icon={<RestoreKeyIcon />}
-        title="Restore identity key"
-        subtitle="Select the type of identity key recovery"
+        title={translate("auth:restoreMenuTitle")}
+        subtitle={translate("auth:restoreMenuSubtitle")}
       />
       <RestoreOptions onSelectCloud={onSelectCloudRestore} onSelectCredentials={onSelectCredentialRestore} />
       <View style={styles.footer}>

@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { translate } from "@ion/localization";
 import { BottomSheet, Icon } from "@ion/ui";
 import { PrimaryButton } from "./primary-button";
 
@@ -13,13 +14,13 @@ export function RestoreSuccessModal({ visible, onLogin }: RestoreSuccessModalPro
       <View style={styles.container}>
         <Icon name="keys-success" size={80} color="#FFFFFF" />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Congratulations</Text>
+          <Text style={styles.title}>{translate("auth:restoreSuccessTitle")}</Text>
           <Text style={styles.description}>
-            Your identity key has been restored. You can now access your account securely.
+            {translate("auth:restoreSuccessDescription")}
           </Text>
         </View>
         <View style={styles.buttonWrapper}>
-          <PrimaryButton label="Log in" onPress={onLogin} showArrow={false} style={styles.button} />
+          <PrimaryButton label={translate("auth:loginButton")} onPress={onLogin} showArrow={false} style={styles.button} />
         </View>
       </View>
     </BottomSheet>

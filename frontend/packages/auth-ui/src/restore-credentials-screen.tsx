@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { translate } from "@ion/localization";
 import { TextInput } from "@ion/ui";
 import { SheetHeader } from "./sheet-header";
 import { RegisterHeader } from "./register-header";
@@ -31,21 +32,21 @@ function CredentialsForm({ form }: { form: ReturnType<typeof useRestoreCredentia
       <TextInput
         value={form.identityKeyName}
         onChangeText={form.setIdentityKeyName}
-        placeholder="Identity key name"
+        placeholder={translate("auth:identityKeyNameLabel")}
         prefixIcon="field-identitykey"
         style={styles.field}
       />
       <TextInput
         value={form.recoveryKeyId}
         onChangeText={form.setRecoveryKeyId}
-        placeholder="Recovery key ID"
+        placeholder={translate("auth:recoveryKeyIdPlaceholder")}
         prefixIcon="channel-private"
         style={styles.field}
       />
       <TextInput
         value={form.recoveryCode}
         onChangeText={form.setRecoveryCode}
-        placeholder="Recovery code"
+        placeholder={translate("auth:recoveryCodePlaceholder")}
         prefixIcon="recovery-code"
         style={styles.field}
       />
@@ -56,7 +57,7 @@ function CredentialsForm({ form }: { form: ReturnType<typeof useRestoreCredentia
 function RestoreButton({ onPress, disabled }: { onPress: () => void; disabled: boolean }) {
   return (
     <View style={styles.buttonWrapper}>
-      <PrimaryButton label="Restore" onPress={onPress} disabled={disabled} showArrow={false} />
+      <PrimaryButton label={translate("auth:restoreButton")} onPress={onPress} disabled={disabled} showArrow={false} />
     </View>
   );
 }
@@ -73,7 +74,7 @@ export function RestoreCredentialsScreen({ onBack, onRestore, isLoading }: Resto
     <View style={styles.page}>
       <SheetHeader title="" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <RegisterHeader icon={<RestoreKeyIcon />} title="Restore identity key" subtitle="Please enter your recovery credentials below" />
+        <RegisterHeader icon={<RestoreKeyIcon />} title={translate("auth:restoreMenuTitle")} subtitle={translate("auth:restoreCredentialsSubtitle")} />
         <CredentialsForm form={form} />
         <RestoreButton onPress={handleRestore} disabled={!form.isFormValid || !!isLoading} />
       </ScrollView>

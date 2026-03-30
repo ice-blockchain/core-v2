@@ -45,4 +45,31 @@ export const authFR: Record<keyof typeof authEN, string> = {
   termsOfServiceLink: 'Conditions d\'utilisation',
   privacyPolicyLink: 'Politique de confidentialité',
   termsSeparator: ' et ',
+  restoreMenuTitle: 'Restaurer la clé d\'identité',
+  restoreMenuSubtitle:
+    'Sélectionnez le type de récupération de la clé d\'identité',
+  restoreFromCloudTitle: 'Restaurer depuis iCloud',
+  restoreFromCloudDescription:
+    'Restaurez votre clé d\'identité à partir d\'une sauvegarde iCloud',
+  restoreUsingCredentialsTitle:
+    'Restaurer avec les identifiants de récupération',
+  restoreUsingCredentialsDescription:
+    'Restaurer avec le code de récupération et l\'ID de clé de récupération',
+  restoreSuccessTitle: 'Félicitations',
+  restoreSuccessDescription:
+    'Votre clé d\'identité a été restaurée. Vous pouvez maintenant accéder à votre compte en toute sécurité.',
+  loginButton: 'Se connecter',
+  setNewPasswordTitle: 'Définir un nouveau mot de passe',
+  setNewPasswordSubtitle:
+    'Choisissez un mot de passe fort que vous n\'avez pas encore utilisé.',
+  restoreCredentialsSubtitle:
+    'Veuillez entrer vos identifiants de récupération ci-dessous',
+  recoveryKeyIdPlaceholder: 'ID de clé de récupération',
+  recoveryCodePlaceholder: 'Code de récupération',
+  restoreButton: 'Restaurer',
+  identityKeyNotFoundTitle:
+    'Clé d\'identité introuvable',
+  identityKeyNotFoundDescription:
+    'La clé d\'identité pour la récupération n\'a pas été trouvée.',
+  closeButton: 'Fermer',
 };
