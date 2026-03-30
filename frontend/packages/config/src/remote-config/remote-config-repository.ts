@@ -3,7 +3,7 @@ import { createHttpClient } from '@ion/network';
 
 import { environmentConfig } from '../environment/environment';
 
-import { getStoredVersion, updateTimestamp } from './config-cache';
+import { getStoredVersion } from './config-cache';
 import { createConfigMutex } from './config-mutex';
 import { fetchConfigFromNetwork } from './fetch-config-from-network';
 import { forceFetchConfig } from './force-fetch-config';
@@ -67,7 +67,6 @@ async function executeGetConfig<T>(
     return networkResult;
   }
 
-  updateTimestamp(deps, configName);
   const stale = readStaleCache(deps, identity);
   if (stale !== null) {
     Logger.warning('Serving stale config after network failure', { tag, data: { configName } });

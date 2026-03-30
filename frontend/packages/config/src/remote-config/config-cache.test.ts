@@ -7,7 +7,6 @@ import {
   readFromMemoryCache,
   readFromStorage,
   writeToCache,
-  updateTimestamp,
   getStoredVersion,
   isExpired,
   clearConfigFromCache,
@@ -91,27 +90,6 @@ describe('writeToCache', () => {
   });
 });
 
-describe('updateTimestamp', () => {
-  it('updates memory cache and storage timestamp', () => {
-    const memoryCache = new Map<string, CachedEntry>();
-    memoryCache.set('cfg', { raw: 'x', version: 1, fetchedAtMs: 0 });
-    const storage = createMockStorage();
-
-    updateTimestamp({ storage, memoryCache }, 'cfg');
-
-    const updated = memoryCache.get('cfg');
-    expect(updated!.fetchedAtMs).toBeGreaterThan(0);
-    expect(storage.setNumber).toHaveBeenCalled();
-  });
-
-  it('does not throw when storage fails', () => {
-    const memoryCache = new Map<string, CachedEntry>();
-    const storage = createMockStorage();
-    storage.setNumber = vi.fn(() => { throw new Error('disk full'); });
-
-    expect(() => updateTimestamp({ storage, memoryCache }, 'cfg')).not.toThrow();
-  });
-});
 
 describe('getStoredVersion', () => {
   it('returns stored version', () => {

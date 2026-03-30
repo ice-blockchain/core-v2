@@ -1,3 +1,5 @@
+import { Logger } from '@ion/diagnostics';
+
 import { readFromStorage } from './config-cache';
 import type { ConfigIdentity, RemoteConfigDeps } from './remote-config-types';
 
@@ -10,7 +12,8 @@ export function readStaleCache<T>(
 
   try {
     return identity.parser(entry.raw);
-  } catch {
+  } catch (error) {
+    Logger.warning('Failed to parse stale config', { tag: 'remote-config', data: { configName: identity.configName, error } });
     return null;
   }
 }

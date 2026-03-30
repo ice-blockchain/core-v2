@@ -1,4 +1,3 @@
-import { Logger } from '@ion/diagnostics';
 import type { IKeyValueStorage } from '@ion/storage';
 
 import type { CachedEntry } from './remote-config-types';
@@ -48,21 +47,6 @@ export function writeToCache(
   deps.storage.setNumber(timestampKey(configName), entry.fetchedAtMs);
 }
 
-export function updateTimestamp(
-  deps: { storage: IKeyValueStorage; memoryCache: Map<string, CachedEntry> },
-  configName: string,
-): void {
-  const now = Date.now();
-  const existing = deps.memoryCache.get(configName);
-  if (existing) {
-    deps.memoryCache.set(configName, { ...existing, fetchedAtMs: now });
-  }
-  try {
-    deps.storage.setNumber(timestampKey(configName), now);
-  } catch (error) {
-    Logger.warning('Failed to update config cache timestamp', { tag: 'remote-config', data: { configName, error } });
-  }
-}
 
 export function getStoredVersion(storage: IKeyValueStorage, configName: string): number {
   return storage.getNumber(versionKey(configName)) ?? 0;

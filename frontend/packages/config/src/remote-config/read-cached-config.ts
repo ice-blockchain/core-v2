@@ -1,3 +1,5 @@
+import { Logger } from '@ion/diagnostics';
+
 import { readFromMemoryCache, readFromStorage, isExpired } from './config-cache';
 import type { ConfigIdentity, RemoteConfigDeps } from './remote-config-types';
 
@@ -24,7 +26,8 @@ export function readCachedConfig<T>(
 function tryParse<T>(raw: string, parser: (raw: string) => T): CacheReadResult<T> {
   try {
     return { value: parser(raw), hadParseError: false };
-  } catch {
+  } catch (error) {
+    Logger.warning('Failed to parse cached config', { tag: 'remote-config', data: { error } });
     return { value: null, hadParseError: true };
   }
 }
