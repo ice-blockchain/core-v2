@@ -1,3 +1,5 @@
+import { Logger } from '@ion/diagnostics';
+
 import { writeToCache } from './config-cache';
 import { ConfigError, ConfigErrorCode } from './remote-config-error';
 import type {
@@ -16,7 +18,10 @@ export async function fetchConfigFromNetwork<T>(
 
   const response = await deps.httpClient.getRaw(url, { query });
 
-  if (response.status === 204) return null;
+  if (response.status === 204) {
+    Logger.debug('Config not modified (204)', { tag: 'remote-config', data: { configName: identity.configName, version } });
+    return null;
+  }
   if (response.status !== 200) {
     throw new ConfigError(
       ConfigErrorCode.CONFIG_FETCH_FAILED,

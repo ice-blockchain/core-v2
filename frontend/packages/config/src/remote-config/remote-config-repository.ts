@@ -1,6 +1,5 @@
 import { Logger } from '@ion/diagnostics';
 import { createHttpClient } from '@ion/network';
-import { createKeyValueStorage } from '@ion/storage';
 
 import { environmentConfig } from '../environment/environment';
 
@@ -19,6 +18,7 @@ import type {
   RemoteConfigOptions,
   RemoteConfigService,
 } from './remote-config-types';
+import { createKeyValueStorage } from '@ion/storage';
 
 const DEFAULT_REFRESH_INTERVAL = 300_000; // 5 minutes
 
@@ -51,17 +51,30 @@ async function executeGetConfig<T>(
   identity: ConfigIdentity<T>,
   timeToLiveMs: number,
 ): Promise<T> {
+  const tag = 'remote-config';
+  const { configName } = identity;
+
   const cached = readCachedConfig(deps, identity, timeToLiveMs);
-  if (cached.value !== null) return cached.value;
+  if (cached.value !== null) {
+    Logger.debug('Serving config from cache', { tag, data: { configName } });
+    return cached.value;
+  }
 
-  const version = cached.hadParseError ? 0 : getStoredVersion(deps.storage, identity.configName);
+  const version = cached.hadParseError ? 0 : getStoredVersion(deps.storage, configName);
   const networkResult = await tryNetworkFetch(deps, identity, version);
-  if (networkResult !== null) return networkResult;
+  if (networkResult !== null) {
+    Logger.info('Config fetched from network', { tag, data: { configName, version } });
+    return networkResult;
+  }
 
-  updateTimestamp(deps, identity.configName);
+  updateTimestamp(deps, configName);
   const stale = readStaleCache(deps, identity);
-  if (stale !== null) return stale;
+  if (stale !== null) {
+    Logger.warning('Serving stale config after network failure', { tag, data: { configName } });
+    return stale;
+  }
 
+  Logger.warning('All caches empty, force-fetching config', { tag, data: { configName } });
   return forceFetchConfig(deps, identity);
 }
 
