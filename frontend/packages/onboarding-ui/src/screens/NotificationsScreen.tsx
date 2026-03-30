@@ -61,7 +61,7 @@ function NotificationDescriptions({ style }: { style: ReturnType<typeof buildDes
     <View style={style}>
       <DescriptionItem
         iconName="button-receive"
-        text="Receive notifications when your sending or receiving assets"
+        text="Receive notifications when you send or receive assets"
         testID="description-receive"
       />
       <DescriptionItem

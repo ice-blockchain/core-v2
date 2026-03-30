@@ -82,9 +82,9 @@ export function CreatorRow({ avatarUrl, name, handle, isVerified, isFollowing, o
   const handlePress = useCallback(() => onToggleFollow(), [onToggleFollow]);
 
   return (
-    <View style={rowStyle} testID={testID} accessibilityRole="button" accessibilityLabel={`${name} ${isFollowing ? "following" : "follow"}`}>
+    <View style={rowStyle} testID={testID}>
       <View style={leftStyle}>
-        <Image source={avatarUrl ? { uri: avatarUrl } : undefined} style={avatarStyle} />
+        {avatarUrl ? <Image source={{ uri: avatarUrl }} style={avatarStyle} /> : <View style={avatarStyle} />}
         <View style={buildInfoStyle()}>
           <View style={nameRowStyle}>
             <Text variant="body" numberOfLines={1}>{name}</Text>

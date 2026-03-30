@@ -46,6 +46,7 @@ function useToggleFollow() {
 function useCreatorList() {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
 
@@ -60,16 +61,18 @@ function useCreatorList() {
   }, []);
 
   const loadMore = useCallback(() => {
-    if (!hasMore || isLoading) return;
+    if (!hasMore || isLoading || isLoadingMore) return;
     const nextPage = page + 1;
+    setIsLoadingMore(true);
     setPage(nextPage);
     fetchSuggestedCreators({ page: nextPage })
       .then((result) => {
         setCreators((prev) => [...prev, ...result.creators]);
         setHasMore(result.hasMore);
       })
-      .catch(() => setHasMore(false));
-  }, [hasMore, isLoading, page]);
+      .catch(() => setHasMore(false))
+      .finally(() => setIsLoadingMore(false));
+  }, [hasMore, isLoading, isLoadingMore, page]);
 
   return { creators, isLoading, hasMore, loadMore };
 }

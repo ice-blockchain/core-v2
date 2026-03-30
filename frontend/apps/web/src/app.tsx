@@ -21,47 +21,29 @@ function OnboardingButton({ onPress }: { onPress: () => void }) {
   );
 }
 
+const onboardingStepMap: Record<OnboardingStep, { Screen: typeof ProfileSetupScreen; next: OnboardingStep | null; prev: OnboardingStep | null }> = {
+  'profile': { Screen: ProfileSetupScreen, next: 'languages', prev: null },
+  'languages': { Screen: SelectLanguagesScreen, next: 'discover-creators', prev: 'profile' },
+  'discover-creators': { Screen: DiscoverCreatorsScreen, next: 'notifications', prev: 'languages' },
+  'notifications': { Screen: NotificationsScreen, next: null, prev: 'discover-creators' },
+};
+
+function OnboardingFlow({ step, setStep }: { step: OnboardingStep; setStep: (s: OnboardingStep | null) => void }) {
+  const config = onboardingStepMap[step];
+  return (
+    <config.Screen
+      onContinue={() => setStep(config.next)}
+      onBack={() => setStep(config.prev)}
+    />
+  );
+}
+
 function AppContent() {
   const [showAuthFlow, setShowAuthFlow] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>(null);
 
   if (showAuthFlow) return <SplashPage />;
-
-  if (onboardingStep === 'profile') {
-    return (
-      <ProfileSetupScreen
-        onContinue={() => setOnboardingStep('languages')}
-        onBack={() => setOnboardingStep(null)}
-      />
-    );
-  }
-
-  if (onboardingStep === 'languages') {
-    return (
-      <SelectLanguagesScreen
-        onContinue={() => setOnboardingStep('discover-creators')}
-        onBack={() => setOnboardingStep('profile')}
-      />
-    );
-  }
-
-  if (onboardingStep === 'discover-creators') {
-    return (
-      <DiscoverCreatorsScreen
-        onContinue={() => setOnboardingStep('notifications')}
-        onBack={() => setOnboardingStep('languages')}
-      />
-    );
-  }
-
-  if (onboardingStep === 'notifications') {
-    return (
-      <NotificationsScreen
-        onContinue={() => setOnboardingStep(null)}
-        onBack={() => setOnboardingStep('discover-creators')}
-      />
-    );
-  }
+  if (onboardingStep) return <OnboardingFlow step={onboardingStep} setStep={setOnboardingStep} />;
 
   return (
     <main>
