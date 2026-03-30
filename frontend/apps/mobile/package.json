@@ -11,6 +11,7 @@
     "android:staging": "../../scripts/setup-env.sh staging && react-native run-android --mode stagingDebug --appId io.ion.app.staging",
     "android:testnet": "../../scripts/setup-env.sh testnet && react-native run-android --mode ionTestnetDebug --appId io.ion.app.testnet",
     "android:production": "../../scripts/setup-env.sh production && react-native run-android --mode productionDebug --appId io.ion.app",
+    "pods": "cd ios && bundle exec pod install && cd ..",
     "lint": "eslint .",
     "start": "react-native start --reset-cache",
     "test": "jest --passWithNoTests"
