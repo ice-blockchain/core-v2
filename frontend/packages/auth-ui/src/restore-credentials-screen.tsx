@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { translate } from "@ion/localization";
-import { TextInput } from "@ion/ui";
+import type { IconName } from "@ion/ui";
+import { TextField, Icon, useTheme } from "@ion/ui";
 import { SheetHeader } from "./sheet-header";
 import { RegisterHeader } from "./register-header";
 import { PrimaryButton } from "./primary-button";
@@ -26,33 +27,40 @@ function useRestoreCredentialsForm() {
   return { identityKeyName, setIdentityKeyName, recoveryKeyId, setRecoveryKeyId, recoveryCode, setRecoveryCode, isFormValid };
 }
 
+function useFieldIcon(name: IconName) {
+  const theme = useTheme();
+  return <Icon name={name} size={20} color={theme.colors.tertiaryText} />;
+}
+
+const NO_AUTO_CAPITALIZE = { autoCapitalize: "none" as const };
+
+interface CredentialFieldProps {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  icon: IconName;
+}
+
+function CredentialField({ label, value, onChangeText, icon }: CredentialFieldProps) {
+  return (
+    <TextField
+      label={label}
+      value={value}
+      onChangeText={onChangeText}
+      prefixIcon={useFieldIcon(icon)}
+      hasPrefixDivider
+      textInputProps={NO_AUTO_CAPITALIZE}
+      style={styles.field}
+    />
+  );
+}
+
 function CredentialsForm({ form }: { form: ReturnType<typeof useRestoreCredentialsForm> }) {
   return (
     <View style={styles.formContainer}>
-      <TextInput
-        value={form.identityKeyName}
-        onChangeText={form.setIdentityKeyName}
-        placeholder={translate("auth:identityKeyNameLabel")}
-        prefixIcon="field-identitykey"
-        autoCapitalize="none"
-        style={styles.field}
-      />
-      <TextInput
-        value={form.recoveryKeyId}
-        onChangeText={form.setRecoveryKeyId}
-        placeholder={translate("auth:recoveryKeyIdPlaceholder")}
-        prefixIcon="channel-private"
-        autoCapitalize="none"
-        style={styles.field}
-      />
-      <TextInput
-        value={form.recoveryCode}
-        onChangeText={form.setRecoveryCode}
-        placeholder={translate("auth:recoveryCodePlaceholder")}
-        prefixIcon="recovery-code"
-        autoCapitalize="none"
-        style={styles.field}
-      />
+      <CredentialField label={translate("auth:identityKeyNameLabel")} value={form.identityKeyName} onChangeText={form.setIdentityKeyName} icon="field-identitykey" />
+      <CredentialField label={translate("auth:recoveryKeyIdPlaceholder")} value={form.recoveryKeyId} onChangeText={form.setRecoveryKeyId} icon="channel-private" />
+      <CredentialField label={translate("auth:recoveryCodePlaceholder")} value={form.recoveryCode} onChangeText={form.setRecoveryCode} icon="recovery-code" />
     </View>
   );
 }
@@ -93,11 +101,9 @@ export function RestoreCredentialsScreen({ onBack, onRestore, isLoading }: Resto
   return (
     <View style={styles.page}>
       <SheetHeader title="" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <RegisterHeader icon={<RestoreKeyIcon />} title={translate("auth:restoreMenuTitle")} subtitle={translate("auth:restoreCredentialsSubtitle")} />
-        <CredentialsForm form={form} />
-        <RestoreButton onPress={handleRestore} disabled={!form.isFormValid || !!isLoading} />
-      </ScrollView>
+      <RegisterHeader icon={<RestoreKeyIcon />} title={translate("auth:restoreMenuTitle")} subtitle={translate("auth:restoreCredentialsSubtitle")} />
+      <CredentialsForm form={form} />
+      <RestoreButton onPress={handleRestore} disabled={!form.isFormValid || !!isLoading} />
       <View style={styles.footer}>
         <SecuredByFooter />
         <TermsFooter />
@@ -112,13 +118,8 @@ const FOOTER_BOTTOM_PADDING = 40;
 
 const styles = StyleSheet.create({
   page: {
-    flexGrow: 1,
     alignItems: "center",
     width: "100%",
-  },
-  scrollContent: {
-    alignItems: "center",
-    paddingBottom: 24,
   },
   formContainer: {
     marginTop: FORM_TOP_MARGIN,
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   footer: {
-    marginTop: "auto",
+    marginTop: 40,
     alignItems: "center",
     gap: 12,
     paddingBottom: FOOTER_BOTTOM_PADDING,
