@@ -2,6 +2,8 @@ import type { ISecureStorage } from '@ion/storage';
 import type { AuthTokens } from '../types';
 import { parseJwtExpiry } from './parse-jwt-expiry';
 
+const EXPIRY_BUFFER_SECONDS = 30;
+
 export interface TokenManager {
   getTokens(username: string): Promise<AuthTokens | null>;
   setTokens(username: string, tokens: AuthTokens): Promise<void>;
@@ -47,7 +49,7 @@ export function createTokenManager(secureStorage: ISecureStorage): TokenManager 
       if (!tokens) return true;
       const exp = parseJwtExpiry(tokens.token);
       if (!exp) return true;
-      return Date.now() >= exp * 1000;
+      return Date.now() >= (exp - EXPIRY_BUFFER_SECONDS) * 1000;
     },
   };
 }

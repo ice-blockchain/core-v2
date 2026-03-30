@@ -10,8 +10,8 @@ describe("validateWebUri", () => {
     expect(() => validateWebUri("https://example.com/photo.jpg")).toThrow("Unsupported URI scheme");
   });
 
-  it("accepts data: URIs", () => {
-    expect(() => validateWebUri("data:image/png;base64,abc")).not.toThrow();
+  it("rejects data: URIs to prevent memory exhaustion", () => {
+    expect(() => validateWebUri("data:image/png;base64,abc")).toThrow("Unsupported URI scheme");
   });
 
   it("rejects http: URIs to prevent SSRF and mixed-content", () => {
@@ -46,5 +46,17 @@ describe("validateNativeUri", () => {
 
   it("rejects javascript: URIs", () => {
     expect(() => validateNativeUri("javascript:alert(1)")).toThrow("Unsupported URI scheme");
+  });
+
+  it("rejects file: URIs with path traversal", () => {
+    expect(() => validateNativeUri("file:///data/../etc/passwd")).toThrow("Path traversal");
+  });
+
+  it("rejects file: URIs with encoded path traversal", () => {
+    expect(() => validateNativeUri("file:///data/%2e%2e/etc/passwd")).toThrow("Path traversal");
+  });
+
+  it("accepts file: URIs without traversal", () => {
+    expect(() => validateNativeUri("file:///data/user/0/com.app/cache/photo.jpg")).not.toThrow();
   });
 });

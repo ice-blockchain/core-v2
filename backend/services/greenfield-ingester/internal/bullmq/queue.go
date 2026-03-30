@@ -30,9 +30,23 @@ func (q *Queue) toKey(suffix string) string {
 	return q.keyPrefix + suffix
 }
 
+// dedupAndSetJob atomically checks if a job exists and creates its hash if not.
+// Returns 1 if created, 0 if duplicate. Runs as a Lua script for atomicity.
+var dedupAndSetJob = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) == 1 then
+  return 0
+end
+redis.call("HSET", KEYS[1],
+  "name", ARGV[1], "data", ARGV[2], "opts", ARGV[3],
+  "timestamp", ARGV[4], "delay", 0, "priority", 0,
+  "attemptsMade", 0, "processedOn", 0, "finishedOn", 0,
+  "stacktrace", "[]", "returnvalue", "null")
+return 1
+`)
+
 // AddJob enqueues a job in BullMQ-compatible format.
 // Returns true if the job was created, false if it already exists.
-// Dedup uses EXISTS on the job hash key (same as gobullmq Lua script).
+// Dedup is atomic via Lua script to prevent TOCTOU races.
 func (q *Queue) AddJob(
 	ctx context.Context,
 	pipe redis.Pipeliner,
@@ -41,15 +55,6 @@ func (q *Queue) AddJob(
 	jobID string,
 ) (bool, error) {
 	jobKey := q.toKey(jobID)
-
-	exists, err := q.client.Exists(ctx, jobKey).Result()
-	if err != nil {
-		return false, fmt.Errorf("check job exists %s: %w", jobID, err)
-	}
-	if exists > 0 {
-		return false, nil
-	}
-
 	now := time.Now().UnixMilli()
 	opts, err := json.Marshal(map[string]interface{}{
 		"jobId":    jobID,
@@ -60,19 +65,16 @@ func (q *Queue) AddJob(
 		return false, fmt.Errorf("marshal job opts: %w", err)
 	}
 
-	pipe.HSet(ctx, jobKey, map[string]interface{}{
-		"name":         jobName,
-		"data":         string(data),
-		"opts":         string(opts),
-		"timestamp":    now,
-		"delay":        0,
-		"priority":     0,
-		"attemptsMade": 0,
-		"processedOn":  0,
-		"finishedOn":   0,
-		"stacktrace":   "[]",
-		"returnvalue":  "null",
-	})
+	created, err := dedupAndSetJob.Run(
+		ctx, q.client, []string{jobKey},
+		jobName, string(data), string(opts), now,
+	).Int()
+	if err != nil {
+		return false, fmt.Errorf("dedup job %s: %w", jobID, err)
+	}
+	if created == 0 {
+		return false, nil
+	}
 
 	pipe.RPush(ctx, q.toKey("wait"), jobID)
 

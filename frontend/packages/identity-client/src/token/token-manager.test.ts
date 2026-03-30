@@ -65,6 +65,18 @@ describe('TokenManager', () => {
     expect(await manager.isTokenExpired('alice')).toBe(false);
   });
 
+  it('treats token as expired when within 30s buffer', async () => {
+    const nearFutureExp = Math.floor(Date.now() / 1000) + 15;
+    await manager.setTokens('alice', { token: createJwt(nearFutureExp), refreshToken: 'r' });
+    expect(await manager.isTokenExpired('alice')).toBe(true);
+  });
+
+  it('treats token as valid when outside 30s buffer', async () => {
+    const safeExp = Math.floor(Date.now() / 1000) + 60;
+    await manager.setTokens('alice', { token: createJwt(safeExp), refreshToken: 'r' });
+    expect(await manager.isTokenExpired('alice')).toBe(false);
+  });
+
   it('reports expired when no token exists', async () => {
     expect(await manager.isTokenExpired('nobody')).toBe(true);
   });
