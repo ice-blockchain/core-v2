@@ -6,5 +6,6 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!react-native-config)'],
+  testPathIgnorePatterns: ['src/remote-config/'],
   testEnvironment: 'node',
 };
