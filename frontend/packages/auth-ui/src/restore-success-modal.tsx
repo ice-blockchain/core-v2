@@ -1,21 +1,26 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { translate } from "@ion/localization";
-import { BottomSheet, Icon } from "@ion/ui";
+import { BottomSheet, Icon, Text, colorPalette } from "@ion/ui";
 import { PrimaryButton } from "./primary-button";
 
+const ICON_SIZE = 80;
+const CONTAINER_WIDTH = 320;
+const BUTTON_WIDTH = 343;
+
 interface RestoreSuccessModalProps {
-  visible: boolean;
+  isVisible: boolean;
+  onClose: () => void;
   onLogin: () => void;
 }
 
-export function RestoreSuccessModal({ visible, onLogin }: RestoreSuccessModalProps) {
+export function RestoreSuccessModal({ isVisible, onClose, onLogin }: RestoreSuccessModalProps) {
   return (
-    <BottomSheet isVisible={visible} onClose={onLogin}>
+    <BottomSheet isVisible={isVisible} onClose={onClose}>
       <View style={styles.container}>
-        <Icon name="keys-success" size={80} color="#FFFFFF" />
+        <Icon name="keys-success" size={ICON_SIZE} color={colorPalette.white} />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{translate("auth:restoreSuccessTitle")}</Text>
-          <Text style={styles.description}>
+          <Text variant="subtitle" color={colorPalette.ink}>{translate("auth:restoreSuccessTitle")}</Text>
+          <Text variant="body2" color={colorPalette.slate} style={styles.description}>
             {translate("auth:restoreSuccessDescription")}
           </Text>
         </View>
@@ -37,23 +42,15 @@ const styles = StyleSheet.create({
   textContainer: {
     alignItems: "center",
     gap: 8,
-    width: 320,
-  },
-  title: {
-    fontWeight: "600",
-    fontSize: 15,
-    color: "#0E0E0E",
+    width: CONTAINER_WIDTH,
   },
   description: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#494949",
     textAlign: "center",
   },
   buttonWrapper: {
     marginTop: 21,
   },
   button: {
-    width: 343,
+    width: BUTTON_WIDTH,
   },
 });

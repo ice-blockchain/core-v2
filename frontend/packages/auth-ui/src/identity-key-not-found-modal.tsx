@@ -4,13 +4,13 @@ import { BottomSheet, Icon } from "@ion/ui";
 import { PrimaryButton } from "./primary-button";
 
 interface IdentityKeyNotFoundModalProps {
-  visible: boolean;
+  isVisible: boolean;
   onClose: () => void;
 }
 
-export function IdentityKeyNotFoundModal({ visible, onClose }: IdentityKeyNotFoundModalProps) {
+export function IdentityKeyNotFoundModal({ isVisible, onClose }: IdentityKeyNotFoundModalProps) {
   return (
-    <BottomSheet isVisible={visible} onClose={onClose}>
+    <BottomSheet isVisible={isVisible} onClose={onClose}>
       <View style={styles.container}>
         <Icon name="keys-error" size={80} />
         <View style={styles.textContainer}>

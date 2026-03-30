@@ -10,7 +10,7 @@ export interface IconProps {
 export function Icon({ name, size = 24, color }: IconProps) {
   const IconComponent = iconRegistry[name];
   if (!IconComponent) return null;
-  return <IconComponent size={size} color={color ?? ""} />;
+  return <IconComponent size={size} color={color ?? "currentColor"} />;
 }
 
 export type { IconName };

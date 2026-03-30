@@ -60,7 +60,7 @@ function PasswordField({ label, value, onChangeText, show, onToggle }: PasswordF
       hasPrefixDivider
       suffixIcon={<Pressable onPress={onToggle}><EyeIcon isOff={!show} /></Pressable>}
       isSecureTextEntry={!show}
-      textInputProps={{ textContentType: "oneTimeCode", autoComplete: "off", autoCorrect: false }}
+      textInputProps={{ textContentType: "newPassword", autoComplete: "password-new", autoCorrect: false }}
       style={styles.field}
     />
   );

@@ -18,4 +18,7 @@ export const colorPalette = {
   heliotrope: "#9973FD",
   electricViolet: "#6F2EFE",
   asphalt: "#1D1E20",
+  white: "#FFFFFF",
+  ink: "#0E0E0E",
+  slate: "#494949",
 } as const;
