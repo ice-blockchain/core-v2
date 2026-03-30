@@ -126,4 +126,31 @@ describe('handleLoginAttempt', () => {
     expect(loadingCalls[0]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: true });
     expect(loadingCalls[loadingCalls.length - 1]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: false });
   });
+
+  it('rejects identity key names with uppercase characters', async () => {
+    await handleLoginAttempt(deps(), 'Alice');
+    expect(client.getLoginCapabilities).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_ERROR' }));
+  });
+
+  it('rejects identity key names with spaces', async () => {
+    await handleLoginAttempt(deps(), 'alice bob');
+    expect(client.getLoginCapabilities).not.toHaveBeenCalled();
+  });
+
+  it('rejects SQL injection strings', async () => {
+    await handleLoginAttempt(deps(), "'; DROP TABLE users;--");
+    expect(client.getLoginCapabilities).not.toHaveBeenCalled();
+  });
+
+  it('rejects empty identity key name', async () => {
+    await handleLoginAttempt(deps(), '');
+    expect(client.getLoginCapabilities).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_ERROR' }));
+  });
+
+  it('rejects unicode characters in identity key name', async () => {
+    await handleLoginAttempt(deps(), '\u0430lice');
+    expect(client.getLoginCapabilities).not.toHaveBeenCalled();
+  });
 });

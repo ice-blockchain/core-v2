@@ -6,6 +6,11 @@ import { useAuthFlow } from './use-auth-flow';
 import type { AuthFlowConfig } from './types';
 import type { ReactNode } from 'react';
 
+vi.mock('@ion/identity-client', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...(actual as Record<string, unknown>), isPasskeyAvailable: () => false };
+});
+
 function createMockClient(): IdentityClient {
   return {
     getLoginCapabilities: vi.fn(),
@@ -167,5 +172,43 @@ describe('useAuthFlow', () => {
     expect(result.current.screenProps.verifyPasskey.loadingElement).toBe(config.loadingElement);
     expect(typeof result.current.screenProps.verifyPasskey.onBack).toBe('function');
     expect(typeof result.current.screenProps.verifyPasskey.onDismiss).toBe('function');
+  });
+
+  it('blocks concurrent registration calls', async () => {
+    const config = createConfig();
+    let resolveRegister: () => void;
+    const pending = new Promise<void>((r) => { resolveRegister = r; });
+    vi.mocked(config.identityClient.registerWithPassword).mockReturnValue(pending);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRegister());
+
+    const first = act(() => result.current.screenProps.register.onContinue({
+      identityKeyName: 'alice', password: 'P@ss1234',
+    }));
+    await act(() => result.current.screenProps.register.onContinue({
+      identityKeyName: 'alice', password: 'P@ss1234',
+    }));
+
+    resolveRegister!();
+    await first;
+
+    expect(config.identityClient.registerWithPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks concurrent login attempts', async () => {
+    const config = createConfig();
+    let resolveCapabilities: (v: unknown) => void;
+    const pending = new Promise((r) => { resolveCapabilities = r; });
+    vi.mocked(config.identityClient.getLoginCapabilities).mockReturnValue(pending as Promise<never>);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    const first = act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('alice'));
+    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('alice'));
+
+    resolveCapabilities!({ identityFound: false, supportsPasskey: false, supportsPassword: false });
+    await first;
+
+    expect(config.identityClient.getLoginCapabilities).toHaveBeenCalledTimes(1);
   });
 });

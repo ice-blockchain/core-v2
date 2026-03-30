@@ -2,6 +2,7 @@ import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
 import type { AuthFlowAction } from './types';
 import { mapIdentityError } from './error-messages';
+import { isValidIdentityKeyName } from './validate-identity-key-name';
 
 interface HandleLoginAttemptDeps {
   identityClient: IdentityClient;
@@ -14,6 +15,10 @@ export async function handleLoginAttempt(
   identityKeyName: string,
 ): Promise<void> {
   const { identityClient, dispatch } = deps;
+  if (!isValidIdentityKeyName(identityKeyName)) {
+    dispatch({ type: 'SET_ERROR', error: mapIdentityError(buildUserNotFoundError()) });
+    return;
+  }
   dispatch({ type: 'SET_LOADING', isLoading: true });
   try {
     const capabilities = await identityClient.getLoginCapabilities(identityKeyName);

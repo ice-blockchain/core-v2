@@ -43,6 +43,7 @@ export interface GetStartedCallbacks {
 export interface RegisterCallbacks {
   onBack: () => void;
   onContinue: (data: { identityKeyName: string; password: string }) => void;
+  passkeyAvailable: boolean;
 }
 
 export interface VerifyPasskeyCallbacks {

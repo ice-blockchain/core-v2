@@ -1,4 +1,5 @@
-import { useCallback, useReducer } from 'react';
+import { useCallback, useReducer, useRef } from 'react';
+import { isPasskeyAvailable } from '@ion/identity-client';
 import type { AuthFlowAction, AuthFlowConfig, AuthFlowState, AuthScreenProps } from './types';
 import { authFlowReducer, createInitialState } from './auth-flow-reducer';
 import { handleLoginAttempt } from './handle-login-attempt';
@@ -16,15 +17,31 @@ interface UseAuthFlowResult {
 export function useAuthFlow(config: AuthFlowConfig): UseAuthFlowResult {
   const [state, dispatch] = useReducer(authFlowReducer, undefined, createInitialState);
   const { identityClient, onAuthSuccess, loadingElement } = config;
+  const inFlight = useRef(false);
 
   const deps = { identityClient, dispatch, onAuthSuccess };
+  const guard = createInFlightGuard(inFlight);
 
-  const screenProps = buildScreenProps(deps, state, loadingElement);
+  const screenProps = buildScreenProps({ deps, state, loadingElement, guard });
   const resetFlow = useCallback(() => dispatch({ type: 'GO_TO_GET_STARTED' }), []);
   const logout = useCallback((u: string) => identityClient.logout(u), [identityClient]);
   const isAuth = useCallback((u: string) => identityClient.isAuthenticated(u), [identityClient]);
 
   return { state, screenProps, logout, isAuthenticated: isAuth, resetFlow };
+}
+
+type AsyncAction = () => Promise<void>;
+
+function createInFlightGuard(ref: React.RefObject<boolean>): (action: AsyncAction) => Promise<void> {
+  return async (action) => {
+    if (ref.current) return;
+    ref.current = true;
+    try {
+      await action();
+    } finally {
+      ref.current = false;
+    }
+  };
 }
 
 interface FlowDeps {
@@ -33,20 +50,25 @@ interface FlowDeps {
   onAuthSuccess: (username: string) => void;
 }
 
-function buildScreenProps(
-  deps: FlowDeps,
-  state: AuthFlowState,
-  loadingElement: AuthFlowConfig['loadingElement'],
-): AuthScreenProps {
+interface BuildScreenPropsInput {
+  deps: FlowDeps;
+  state: AuthFlowState;
+  loadingElement: AuthFlowConfig['loadingElement'];
+  guard: (action: AsyncAction) => Promise<void>;
+}
+
+function buildScreenProps(input: BuildScreenPropsInput): AuthScreenProps {
+  const { deps, state, loadingElement, guard } = input;
   return {
     getStarted: {
       onNavigateToRegister: () => deps.dispatch({ type: 'GO_TO_REGISTER' }),
-      onNavigateToVerifyPassword: (name: string) => handleLoginAttempt(deps, name),
+      onNavigateToVerifyPassword: (name: string) => guard(() => handleLoginAttempt(deps, name)),
       onNavigateToRestore: () => { /* TODO: wire restore flow */ },
     },
     register: {
       onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
-      onContinue: (data) => handleRegister(deps, data),
+      onContinue: (data) => guard(() => handleRegister(deps, data)),
+      passkeyAvailable: isPasskeyAvailable(),
     },
     verifyPasskey: {
       identityKeyName: state.identityKeyName,
@@ -57,7 +79,7 @@ function buildScreenProps(
     verifyPassword: {
       backgroundProps: { loadingElement },
       overlayProps: {
-        onConfirm: (password: string) => handlePasswordLogin(deps, state.identityKeyName, password),
+        onConfirm: (password: string) => guard(() => handlePasswordLogin(deps, state.identityKeyName, password)),
       },
     },
   };

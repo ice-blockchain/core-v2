@@ -12,6 +12,18 @@ describe("buildPasswordRules", () => {
     expect(lengthRule?.isMet).toBe(true);
   });
 
+  it("marks length rule as not met for exactly 8 characters", () => {
+    const rules = buildPasswordRules("abcdefgh");
+    const lengthRule = rules.find((r) => r.label.includes("8 characters"));
+    expect(lengthRule?.isMet).toBe(false);
+  });
+
+  it("marks length rule as not met for 7 characters", () => {
+    const rules = buildPasswordRules("abcdefg");
+    const lengthRule = rules.find((r) => r.label.includes("8 characters"));
+    expect(lengthRule?.isMet).toBe(false);
+  });
+
   it("marks number rule as met when password contains a digit", () => {
     const rules = buildPasswordRules("abc1");
     const numberRule = rules.find((r) => r.label.includes("1 number"));

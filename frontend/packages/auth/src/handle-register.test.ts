@@ -83,4 +83,45 @@ describe('handleRegister', () => {
     expect(loadingCalls[0]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: true });
     expect(loadingCalls[loadingCalls.length - 1]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: false });
   });
+
+  it('falls back to register screen when passkey registration is cancelled', async () => {
+    vi.mocked(client.registerWithPasskey).mockRejectedValue(
+      new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
+    );
+    await handleRegister(deps(), { identityKeyName: 'frank', password: '' });
+    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_REGISTER' });
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'SET_ERROR',
+      error: expect.objectContaining({ code: IdentityErrorCode.PASSKEY_CANCELLED }),
+    }));
+    expect(onAuthSuccess).not.toHaveBeenCalled();
+  });
+
+  it('falls back to register screen when passkey is not available', async () => {
+    vi.mocked(client.registerWithPasskey).mockRejectedValue(
+      new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'unavailable'),
+    );
+    await handleRegister(deps(), { identityKeyName: 'grace', password: '' });
+    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_REGISTER' });
+  });
+
+  it('rejects invalid identity key names without calling the API', async () => {
+    await handleRegister(deps(), { identityKeyName: 'Alice', password: 'P@ss1234' });
+    expect(client.registerWithPassword).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_ERROR' }));
+  });
+
+  it('rejects identity key names with spaces or special characters', async () => {
+    await handleRegister(deps(), { identityKeyName: 'alice bob', password: 'P@ss1234' });
+    expect(client.registerWithPassword).not.toHaveBeenCalled();
+
+    await handleRegister(deps(), { identityKeyName: "'; DROP TABLE users;--", password: 'P@ss1234' });
+    expect(client.registerWithPassword).not.toHaveBeenCalled();
+  });
+
+  it('rejects empty identity key name', async () => {
+    await handleRegister(deps(), { identityKeyName: '', password: 'P@ss1234' });
+    expect(client.registerWithPassword).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_ERROR' }));
+  });
 });
