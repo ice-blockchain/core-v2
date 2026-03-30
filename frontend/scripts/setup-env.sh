@@ -14,7 +14,11 @@ if [[ "${CI:-}" == "true" ]]; then
   fi
 elif [[ -d "${SECRETS_ROOT}/.git" ]]; then
   echo "Pulling latest secrets..."
-  git -C "${SECRETS_ROOT}" pull --ff-only
+  if ! git -C "${SECRETS_ROOT}" pull --ff-only; then
+    echo "warning: Could not fast-forward secrets repository at ${SECRETS_ROOT}."
+    echo "warning: Continuing with your local secrets checkout."
+    echo "warning: Resolve manually with: git -C ${SECRETS_ROOT} pull --rebase"
+  fi
 elif [[ ! -d "${SECRETS_DIR}" ]]; then
   echo "Secrets repo not found at ${SECRETS_ROOT}"
   read -rp "Enter the secrets repo URL: " SECRETS_URL

@@ -13,6 +13,7 @@ export const onboardingDE: Record<keyof typeof onboardingEN, string> = {
   referralPlaceholder: 'Wer hat dich eingeladen',
   customizeAccountSubtitle: 'Passe dein Konto an',
   nicknameReservedTitle: 'Spitzname ist reserviert',
+  nicknameReservedModalTitle: 'Information',
   nicknameReservedDescription:
-    'Dieser Spitzname ist reserviert. Sende eine E-Mail von deiner Firmen-E-Mail-Adresse an hi@ice.io, um ihn zu beanspruchen.',
+    'Wenn du diesen Spitznamen verwenden möchtest, sende bitte eine E-Mail an hi@ice.io von der offiziellen E-Mail-Adresse deines Unternehmens. Wir werden deine Anfrage prüfen und dich so schnell wie möglich kontaktieren.',
 };

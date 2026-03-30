@@ -38,6 +38,7 @@ import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
 import { RestoreKeyIcon } from "./generated/RestoreKeyIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SendIcon } from "./generated/SendIcon";
+import { SheetCloseIcon } from "./generated/SheetCloseIcon";
 
 interface IconComponentProps {
   size?: number;
@@ -81,4 +82,5 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "restore-key": RestoreKeyIcon,
   "search": SearchIcon,
   "send": SendIcon,
+  "sheet-close": SheetCloseIcon,
 };

@@ -3,6 +3,7 @@ export { uploadAvatar } from "./upload-avatar";
 export { validateNickname } from "./validate-nickname";
 export { validateReferral } from "./validate-referral";
 export { fetchLanguages } from "./fetch-languages";
+export { fetchReservedNicknames } from "./fetch-reserved-nicknames";
 export { saveSelectedLanguages } from "./save-selected-languages";
 export { fetchSuggestedCreators } from "./fetch-suggested-creators";
 export { followCreator } from "./follow-creator";
@@ -17,6 +18,7 @@ export type {
   UploadAvatarResult,
   ValidateNicknameResult,
   ValidateReferralResult,
+  FetchReservedNicknamesResult,
   Language,
   FetchLanguagesResult,
   SaveSelectedLanguagesInput,

@@ -65,3 +65,7 @@ export interface FetchSuggestedCreatorsResult {
   creators: Creator[];
   hasMore: boolean;
 }
+
+export interface FetchReservedNicknamesResult {
+  reservedNicknames: Set<string>;
+}

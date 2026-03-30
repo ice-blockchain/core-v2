@@ -13,6 +13,7 @@ export const onboardingFR: Record<keyof typeof onboardingEN, string> = {
   referralPlaceholder: 'Qui vous a invité',
   customizeAccountSubtitle: 'Personnalisez votre compte',
   nicknameReservedTitle: 'Pseudo réservé',
+  nicknameReservedModalTitle: 'Information',
   nicknameReservedDescription:
-    'Ce pseudo est réservé. Pour le revendiquer, envoyez un e-mail à hi@ice.io depuis votre adresse e-mail professionnelle.',
+    'Si vous souhaitez utiliser ce pseudo, veuillez envoyer un e-mail à hi@ice.io depuis l\'adresse e-mail officielle de votre entreprise. Nous examinerons votre demande et vous contacterons dès que possible.',
 };

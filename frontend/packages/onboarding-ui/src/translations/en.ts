@@ -11,6 +11,7 @@ export const onboardingEN = {
   referralPlaceholder: 'Who invited you',
   customizeAccountSubtitle: 'Customize your account',
   nicknameReservedTitle: 'Nickname is reserved',
+  nicknameReservedModalTitle: 'Information',
   nicknameReservedDescription:
-    'This nickname is reserved. To claim it, email hi@ice.io from your company email address.',
+    'If you would like to use this nickname, please send an email to hi@ice.io from your company\'s official email address. We will review your application and contact you as soon as possible.',
 } as const;

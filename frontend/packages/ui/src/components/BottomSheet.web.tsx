@@ -71,6 +71,7 @@ export function BottomSheet(props: BottomSheetProps) {
       <Pressable style={BACKDROP_STYLE} onPress={onClose} />
       <View style={handleStyle} />
       <SheetContent {...props} />
+      {props.overlay}
     </View>
   );
 }
