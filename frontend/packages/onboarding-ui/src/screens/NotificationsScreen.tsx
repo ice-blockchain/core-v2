@@ -78,12 +78,25 @@ function NotificationDescriptions({ style }: { style: ReturnType<typeof buildDes
   );
 }
 
+function NotificationsContent({ styles }: { styles: ReturnType<typeof useScreenStyles> }) {
+  return (
+    <View style={styles.screenContent}>
+      <OnboardingScreenTitle title="Turn on notifications" subtitle="Receive notifications when you transfer and receive funds" />
+      <View style={styles.cardsContainer}>
+        <NotificationCards innerStyle={styles.cardsInner} />
+      </View>
+      <NotificationDescriptions style={styles.descriptions} />
+      <View style={styles.footerSpacer} />
+    </View>
+  );
+}
+
 export function NotificationsScreen({ onContinue, onBack }: OnboardingScreenProps) {
   const styles = useScreenStyles();
   const handleClose = useCallback(() => onBack?.(), [onBack]);
 
   const handleContinue = useCallback(async () => {
-    await requestNotificationPermission();
+    try { await requestNotificationPermission(); } catch { /* user denied or unavailable — proceed anyway */ }
     onContinue();
   }, [onContinue]);
 
@@ -96,17 +109,7 @@ export function NotificationsScreen({ onContinue, onBack }: OnboardingScreenProp
       floatingFooter={<Button label="Continue" onPress={handleContinue} />}
       testID="notifications-screen"
     >
-      <View style={styles.screenContent}>
-        <OnboardingScreenTitle
-          title="Turn on notifications"
-          subtitle="Receive notifications when you transfer and receive funds"
-        />
-        <View style={styles.cardsContainer}>
-          <NotificationCards innerStyle={styles.cardsInner} />
-        </View>
-        <NotificationDescriptions style={styles.descriptions} />
-        <View style={styles.footerSpacer} />
-      </View>
+      <NotificationsContent styles={styles} />
     </BottomSheet>
   );
 }
