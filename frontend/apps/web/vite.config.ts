@@ -48,6 +48,10 @@ function reactNativeWebPlugin(): Plugin {
               replacement: path.join(stubsDir, 'TurboModuleRegistry.ts'),
             },
             {
+              find: /react-native\/src\/private\/devsupport\/rndevtools\/ReactDevToolsSettingsManager/,
+              replacement: path.join(stubsDir, 'ReactDevToolsSettingsManager.ts'),
+            },
+            {
               find: 'react-native',
               replacement: rnwReplacement,
             },
