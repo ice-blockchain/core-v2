@@ -14,6 +14,7 @@ export { saveSelectedLanguages }    // Persist language selections
 export { fetchSuggestedCreators }   // Paginated creator suggestions
 export { followCreator }            // Follow a creator
 export { unfollowCreator }          // Unfollow a creator
+export { requestNotificationPermission } // Request push notification permission
 export { completeOnboarding }       // Mark onboarding as complete
 export { ActionError }              // Structured error with code + userMessage
 
@@ -59,6 +60,7 @@ interface ValidateNicknameResult {
 | `fetchSuggestedCreators` | `@ion/identity-client` | Stub (returns hardcoded list) |
 | `followCreator` | `@ion/ion-connect-client` | Stub |
 | `unfollowCreator` | `@ion/ion-connect-client` | Stub |
+| `requestNotificationPermission` | `@ion/permissions` + `@ion/push-notifications` | Stub |
 | `completeOnboarding` | `@ion/identity-client` | Stub |
 
 ## Design Decisions
@@ -89,6 +91,7 @@ src/
   fetch-suggested-creators.test.ts    # Tests pagination behavior
   follow-creator.ts                   # Stub
   unfollow-creator.ts                 # Stub
+  request-notification-permission.ts  # Stub
   complete-onboarding.ts              # Stub
   onboarding.test.ts                  # Verifies exports
 ```

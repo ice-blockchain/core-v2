@@ -18,7 +18,7 @@ function buildCircleStyle(scale: (n: number) => number, backgroundColor: string)
   return {
     width: scale(30),
     height: scale(30),
-    borderRadius: scale(10),
+    borderRadius: scale(15),
     backgroundColor,
   };
 }

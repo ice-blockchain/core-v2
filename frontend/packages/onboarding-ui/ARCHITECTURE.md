@@ -346,7 +346,7 @@ Let the user choose which language(s) they want content displayed in.
 
 ## Screen 3: Discover Creators
 
-**Status:** TODO
+**Status:** DONE
 
 ### Purpose
 Suggest popular creators for the user to follow during onboarding.
