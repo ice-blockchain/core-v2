@@ -13,11 +13,6 @@ function resolveAnimationData(variant: IONLoaderVariant) {
 
 export function IONLoader({ variant, size = 20 }: IONLoaderProps) {
   return (
-    <LottieView
-      source={resolveAnimationData(variant)}
-      autoPlay
-      loop
-      style={buildIONLoaderStyle(size)}
-    />
+    null
   );
 }
