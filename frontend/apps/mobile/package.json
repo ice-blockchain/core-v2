@@ -28,6 +28,7 @@
     "@ion/media-viewer": "workspace:*",
     "@ion/navigation": "workspace:*",
     "@ion/network": "workspace:*",
+    "@ion/storage": "workspace:*",
     "@ion/nsfw-detection": "workspace:*",
     "@ion/onboarding-ui": "workspace:*",
     "@ion/splash-ui": "workspace:*",
