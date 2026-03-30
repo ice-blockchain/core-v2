@@ -43,6 +43,7 @@ function usePhaseCallbacks(setPhase: (p: Phase) => void, setRestoreSuccess: (s: 
     showKeyNotFound: useCallback(() => setKeyNotFound(true), [setKeyNotFound]),
     hideKeyNotFound: useCallback(() => setKeyNotFound(false), [setKeyNotFound]),
     showRestoreSuccess: useCallback((identityKeyName: string) => setRestoreSuccess(identityKeyName), [setRestoreSuccess]),
+    hideRestoreSuccess: useCallback(() => setRestoreSuccess(null), [setRestoreSuccess]),
   };
 }
 
@@ -80,7 +81,7 @@ function renderRestorePhase(nav: Nav) {
       <SetNewPasswordScreen
         identityKeyName={nav.phase.identityKeyName}
         onBack={nav.goToRestoreCredentials}
-        onContinue={() => nav.goToGetStarted()}
+        onContinue={(_password: string) => nav.goToGetStarted()}
       />
     );
   }
@@ -137,9 +138,10 @@ export default function SplashPage() {
           <BottomSheet>
             <AuthSheetContent nav={nav} />
           </BottomSheet>
-          <IdentityKeyNotFoundModal visible={nav.keyNotFound} onClose={nav.hideKeyNotFound} />
+          <IdentityKeyNotFoundModal isVisible={nav.keyNotFound} onClose={nav.hideKeyNotFound} />
           <RestoreSuccessModal
-            visible={nav.restoreSuccess !== null}
+            isVisible={nav.restoreSuccess !== null}
+            onClose={nav.hideRestoreSuccess}
             onLogin={() => { if (nav.restoreSuccess) nav.goToSetNewPassword(nav.restoreSuccess); }}
           />
           <PasswordOverlay nav={nav} />

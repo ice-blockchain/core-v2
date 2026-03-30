@@ -17,46 +17,55 @@ const loadingElement = (
   <IONLoader variant="light" size={30} />
 );
 
+function renderRestoreKeyNotFound(nav: Nav) {
+  return <IdentityKeyNotFoundModal isVisible={true} onClose={nav.goToRestoreMenu} />;
+}
+
+function renderRestoreSuccess(nav: Nav, identityKeyName: string) {
+  return (
+    <RestoreSuccessModal
+      isVisible={true}
+      onClose={nav.goToRestoreMenu}
+      onLogin={() => nav.goToSetNewPassword(identityKeyName)}
+    />
+  );
+}
+
+function renderSetNewPassword(nav: Nav, identityKeyName: string) {
+  return (
+    <SetNewPasswordScreen
+      identityKeyName={identityKeyName}
+      onBack={nav.goToRestoreCredentials}
+      onContinue={nav.submitNewPassword}
+    />
+  );
+}
+
+function renderRestoreCredentials(nav: Nav) {
+  return (
+    <RestoreCredentialsScreen
+      onBack={nav.goToRestoreMenu}
+      onRestore={(data) => nav.goToRestoreSuccess(data.identityKeyName)}
+    />
+  );
+}
+
+function renderRestoreMenu(nav: Nav) {
+  return (
+    <RestoreMenuScreen
+      onBack={nav.goToGetStarted}
+      onSelectCloudRestore={nav.goToRestoreKeyNotFound}
+      onSelectCredentialRestore={nav.goToRestoreCredentials}
+    />
+  );
+}
+
 function renderRestorePhase(nav: Nav) {
-  if (nav.phase.name === "restore-key-not-found") {
-    return <IdentityKeyNotFoundModal isVisible={true} onClose={nav.goToRestoreMenu} />;
-  }
-  if (nav.phase.name === "restore-success") {
-    const { identityKeyName } = nav.phase;
-    return (
-      <RestoreSuccessModal
-        isVisible={true}
-        onClose={nav.goToRestoreMenu}
-        onLogin={() => nav.goToSetNewPassword(identityKeyName)}
-      />
-    );
-  }
-  if (nav.phase.name === "set-new-password") {
-    return (
-      <SetNewPasswordScreen
-        identityKeyName={nav.phase.identityKeyName}
-        onBack={nav.goToRestoreCredentials}
-        onContinue={nav.submitNewPassword}
-      />
-    );
-  }
-  if (nav.phase.name === "restore-credentials") {
-    return (
-      <RestoreCredentialsScreen
-        onBack={nav.goToRestoreMenu}
-        onRestore={(data) => nav.goToRestoreSuccess(data.identityKeyName)}
-      />
-    );
-  }
-  if (nav.phase.name === "restore-menu") {
-    return (
-      <RestoreMenuScreen
-        onBack={nav.goToGetStarted}
-        onSelectCloudRestore={nav.goToRestoreKeyNotFound}
-        onSelectCredentialRestore={nav.goToRestoreCredentials}
-      />
-    );
-  }
+  if (nav.phase.name === "restore-key-not-found") return renderRestoreKeyNotFound(nav);
+  if (nav.phase.name === "restore-success") return renderRestoreSuccess(nav, nav.phase.identityKeyName);
+  if (nav.phase.name === "set-new-password") return renderSetNewPassword(nav, nav.phase.identityKeyName);
+  if (nav.phase.name === "restore-credentials") return renderRestoreCredentials(nav);
+  if (nav.phase.name === "restore-menu") return renderRestoreMenu(nav);
   return null;
 }
 
@@ -78,7 +87,7 @@ function renderRegistrationPhase(nav: Nav) {
     return (
       <VerifyPasskeyScreen
         identityKeyName={nav.phase.identityKeyName}
-        onBack={nav.phase.from === "register" ? nav.goToRegister : nav.goToRegister}
+        onBack={nav.phase.from === "register" ? nav.goToRegister : () => nav.goToVerifyPassword(nav.phase.identityKeyName)}
         onDismiss={nav.goToGetStarted}
         loadingElement={loadingElement}
       />
