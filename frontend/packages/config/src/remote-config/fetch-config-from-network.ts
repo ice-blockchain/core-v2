@@ -2,17 +2,17 @@ import { writeToCache } from './config-cache';
 import { ConfigError, ConfigErrorCode } from './remote-config-error';
 import type {
   AppConfigWithVersion,
-  GetConfigOptions,
+  ConfigIdentity,
   RemoteConfigDeps,
 } from './remote-config-types';
 
 export async function fetchConfigFromNetwork<T>(
   deps: RemoteConfigDeps,
-  options: GetConfigOptions<T>,
+  identity: ConfigIdentity<T>,
   version: number,
 ): Promise<T | null> {
-  const query = buildQuery(options.checkVersion, version);
-  const url = `/v1/config/${options.configName}`;
+  const query = buildQuery(identity.checkVersion, version);
+  const url = `/v1/config/${identity.configName}`;
 
   const response = await deps.httpClient.getRaw(url, { query });
 
@@ -20,14 +20,14 @@ export async function fetchConfigFromNetwork<T>(
   if (response.status !== 200) {
     throw new ConfigError(
       ConfigErrorCode.CONFIG_FETCH_FAILED,
-      `Unexpected status ${response.status} for config "${options.configName}"`,
+      `Unexpected status ${response.status} for config "${identity.configName}"`,
     );
   }
 
-  const parsed = options.parser(response.body);
-  const resolvedVersion = resolveVersion(parsed, response.headers, options.checkVersion);
+  const parsed = identity.parser(response.body);
+  const resolvedVersion = resolveVersion(parsed, response.headers, identity.checkVersion);
   const entry = { raw: response.body, version: resolvedVersion, fetchedAtMs: Date.now() };
-  writeToCache(deps, options.configName, entry);
+  writeToCache(deps, identity.configName, entry);
 
   return parsed;
 }

@@ -30,7 +30,6 @@ function createDeps(storage: IKeyValueStorage): RemoteConfigDeps {
     },
     storage,
 
-    defaultTimeToLiveMs: 60_000,
     memoryCache: new Map<string, CachedEntry>(),
   };
 }
@@ -43,13 +42,13 @@ describe('readStaleCache', () => {
     storage.setString('remote_config:data:cfg', '{"value":99}');
     storage.setNumber('remote_config:timestamp:cfg', 0);
 
-    const result = readStaleCache(createDeps(storage), { configName: 'cfg', parser });
+    const result = readStaleCache(createDeps(storage), { configName: 'cfg', parser, checkVersion: false });
 
     expect(result).toEqual({ value: 99 });
   });
 
   it('returns null when nothing is cached', () => {
-    const result = readStaleCache(createDeps(createMockStorage()), { configName: 'missing', parser });
+    const result = readStaleCache(createDeps(createMockStorage()), { configName: 'missing', parser, checkVersion: false });
 
     expect(result).toBeNull();
   });
@@ -58,7 +57,7 @@ describe('readStaleCache', () => {
     const storage = createMockStorage();
     storage.setString('remote_config:data:cfg', 'broken');
 
-    const result = readStaleCache(createDeps(storage), { configName: 'cfg', parser });
+    const result = readStaleCache(createDeps(storage), { configName: 'cfg', parser, checkVersion: false });
 
     expect(result).toBeNull();
   });

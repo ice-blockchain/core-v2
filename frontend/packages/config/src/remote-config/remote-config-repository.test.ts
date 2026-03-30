@@ -7,7 +7,7 @@ vi.mock('../environment/environment', () => ({
   environmentConfig: { apiBaseUrl: 'https://api.test.ion.app' },
 }));
 
-import { createRemoteConfig } from './create-remote-config';
+import { remoteConfigRepository } from './remote-config-repository';
 import { ConfigError, ConfigErrorCode } from './remote-config-error';
 
 function createMockStorage(): IKeyValueStorage {
@@ -44,8 +44,9 @@ function noContentResponse(): RawResponse {
 }
 
 const parser = (raw: string) => JSON.parse(raw) as { value: number };
+const configOptions = { configName: 'cfg', parser };
 
-describe('createRemoteConfig', () => {
+describe('remoteConfigRepository', () => {
   let storage: IKeyValueStorage;
   let httpClient: HttpClient;
 
@@ -54,13 +55,8 @@ describe('createRemoteConfig', () => {
     httpClient = createMockHttpClient();
   });
 
-  function createService(overrides?: { defaultTimeToLiveMs?: number }) {
-    return createRemoteConfig({
-      httpClient,
-      storage,
-
-      ...overrides,
-    });
+  function createService() {
+    return remoteConfigRepository({ httpClient, storage });
   }
 
   function mockGetRaw(): ReturnType<typeof vi.fn> {
@@ -71,7 +67,7 @@ describe('createRemoteConfig', () => {
     mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
-    const result = await service.getConfig({ configName: 'cfg', parser });
+    const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 1 });
     expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
@@ -81,22 +77,22 @@ describe('createRemoteConfig', () => {
     mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
-    await service.getConfig({ configName: 'cfg', parser });
-    const result = await service.getConfig({ configName: 'cfg', parser });
+    await service.getConfig(configOptions);
+    const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 1 });
     expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
   });
 
-  it('refetches after TTL expires', async () => {
+  it('refetches after refresh interval expires', async () => {
     mockGetRaw()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockResolvedValueOnce(okResponse('{"value":2}'));
 
-    const service = createService({ defaultTimeToLiveMs: 0 });
+    const service = createService();
 
-    const first = await service.getConfig({ configName: 'cfg', parser });
-    const second = await service.getConfig({ configName: 'cfg', parser });
+    const first = await service.getConfig({ ...configOptions, timeToLiveMs: 0 });
+    const second = await service.getConfig({ ...configOptions, timeToLiveMs: 0 });
 
     expect(first).toEqual({ value: 1 });
     expect(second).toEqual({ value: 2 });
@@ -107,10 +103,10 @@ describe('createRemoteConfig', () => {
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockResolvedValueOnce(noContentResponse());
 
-    const service = createService({ defaultTimeToLiveMs: 0 });
+    const service = createService();
 
-    await service.getConfig({ configName: 'cfg', parser });
-    const result = await service.getConfig({ configName: 'cfg', parser });
+    await service.getConfig({ ...configOptions, timeToLiveMs: 0 });
+    const result = await service.getConfig({ ...configOptions, timeToLiveMs: 0 });
 
     expect(result).toEqual({ value: 1 });
   });
@@ -120,10 +116,10 @@ describe('createRemoteConfig', () => {
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockRejectedValueOnce(new Error('offline'));
 
-    const service = createService({ defaultTimeToLiveMs: 0 });
+    const service = createService();
 
-    await service.getConfig({ configName: 'cfg', parser });
-    const result = await service.getConfig({ configName: 'cfg', parser });
+    await service.getConfig({ ...configOptions, timeToLiveMs: 0 });
+    const result = await service.getConfig({ ...configOptions, timeToLiveMs: 0 });
 
     expect(result).toEqual({ value: 1 });
   });
@@ -134,7 +130,7 @@ describe('createRemoteConfig', () => {
       .mockResolvedValueOnce(okResponse('{"value":99}'));
 
     const service = createService();
-    const result = await service.getConfig({ configName: 'cfg', parser });
+    const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 99 });
     expect(httpClient.getRaw).toHaveBeenCalledTimes(2);
@@ -147,12 +143,12 @@ describe('createRemoteConfig', () => {
 
     const service = createService();
 
-    await expect(
-      service.getConfig({ configName: 'cfg', parser }),
-    ).rejects.toMatchObject({ code: ConfigErrorCode.CONFIG_NOT_FOUND });
+    await expect(service.getConfig(configOptions)).rejects.toMatchObject({
+      code: ConfigErrorCode.CONFIG_NOT_FOUND,
+    });
   });
 
-  it('serializes concurrent requests for the same config', async () => {
+  it('serializes concurrent getConfig calls for the same config', async () => {
     let callCount = 0;
     mockGetRaw().mockImplementation(async () => {
       callCount++;
@@ -161,8 +157,8 @@ describe('createRemoteConfig', () => {
 
     const service = createService();
     const [a, b] = await Promise.all([
-      service.getConfig({ configName: 'cfg', parser }),
-      service.getConfig({ configName: 'cfg', parser }),
+      service.getConfig(configOptions),
+      service.getConfig(configOptions),
     ]);
 
     expect(a).toEqual(b);
@@ -174,22 +170,26 @@ describe('createRemoteConfig', () => {
     const service = createService();
 
     await Promise.all([
-      service.getConfig({ configName: 'a', parser }),
-      service.getConfig({ configName: 'b', parser }),
+      service.getConfig({ ...configOptions, configName: 'a' }),
+      service.getConfig({ ...configOptions, configName: 'b' }),
     ]);
 
     expect(httpClient.getRaw).toHaveBeenCalledTimes(2);
   });
 
-  it('re-throws ConfigError from network fetch', async () => {
+  it('re-throws ConfigError from parser', async () => {
     mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
 
+    const badParser = () => {
+      throw new ConfigError(ConfigErrorCode.CONFIG_VERSION_MISSING, 'no version');
+    };
     const service = createService();
-    const badParser = () => { throw new ConfigError(ConfigErrorCode.CONFIG_VERSION_MISSING, 'no version'); };
 
     await expect(
       service.getConfig({ configName: 'cfg', parser: badParser }),
-    ).rejects.toMatchObject({ code: ConfigErrorCode.CONFIG_VERSION_MISSING });
+    ).rejects.toMatchObject({
+      code: ConfigErrorCode.CONFIG_VERSION_MISSING,
+    });
   });
 
   it('forces version=0 when cached data fails to parse', async () => {
@@ -200,7 +200,7 @@ describe('createRemoteConfig', () => {
     mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
-    const result = await service.getConfig({ configName: 'cfg', parser });
+    const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 1 });
   });

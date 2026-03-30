@@ -38,12 +38,12 @@ function createDeps(httpClient: HttpClient): RemoteConfigDeps {
     httpClient,
     storage: createMockStorage(),
 
-    defaultTimeToLiveMs: 60_000,
     memoryCache: new Map<string, CachedEntry>(),
   };
 }
 
 const parser = (raw: string) => JSON.parse(raw) as { value: number };
+const identity = { configName: 'cfg', parser, checkVersion: false };
 
 describe('forceFetchConfig', () => {
   it('returns parsed data on successful fetch', async () => {
@@ -52,7 +52,7 @@ describe('forceFetchConfig', () => {
       status: 200, headers: {}, body: '{"value":1}',
     });
 
-    const result = await forceFetchConfig(createDeps(httpClient), { configName: 'cfg', parser });
+    const result = await forceFetchConfig(createDeps(httpClient), identity);
 
     expect(result).toEqual({ value: 1 });
   });
@@ -63,7 +63,7 @@ describe('forceFetchConfig', () => {
       status: 200, headers: { 'x-version': '1' }, body: '{"value":1}',
     });
 
-    await forceFetchConfig(createDeps(httpClient), { configName: 'cfg', parser, checkVersion: true });
+    await forceFetchConfig(createDeps(httpClient), { ...identity, checkVersion: true });
 
     expect(httpClient.getRaw).toHaveBeenCalledWith(
       '/v1/config/cfg',
@@ -78,7 +78,7 @@ describe('forceFetchConfig', () => {
     });
 
     await expect(
-      forceFetchConfig(createDeps(httpClient), { configName: 'cfg', parser }),
+      forceFetchConfig(createDeps(httpClient), identity),
     ).rejects.toMatchObject({ code: ConfigErrorCode.CONFIG_NOT_FOUND });
   });
 
@@ -87,7 +87,7 @@ describe('forceFetchConfig', () => {
     (httpClient.getRaw as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('offline'));
 
     await expect(
-      forceFetchConfig(createDeps(httpClient), { configName: 'cfg', parser }),
+      forceFetchConfig(createDeps(httpClient), identity),
     ).rejects.toSatisfy((error: ConfigError) => {
       expect(error.code).toBe(ConfigErrorCode.CONFIG_FETCH_FAILED);
       expect(error.cause).toBeInstanceOf(Error);

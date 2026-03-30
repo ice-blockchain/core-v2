@@ -5,15 +5,14 @@ import type { IKeyValueStorage } from '@ion/storage';
 
 export interface RemoteConfigOptions {
   httpClient?: HttpClient;
-  storage: IKeyValueStorage;
-  defaultTimeToLiveMs?: number;
+  storage?: IKeyValueStorage;
 }
 
 export interface GetConfigOptions<T> {
   configName: string;
   parser: (raw: string) => T;
-  timeToLiveMs?: number;
   checkVersion?: boolean;
+  timeToLiveMs?: number;
 }
 
 // --- Version-aware config ---
@@ -33,8 +32,13 @@ export interface CachedEntry {
 export interface RemoteConfigDeps {
   httpClient: HttpClient;
   storage: IKeyValueStorage;
-  defaultTimeToLiveMs: number;
   memoryCache: Map<string, CachedEntry>;
+}
+
+export interface ConfigIdentity<T> {
+  configName: string;
+  parser: (raw: string) => T;
+  checkVersion: boolean;
 }
 
 // --- Public service ---

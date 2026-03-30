@@ -10,7 +10,7 @@ export { environmentConfig } from './src/environment/environment';
 export type { AppEnvironment, EnvironmentConfig, LogLevel } from './src/environment/types';
 
 // Remote config
-export { createRemoteConfig } from './src/remote-config/create-remote-config';
+export { remoteConfigRepository } from './src/remote-config/remote-config-repository';
 export { ConfigError, ConfigErrorCode } from './src/remote-config/remote-config-error';
 export type {
   RemoteConfigService, RemoteConfigOptions, GetConfigOptions,
@@ -50,7 +50,7 @@ Both platforms share `validateEnvironmentConfig()` which enforces:
 
 ### Overview
 
-`createRemoteConfig<T>(options)` returns a typed `RemoteConfigService<T>` bound to a single config name. It fetches from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 5-step fallback chain.
+`remoteConfigRepository(options?)` returns a `RemoteConfigService` that fetches named configs from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 5-step fallback chain.
 
 ### Dependencies
 
@@ -60,41 +60,42 @@ Both platforms share `validateEnvironmentConfig()` which enforces:
 
 ```typescript
 // Minimal — uses default httpClient and storage
-const multiswap = createRemoteConfig({
+const repository = remoteConfigRepository();
+
+const config = await repository.getConfig({
   configName: 'multiswap',
   parser: (raw) => JSON.parse(raw) as MultiswapConfig,
   checkVersion: true,
+  timeToLiveMs: 60_000,   // optional, defaults to 5 min
 });
-
-const config = await multiswap.getConfig();
 
 // Custom dependencies
-const service = createRemoteConfig({
-  configName: 'feature-flags',
-  parser: (raw) => JSON.parse(raw) as FeatureFlags,
+const customRepository = remoteConfigRepository({
   httpClient: customHttpClient,
   storage: customStorage,
-  timeToLiveMs: 60_000,
 });
 
-const flags = await service.getConfig({ timeToLiveMs: 10_000 });
+const flags = await customRepository.getConfig({
+  configName: 'feature-flags',
+  parser: (raw) => JSON.parse(raw) as FeatureFlags,
+});
 ```
 
 ### Fallback Chain
 
 ```
-1. Fresh cache (memory -> storage, respecting TTL)
+1. Fresh cache (memory -> storage, respecting timeToLiveMs)
 2. Network fetch (with ?version= if checkVersion)
    - 200 -> parse, save, return
    - 204 -> continue to step 3
-3. Stale cache (ignore TTL, refresh timestamp)
+3. Stale cache (ignore timeToLiveMs, refresh timestamp)
 4. Force fetch (?version=0)
 5. Throw CONFIG_NOT_FOUND
 ```
 
 ### Concurrency
 
-Per-config-name mutex serializes concurrent `getConfig` calls. Each `RemoteConfigService<T>` instance is bound to one config name.
+Per-config-name mutex serializes concurrent `getConfig` calls for the same config name. Different config names are fetched concurrently.
 
 ### Cache Storage Keys
 
@@ -114,7 +115,7 @@ When `checkVersion = true`, the service sends `?version={cachedVersion}` and exp
 - **Peer deps only for env config**: `react-native-config` is optional.
 - **`getRaw` on HttpClient**: Remote config uses `HttpClient.getRaw()` which returns raw status, headers, and body string -- unlike `get<T>()` which parses JSON.
 - **Defaults for httpClient and storage**: Both are optional. When omitted, the service creates an `HttpClient` using `environmentConfig.apiBaseUrl` and a `KeyValueStorage` with id `remote-config`.
-- **One service per config**: Each `createRemoteConfig` call binds `configName`, `parser`, and `checkVersion` at creation time. Consumers call `getConfig()` with no args (or an optional `timeToLiveMs` override).
+- **Config per call**: `configName`, `parser`, `checkVersion`, and `timeToLiveMs` are passed to `getConfig<T>()`. One `RemoteConfigService` can serve multiple configs.
 
 ## Dependencies
 
@@ -143,5 +144,5 @@ src/
     fetch-config-from-network.ts  # Step 2: network fetch + 200/204 handling
     read-stale-cache.ts           # Step 3: stale fallback (ignore TTL)
     force-fetch-config.ts         # Step 4: force fetch with version=0
-    create-remote-config.ts       # Factory + orchestrator
+    remote-config-repository.ts       # Factory + orchestrator
 ```

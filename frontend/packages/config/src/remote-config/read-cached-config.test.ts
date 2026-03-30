@@ -30,7 +30,6 @@ function createDeps(overrides?: Partial<RemoteConfigDeps>): RemoteConfigDeps {
     },
     storage: createMockStorage(),
 
-    defaultTimeToLiveMs: 60_000,
     memoryCache: new Map<string, CachedEntry>(),
     ...overrides,
   };
@@ -38,13 +37,14 @@ function createDeps(overrides?: Partial<RemoteConfigDeps>): RemoteConfigDeps {
 
 describe('readCachedConfig', () => {
   const parser = (raw: string) => JSON.parse(raw) as { value: number };
+  const identity = { configName: 'cfg', parser, checkVersion: false };
 
   it('returns value from fresh memory cache', () => {
     const memoryCache = new Map<string, CachedEntry>();
     memoryCache.set('cfg', { raw: '{"value":1}', version: 1, fetchedAtMs: Date.now() });
     const deps = createDeps({ memoryCache });
 
-    const result = readCachedConfig(deps, { configName: 'cfg', parser });
+    const result = readCachedConfig(deps, identity, 60_000);
 
     expect(result.value).toEqual({ value: 1 });
     expect(result.hadParseError).toBe(false);
@@ -55,7 +55,7 @@ describe('readCachedConfig', () => {
     memoryCache.set('cfg', { raw: '{"value":1}', version: 1, fetchedAtMs: Date.now() - 120_000 });
     const deps = createDeps({ memoryCache });
 
-    const result = readCachedConfig(deps, { configName: 'cfg', parser });
+    const result = readCachedConfig(deps, identity, 60_000);
 
     expect(result.value).toBeNull();
   });
@@ -67,7 +67,7 @@ describe('readCachedConfig', () => {
     storage.setNumber('remote_config:timestamp:cfg', Date.now());
     const deps = createDeps({ storage });
 
-    const result = readCachedConfig(deps, { configName: 'cfg', parser });
+    const result = readCachedConfig(deps, identity, 60_000);
 
     expect(result.value).toEqual({ value: 2 });
   });
@@ -78,7 +78,7 @@ describe('readCachedConfig', () => {
     storage.setNumber('remote_config:timestamp:cfg', Date.now() - 120_000);
     const deps = createDeps({ storage });
 
-    const result = readCachedConfig(deps, { configName: 'cfg', parser });
+    const result = readCachedConfig(deps, identity, 60_000);
 
     expect(result.value).toBeNull();
   });
@@ -86,7 +86,7 @@ describe('readCachedConfig', () => {
   it('returns null with no cache at all', () => {
     const deps = createDeps();
 
-    const result = readCachedConfig(deps, { configName: 'missing', parser });
+    const result = readCachedConfig(deps, { configName: 'missing', parser, checkVersion: false }, 60_000);
 
     expect(result.value).toBeNull();
     expect(result.hadParseError).toBe(false);
@@ -97,7 +97,7 @@ describe('readCachedConfig', () => {
     memoryCache.set('cfg', { raw: 'not-json', version: 1, fetchedAtMs: Date.now() });
     const deps = createDeps({ memoryCache });
 
-    const result = readCachedConfig(deps, { configName: 'cfg', parser });
+    const result = readCachedConfig(deps, identity, 60_000);
 
     expect(result.value).toBeNull();
     expect(result.hadParseError).toBe(true);
@@ -106,9 +106,9 @@ describe('readCachedConfig', () => {
   it('uses per-config timeToLiveMs override', () => {
     const memoryCache = new Map<string, CachedEntry>();
     memoryCache.set('cfg', { raw: '{"value":1}', version: 1, fetchedAtMs: Date.now() - 5_000 });
-    const deps = createDeps({ memoryCache, defaultTimeToLiveMs: 60_000 });
+    const deps = createDeps({ memoryCache });
 
-    const result = readCachedConfig(deps, { configName: 'cfg', parser, timeToLiveMs: 1_000 });
+    const result = readCachedConfig(deps, identity, 1_000);
 
     expect(result.value).toBeNull();
   });

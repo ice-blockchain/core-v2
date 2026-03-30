@@ -1,5 +1,5 @@
 import { readFromMemoryCache, readFromStorage, isExpired } from './config-cache';
-import type { GetConfigOptions, RemoteConfigDeps } from './remote-config-types';
+import type { ConfigIdentity, RemoteConfigDeps } from './remote-config-types';
 
 export interface CacheReadResult<T> {
   value: T | null;
@@ -8,18 +8,17 @@ export interface CacheReadResult<T> {
 
 export function readCachedConfig<T>(
   deps: RemoteConfigDeps,
-  options: GetConfigOptions<T>,
+  identity: ConfigIdentity<T>,
+  timeToLiveMs: number,
 ): CacheReadResult<T> {
-  const timeToLiveMs = options.timeToLiveMs ?? deps.defaultTimeToLiveMs;
+  const memoryEntry = readFromMemoryCache(deps.memoryCache, identity.configName, timeToLiveMs);
+  if (memoryEntry) return tryParse(memoryEntry.raw, identity.parser);
 
-  const memoryEntry = readFromMemoryCache(deps.memoryCache, options.configName, timeToLiveMs);
-  if (memoryEntry) return tryParse(memoryEntry.raw, options.parser);
-
-  const storageEntry = readFromStorage(deps.storage, options.configName);
+  const storageEntry = readFromStorage(deps.storage, identity.configName);
   if (!storageEntry) return { value: null, hadParseError: false };
   if (isExpired(storageEntry.fetchedAtMs, timeToLiveMs)) return { value: null, hadParseError: false };
 
-  return tryParse(storageEntry.raw, options.parser);
+  return tryParse(storageEntry.raw, identity.parser);
 }
 
 function tryParse<T>(raw: string, parser: (raw: string) => T): CacheReadResult<T> {

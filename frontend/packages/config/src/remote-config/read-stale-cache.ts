@@ -1,15 +1,15 @@
 import { readFromStorage } from './config-cache';
-import type { GetConfigOptions, RemoteConfigDeps } from './remote-config-types';
+import type { ConfigIdentity, RemoteConfigDeps } from './remote-config-types';
 
 export function readStaleCache<T>(
   deps: RemoteConfigDeps,
-  options: GetConfigOptions<T>,
+  identity: ConfigIdentity<T>,
 ): T | null {
-  const entry = readFromStorage(deps.storage, options.configName);
+  const entry = readFromStorage(deps.storage, identity.configName);
   if (!entry) return null;
 
   try {
-    return options.parser(entry.raw);
+    return identity.parser(entry.raw);
   } catch {
     return null;
   }

@@ -37,12 +37,12 @@ function createDeps(httpClient: HttpClient): RemoteConfigDeps {
     httpClient,
     storage: createMockStorage(),
 
-    defaultTimeToLiveMs: 60_000,
     memoryCache: new Map<string, CachedEntry>(),
   };
 }
 
 const parser = (raw: string) => JSON.parse(raw) as { value: number };
+const identity = { configName: 'cfg', parser, checkVersion: false };
 
 describe('fetchConfigFromNetwork', () => {
   it('returns parsed data on 200 and saves to cache', async () => {
@@ -52,7 +52,7 @@ describe('fetchConfigFromNetwork', () => {
     });
     const deps = createDeps(httpClient);
 
-    const result = await fetchConfigFromNetwork(deps, { configName: 'cfg', parser }, 0);
+    const result = await fetchConfigFromNetwork(deps, identity, 0);
 
     expect(result).toEqual({ value: 42 });
     expect(deps.memoryCache.has('cfg')).toBe(true);
@@ -65,7 +65,7 @@ describe('fetchConfigFromNetwork', () => {
       status: 204, headers: {}, body: '',
     });
 
-    const result = await fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser }, 5);
+    const result = await fetchConfigFromNetwork(createDeps(httpClient), identity, 5);
 
     expect(result).toBeNull();
   });
@@ -76,7 +76,7 @@ describe('fetchConfigFromNetwork', () => {
       status: 200, headers: { 'x-version': '3' }, body: '{"value":1}',
     });
 
-    await fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser, checkVersion: true }, 3);
+    await fetchConfigFromNetwork(createDeps(httpClient), { ...identity, checkVersion: true }, 3);
 
     expect(httpClient.getRaw).toHaveBeenCalledWith(
       '/v1/config/cfg',
@@ -90,7 +90,7 @@ describe('fetchConfigFromNetwork', () => {
       status: 200, headers: {}, body: '{"value":1}',
     });
 
-    await fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser }, 0);
+    await fetchConfigFromNetwork(createDeps(httpClient), identity, 0);
 
     expect(httpClient.getRaw).toHaveBeenCalledWith(
       '/v1/config/cfg',
@@ -118,7 +118,7 @@ describe('fetchConfigFromNetwork', () => {
     });
     const deps = createDeps(httpClient);
 
-    await fetchConfigFromNetwork(deps, { configName: 'cfg', parser, checkVersion: true }, 0);
+    await fetchConfigFromNetwork(deps, { ...identity, checkVersion: true }, 0);
 
     expect(deps.memoryCache.get('cfg')!.version).toBe(10);
   });
@@ -130,7 +130,7 @@ describe('fetchConfigFromNetwork', () => {
     });
 
     await expect(
-      fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser, checkVersion: true }, 0),
+      fetchConfigFromNetwork(createDeps(httpClient), { ...identity, checkVersion: true }, 0),
     ).rejects.toThrow(ConfigError);
   });
 
@@ -141,7 +141,7 @@ describe('fetchConfigFromNetwork', () => {
     });
 
     await expect(
-      fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser }, 0),
+      fetchConfigFromNetwork(createDeps(httpClient), identity, 0),
     ).rejects.toMatchObject({ code: ConfigErrorCode.CONFIG_FETCH_FAILED });
   });
 });
