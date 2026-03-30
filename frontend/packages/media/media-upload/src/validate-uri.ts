@@ -1,4 +1,4 @@
-const ALLOWED_SCHEMES_WEB = new Set(["blob:", "data:", "https:"]);
+const ALLOWED_SCHEMES_WEB = new Set(["blob:", "data:"]);
 const ALLOWED_SCHEMES_NATIVE = new Set(["file:", "content:"]);
 
 export function validateWebUri(uri: string): void {

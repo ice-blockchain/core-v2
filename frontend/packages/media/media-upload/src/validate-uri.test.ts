@@ -6,8 +6,8 @@ describe("validateWebUri", () => {
     expect(() => validateWebUri("blob:https://example.com/abc")).not.toThrow();
   });
 
-  it("accepts https: URIs", () => {
-    expect(() => validateWebUri("https://example.com/photo.jpg")).not.toThrow();
+  it("rejects https: URIs to prevent SSRF", () => {
+    expect(() => validateWebUri("https://example.com/photo.jpg")).toThrow("Unsupported URI scheme");
   });
 
   it("accepts data: URIs", () => {
