@@ -49,7 +49,7 @@ importers:
         version: link:../../packages/localization
       '@ion/nsfw-detection':
         specifier: workspace:*
-        version: link:../../packages/media/nsfw-detection
+        version: link:../../packages/nsfw-detection
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
@@ -188,7 +188,7 @@ importers:
         version: link:../../packages/localization
       '@ion/nsfw-detection':
         specifier: workspace:*
-        version: link:../../packages/media/nsfw-detection
+        version: link:../../packages/nsfw-detection
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
@@ -393,7 +393,7 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
-  packages/media/media-acquisition:
+  packages/media-acquisition:
     dependencies:
       expo-camera:
         specifier: '>=15'
@@ -412,7 +412,7 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
-  packages/media/media-processing:
+  packages/media-processing:
     dependencies:
       blurhash:
         specifier: ^2.0.5
@@ -449,20 +449,20 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
-  packages/media/media-upload:
+  packages/media-upload:
     dependencies:
       '@bnb-chain/greenfield-js-sdk':
         specifier: '>=2.2.0'
         version: 2.2.2
       '@ion/diagnostics':
         specifier: workspace:*
-        version: link:../../diagnostics
+        version: link:../diagnostics
       '@ion/network':
         specifier: workspace:*
-        version: link:../../network
+        version: link:../network
       '@ion/storage':
         specifier: workspace:*
-        version: link:../../storage
+        version: link:../storage
       expo-file-system:
         specifier: '>=18.0.0'
         version: 55.0.11(expo@55.0.8)(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))
@@ -474,11 +474,11 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
-  packages/media/media-viewer:
+  packages/media-viewer:
     dependencies:
       '@ion/ui':
         specifier: workspace:*
-        version: link:../../ui
+        version: link:../ui
       expo-av:
         specifier: '>=15'
         version: 16.0.8(expo@55.0.8)(react-native-web@0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
@@ -523,11 +523,33 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/media/nsfw-detection:
+  packages/network:
     dependencies:
       '@ion/diagnostics':
         specifier: workspace:*
-        version: link:../../diagnostics
+        version: link:../diagnostics
+      '@react-native-community/netinfo':
+        specifier: '>=11.0.0'
+        version: 12.0.1(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      axios:
+        specifier: ^1.7.0
+        version: 1.13.6
+      axios-retry:
+        specifier: ^4.5.0
+        version: 4.5.0(axios@1.13.6)
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+
+  packages/nsfw-detection:
+    dependencies:
+      '@ion/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@tensorflow/tfjs':
         specifier: '>=4'
         version: 4.22.0(seedrandom@3.0.5)
@@ -544,28 +566,6 @@ importers:
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^3.1.1
-        version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
-
-  packages/network:
-    dependencies:
-      '@ion/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
-      '@react-native-community/netinfo':
-        specifier: '>=11.0.0'
-        version: 12.0.1(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
-      axios:
-        specifier: ^1.7.0
-        version: 1.13.6
-      axios-retry:
-        specifier: ^4.5.0
-        version: 4.5.0(axios@1.13.6)
-    devDependencies:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -8554,7 +8554,7 @@ snapshots:
 
   '@ethersproject/strings@5.7.0':
     dependencies:
-      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/logger': 5.8.0
 
