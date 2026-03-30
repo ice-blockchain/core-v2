@@ -136,10 +136,10 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<HttpRes
 async function buildHttpResponse<T>(internals: ClientInternals, response: AxiosResponse): Promise<HttpResponse<T>> {
   const parsedBody = parseResponseData<T>(response);
   const interceptedResp = await buildInterceptedResponse(internals, response, parsedBody);
-  throwOnErrorStatus(response.status, interceptedResp);
+  throwOnErrorStatus(interceptedResp.status, interceptedResp);
   return {
-    status: response.status,
-    headers: { ...response.headers } as Record<string, string>,
+    status: interceptedResp.status,
+    headers: interceptedResp.headers,
     body: interceptedResp.body as T,
   };
 }
