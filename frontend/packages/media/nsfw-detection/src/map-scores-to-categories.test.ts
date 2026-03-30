@@ -21,13 +21,13 @@ describe('mapScoresToCategories', () => {
   });
 
   it('marks category below threshold correctly', () => {
-    const result = mapScoresToCategories(makeScores({ explicit: 0.5 }));
+    const result = mapScoresToCategories(makeScores({ explicit: 0.3 }));
     const explicit = result.categories.find((c) => c.label === 'explicit')!;
     expect(explicit.isAboveThreshold).toBe(false);
   });
 
   it('handles exact-threshold boundary as above', () => {
-    const result = mapScoresToCategories(makeScores({ explicit: 0.85 }));
+    const result = mapScoresToCategories(makeScores({ explicit: 0.50 }));
     const explicit = result.categories.find((c) => c.label === 'explicit')!;
     expect(explicit.isAboveThreshold).toBe(true);
   });
