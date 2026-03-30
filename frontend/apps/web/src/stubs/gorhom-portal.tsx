@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
 
 export function Portal({ children }: { children?: ReactNode; hostName?: string }) {
   return <>{children}</>;
@@ -10,7 +9,7 @@ export function PortalHost(_: { name: string }) {
 }
 
 export function PortalProvider({ children }: { children?: ReactNode }) {
-  return <View style={{ flex: 1 }}>{children}</View>;
+  return <div style={{ flex: 1 }}>{children}</div>;
 }
 
 export function usePortal() {

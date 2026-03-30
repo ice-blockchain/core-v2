@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
 
 interface BottomSheetProps {
   children?: ReactNode;
@@ -17,15 +16,15 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ children }: BottomSheetProps) {
-  return <View>{children}</View>;
+  return <div>{children}</div>;
 }
 
 export function BottomSheetView({ children }: { children?: ReactNode }) {
-  return <View>{children}</View>;
+  return <div>{children}</div>;
 }
 
 export function BottomSheetScrollView({ children }: { children?: ReactNode }) {
-  return <View>{children}</View>;
+  return <div>{children}</div>;
 }
 
 export function BottomSheetBackdrop() {
@@ -33,15 +32,15 @@ export function BottomSheetBackdrop() {
 }
 
 export function BottomSheetFooter({ children }: { children?: ReactNode }) {
-  return <View>{children}</View>;
+  return <div>{children}</div>;
 }
 
 export function BottomSheetModal({ children }: BottomSheetProps) {
-  return <View>{children}</View>;
+  return <div>{children}</div>;
 }
 
 export function BottomSheetModalProvider({ children }: { children?: ReactNode }) {
-  return <View style={{ flex: 1 }}>{children}</View>;
+  return <div style={{ flex: 1 }}>{children}</div>;
 }
 
 export default BottomSheet;
