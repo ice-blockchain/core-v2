@@ -4,7 +4,7 @@ import type { IKeyValueStorage } from '@ion/storage';
 // --- Configuration ---
 
 export interface RemoteConfigOptions {
-  httpClient: HttpClient;
+  httpClient?: HttpClient;
   storage: IKeyValueStorage;
   defaultTimeToLiveMs?: number;
 }

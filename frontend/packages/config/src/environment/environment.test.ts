@@ -1,3 +1,5 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 vi.mock('react-native-config', () => ({ default: {} }));
 
 const validVars = {

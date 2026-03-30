@@ -1,4 +1,7 @@
 import { Logger } from '@ion/diagnostics';
+import { createHttpClient } from '@ion/network';
+
+import { environmentConfig } from '../environment/environment';
 
 import { getStoredVersion, updateTimestamp } from './config-cache';
 import { createConfigMutex } from './config-mutex';
@@ -19,8 +22,9 @@ const DEFAULT_TIME_TO_LIVE_MS = 300_000; // 5 minutes
 
 export function createRemoteConfig(options: RemoteConfigOptions): RemoteConfigService {
   const mutex = createConfigMutex();
+  const httpClient = options.httpClient ?? createHttpClient({ baseUrl: environmentConfig.apiBaseUrl });
   const deps: RemoteConfigDeps = {
-    httpClient: options.httpClient,
+    httpClient,
     storage: options.storage,
     defaultTimeToLiveMs: options.defaultTimeToLiveMs ?? DEFAULT_TIME_TO_LIVE_MS,
     memoryCache: new Map<string, CachedEntry>(),

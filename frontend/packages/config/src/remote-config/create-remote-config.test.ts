@@ -3,6 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { HttpClient, RawResponse } from '@ion/network';
 import type { IKeyValueStorage } from '@ion/storage';
 
+vi.mock('../environment/environment', () => ({
+  environmentConfig: { apiBaseUrl: 'https://api.test.ion.app' },
+}));
+
 import { createRemoteConfig } from './create-remote-config';
 import { ConfigError, ConfigErrorCode } from './remote-config-error';
 

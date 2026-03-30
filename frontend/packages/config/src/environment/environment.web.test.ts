@@ -1,3 +1,5 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 const ENV_KEYS = [
   'VITE_APP_ENV',
   'VITE_API_BASE_URL',
