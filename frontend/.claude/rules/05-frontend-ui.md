@@ -94,6 +94,32 @@ const styles = StyleSheet.create({
 
 The only exceptions are `0`, `1` (hairline borders), and `flex` values — these do not need scaling.
 
+#### IMPORTANT: Use `StyleSheet.create()` or `useMemo` — never inline style objects.
+Every style must be defined via `StyleSheet.create()` (module-level, for non-scaled styles) or `useMemo` (component-level, for theme-dependent styles). Never pass raw object literals directly to the `style` prop — inline objects are re-created on every render, causing unnecessary work for the reconciler.
+
+The only exception is style props that depend on dynamic values (e.g., computed from props, state, or data at render time) — these may be inlined when memoization would add complexity without benefit.
+
+```typescript
+// VIOLATION — static inline style, re-created every render
+<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+
+// CORRECT — module-level StyleSheet for static styles
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+});
+<View style={styles.row}>
+
+// CORRECT — useMemo for theme-dependent styles
+const rowStyle = useMemo(() => ({
+  flexDirection: 'row' as const,
+  padding: theme.spacing.md,
+}), [theme]);
+<View style={rowStyle}>
+
+// OK — dynamic value derived from props/state
+<View style={{ height: item.isExpanded ? expandedHeight : collapsedHeight }}>
+```
+
 - **No CSS-in-JS libraries.**
 - **No magic numbers.** Use theme tokens or scale functions:
 ```typescript
