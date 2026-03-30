@@ -28,6 +28,7 @@
     "react-native-config": "^1.6.1",
     "react-native-create-thumbnail": "^2.2.0",
     "react-native-image-picker": "^7.1.2",
+    "react-native-mmkv": "^4.3.0",
     "react-native-nitro-modules": "^0.35.2",
     "react-native-nitro-tflite": "^0.0.1",
     "react-native-safe-area-context": "^5.5.2",

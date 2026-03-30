@@ -1,4 +1,3 @@
-import { MMKV } from "react-native-mmkv";
 import type { IKeyValueStorage } from "../types";
 
 interface KeyValueStorageOptions {
@@ -6,10 +5,15 @@ interface KeyValueStorageOptions {
   encryptionKey?: string;
 }
 
-type KeyValueBackend = Pick<
-  MMKV,
-  "getString" | "set" | "getNumber" | "getBoolean" | "delete" | "contains" | "clearAll"
->;
+interface KeyValueBackend {
+  getString(key: string): string | undefined;
+  set(key: string, value: string | number | boolean): void;
+  getNumber(key: string): number | undefined;
+  getBoolean(key: string): boolean | undefined;
+  remove(key: string): boolean;
+  contains(key: string): boolean;
+  clearAll(): void;
+}
 
 const fallbackStores = new Map<string, Map<string, string | number | boolean>>();
 
@@ -40,8 +44,8 @@ function createFallbackBackend(id: string): KeyValueBackend {
       const value = store.get(key);
       return typeof value === "boolean" ? value : undefined;
     },
-    delete(key: string): void {
-      store.delete(key);
+    remove(key: string): boolean {
+      return store.delete(key);
     },
     contains(key: string): boolean {
       return store.has(key);
@@ -54,12 +58,9 @@ function createFallbackBackend(id: string): KeyValueBackend {
 
 function createBackend(options: KeyValueStorageOptions): KeyValueBackend {
   try {
-    if (typeof MMKV === "function") {
-      return new MMKV({
-        id: options.id,
-        encryptionKey: options.encryptionKey,
-      });
-    }
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createMMKV } = require("react-native-mmkv") as { createMMKV: (config: Record<string, unknown>) => KeyValueBackend };
+    return createMMKV({ id: options.id, ...(options.encryptionKey ? { encryptionKey: options.encryptionKey } : {}) });
   } catch {
     // fall through to in-memory fallback
   }
@@ -107,7 +108,7 @@ function buildObjectAndUtilMethods(backend: KeyValueBackend): Pick<
       backend.set(key, JSON.stringify(value));
     },
     removeItem(key: string): void {
-      backend.delete(key);
+      backend.remove(key);
     },
     hasItem(key: string): boolean {
       return backend.contains(key);
