@@ -28,7 +28,7 @@ function buildFloatingFooterStyle(scale: (n: number) => number, keyboardInset: n
     bottom: scale(10) + keyboardInset + safeAreaBottom,
     left: 0,
     right: 0,
-    paddingHorizontal: scale(44),
+    paddingHorizontal: scale(16),
   };
 }
 

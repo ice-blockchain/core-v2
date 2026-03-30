@@ -114,6 +114,7 @@ Never import from a higher layer. Never import sideways. If you need cross-layer
 - `/security-audit` — adversarial security review across 6 categories
 - `/post-merge` — check if architecture docs need updating after merge
 - `/update-arch` — sync architecture docs with current codebase state
+- `/pr-monitor` — monitor PR, fix CI failures, address review comments. Use with `/loop 5m /pr-monitor {number}` for polling
 
 ## Detailed Rules
 Full rules with code examples, severity levels, and violation cases: `.claude/rules/`

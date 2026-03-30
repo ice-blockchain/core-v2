@@ -3,7 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { environmentConfig } from '@ion/config';
 import { Button, CatalogScreen, ThemeProvider } from '@ion/ui';
 import { createLocalization, registerTranslations, translate } from '@ion/localization';
-import { ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from '@ion/onboarding-ui';
+import { DiscoverCreatorsScreen, NotificationsScreen, ProfileSetupScreen, SelectLanguagesScreen, onboardingTranslations } from '@ion/onboarding-ui';
 import { authTranslations } from '@ion/auth-ui';
 import SplashPage from './app/page';
 
@@ -11,7 +11,7 @@ const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
 
-type OnboardingStep = 'profile' | 'languages';
+type OnboardingStep = 'profile' | 'languages' | 'discover-creators' | 'notifications';
 
 function OnboardingButton({ onPress }: { onPress: () => void }) {
   return (
@@ -21,29 +21,29 @@ function OnboardingButton({ onPress }: { onPress: () => void }) {
   );
 }
 
+const onboardingStepMap: Record<OnboardingStep, { Screen: typeof ProfileSetupScreen; next: OnboardingStep | null; prev: OnboardingStep | null }> = {
+  'profile': { Screen: ProfileSetupScreen, next: 'languages', prev: null },
+  'languages': { Screen: SelectLanguagesScreen, next: 'discover-creators', prev: 'profile' },
+  'discover-creators': { Screen: DiscoverCreatorsScreen, next: 'notifications', prev: 'languages' },
+  'notifications': { Screen: NotificationsScreen, next: null, prev: 'discover-creators' },
+};
+
+function OnboardingFlow({ step, setStep }: { step: OnboardingStep; setStep: (s: OnboardingStep | null) => void }) {
+  const config = onboardingStepMap[step];
+  return (
+    <config.Screen
+      onContinue={() => setStep(config.next)}
+      onBack={() => setStep(config.prev)}
+    />
+  );
+}
+
 function AppContent() {
   const [showAuthFlow, setShowAuthFlow] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>(null);
 
   if (showAuthFlow) return <SplashPage />;
-
-  if (onboardingStep === 'profile') {
-    return (
-      <ProfileSetupScreen
-        onContinue={() => setOnboardingStep('languages')}
-        onBack={() => setOnboardingStep(null)}
-      />
-    );
-  }
-
-  if (onboardingStep === 'languages') {
-    return (
-      <SelectLanguagesScreen
-        onContinue={() => setOnboardingStep(null)}
-        onBack={() => setOnboardingStep('profile')}
-      />
-    );
-  }
+  if (onboardingStep) return <OnboardingFlow step={onboardingStep} setStep={setOnboardingStep} />;
 
   return (
     <main>

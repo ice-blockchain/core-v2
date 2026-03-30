@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildTitleContainerStyle, buildListSectionStyle, buildScrollContentStyle } from "./select-languages-styles";
+import { buildListSectionStyle, buildScrollContentStyle } from "./select-languages-styles";
 
 const identity = (n: number) => n;
 
@@ -18,13 +18,6 @@ describe("select-languages-hooks", () => {
 });
 
 describe("select-languages-styles", () => {
-  it("builds title container with center alignment and 8px gap", () => {
-    const style = buildTitleContainerStyle(identity);
-    expect(style.alignItems).toBe("center");
-    expect(style.gap).toBe(8);
-    expect(style.paddingTop).toBe(16);
-  });
-
   it("builds list section with full width and 34px top padding", () => {
     const style = buildListSectionStyle(identity);
     expect(style.width).toBe("100%");

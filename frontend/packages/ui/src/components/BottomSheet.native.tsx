@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/ThemeProvider";
@@ -9,6 +9,20 @@ import type { BottomSheetProps } from "./bottom-sheet-types";
 import { buildOverlayStyle, buildSheetStyle, buildHandleStyle, computeTitleOpacity } from "./bottom-sheet-styles";
 
 const KEYBOARD_BEHAVIOR = Platform.select({ ios: "padding" as const, default: "height" as const });
+
+function useKeyboardHeight(): number {
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, (e) => setHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener(hideEvent, () => setHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
+  return height;
+}
 
 function useBottomSheetStyles() {
   const theme = useTheme();
@@ -21,13 +35,14 @@ function useBottomSheetStyles() {
   return { overlayStyle, sheetStyle, handleStyle };
 }
 
-function buildFloatingFooterStyle(bottomInset: number, scale: (n: number) => number): ViewStyle {
+function buildFloatingFooterStyle(bottomInset: number, keyboardHeight: number, scale: (n: number) => number): ViewStyle {
+  const bottom = keyboardHeight > 0 ? keyboardHeight + scale(10) : scale(10) + bottomInset;
   return {
     position: "absolute",
-    bottom: scale(10) + bottomInset,
+    bottom,
     left: 0,
     right: 0,
-    paddingHorizontal: scale(44),
+    paddingHorizontal: scale(16),
   };
 }
 
@@ -38,7 +53,11 @@ function SheetContent(props: BottomSheetProps) {
   const scale = theme.scale.scaleSize;
   const [titleOpacity, setTitleOpacity] = useState(0);
   const insets = useSafeAreaInsets();
-  const floatingFooterStyle = useMemo(() => buildFloatingFooterStyle(insets.bottom, scale), [insets.bottom, scale]);
+  const keyboardHeight = useKeyboardHeight();
+  const floatingStyle = useMemo(
+    () => buildFloatingFooterStyle(insets.bottom, keyboardHeight, scale),
+    [insets.bottom, keyboardHeight, scale],
+  );
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setTitleOpacity(computeTitleOpacity(event.nativeEvent.contentOffset.y));
@@ -52,8 +71,8 @@ function SheetContent(props: BottomSheetProps) {
           {children}
         </ScrollView>
         {bottomButton ? <BottomSheetFooter>{bottomButton}</BottomSheetFooter> : null}
-        {floatingFooter ? <View style={floatingFooterStyle}>{floatingFooter}</View> : null}
       </KeyboardAvoidingView>
+      {floatingFooter ? <View style={floatingStyle}>{floatingFooter}</View> : null}
     </Pressable>
   );
 }
