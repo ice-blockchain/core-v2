@@ -27,7 +27,7 @@ Actions (onboarding)
   |
 Clients (ion-connect-client)
   |
-Media (media, media-viewer)
+Media (media-acquisition, media-processing, media-upload, media-viewer, nsfw-detection)
   |
 Foundation (config, diagnostics, network, permissions, platform, storage, ui)
 ```
@@ -50,8 +50,11 @@ Foundation (config, diagnostics, network, permissions, platform, storage, ui)
 
 | Package | Description | Architecture |
 |---------|-------------|-------------|
-| [@ion/media](packages/media/) | Media processing (compression, cropping, blurhash) and acquisition (picker, camera, metadata) | [ARCHITECTURE.md](packages/media/ARCHITECTURE.md) |
+| [@ion/media-acquisition](packages/media-acquisition/) | Media picker, camera capture, metadata extraction | [ARCHITECTURE.md](packages/media-acquisition/ARCHITECTURE.md) |
+| [@ion/media-processing](packages/media-processing/) | Compression, cropping, blurhash generation | [ARCHITECTURE.md](packages/media-processing/ARCHITECTURE.md) |
+| [@ion/media-upload](packages/media-upload/) | Delegated upload, retry, queue | [ARCHITECTURE.md](packages/media-upload/ARCHITECTURE.md) |
 | [@ion/media-viewer](packages/media-viewer/) | Image/video display components with fullscreen viewing, pinch-to-zoom, dismiss gestures | [ARCHITECTURE.md](packages/media-viewer/ARCHITECTURE.md) |
+| [@ion/nsfw-detection](packages/nsfw-detection/) | On-device media safety checks for images and videos | [ARCHITECTURE.md](packages/nsfw-detection/ARCHITECTURE.md) |
 
 ### Client Layer
 
