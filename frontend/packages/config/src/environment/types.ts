@@ -5,7 +5,6 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export interface EnvironmentConfig {
   appEnvironment: AppEnvironment;
   apiBaseUrl: string;
-  identityApiUrl: string;
   identityAppId: string;
   relayUrl: string;
   logLevel: LogLevel;

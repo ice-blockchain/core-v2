@@ -3,6 +3,7 @@ import { validateEnvironmentConfig } from './validate-environment';
 const validConfig = {
   APP_ENV: 'staging',
   API_BASE_URL: 'https://api.staging.ion.app',
+  IDENTITY_APP_ID: 'ap-test-app-id',
   RELAY_URL: 'wss://relay.staging.ion.app',
   LOG_LEVEL: 'debug',
 };
@@ -14,6 +15,7 @@ describe('validateEnvironmentConfig', () => {
     expect(result).toEqual({
       appEnvironment: 'staging',
       apiBaseUrl: 'https://api.staging.ion.app',
+      identityAppId: 'ap-test-app-id',
       relayUrl: 'wss://relay.staging.ion.app',
       logLevel: 'debug',
     });
@@ -33,7 +35,7 @@ describe('validateEnvironmentConfig', () => {
     }
   });
 
-  it.each(['APP_ENV', 'API_BASE_URL', 'RELAY_URL', 'LOG_LEVEL'])(
+  it.each(['APP_ENV', 'API_BASE_URL', 'IDENTITY_APP_ID', 'RELAY_URL', 'LOG_LEVEL'])(
     'throws when %s is missing',
     (key) => {
       const config = { ...validConfig, [key]: undefined };
