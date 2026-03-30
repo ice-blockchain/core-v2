@@ -52,7 +52,7 @@ describe("retry-failed-uploads", () => {
     vi.clearAllMocks();
   });
 
-  it("retries failed items with existing delegation", async () => {
+  it("requests fresh delegation on retry even with existing bucket", async () => {
     const deps = createMockDependencies([
       {
         upload_id: "fail-1",
@@ -74,8 +74,8 @@ describe("retry-failed-uploads", () => {
     const results = await retryFailedUploads();
 
     expect(results).toHaveLength(1);
-    expect(results[0]!.bucketName).toBe("existing-bucket");
-    expect(results[0]!.objectName).toBe("existing-object");
+    expect(results[0]!.bucketName).toBe("retry-bucket");
+    expect(results[0]!.objectName).toBe("retry-object");
   });
 
   it("retries failed items without delegation by requesting new one", async () => {
@@ -126,6 +126,36 @@ describe("retry-failed-uploads", () => {
     const results = await retryFailedUploads();
 
     expect(results).toHaveLength(0);
+  });
+
+  it("uses auth from same delegation as bucket and object", async () => {
+    const { greenfieldUpload } = await import("./greenfield-upload");
+    const deps = createMockDependencies([
+      {
+        upload_id: "fail-auth",
+        uri: "file:///d.jpg",
+        mime_type: "image/jpeg",
+        file_size: 512,
+        status: "failed",
+        bucket_name: "old-bucket",
+        object_name: "old-object",
+        bytes_uploaded: 0,
+        error_message: "auth error",
+        retry_count: 0,
+        created_at: 1000,
+        updated_at: 2000,
+      },
+    ]);
+
+    const { retryFailedUploads } = createUploadRetrier(deps);
+    await retryFailedUploads();
+
+    const call = vi.mocked(greenfieldUpload).mock.calls[0]!;
+    const params = call[1]!;
+    expect(params.bucketName).toBe("retry-bucket");
+    expect(params.auth.domain).toBe("test.com");
+    expect(params.auth.seedString).toBe("seed-123");
+    expect(params.auth.address).toBe("0xabc");
   });
 
   it("returns empty array when no failed items exist", async () => {

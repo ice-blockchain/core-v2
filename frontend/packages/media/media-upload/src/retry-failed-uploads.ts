@@ -7,15 +7,11 @@ import { greenfieldUpload } from "./greenfield-upload";
 
 const MAX_RETRIES = 5;
 
-async function ensureDelegation(
+async function requestRetryDelegation(
   deps: UploadDependencies,
   repository: ReturnType<typeof createUploadQueueRepository>,
   item: UploadQueueRecord,
 ) {
-  if (item.bucket_name && item.object_name) {
-    return { bucketName: item.bucket_name, objectName: item.object_name };
-  }
-
   const delegation = await requestDelegation(
     deps.httpClient, deps.apiBaseUrl,
     { mimeType: item.mime_type, fileSize: item.file_size },
@@ -27,27 +23,19 @@ async function ensureDelegation(
   return delegation;
 }
 
-async function buildRetryAuth(deps: UploadDependencies, item: UploadQueueRecord) {
-  const delegation = await requestDelegation(
-    deps.httpClient, deps.apiBaseUrl,
-    { mimeType: item.mime_type, fileSize: item.file_size },
-  );
-  return {
-    type: delegation.authType,
-    domain: delegation.domain,
-    seedString: delegation.seedString,
-    address: delegation.address,
-  };
-}
-
 async function retryItem(
   deps: UploadDependencies,
   repository: ReturnType<typeof createUploadQueueRepository>,
   item: UploadQueueRecord,
 ): Promise<UploadResult> {
   const controller = cancellationRegistry.register(item.upload_id);
-  const delegation = await ensureDelegation(deps, repository, item);
-  const auth = await buildRetryAuth(deps, item);
+  const delegation = await requestRetryDelegation(deps, repository, item);
+  const auth = {
+    type: delegation.authType,
+    domain: delegation.domain,
+    seedString: delegation.seedString,
+    address: delegation.address,
+  };
 
   await repository.updateStatus(item.upload_id, "uploading");
   await greenfieldUpload(deps.greenfieldClient, {
