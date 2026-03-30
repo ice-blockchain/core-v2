@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   checkMediaSafety,
   checkVideoSafety,
@@ -19,57 +19,70 @@ export function NsfwTestSection() {
   async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    setError(null);
-    setResult(null);
-    setIsLoading(true);
-
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
-
-    try {
-      const isVideo = file.type.startsWith('video/');
-      const safetyResult = isVideo
-        ? await checkVideoSafety(objectUrl)
-        : await checkMediaSafety(objectUrl);
-
-      setResult({ ...safetyResult, type: isVideo ? 'video' : 'image' });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsLoading(false);
-    }
+    await analyzeFile(file, { setResult, setError, setIsLoading, setPreviewUrl });
   }
 
   return (
     <section style={styles.section}>
       <h2 style={styles.heading}>NSFW Detection Test</h2>
-      <p style={styles.subtitle}>
-        Pick an image or video to run on-device safety detection.
-        Platform stubs return mock scores — real inference in future PRs.
-      </p>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFileSelect}
-        style={styles.hidden}
-      />
-
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isLoading}
-        style={styles.pickButton}
-      >
-        {isLoading ? 'Analyzing...' : 'Pick Media'}
-      </button>
-
+      <SectionSubtitle />
+      <FileInput ref={fileInputRef} onFileSelect={handleFileSelect} />
+      <PickButton isLoading={isLoading} onClick={() => fileInputRef.current?.click()} />
       {isLoading && <ProgressIndicator />}
       {previewUrl && !isLoading && <MediaPreview url={previewUrl} />}
       {error && <p style={styles.error}>Error: {error}</p>}
       {result && <ResultDisplay result={result} />}
     </section>
+  );
+}
+
+interface AnalyzeHandlers {
+  setResult: (r: Result | null) => void;
+  setError: (e: string | null) => void;
+  setIsLoading: (l: boolean) => void;
+  setPreviewUrl: (u: string | null) => void;
+}
+
+async function analyzeFile(file: File, handlers: AnalyzeHandlers) {
+  const { setResult, setError, setIsLoading, setPreviewUrl } = handlers;
+  setError(null);
+  setResult(null);
+  setIsLoading(true);
+  const objectUrl = URL.createObjectURL(file);
+  setPreviewUrl(objectUrl);
+  try {
+    const isVideo = file.type.startsWith('video/');
+    const safetyResult = isVideo
+      ? await checkVideoSafety(objectUrl)
+      : await checkMediaSafety(objectUrl);
+    setResult({ ...safetyResult, type: isVideo ? 'video' : 'image' });
+  } catch (err) {
+    setError(err instanceof Error ? err.message : String(err));
+  } finally {
+    setIsLoading(false);
+  }
+}
+
+function SectionSubtitle() {
+  return (
+    <p style={styles.subtitle}>
+      Pick an image or video to run on-device safety detection.
+      Platform stubs return mock scores — real inference in future PRs.
+    </p>
+  );
+}
+
+const FileInput = React.forwardRef<HTMLInputElement, { onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void }>(
+  function FileInput({ onFileSelect }, ref) {
+    return <input ref={ref} type="file" accept="image/*,video/*" onChange={onFileSelect} style={styles.hidden} />;
+  },
+);
+
+function PickButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} disabled={isLoading} style={styles.pickButton}>
+      {isLoading ? 'Analyzing...' : 'Pick Media'}
+    </button>
   );
 }
 
@@ -110,49 +123,63 @@ function ResultDisplay({ result }: { result: Result }) {
 
   return (
     <div style={styles.resultContainer}>
-      <div style={{
-        ...styles.verdict,
-        backgroundColor: result.isSafe ? '#e8f5e9' : '#ffebee',
-        color: result.isSafe ? '#2e7d32' : '#c62828',
-      }}>
-        {result.isSafe ? 'SAFE' : 'UNSAFE'} ({result.type})
-      </div>
-
-      {videoResult && (
-        <>
-          <p style={styles.frameInfo}>
-            Frames analyzed: {videoResult.framesAnalyzed}/{videoResult.totalFramesRequested}
-            {videoResult.flaggedFrameIndices.length > 0 &&
-              ` | Flagged: [${videoResult.flaggedFrameIndices.join(', ')}]`}
-          </p>
-          <FrameGrid frames={videoResult.frames} />
-        </>
-      )}
-
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>Category</th>
-            <th style={styles.th}>Confidence</th>
-            <th style={styles.th}>Flagged</th>
-          </tr>
-        </thead>
-        <tbody>
-          {result.categories.map((cat) => (
-            <tr key={cat.label}>
-              <td style={styles.td}>{cat.label}</td>
-              <td style={styles.td}>{(cat.confidence * 100).toFixed(1)}%</td>
-              <td style={{
-                ...styles.td,
-                color: cat.isAboveThreshold ? '#c62828' : '#2e7d32',
-              }}>
-                {cat.isAboveThreshold ? 'YES' : 'no'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <VerdictBadge isSafe={result.isSafe} type={result.type} />
+      {videoResult && <VideoResultSection videoResult={videoResult} />}
+      <CategoriesTable categories={result.categories} />
     </div>
+  );
+}
+
+function VerdictBadge({ isSafe, type }: { isSafe: boolean; type: string }) {
+  return (
+    <div style={{
+      ...styles.verdict,
+      backgroundColor: isSafe ? '#e8f5e9' : '#ffebee',
+      color: isSafe ? '#2e7d32' : '#c62828',
+    }}>
+      {isSafe ? 'SAFE' : 'UNSAFE'} ({type})
+    </div>
+  );
+}
+
+function VideoResultSection({ videoResult }: { videoResult: VideoSafetyResult }) {
+  return (
+    <>
+      <p style={styles.frameInfo}>
+        Frames analyzed: {videoResult.framesAnalyzed}/{videoResult.totalFramesRequested}
+        {videoResult.flaggedFrameIndices.length > 0 &&
+          ` | Flagged: [${videoResult.flaggedFrameIndices.join(', ')}]`}
+      </p>
+      <FrameGrid frames={videoResult.frames} />
+    </>
+  );
+}
+
+function CategoriesTable({ categories }: { categories: SafetyResult['categories'] }) {
+  return (
+    <table style={styles.table}>
+      <thead>
+        <tr>
+          <th style={styles.th}>Category</th>
+          <th style={styles.th}>Confidence</th>
+          <th style={styles.th}>Flagged</th>
+        </tr>
+      </thead>
+      <tbody>
+        {categories.map((cat) => (
+          <tr key={cat.label}>
+            <td style={styles.td}>{cat.label}</td>
+            <td style={styles.td}>{(cat.confidence * 100).toFixed(1)}%</td>
+            <td style={{
+              ...styles.td,
+              color: cat.isAboveThreshold ? '#c62828' : '#2e7d32',
+            }}>
+              {cat.isAboveThreshold ? 'YES' : 'no'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

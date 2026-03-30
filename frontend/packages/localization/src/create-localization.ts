@@ -2,7 +2,7 @@ import i18next from 'i18next';
 import type { i18n } from 'i18next';
 
 import { Logger } from '@ion/diagnostics';
-import { createKeyValueStorage } from '@ion/storage';
+import { createKeyValueStorage } from '@ion/storage/key-value-storage';
 import type { SupportedLocale } from './types';
 import { getDeviceLocale } from './device-locale';
 import { buildFallbackChain } from './fallback-chain';

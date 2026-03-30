@@ -6,54 +6,114 @@ interface KeyValueStorageOptions {
   encryptionKey?: string;
 }
 
-function buildPrimitiveMethods(mmkv: MMKV): Pick<
+type KeyValueBackend = Pick<
+  MMKV,
+  "getString" | "set" | "getNumber" | "getBoolean" | "delete" | "contains" | "clearAll"
+>;
+
+const fallbackStores = new Map<string, Map<string, string | number | boolean>>();
+
+function getFallbackStore(id: string): Map<string, string | number | boolean> {
+  let store = fallbackStores.get(id);
+  if (!store) {
+    store = new Map<string, string | number | boolean>();
+    fallbackStores.set(id, store);
+  }
+  return store;
+}
+
+function createFallbackBackend(id: string): KeyValueBackend {
+  const store = getFallbackStore(id);
+  return {
+    getString(key: string): string | undefined {
+      const value = store.get(key);
+      return typeof value === "string" ? value : undefined;
+    },
+    set(key: string, value: string | number | boolean): void {
+      store.set(key, value);
+    },
+    getNumber(key: string): number | undefined {
+      const value = store.get(key);
+      return typeof value === "number" ? value : undefined;
+    },
+    getBoolean(key: string): boolean | undefined {
+      const value = store.get(key);
+      return typeof value === "boolean" ? value : undefined;
+    },
+    delete(key: string): void {
+      store.delete(key);
+    },
+    contains(key: string): boolean {
+      return store.has(key);
+    },
+    clearAll(): void {
+      store.clear();
+    },
+  };
+}
+
+function createBackend(options: KeyValueStorageOptions): KeyValueBackend {
+  try {
+    if (typeof MMKV === "function") {
+      return new MMKV({
+        id: options.id,
+        encryptionKey: options.encryptionKey,
+      });
+    }
+  } catch {
+    // fall through to in-memory fallback
+  }
+  return createFallbackBackend(options.id);
+}
+
+function buildPrimitiveMethods(backend: KeyValueBackend): Pick<
   IKeyValueStorage,
   "getString" | "setString" | "getNumber" | "setNumber" | "getBoolean" | "setBoolean"
 > {
   return {
     getString(key: string): string | null {
-      return mmkv.getString(key) ?? null;
+      return backend.getString(key) ?? null;
     },
     setString(key: string, value: string): void {
-      mmkv.set(key, value);
+      backend.set(key, value);
     },
     getNumber(key: string): number | null {
-      return mmkv.getNumber(key) ?? null;
+      return backend.getNumber(key) ?? null;
     },
     setNumber(key: string, value: number): void {
-      mmkv.set(key, value);
+      backend.set(key, value);
     },
     getBoolean(key: string): boolean | null {
-      const value = mmkv.getBoolean(key);
+      const value = backend.getBoolean(key);
       return value === undefined ? null : value;
     },
     setBoolean(key: string, value: boolean): void {
-      mmkv.set(key, value);
+      backend.set(key, value);
     },
   };
 }
 
-function buildObjectAndUtilMethods(mmkv: MMKV): Pick<
+function buildObjectAndUtilMethods(backend: KeyValueBackend): Pick<
   IKeyValueStorage,
   "getObject" | "setObject" | "removeItem" | "hasItem" | "clear"
 > {
   return {
     getObject<T>(key: string): T | null {
-      const raw = mmkv.getString(key);
+      const raw = backend.getString(key);
       if (raw === undefined) return null;
       return JSON.parse(raw) as T;
     },
     setObject<T>(key: string, value: T): void {
-      mmkv.set(key, JSON.stringify(value));
+      backend.set(key, JSON.stringify(value));
     },
     removeItem(key: string): void {
-      mmkv.delete(key);
+      backend.delete(key);
     },
     hasItem(key: string): boolean {
-      return mmkv.contains(key);
+      return backend.contains(key);
     },
     clear(): void {
-      mmkv.clearAll();
+      backend.clearAll();
     },
   };
 }
@@ -61,12 +121,9 @@ function buildObjectAndUtilMethods(mmkv: MMKV): Pick<
 export function createKeyValueStorage(
   options: KeyValueStorageOptions,
 ): IKeyValueStorage {
-  const mmkv = new MMKV({
-    id: options.id,
-    encryptionKey: options.encryptionKey,
-  });
+  const backend = createBackend(options);
   return {
-    ...buildPrimitiveMethods(mmkv),
-    ...buildObjectAndUtilMethods(mmkv),
+    ...buildPrimitiveMethods(backend),
+    ...buildObjectAndUtilMethods(backend),
   };
 }
