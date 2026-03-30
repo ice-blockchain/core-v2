@@ -4,17 +4,38 @@ import { validateReferral } from "./validate-referral";
 import { uploadAvatar } from "./upload-avatar";
 import { saveProfile } from "./save-profile";
 import { fetchLanguages } from "./fetch-languages";
+import { fetchReservedNicknames } from "./fetch-reserved-nicknames";
 import { saveSelectedLanguages } from "./save-selected-languages";
+
+const EMPTY_RESERVED = new Set<string>();
+const STUB_RESERVED = new Set(["ion", "hades"]);
 
 describe("onboarding action stubs", () => {
   it("validateNickname returns available for valid nickname", async () => {
-    const result = await validateNickname("test");
+    const result = await validateNickname("test", EMPTY_RESERVED);
     expect(result).toEqual({ isAvailable: true, isReserved: false });
   });
 
   it("validateNickname returns unavailable for invalid nickname", async () => {
-    const result = await validateNickname("INVALID!");
+    const result = await validateNickname("INVALID!", EMPTY_RESERVED);
     expect(result).toEqual({ isAvailable: false, isReserved: false });
+  });
+
+  it("validateNickname returns reserved for a reserved nickname", async () => {
+    const result = await validateNickname("ion", STUB_RESERVED);
+    expect(result).toEqual({ isAvailable: false, isReserved: true });
+  });
+
+  it("validateNickname returns available when nickname is not reserved", async () => {
+    const result = await validateNickname("alice", STUB_RESERVED);
+    expect(result).toEqual({ isAvailable: true, isReserved: false });
+  });
+
+  it("fetchReservedNicknames returns an array containing ion and hades", async () => {
+    const result = await fetchReservedNicknames();
+    expect(Array.isArray(result.reservedNicknames)).toBe(true);
+    expect(result.reservedNicknames).toContain("ion");
+    expect(result.reservedNicknames).toContain("hades");
   });
 
   it("validateReferral returns valid for valid referral", async () => {

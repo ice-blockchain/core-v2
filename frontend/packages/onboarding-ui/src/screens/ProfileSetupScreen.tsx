@@ -39,18 +39,17 @@ export function ProfileSetupScreen({ onContinue, onBack }: OnboardingScreenProps
     <Button label={translate("onboarding:saveButton")} icon={<Icon name="profile-save" size={scale(24)} color={theme.colors.onPrimaryAccent} />} iconPosition="left" height={56} isDisabled={!formState.isFormValid} isLoading={formState.isSubmitting} onPress={handleSave} />
   );
 
+  const reservedOverlay = <NicknameReservedModal isVisible={formState.isNicknameReserved} onClose={formActions.dismissReservedModal} />;
+
   return (
-    <>
-      <BottomSheet isVisible onClose={handleClose} title={translate("onboarding:yourProfileTitle")} {...(onBack ? { onBack } : {})} bottomButton={saveButton} testID="profile-setup-screen">
-        <View style={contentStyle}>
-          <AuthHeader />
-          <View style={avatarStyle}>
-            <AvatarPicker isLoading={formState.isAvatarLoading} onPress={() => {}} testID="avatar-picker" />
-          </View>
-          <ProfileSetupFields formState={formState} formActions={formActions} style={fieldsStyle} />
+    <BottomSheet isVisible onClose={handleClose} title={translate("onboarding:yourProfileTitle")} {...(onBack ? { onBack } : {})} bottomButton={saveButton} overlay={reservedOverlay} testID="profile-setup-screen">
+      <View style={contentStyle}>
+        <AuthHeader />
+        <View style={avatarStyle}>
+          <AvatarPicker isLoading={formState.isAvatarLoading} onPress={() => {}} testID="avatar-picker" />
         </View>
-      </BottomSheet>
-      <NicknameReservedModal isVisible={formState.isNicknameReserved} onClose={formActions.dismissReservedModal} />
-    </>
+        <ProfileSetupFields formState={formState} formActions={formActions} style={fieldsStyle} />
+      </View>
+    </BottomSheet>
   );
 }

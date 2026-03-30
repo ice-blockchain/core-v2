@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TextInputState } from "@ion/ui";
-import { validateNickname, validateReferral } from "@ion/onboarding";
+import { fetchReservedNicknames, validateNickname, validateReferral } from "@ion/onboarding";
 
 const NICKNAME_PATTERN = /^[a-z0-9.]+$/;
 const DEBOUNCE_MS = 1000;
@@ -54,7 +54,17 @@ function applyNicknameResult(value: string, result: { isReserved: boolean; isAva
   return { value, inputState: "valid" };
 }
 
-function useNicknameField() {
+function useReservedNicknames() {
+  const reservedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    fetchReservedNicknames()
+      .then((result) => { reservedRef.current = new Set(result.reservedNicknames); })
+      .catch(() => { /* reserved list unavailable, validation continues without it */ });
+  }, []);
+  return reservedRef;
+}
+
+function useNicknameField(reservedRef: React.RefObject<Set<string>>) {
   const [state, setState] = useState<FieldState>({ value: "", inputState: "empty" });
   const [isReserved, setReserved] = useState(false);
 
@@ -64,13 +74,13 @@ function useNicknameField() {
       return;
     }
     try {
-      const result = await validateNickname(value);
+      const result = await validateNickname(value, reservedRef.current ?? new Set());
       if (result.isReserved) setReserved(true);
       setState(applyNicknameResult(value, result));
     } catch {
       setState({ value, inputState: "error", errorMessage: "Validation failed" });
     }
-  }, []);
+  }, [reservedRef]);
 
   const onChange = useCallback((value: string) => {
     const lowered = value.toLowerCase();
@@ -147,7 +157,8 @@ export function useProfileForm(): [ProfileFormState, ProfileFormActions] {
   const [isAvatarLoading, setAvatarLoading] = useState(false);
   const [isSubmitting, setSubmitting] = useState(false);
   const nameField = useNameField();
-  const nick = useNicknameField();
+  const reservedRef = useReservedNicknames();
+  const nick = useNicknameField(reservedRef);
   const ref = useReferralField();
 
   const handleNickname = useDebouncedField(nick.onChange, nick.validate);

@@ -78,7 +78,7 @@ function SheetContent(props: BottomSheetProps) {
 }
 
 export function BottomSheet(props: BottomSheetProps) {
-  const { isVisible, onClose, testID } = props;
+  const { isVisible, onClose, overlay, testID } = props;
   const { overlayStyle, handleStyle } = useBottomSheetStyles();
 
   return (
@@ -87,6 +87,7 @@ export function BottomSheet(props: BottomSheetProps) {
         <View style={handleStyle} />
         <SheetContent {...props} />
       </Pressable>
+      {overlay}
     </Modal>
   );
 }
