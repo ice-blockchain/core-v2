@@ -7,10 +7,11 @@ export interface UserDataSource {
 
 export function createUserDataSource(httpClient: HttpClient): UserDataSource {
   return {
-    getUser(userIdOrMasterKey, token) {
-      return httpClient.get<User>(`/auth/users/${encodeURIComponent(userIdOrMasterKey)}`, {
+    async getUser(userIdOrMasterKey, token) {
+      const response = await httpClient.get<User>(`/auth/users/${encodeURIComponent(userIdOrMasterKey)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      return response.body;
     },
   };
 }

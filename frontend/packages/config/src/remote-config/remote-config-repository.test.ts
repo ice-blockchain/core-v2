@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import type { HttpClient, RawResponse } from '@ion/network';
+import type { HttpClient, HttpResponse } from '@ion/network';
 import type { IKeyValueStorage } from '@ion/storage';
 
 vi.mock('../environment/environment', () => ({
@@ -31,15 +31,14 @@ function createMockHttpClient(): HttpClient {
   return {
     get: vi.fn(), post: vi.fn(), put: vi.fn(),
     patch: vi.fn(), delete: vi.fn(), upload: vi.fn(),
-    getRaw: vi.fn(),
   };
 }
 
-function okResponse(body: string, headers: Record<string, string> = {}): RawResponse {
+function okResponse(body: string, headers: Record<string, string> = {}): HttpResponse<string> {
   return { status: 200, headers, body };
 }
 
-function noContentResponse(): RawResponse {
+function noContentResponse(): HttpResponse<string> {
   return { status: 204, headers: {}, body: '' };
 }
 
@@ -59,33 +58,33 @@ describe('remoteConfigRepository', () => {
     return remoteConfigRepository({ httpClient, storage });
   }
 
-  function mockGetRaw(): ReturnType<typeof vi.fn> {
-    return httpClient.getRaw as ReturnType<typeof vi.fn>;
+  function mockGet(): ReturnType<typeof vi.fn> {
+    return httpClient.get as ReturnType<typeof vi.fn>;
   }
 
   it('fetches from network on first call and caches', async () => {
-    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
+    mockGet().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 1 });
-    expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
+    expect(httpClient.get).toHaveBeenCalledTimes(1);
   });
 
   it('returns cached data on subsequent calls within TTL', async () => {
-    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
+    mockGet().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     await service.getConfig(configOptions);
     const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 1 });
-    expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
+    expect(httpClient.get).toHaveBeenCalledTimes(1);
   });
 
   it('refetches after refresh interval expires', async () => {
-    mockGetRaw()
+    mockGet()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockResolvedValueOnce(okResponse('{"value":2}'));
 
@@ -99,7 +98,7 @@ describe('remoteConfigRepository', () => {
   });
 
   it('falls back to stale cache when server returns 204', async () => {
-    mockGetRaw()
+    mockGet()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockResolvedValueOnce(noContentResponse());
 
@@ -112,7 +111,7 @@ describe('remoteConfigRepository', () => {
   });
 
   it('falls back to stale cache when network fails', async () => {
-    mockGetRaw()
+    mockGet()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockRejectedValueOnce(new Error('offline'));
 
@@ -125,7 +124,7 @@ describe('remoteConfigRepository', () => {
   });
 
   it('force-fetches when stale cache also unavailable', async () => {
-    mockGetRaw()
+    mockGet()
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce(okResponse('{"value":99}'));
 
@@ -133,11 +132,11 @@ describe('remoteConfigRepository', () => {
     const result = await service.getConfig(configOptions);
 
     expect(result).toEqual({ value: 99 });
-    expect(httpClient.getRaw).toHaveBeenCalledTimes(2);
+    expect(httpClient.get).toHaveBeenCalledTimes(2);
   });
 
   it('throws CONFIG_NOT_FOUND when all sources exhausted', async () => {
-    mockGetRaw()
+    mockGet()
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce(noContentResponse());
 
@@ -150,7 +149,7 @@ describe('remoteConfigRepository', () => {
 
   it('serializes concurrent getConfig calls for the same config', async () => {
     let callCount = 0;
-    mockGetRaw().mockImplementation(async () => {
+    mockGet().mockImplementation(async () => {
       callCount++;
       return okResponse(`{"value":${callCount}}`);
     });
@@ -162,11 +161,11 @@ describe('remoteConfigRepository', () => {
     ]);
 
     expect(a).toEqual(b);
-    expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
+    expect(httpClient.get).toHaveBeenCalledTimes(1);
   });
 
   it('allows concurrent requests for different configs', async () => {
-    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
+    mockGet().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     await Promise.all([
@@ -174,11 +173,11 @@ describe('remoteConfigRepository', () => {
       service.getConfig({ ...configOptions, configName: 'b' }),
     ]);
 
-    expect(httpClient.getRaw).toHaveBeenCalledTimes(2);
+    expect(httpClient.get).toHaveBeenCalledTimes(2);
   });
 
   it('re-throws ConfigError from parser', async () => {
-    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
+    mockGet().mockResolvedValue(okResponse('{"value":1}'));
 
     const badParser = () => {
       throw new ConfigError(ConfigErrorCode.CONFIG_VERSION_MISSING, 'no version');
@@ -197,7 +196,7 @@ describe('remoteConfigRepository', () => {
     storage.setNumber('remote_config:version:cfg', 5);
     storage.setNumber('remote_config:timestamp:cfg', Date.now());
 
-    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
+    mockGet().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     const result = await service.getConfig(configOptions);

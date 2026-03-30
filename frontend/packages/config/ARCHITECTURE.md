@@ -90,7 +90,7 @@ type FeatureFlagName = keyof FeatureFlags;
 
 ### Dependencies
 
-- **`@ion/network`** — `HttpClient.getRaw()` for raw response access (status, headers, body). Optional — defaults to `createHttpClient({ baseUrl: environmentConfig.apiBaseUrl })`
+- **`@ion/network`** — `HttpClient.get()` returns `HttpResponse<T>` with status, headers, and body. Optional — defaults to `createHttpClient({ baseUrl: environmentConfig.apiBaseUrl })`
 - **`@ion/storage`** — `IKeyValueStorage` for persistent cache. Optional — defaults to `createKeyValueStorage({ id: 'remote-config' })`
 - **`@ion/diagnostics`** — `Logger` for error/warning logging on cache and network failures
 
@@ -149,7 +149,7 @@ When `checkVersion = true`, the service sends `?version={cachedVersion}` and exp
 - **Singleton**: `environmentConfig` is created once on module load -- no runtime re-reads.
 - **Shared validation**: One `validateEnvironmentConfig()` function used by both platforms.
 - **Peer deps only for env config**: `react-native-config` is optional.
-- **`getRaw` on HttpClient**: Remote config uses `HttpClient.getRaw()` which returns raw status, headers, and body string -- unlike `get<T>()` which parses JSON.
+- **`HttpResponse<T>` wrapper**: All HttpClient methods return `HttpResponse<T>` with status, headers, and typed body. Remote config uses status codes (200 vs 204) and headers (`x-version`) from the response.
 - **Defaults for httpClient and storage**: Both are optional. When omitted, the service creates an `HttpClient` using `environmentConfig.apiBaseUrl` and a `KeyValueStorage` with id `remote-config`.
 - **Config per call**: `configName`, `parser`, `checkVersion`, and `timeToLiveMs` are passed to `getConfig<T>()`. One `RemoteConfigService` can serve multiple configs.
 

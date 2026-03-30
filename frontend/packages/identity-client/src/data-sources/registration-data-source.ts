@@ -22,20 +22,20 @@ export interface RegistrationCredentialPayload {
 export function createRegistrationDataSource(httpClient: HttpClient): RegistrationDataSource {
   return {
     async initRegistration(email, earlyAccessEmail) {
-      const response = await httpClient.post<UserRegistrationChallenge>('/auth/registration/delegated', {
+      const { body } = await httpClient.post<UserRegistrationChallenge>('/auth/registration/delegated', {
         body: { email, ...(earlyAccessEmail != null && { earlyAccessEmail }) },
       });
-      validateRegistrationChallengeResponse(response);
-      return response;
+      validateRegistrationChallengeResponse(body);
+      return body;
     },
 
     async completeRegistration(credential, tempToken, earlyAccessEmail) {
-      const response = await httpClient.post<RegistrationResult>('/auth/registration/enduser', {
+      const { body } = await httpClient.post<RegistrationResult>('/auth/registration/enduser', {
         body: { ...credential, ...(earlyAccessEmail != null && { earlyAccessEmail }) },
         headers: { Authorization: `Bearer ${tempToken}` },
       });
-      validateRegistrationResultResponse(response);
-      return response;
+      validateRegistrationResultResponse(body);
+      return body;
     },
   };
 }

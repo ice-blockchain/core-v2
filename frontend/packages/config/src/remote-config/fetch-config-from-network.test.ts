@@ -28,7 +28,6 @@ function createMockHttpClient(): HttpClient {
   return {
     get: vi.fn(), post: vi.fn(), put: vi.fn(),
     patch: vi.fn(), delete: vi.fn(), upload: vi.fn(),
-    getRaw: vi.fn(),
   };
 }
 
@@ -47,7 +46,7 @@ const identity = { configName: 'cfg', parser, checkVersion: false };
 describe('fetchConfigFromNetwork', () => {
   it('returns parsed data on 200 and saves to cache', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: {}, body: '{"value":42}',
     });
     const deps = createDeps(httpClient);
@@ -61,7 +60,7 @@ describe('fetchConfigFromNetwork', () => {
 
   it('returns null on 204', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 204, headers: {}, body: '',
     });
 
@@ -72,13 +71,13 @@ describe('fetchConfigFromNetwork', () => {
 
   it('sends version query param when checkVersion is true', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: { 'x-version': '3' }, body: '{"value":1}',
     });
 
     await fetchConfigFromNetwork(createDeps(httpClient), { ...identity, checkVersion: true }, 3);
 
-    expect(httpClient.getRaw).toHaveBeenCalledWith(
+    expect(httpClient.get).toHaveBeenCalledWith(
       '/v1/config/cfg',
       { query: { version: '3' } },
     );
@@ -86,13 +85,13 @@ describe('fetchConfigFromNetwork', () => {
 
   it('does not send version query param when checkVersion is false', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: {}, body: '{"value":1}',
     });
 
     await fetchConfigFromNetwork(createDeps(httpClient), identity, 0);
 
-    expect(httpClient.getRaw).toHaveBeenCalledWith(
+    expect(httpClient.get).toHaveBeenCalledWith(
       '/v1/config/cfg',
       { query: undefined },
     );
@@ -100,7 +99,7 @@ describe('fetchConfigFromNetwork', () => {
 
   it('uses parsed version field when available', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: { 'x-version': '10' }, body: '{"value":1,"version":7}',
     });
     const deps = createDeps(httpClient);
@@ -113,7 +112,7 @@ describe('fetchConfigFromNetwork', () => {
 
   it('falls back to x-version header', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: { 'x-version': '10' }, body: '{"value":1}',
     });
     const deps = createDeps(httpClient);
@@ -125,7 +124,7 @@ describe('fetchConfigFromNetwork', () => {
 
   it('throws CONFIG_VERSION_MISSING when checkVersion is true but no version found', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: {}, body: '{"value":1}',
     });
 
@@ -136,7 +135,7 @@ describe('fetchConfigFromNetwork', () => {
 
   it('throws CONFIG_FETCH_FAILED on unexpected status', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 500, headers: {}, body: 'error',
     });
 

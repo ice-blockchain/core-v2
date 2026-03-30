@@ -34,7 +34,7 @@ const validRegResult = {
 describe('createRegistrationDataSource', () => {
   it('posts email to delegated registration endpoint', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegChallenge);
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: validRegChallenge });
     const ds = createRegistrationDataSource(httpClient);
 
     await ds.initRegistration('alice@example.com');
@@ -46,7 +46,7 @@ describe('createRegistrationDataSource', () => {
 
   it('includes earlyAccessEmail in registration init when provided', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegChallenge);
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: validRegChallenge });
     const ds = createRegistrationDataSource(httpClient);
 
     await ds.initRegistration('alice@example.com', 'early@example.com');
@@ -58,7 +58,7 @@ describe('createRegistrationDataSource', () => {
 
   it('posts credential to enduser registration endpoint with temp token', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegResult);
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: validRegResult });
     const ds = createRegistrationDataSource(httpClient);
     const credential = {
       firstFactorCredential: {
@@ -77,7 +77,7 @@ describe('createRegistrationDataSource', () => {
 
   it('includes earlyAccessEmail in registration complete when provided', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce(validRegResult);
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: validRegResult });
     const ds = createRegistrationDataSource(httpClient);
     const credential = {
       firstFactorCredential: {
@@ -96,7 +96,7 @@ describe('createRegistrationDataSource', () => {
 
   it('rejects malformed registration challenge from server', async () => {
     const httpClient = createMockHttpClient();
-    vi.mocked(httpClient.post).mockResolvedValueOnce({ bad: 'data' });
+    vi.mocked(httpClient.post).mockResolvedValueOnce({ status: 200, headers: {}, body: { bad: 'data' } });
     const ds = createRegistrationDataSource(httpClient);
 
     await expect(ds.initRegistration('alice@example.com')).rejects.toThrow('missing or empty challenge');

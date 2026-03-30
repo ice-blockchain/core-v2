@@ -117,12 +117,13 @@ function ensureReconnectingState<T>(ctx: PollContext<T>): void {
 async function executePollRequest<T>(ctx: PollContext<T>): Promise<SyncResponse> {
   const request: SyncRequest = { cursor: ctx.cursor, timeoutMs: ctx.holdTimeout };
   const body = ctx.serializer.serialize(request);
-  return ctx.config.httpClient.post<SyncResponse>(ctx.config.url, {
+  const response = await ctx.config.httpClient.post<SyncResponse>(ctx.config.url, {
     body,
     headers: { 'Content-Type': ctx.serializer.contentType },
     timeoutMs: ctx.holdTimeout + 5000,
     signal: ctx.abortController?.signal,
   });
+  return response.body;
 }
 
 function handlePollSuccess<T>(ctx: PollContext<T>, response: SyncResponse): void {

@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosProgressEvent, AxiosResponse } from 'axios';
 import axiosRetry from 'axios-retry';
 import { Logger } from '@ion/diagnostics';
-import type { HttpClient, HttpClientConfig, RawResponse, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
+import type { HttpClient, HttpClientConfig, HttpResponse, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
 import type { InterceptedRequest, InterceptedResponse } from './interceptor-types';
 import type { UploadProgress } from './shared-types';
 import type { RequestQueue } from './queue-types';
@@ -44,8 +44,6 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
     delete: <T>(url: string, opts?: RequestOptions) => executeRequest<T>({ internals, method: 'DELETE', url, options: opts }),
     upload: <T>(url: string, formData: FormData, opts?: UploadOptions) =>
       executeRequest<T>({ internals, method: 'POST', url, options: { ...opts, body: formData }, onProgress: opts?.onProgress }),
-    getRaw: (url: string, opts?: RequestOptions) =>
-      executeRawRequest({ internals, method: 'GET', url, options: opts }),
   };
 }
 
@@ -93,7 +91,7 @@ function configureRetry(instance: AxiosInstance, retryConfig: RetryConfig): void
   });
 }
 
-async function executeRequest<T>(context: RequestContext): Promise<T> {
+async function executeRequest<T>(context: RequestContext): Promise<HttpResponse<T>> {
   const { internals, options } = context;
   const path = interpolatePathParams(context.url, options?.params);
   validateRequestBodySize(options?.body, internals.config.maxRequestBodySizeBytes);
@@ -107,7 +105,7 @@ async function executeRequest<T>(context: RequestContext): Promise<T> {
   }
 }
 
-async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
+async function executeSingleRequest<T>(context: RequestContext): Promise<HttpResponse<T>> {
   const { internals, options } = context;
   const interceptedReq = await buildInterceptedRequest(context);
   const timeoutMs = options?.timeoutMs ?? internals.config.timeoutMs;
@@ -124,10 +122,7 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
       ...(context.onProgress ? { onUploadProgress: buildProgressHandler(context.onProgress) } : {}),
       'axios-retry': { retryCondition: buildRetryCondition(context.method, options?.retryable) },
     });
-    const parsedBody = parseResponseData<T>(response);
-    const interceptedResp = await buildInterceptedResponse(internals, response, parsedBody);
-    throwOnErrorStatus(response.status, interceptedResp);
-    return interceptedResp.body as T;
+    return await buildHttpResponse<T>(internals, response);
   } catch (error) {
     const handled = await handleError(internals, error);
     if (handled.shouldRetry && !context.authRetried) {
@@ -137,31 +132,16 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
   }
 }
 
-async function executeRawRequest(context: RequestContext): Promise<RawResponse> {
-  const { internals, options } = context;
-  const path = interpolatePathParams(context.url, options?.params);
-  const interceptedReq = await buildInterceptedRequest({ ...context, url: path });
-  const timeoutMs = options?.timeoutMs ?? internals.config.timeoutMs;
-  try {
-    const response = await internals.axiosInstance.request({
-      url: interceptedReq.url,
-      method: interceptedReq.method,
-      headers: interceptedReq.headers,
-      timeout: timeoutMs,
-      responseType: 'text',
-      transformResponse: [(data: unknown) => data],
-      ...(options?.signal ? { signal: options.signal } : {}),
-      ...(options?.query ? { params: options.query } : {}),
-    });
-    return {
-      status: response.status,
-      headers: { ...response.headers } as Record<string, string>,
-      body: typeof response.data === 'string' ? response.data : String(response.data ?? ''),
-    };
-  } catch (error) {
-    const handled = await handleError(internals, error);
-    throw handled;
-  }
+
+async function buildHttpResponse<T>(internals: ClientInternals, response: AxiosResponse): Promise<HttpResponse<T>> {
+  const parsedBody = parseResponseData<T>(response);
+  const interceptedResp = await buildInterceptedResponse(internals, response, parsedBody);
+  throwOnErrorStatus(response.status, interceptedResp);
+  return {
+    status: response.status,
+    headers: { ...response.headers } as Record<string, string>,
+    body: interceptedResp.body as T,
+  };
 }
 
 function buildRetryCondition(method: string, retryable?: boolean): (error: AxiosError) => boolean {

@@ -16,7 +16,7 @@ export async function fetchConfigFromNetwork<T>(
   const query = buildQuery(identity.checkVersion, version);
   const url = `/v1/config/${identity.configName}`;
 
-  const response = await deps.httpClient.getRaw(url, { query });
+  const response = await deps.httpClient.get<string>(url, { query });
 
   if (response.status === 204) {
     Logger.debug('Config not modified (204)', { tag: 'remote-config', data: { configName: identity.configName, version } });

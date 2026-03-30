@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createLongPollClient } from './long-poll-client';
 import type { HttpClient } from './http-types';
-import type { SyncResponse } from './long-poll-types';
 
 vi.mock('@ion/diagnostics', () => ({
   Logger: { debug: vi.fn(), warning: vi.fn(), info: vi.fn(), error: vi.fn() },
@@ -15,12 +14,11 @@ function createMockHttpClient(): HttpClient {
     patch: vi.fn(),
     delete: vi.fn(),
     upload: vi.fn(),
-    getRaw: vi.fn(),
   };
 }
 
-function syncResponse(inbox: Array<{ seq: string; data: unknown }>, cursor = 'c1'): SyncResponse {
-  return { inbox, cursor };
+function syncResponse(inbox: Array<{ seq: string; data: unknown }>, cursor = 'c1') {
+  return { status: 200, headers: {}, body: { inbox, cursor } };
 }
 
 describe('LongPollClient initial state', () => {

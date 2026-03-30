@@ -29,7 +29,6 @@ function createMockHttpClient(): HttpClient {
   return {
     get: vi.fn(), post: vi.fn(), put: vi.fn(),
     patch: vi.fn(), delete: vi.fn(), upload: vi.fn(),
-    getRaw: vi.fn(),
   };
 }
 
@@ -48,7 +47,7 @@ const identity = { configName: 'cfg', parser, checkVersion: false };
 describe('forceFetchConfig', () => {
   it('returns parsed data on successful fetch', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: {}, body: '{"value":1}',
     });
 
@@ -59,13 +58,13 @@ describe('forceFetchConfig', () => {
 
   it('sends version=0 to force latest data', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 200, headers: { 'x-version': '1' }, body: '{"value":1}',
     });
 
     await forceFetchConfig(createDeps(httpClient), { ...identity, checkVersion: true });
 
-    expect(httpClient.getRaw).toHaveBeenCalledWith(
+    expect(httpClient.get).toHaveBeenCalledWith(
       '/v1/config/cfg',
       { query: { version: '0' } },
     );
@@ -73,7 +72,7 @@ describe('forceFetchConfig', () => {
 
   it('throws CONFIG_NOT_FOUND when server returns 204', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
       status: 204, headers: {}, body: '',
     });
 
@@ -84,7 +83,7 @@ describe('forceFetchConfig', () => {
 
   it('throws CONFIG_FETCH_FAILED when network fails', async () => {
     const httpClient = createMockHttpClient();
-    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('offline'));
+    (httpClient.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('offline'));
 
     await expect(
       forceFetchConfig(createDeps(httpClient), identity),
