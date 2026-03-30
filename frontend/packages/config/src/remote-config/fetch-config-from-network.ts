@@ -12,9 +12,9 @@ export async function fetchConfigFromNetwork<T>(
   version: number,
 ): Promise<T | null> {
   const query = buildQuery(options.checkVersion, version);
-  const url = `${deps.baseUrl}/v1/config/${options.configName}`;
+  const url = `/v1/config/${options.configName}`;
 
-  const response = await deps.httpClient.get(url, { query });
+  const response = await deps.httpClient.getRaw(url, { query });
 
   if (response.status === 204) return null;
   if (response.status !== 200) {

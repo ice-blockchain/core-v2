@@ -1,33 +1,11 @@
-// --- Dependency injection interfaces (consumers provide implementations) ---
-
-export interface ConfigHttpClient {
-  get(url: string, options?: ConfigRequestOptions): Promise<ConfigHttpResponse>;
-}
-
-export interface ConfigRequestOptions {
-  query?: Record<string, string> | undefined;
-}
-
-export interface ConfigHttpResponse {
-  status: number;
-  headers: Record<string, string>;
-  body: string;
-}
-
-export interface ConfigStorage {
-  getString(key: string): string | null;
-  setString(key: string, value: string): void;
-  getNumber(key: string): number | null;
-  setNumber(key: string, value: number): void;
-  removeItem(key: string): void;
-}
+import type { HttpClient } from '@ion/network';
+import type { IKeyValueStorage } from '@ion/storage';
 
 // --- Configuration ---
 
 export interface RemoteConfigOptions {
-  httpClient: ConfigHttpClient;
-  storage: ConfigStorage;
-  baseUrl: string;
+  httpClient: HttpClient;
+  storage: IKeyValueStorage;
   defaultTimeToLiveMs?: number;
 }
 
@@ -53,9 +31,8 @@ export interface CachedEntry {
 }
 
 export interface RemoteConfigDeps {
-  httpClient: ConfigHttpClient;
-  storage: ConfigStorage;
-  baseUrl: string;
+  httpClient: HttpClient;
+  storage: IKeyValueStorage;
   defaultTimeToLiveMs: number;
   memoryCache: Map<string, CachedEntry>;
 }

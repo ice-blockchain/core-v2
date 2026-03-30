@@ -272,6 +272,15 @@ importers:
 
   packages/config:
     dependencies:
+      '@ion/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
+      '@ion/network':
+        specifier: workspace:*
+        version: link:../network
+      '@ion/storage':
+        specifier: workspace:*
+        version: link:../storage
       react-native:
         specifier: '>=0.84'
         version: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)

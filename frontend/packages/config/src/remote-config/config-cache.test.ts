@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import type { CachedEntry, ConfigStorage } from './remote-config-types';
+import type { IKeyValueStorage } from '@ion/storage';
+
+import type { CachedEntry } from './remote-config-types';
 import {
   readFromMemoryCache,
   readFromStorage,
@@ -11,14 +13,20 @@ import {
   clearConfigFromCache,
 } from './config-cache';
 
-function createMockStorage(): ConfigStorage {
-  const store = new Map<string, string | number>();
+function createMockStorage(): IKeyValueStorage {
+  const store = new Map<string, unknown>();
   return {
     getString: vi.fn((key: string) => (store.get(key) as string) ?? null),
-    setString: vi.fn((key: string, value: string) => store.set(key, value)),
+    setString: vi.fn((key: string, value: string) => { store.set(key, value); }),
     getNumber: vi.fn((key: string) => (store.get(key) as number) ?? null),
-    setNumber: vi.fn((key: string, value: number) => store.set(key, value)),
-    removeItem: vi.fn((key: string) => store.delete(key)),
+    setNumber: vi.fn((key: string, value: number) => { store.set(key, value); }),
+    getBoolean: vi.fn(() => null),
+    setBoolean: vi.fn(),
+    getObject: vi.fn(() => null),
+    setObject: vi.fn(),
+    removeItem: vi.fn((key: string) => { store.delete(key); }),
+    hasItem: vi.fn((key: string) => store.has(key)),
+    clear: vi.fn(() => { store.clear(); }),
   };
 }
 

@@ -1,24 +1,35 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { readCachedConfig } from './read-cached-config';
-import type { RemoteConfigDeps, CachedEntry, ConfigStorage } from './remote-config-types';
+import type { IKeyValueStorage } from '@ion/storage';
 
-function createMockStorage(): ConfigStorage {
-  const store = new Map<string, string | number>();
+import type { RemoteConfigDeps, CachedEntry } from './remote-config-types';
+
+function createMockStorage(): IKeyValueStorage {
+  const store = new Map<string, unknown>();
   return {
     getString: vi.fn((key: string) => (store.get(key) as string) ?? null),
-    setString: vi.fn((key: string, value: string) => store.set(key, value)),
+    setString: vi.fn((key: string, value: string) => { store.set(key, value); }),
     getNumber: vi.fn((key: string) => (store.get(key) as number) ?? null),
-    setNumber: vi.fn((key: string, value: number) => store.set(key, value)),
-    removeItem: vi.fn((key: string) => store.delete(key)),
+    setNumber: vi.fn((key: string, value: number) => { store.set(key, value); }),
+    getBoolean: vi.fn(() => null),
+    setBoolean: vi.fn(),
+    getObject: vi.fn(() => null),
+    setObject: vi.fn(),
+    removeItem: vi.fn((key: string) => { store.delete(key); }),
+    hasItem: vi.fn((key: string) => store.has(key)),
+    clear: vi.fn(() => { store.clear(); }),
   };
 }
 
 function createDeps(overrides?: Partial<RemoteConfigDeps>): RemoteConfigDeps {
   return {
-    httpClient: { get: vi.fn() },
+    httpClient: {
+      get: vi.fn(), post: vi.fn(), put: vi.fn(),
+      patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), getRaw: vi.fn(),
+    },
     storage: createMockStorage(),
-    baseUrl: 'https://api.example.com',
+
     defaultTimeToLiveMs: 60_000,
     memoryCache: new Map<string, CachedEntry>(),
     ...overrides,

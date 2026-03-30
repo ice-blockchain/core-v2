@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosProgressEvent, AxiosResponse } from 'axios';
 import axiosRetry from 'axios-retry';
 import { Logger } from '@ion/diagnostics';
-import type { HttpClient, HttpClientConfig, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
+import type { HttpClient, HttpClientConfig, RawResponse, RequestOptions, RequestOptionsWithBody, UploadOptions } from './http-types';
 import type { InterceptedRequest, InterceptedResponse } from './interceptor-types';
 import type { UploadProgress } from './shared-types';
 import type { RequestQueue } from './queue-types';
@@ -44,6 +44,8 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
     delete: <T>(url: string, opts?: RequestOptions) => executeRequest<T>({ internals, method: 'DELETE', url, options: opts }),
     upload: <T>(url: string, formData: FormData, opts?: UploadOptions) =>
       executeRequest<T>({ internals, method: 'POST', url, options: { ...opts, body: formData }, onProgress: opts?.onProgress }),
+    getRaw: (url: string, opts?: RequestOptions) =>
+      executeRawRequest({ internals, method: 'GET', url, options: opts }),
   };
 }
 
@@ -129,6 +131,33 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<T> {
     if (handled.shouldRetry && !context.authRetried) {
       return executeSingleRequest<T>({ ...context, authRetried: true });
     }
+    throw handled;
+  }
+}
+
+async function executeRawRequest(context: RequestContext): Promise<RawResponse> {
+  const { internals, options } = context;
+  const path = interpolatePathParams(context.url, options?.params);
+  const interceptedReq = await buildInterceptedRequest({ ...context, url: path });
+  const timeoutMs = options?.timeoutMs ?? internals.config.timeoutMs;
+  try {
+    const response = await internals.axiosInstance.request({
+      url: interceptedReq.url,
+      method: interceptedReq.method,
+      headers: interceptedReq.headers,
+      timeout: timeoutMs,
+      responseType: 'text',
+      transformResponse: [(data: unknown) => data],
+      ...(options?.signal ? { signal: options.signal } : {}),
+      ...(options?.query ? { params: options.query } : {}),
+    });
+    return {
+      status: response.status,
+      headers: { ...response.headers } as Record<string, string>,
+      body: typeof response.data === 'string' ? response.data : String(response.data ?? ''),
+    };
+  } catch (error) {
+    const handled = await handleError(internals, error);
     throw handled;
   }
 }

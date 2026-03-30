@@ -14,8 +14,7 @@ export { createRemoteConfig } from './src/remote-config/create-remote-config';
 export { ConfigError, ConfigErrorCode } from './src/remote-config/remote-config-error';
 export type {
   RemoteConfigService, RemoteConfigOptions, GetConfigOptions,
-  AppConfigWithVersion, ConfigHttpClient, ConfigHttpResponse,
-  ConfigRequestOptions, ConfigStorage,
+  AppConfigWithVersion,
 } from './src/remote-config/remote-config-types';
 ```
 
@@ -53,15 +52,16 @@ Both platforms share `validateEnvironmentConfig()` which enforces:
 
 `createRemoteConfig(options)` returns a `RemoteConfigService` that fetches named configs from `GET {baseUrl}/v1/config/{configName}` with caching, version-aware conditional fetching, and a 5-step fallback chain.
 
-### Dependency Injection
+### Dependencies
 
-As a Foundation layer package, `@ion/config` cannot import `@ion/network` or `@ion/storage`. Instead, it defines minimal interfaces (`ConfigHttpClient`, `ConfigStorage`) that consumers inject:
+- **`@ion/network`** — uses `HttpClient.getRaw()` for fetching configs with raw response access (status, headers, body)
+- **`@ion/storage`** — uses `IKeyValueStorage` for persistent cache (raw config data, version numbers, timestamps)
+- **`@ion/diagnostics`** — uses `Logger` for error/warning logging on cache and network failures
 
 ```typescript
 const service = createRemoteConfig({
-  httpClient: myHttpClientAdapter,  // implements ConfigHttpClient
-  storage: myKeyValueStorage,       // implements ConfigStorage
-  baseUrl: 'https://api.example.com',
+  httpClient,                       // HttpClient from @ion/network
+  storage: keyValueStorage,         // IKeyValueStorage from @ion/storage
   defaultTimeToLiveMs: 300_000,     // 5 min default
 });
 
@@ -103,13 +103,13 @@ When `checkVersion = true`, the service sends `?version={cachedVersion}` and exp
 - **Fail-fast**: Environment config validates at import time. Invalid config crashes the app before any logic runs.
 - **Singleton**: `environmentConfig` is created once on module load -- no runtime re-reads.
 - **Shared validation**: One `validateEnvironmentConfig()` function used by both platforms.
-- **No runtime deps**: Zero production dependencies. Peer deps (`react-native-config`) are optional.
-- **DI for remote config**: Keeps Foundation layer clean -- no imports from `@ion/network` or `@ion/storage`.
+- **Peer deps only for env config**: `react-native-config` is optional.
+- **`getRaw` on HttpClient**: Remote config uses `HttpClient.getRaw()` which returns raw status, headers, and body string — unlike `get<T>()` which parses JSON.
 
 ## Dependencies
 
-- **Downstream**: None (foundation layer)
-- **Upstream consumers**: `@ion/network`, `@ion/diagnostics`, app shells
+- **Downstream**: `@ion/network`, `@ion/storage`, `@ion/diagnostics`
+- **Upstream consumers**: app shells
 
 ## File Structure
 

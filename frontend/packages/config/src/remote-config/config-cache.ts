@@ -1,4 +1,7 @@
-import type { CachedEntry, ConfigStorage } from './remote-config-types';
+import { Logger } from '@ion/diagnostics';
+import type { IKeyValueStorage } from '@ion/storage';
+
+import type { CachedEntry } from './remote-config-types';
 
 const PREFIX = 'remote_config';
 
@@ -25,7 +28,7 @@ export function readFromMemoryCache(
   return entry;
 }
 
-export function readFromStorage(storage: ConfigStorage, configName: string): CachedEntry | null {
+export function readFromStorage(storage: IKeyValueStorage, configName: string): CachedEntry | null {
   const raw = storage.getString(dataKey(configName));
   if (!raw) return null;
 
@@ -35,7 +38,7 @@ export function readFromStorage(storage: ConfigStorage, configName: string): Cac
 }
 
 export function writeToCache(
-  deps: { storage: ConfigStorage; memoryCache: Map<string, CachedEntry> },
+  deps: { storage: IKeyValueStorage; memoryCache: Map<string, CachedEntry> },
   configName: string,
   entry: CachedEntry,
 ): void {
@@ -46,7 +49,7 @@ export function writeToCache(
 }
 
 export function updateTimestamp(
-  deps: { storage: ConfigStorage; memoryCache: Map<string, CachedEntry> },
+  deps: { storage: IKeyValueStorage; memoryCache: Map<string, CachedEntry> },
   configName: string,
 ): void {
   const now = Date.now();
@@ -56,12 +59,12 @@ export function updateTimestamp(
   }
   try {
     deps.storage.setNumber(timestampKey(configName), now);
-  } catch {
-    // best-effort — swallow storage errors on timestamp update
+  } catch (error) {
+    Logger.warning('Failed to update config cache timestamp', { tag: 'remote-config', data: { configName, error } });
   }
 }
 
-export function getStoredVersion(storage: ConfigStorage, configName: string): number {
+export function getStoredVersion(storage: IKeyValueStorage, configName: string): number {
   return storage.getNumber(versionKey(configName)) ?? 0;
 }
 
@@ -70,7 +73,7 @@ export function isExpired(fetchedAtMs: number, timeToLiveMs: number): boolean {
 }
 
 export function clearConfigFromCache(
-  deps: { storage: ConfigStorage; memoryCache: Map<string, CachedEntry> },
+  deps: { storage: IKeyValueStorage; memoryCache: Map<string, CachedEntry> },
   configName: string,
 ): void {
   deps.memoryCache.delete(configName);

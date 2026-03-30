@@ -1,3 +1,5 @@
+import { Logger } from '@ion/diagnostics';
+
 import { getStoredVersion, updateTimestamp } from './config-cache';
 import { createConfigMutex } from './config-mutex';
 import { fetchConfigFromNetwork } from './fetch-config-from-network';
@@ -20,7 +22,6 @@ export function createRemoteConfig(options: RemoteConfigOptions): RemoteConfigSe
   const deps: RemoteConfigDeps = {
     httpClient: options.httpClient,
     storage: options.storage,
-    baseUrl: options.baseUrl,
     defaultTimeToLiveMs: options.defaultTimeToLiveMs ?? DEFAULT_TIME_TO_LIVE_MS,
     memoryCache: new Map<string, CachedEntry>(),
   };
@@ -59,6 +60,11 @@ async function tryNetworkFetch<T>(
     return await fetchConfigFromNetwork(deps, options, version);
   } catch (error) {
     if (error instanceof ConfigError) throw error;
+    Logger.error('Network fetch failed for remote config, falling back to cache', {
+      tag: 'remote-config',
+      data: { configName: options.configName },
+      ...(error instanceof Error ? { error } : {}),
+    });
     return null;
   }
 }

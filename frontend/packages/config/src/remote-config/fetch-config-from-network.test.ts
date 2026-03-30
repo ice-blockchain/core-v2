@@ -1,30 +1,42 @@
 import { describe, it, expect, vi } from 'vitest';
 
+import type { HttpClient } from '@ion/network';
+import type { IKeyValueStorage } from '@ion/storage';
+
 import { fetchConfigFromNetwork } from './fetch-config-from-network';
 import { ConfigError, ConfigErrorCode } from './remote-config-error';
-import type {
-  RemoteConfigDeps,
-  CachedEntry,
-  ConfigStorage,
-  ConfigHttpClient,
-} from './remote-config-types';
+import type { RemoteConfigDeps, CachedEntry } from './remote-config-types';
 
-function createMockStorage(): ConfigStorage {
-  const store = new Map<string, string | number>();
+function createMockStorage(): IKeyValueStorage {
+  const store = new Map<string, unknown>();
   return {
     getString: vi.fn((key: string) => (store.get(key) as string) ?? null),
-    setString: vi.fn((key: string, value: string) => store.set(key, value)),
+    setString: vi.fn((key: string, value: string) => { store.set(key, value); }),
     getNumber: vi.fn((key: string) => (store.get(key) as number) ?? null),
-    setNumber: vi.fn((key: string, value: number) => store.set(key, value)),
-    removeItem: vi.fn((key: string) => store.delete(key)),
+    setNumber: vi.fn((key: string, value: number) => { store.set(key, value); }),
+    getBoolean: vi.fn(() => null),
+    setBoolean: vi.fn(),
+    getObject: vi.fn(() => null),
+    setObject: vi.fn(),
+    removeItem: vi.fn((key: string) => { store.delete(key); }),
+    hasItem: vi.fn((key: string) => store.has(key)),
+    clear: vi.fn(() => { store.clear(); }),
   };
 }
 
-function createDeps(httpClient: ConfigHttpClient): RemoteConfigDeps {
+function createMockHttpClient(): HttpClient {
+  return {
+    get: vi.fn(), post: vi.fn(), put: vi.fn(),
+    patch: vi.fn(), delete: vi.fn(), upload: vi.fn(),
+    getRaw: vi.fn(),
+  };
+}
+
+function createDeps(httpClient: HttpClient): RemoteConfigDeps {
   return {
     httpClient,
     storage: createMockStorage(),
-    baseUrl: 'https://api.example.com',
+
     defaultTimeToLiveMs: 60_000,
     memoryCache: new Map<string, CachedEntry>(),
   };
@@ -34,13 +46,10 @@ const parser = (raw: string) => JSON.parse(raw) as { value: number };
 
 describe('fetchConfigFromNetwork', () => {
   it('returns parsed data on 200 and saves to cache', async () => {
-    const httpClient: ConfigHttpClient = {
-      get: vi.fn().mockResolvedValue({
-        status: 200,
-        headers: {},
-        body: '{"value":42}',
-      }),
-    };
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200, headers: {}, body: '{"value":42}',
+    });
     const deps = createDeps(httpClient);
 
     const result = await fetchConfigFromNetwork(deps, { configName: 'cfg', parser }, 0);
@@ -51,104 +60,88 @@ describe('fetchConfigFromNetwork', () => {
   });
 
   it('returns null on 204', async () => {
-    const httpClient: ConfigHttpClient = {
-      get: vi.fn().mockResolvedValue({ status: 204, headers: {}, body: '' }),
-    };
-    const deps = createDeps(httpClient);
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 204, headers: {}, body: '',
+    });
 
-    const result = await fetchConfigFromNetwork(deps, { configName: 'cfg', parser }, 5);
+    const result = await fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser }, 5);
 
     expect(result).toBeNull();
   });
 
   it('sends version query param when checkVersion is true', async () => {
-    const get = vi.fn().mockResolvedValue({
-      status: 200,
-      headers: { 'x-version': '3' },
-      body: '{"value":1}',
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200, headers: { 'x-version': '3' }, body: '{"value":1}',
     });
-    const deps = createDeps({ get });
 
-    await fetchConfigFromNetwork(deps, { configName: 'cfg', parser, checkVersion: true }, 3);
+    await fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser, checkVersion: true }, 3);
 
-    expect(get).toHaveBeenCalledWith(
-      'https://api.example.com/v1/config/cfg',
+    expect(httpClient.getRaw).toHaveBeenCalledWith(
+      '/v1/config/cfg',
       { query: { version: '3' } },
     );
   });
 
   it('does not send version query param when checkVersion is false', async () => {
-    const get = vi.fn().mockResolvedValue({
-      status: 200,
-      headers: {},
-      body: '{"value":1}',
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200, headers: {}, body: '{"value":1}',
     });
-    const deps = createDeps({ get });
 
-    await fetchConfigFromNetwork(deps, { configName: 'cfg', parser }, 0);
+    await fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser }, 0);
 
-    expect(get).toHaveBeenCalledWith(
-      'https://api.example.com/v1/config/cfg',
+    expect(httpClient.getRaw).toHaveBeenCalledWith(
+      '/v1/config/cfg',
       { query: undefined },
     );
   });
 
   it('uses parsed version field when available', async () => {
-    const httpClient: ConfigHttpClient = {
-      get: vi.fn().mockResolvedValue({
-        status: 200,
-        headers: { 'x-version': '10' },
-        body: '{"value":1,"version":7}',
-      }),
-    };
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200, headers: { 'x-version': '10' }, body: '{"value":1,"version":7}',
+    });
     const deps = createDeps(httpClient);
     const versionedParser = (raw: string) => JSON.parse(raw) as { value: number; version: number };
 
     await fetchConfigFromNetwork(deps, { configName: 'cfg', parser: versionedParser, checkVersion: true }, 0);
 
-    const cached = deps.memoryCache.get('cfg');
-    expect(cached!.version).toBe(7);
+    expect(deps.memoryCache.get('cfg')!.version).toBe(7);
   });
 
   it('falls back to x-version header', async () => {
-    const httpClient: ConfigHttpClient = {
-      get: vi.fn().mockResolvedValue({
-        status: 200,
-        headers: { 'x-version': '10' },
-        body: '{"value":1}',
-      }),
-    };
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200, headers: { 'x-version': '10' }, body: '{"value":1}',
+    });
     const deps = createDeps(httpClient);
 
     await fetchConfigFromNetwork(deps, { configName: 'cfg', parser, checkVersion: true }, 0);
 
-    const cached = deps.memoryCache.get('cfg');
-    expect(cached!.version).toBe(10);
+    expect(deps.memoryCache.get('cfg')!.version).toBe(10);
   });
 
   it('throws CONFIG_VERSION_MISSING when checkVersion is true but no version found', async () => {
-    const httpClient: ConfigHttpClient = {
-      get: vi.fn().mockResolvedValue({
-        status: 200,
-        headers: {},
-        body: '{"value":1}',
-      }),
-    };
-    const deps = createDeps(httpClient);
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 200, headers: {}, body: '{"value":1}',
+    });
 
     await expect(
-      fetchConfigFromNetwork(deps, { configName: 'cfg', parser, checkVersion: true }, 0),
+      fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser, checkVersion: true }, 0),
     ).rejects.toThrow(ConfigError);
   });
 
   it('throws CONFIG_FETCH_FAILED on unexpected status', async () => {
-    const httpClient: ConfigHttpClient = {
-      get: vi.fn().mockResolvedValue({ status: 500, headers: {}, body: 'error' }),
-    };
-    const deps = createDeps(httpClient);
+    const httpClient = createMockHttpClient();
+    (httpClient.getRaw as ReturnType<typeof vi.fn>).mockResolvedValue({
+      status: 500, headers: {}, body: 'error',
+    });
 
     await expect(
-      fetchConfigFromNetwork(deps, { configName: 'cfg', parser }, 0),
+      fetchConfigFromNetwork(createDeps(httpClient), { configName: 'cfg', parser }, 0),
     ).rejects.toMatchObject({ code: ConfigErrorCode.CONFIG_FETCH_FAILED });
   });
 });

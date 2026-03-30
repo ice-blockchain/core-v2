@@ -1,71 +1,91 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import type { HttpClient, RawResponse } from '@ion/network';
+import type { IKeyValueStorage } from '@ion/storage';
+
 import { createRemoteConfig } from './create-remote-config';
 import { ConfigError, ConfigErrorCode } from './remote-config-error';
-import type { ConfigHttpClient, ConfigHttpResponse, ConfigStorage } from './remote-config-types';
 
-function createMockStorage(): ConfigStorage {
-  const store = new Map<string, string | number>();
+function createMockStorage(): IKeyValueStorage {
+  const store = new Map<string, unknown>();
   return {
     getString: vi.fn((key: string) => (store.get(key) as string) ?? null),
     setString: vi.fn((key: string, value: string) => { store.set(key, value); }),
     getNumber: vi.fn((key: string) => (store.get(key) as number) ?? null),
     setNumber: vi.fn((key: string, value: number) => { store.set(key, value); }),
+    getBoolean: vi.fn(() => null),
+    setBoolean: vi.fn(),
+    getObject: vi.fn(() => null),
+    setObject: vi.fn(),
     removeItem: vi.fn((key: string) => { store.delete(key); }),
+    hasItem: vi.fn((key: string) => store.has(key)),
+    clear: vi.fn(() => { store.clear(); }),
   };
 }
 
-function okResponse(body: string, headers: Record<string, string> = {}): ConfigHttpResponse {
+function createMockHttpClient(): HttpClient {
+  return {
+    get: vi.fn(), post: vi.fn(), put: vi.fn(),
+    patch: vi.fn(), delete: vi.fn(), upload: vi.fn(),
+    getRaw: vi.fn(),
+  };
+}
+
+function okResponse(body: string, headers: Record<string, string> = {}): RawResponse {
   return { status: 200, headers, body };
 }
 
-function noContentResponse(): ConfigHttpResponse {
+function noContentResponse(): RawResponse {
   return { status: 204, headers: {}, body: '' };
 }
 
 const parser = (raw: string) => JSON.parse(raw) as { value: number };
 
 describe('createRemoteConfig', () => {
-  let storage: ConfigStorage;
-  let httpClient: ConfigHttpClient;
+  let storage: IKeyValueStorage;
+  let httpClient: HttpClient;
 
   beforeEach(() => {
     storage = createMockStorage();
-    httpClient = { get: vi.fn() };
+    httpClient = createMockHttpClient();
   });
 
   function createService(overrides?: { defaultTimeToLiveMs?: number }) {
     return createRemoteConfig({
       httpClient,
       storage,
-      baseUrl: 'https://api.test.com',
+
       ...overrides,
     });
   }
 
+  function mockGetRaw(): ReturnType<typeof vi.fn> {
+    return httpClient.getRaw as ReturnType<typeof vi.fn>;
+  }
+
   it('fetches from network on first call and caches', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue(okResponse('{"value":1}'));
+    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     const result = await service.getConfig({ configName: 'cfg', parser });
 
     expect(result).toEqual({ value: 1 });
-    expect(httpClient.get).toHaveBeenCalledTimes(1);
+    expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
   });
 
   it('returns cached data on subsequent calls within TTL', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue(okResponse('{"value":1}'));
+    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     await service.getConfig({ configName: 'cfg', parser });
     const result = await service.getConfig({ configName: 'cfg', parser });
 
     expect(result).toEqual({ value: 1 });
-    expect(httpClient.get).toHaveBeenCalledTimes(1);
+    expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
   });
 
   it('refetches after TTL expires', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>)
+    mockGetRaw()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockResolvedValueOnce(okResponse('{"value":2}'));
 
@@ -79,7 +99,7 @@ describe('createRemoteConfig', () => {
   });
 
   it('falls back to stale cache when server returns 204', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>)
+    mockGetRaw()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockResolvedValueOnce(noContentResponse());
 
@@ -92,7 +112,7 @@ describe('createRemoteConfig', () => {
   });
 
   it('falls back to stale cache when network fails', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>)
+    mockGetRaw()
       .mockResolvedValueOnce(okResponse('{"value":1}'))
       .mockRejectedValueOnce(new Error('offline'));
 
@@ -105,7 +125,7 @@ describe('createRemoteConfig', () => {
   });
 
   it('force-fetches when stale cache also unavailable', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>)
+    mockGetRaw()
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce(okResponse('{"value":99}'));
 
@@ -113,11 +133,11 @@ describe('createRemoteConfig', () => {
     const result = await service.getConfig({ configName: 'cfg', parser });
 
     expect(result).toEqual({ value: 99 });
-    expect(httpClient.get).toHaveBeenCalledTimes(2);
+    expect(httpClient.getRaw).toHaveBeenCalledTimes(2);
   });
 
   it('throws CONFIG_NOT_FOUND when all sources exhausted', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>)
+    mockGetRaw()
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce(noContentResponse());
 
@@ -130,7 +150,7 @@ describe('createRemoteConfig', () => {
 
   it('serializes concurrent requests for the same config', async () => {
     let callCount = 0;
-    (httpClient.get as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+    mockGetRaw().mockImplementation(async () => {
       callCount++;
       return okResponse(`{"value":${callCount}}`);
     });
@@ -142,11 +162,11 @@ describe('createRemoteConfig', () => {
     ]);
 
     expect(a).toEqual(b);
-    expect(httpClient.get).toHaveBeenCalledTimes(1);
+    expect(httpClient.getRaw).toHaveBeenCalledTimes(1);
   });
 
   it('allows concurrent requests for different configs', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue(okResponse('{"value":1}'));
+    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     await Promise.all([
@@ -154,15 +174,11 @@ describe('createRemoteConfig', () => {
       service.getConfig({ configName: 'b', parser }),
     ]);
 
-    expect(httpClient.get).toHaveBeenCalledTimes(2);
+    expect(httpClient.getRaw).toHaveBeenCalledTimes(2);
   });
 
   it('re-throws ConfigError from network fetch', async () => {
-    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue({
-      status: 200,
-      headers: {},
-      body: '{"value":1}',
-    });
+    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
 
     const service = createService();
     const badParser = () => { throw new ConfigError(ConfigErrorCode.CONFIG_VERSION_MISSING, 'no version'); };
@@ -173,12 +189,11 @@ describe('createRemoteConfig', () => {
   });
 
   it('forces version=0 when cached data fails to parse', async () => {
-    // Pre-populate storage with unparseable data
     storage.setString('remote_config:data:cfg', 'corrupt');
     storage.setNumber('remote_config:version:cfg', 5);
     storage.setNumber('remote_config:timestamp:cfg', Date.now());
 
-    (httpClient.get as ReturnType<typeof vi.fn>).mockResolvedValue(okResponse('{"value":1}'));
+    mockGetRaw().mockResolvedValue(okResponse('{"value":1}'));
     const service = createService();
 
     const result = await service.getConfig({ configName: 'cfg', parser });

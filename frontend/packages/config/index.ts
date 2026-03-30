@@ -8,8 +8,4 @@ export type {
   RemoteConfigOptions,
   GetConfigOptions,
   AppConfigWithVersion,
-  ConfigHttpClient,
-  ConfigHttpResponse,
-  ConfigRequestOptions,
-  ConfigStorage,
 } from './src/remote-config/remote-config-types';

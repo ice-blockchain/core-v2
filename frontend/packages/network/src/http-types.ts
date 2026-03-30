@@ -33,6 +33,12 @@ export interface UploadOptions extends RequestOptions {
   onProgress?: (progress: UploadProgress) => void;
 }
 
+export interface RawResponse {
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+}
+
 export interface HttpClient {
   get<T>(url: string, options?: RequestOptions): Promise<T>;
   post<T>(url: string, options?: RequestOptionsWithBody): Promise<T>;
@@ -44,4 +50,5 @@ export interface HttpClient {
     formData: FormData,
     options?: UploadOptions,
   ): Promise<T>;
+  getRaw(url: string, options?: RequestOptions): Promise<RawResponse>;
 }

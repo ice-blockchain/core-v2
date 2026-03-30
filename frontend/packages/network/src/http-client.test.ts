@@ -197,3 +197,45 @@ describe('createHttpClient HTTPS enforcement', () => {
     })).toThrow('HTTPS allowlist must be empty in production');
   });
 });
+
+describe('createHttpClient getRaw', () => {
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
+
+  it('returns status, headers, and raw body string', async () => {
+    mockRequest.mockResolvedValue({
+      status: 200,
+      data: '{"key":"value"}',
+      headers: { 'content-type': 'application/json', 'x-version': '5' },
+      config: { url: 'https://api.example.com/v1/config/test' },
+    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    const result = await client.getRaw('/v1/config/test');
+
+    expect(result.status).toBe(200);
+    expect(result.headers['x-version']).toBe('5');
+    expect(result.body).toBe('{"key":"value"}');
+  });
+
+  it('returns 204 without throwing', async () => {
+    mockRequest.mockResolvedValue({
+      status: 204, data: '', headers: {},
+      config: { url: 'https://api.example.com/v1/config/test' },
+    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    const result = await client.getRaw('/v1/config/test');
+
+    expect(result.status).toBe(204);
+    expect(result.body).toBe('');
+  });
+
+  it('passes query params to axios', async () => {
+    mockRequest.mockResolvedValue({
+      status: 200, data: 'ok', headers: {},
+      config: { url: 'https://api.example.com/v1/config/test' },
+    });
+    const client = createHttpClient({ baseUrl: 'https://api.example.com' });
+    await client.getRaw('/v1/config/test', { query: { version: '3' } });
+
+    expect(mockRequest.mock.calls[0]![0].params).toEqual({ version: '3' });
+  });
+});
