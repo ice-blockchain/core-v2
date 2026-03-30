@@ -1,5 +1,3 @@
-import type { EnvironmentConfig } from './types';
-
 const ENV_KEYS = [
   'VITE_APP_ENV',
   'VITE_API_BASE_URL',
@@ -13,19 +11,12 @@ function clearWebEnvVars(): void {
   }
 }
 
-function loadWebEnvironment(
-  vars: Partial<Record<string, string>>,
-): EnvironmentConfig {
-  jest.resetModules();
+function setWebEnvVars(vars: Partial<Record<string, string>>): void {
   clearWebEnvVars();
-
   if (vars.APP_ENV) process.env.VITE_APP_ENV = vars.APP_ENV;
   if (vars.API_BASE_URL) process.env.VITE_API_BASE_URL = vars.API_BASE_URL;
   if (vars.RELAY_URL) process.env.VITE_RELAY_URL = vars.RELAY_URL;
   if (vars.LOG_LEVEL) process.env.VITE_LOG_LEVEL = vars.LOG_LEVEL;
-
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('./environment.web').environmentConfig as EnvironmentConfig;
 }
 
 const validVars = {
@@ -35,15 +26,15 @@ const validVars = {
   LOG_LEVEL: 'debug',
 };
 
-afterEach(() => {
-  clearWebEnvVars();
-});
-
 describe('environmentConfig (web)', () => {
-  it('reads config from VITE_ env vars and returns validated result', () => {
-    const config = loadWebEnvironment(validVars);
+  beforeEach(() => vi.resetModules());
+  afterEach(() => clearWebEnvVars());
 
-    expect(config).toEqual({
+  it('reads config from VITE_ env vars and returns validated result', async () => {
+    setWebEnvVars(validVars);
+    const { environmentConfig } = await import('./environment.web');
+
+    expect(environmentConfig).toEqual({
       appEnvironment: 'staging',
       apiBaseUrl: 'https://api.staging.ion.app',
       relayUrl: 'wss://relay.staging.ion.app',
@@ -51,8 +42,10 @@ describe('environmentConfig (web)', () => {
     });
   });
 
-  it('throws when VITE_ env vars are missing', () => {
-    expect(() => loadWebEnvironment({ APP_ENV: 'staging' })).toThrow(
+  it('throws when VITE_ env vars are missing', async () => {
+    setWebEnvVars({ APP_ENV: 'staging' });
+
+    await expect(import('./environment.web')).rejects.toThrow(
       'Missing required environment variable',
     );
   });
