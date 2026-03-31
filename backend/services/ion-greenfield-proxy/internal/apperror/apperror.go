@@ -28,6 +28,7 @@ func New(statusCode int, code string, message string) *AppError {
 func WriteError(c *gin.Context, err error) {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
+		c.Error(err) // Log the error in Gin's context.
 		c.JSON(appErr.StatusCode, appErr)
 		return
 	}

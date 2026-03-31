@@ -54,6 +54,10 @@ func Logger(logger *slog.Logger) gin.HandlerFunc {
 			fields = append(fields, "adnl_rldp_id", rldp)
 		}
 
+		if errs := c.Errors; len(errs) > 0 {
+			fields = append(fields, "errors", errs.String())
+		}
+
 		logger.Info("request", fields...)
 	}
 }

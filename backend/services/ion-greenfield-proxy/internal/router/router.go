@@ -2,6 +2,8 @@ package router
 
 import (
 	"log/slog"
+	"net/url"
+	"os"
 
 	"ion-greenfield-proxy/internal/adnl"
 	"ion-greenfield-proxy/internal/config"
@@ -20,6 +22,7 @@ type Params struct {
 	Logger            *slog.Logger
 	Registry          *prometheus.Registry
 	MetricsCollectors *middleware.MetricsCollectors
+	Key               *adnl.Key
 }
 
 func New(p Params) *gin.Engine {
@@ -27,22 +30,41 @@ func New(p Params) *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	logger := p.Logger
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
+	}
+	logger = logger.With("component", "router")
+
 	r := gin.New()
 	r.Use(
 		adnl.ADNLContextMiddleware(),
 		middleware.CORS(),
-		middleware.Auth(),
 		middleware.FeeGuarantee(),
 		middleware.RateLimiter(),
-		middleware.Metrics(p.MetricsCollectors),
-		middleware.Logger(p.Logger),
+		middleware.Logger(logger),
 	)
+	if p.MetricsCollectors != nil {
+		r.Use(middleware.Metrics(p.MetricsCollectors))
+	}
 
 	r.GET("/health-check", handler.Health)
-
-	if p.Config.MetricsPort == 0 {
+	if p.Config.MetricsPort == 0 && p.Registry != nil {
 		r.GET("/metrics", handler.MetricsHandler(p.Registry))
 	}
+
+	rpcURL, err := url.Parse(p.Config.GreenfieldRPCEndpoint)
+	if err != nil {
+		panic("invalid Greenfield RPC endpoint URL: " + err.Error())
+	}
+
+	adnlAddress := p.Key.Address
+	logger.Info("Starting proxy",
+		"upstream_rpc", rpcURL.String(),
+		"adnl_address", adnlAddress,
+	)
+	r.Any("/sp/*path", handler.ProxySP(logger.With("proxy", "sp"), adnlAddress))
+	r.NoRoute(handler.ProxyRPC(rpcURL, logger.With("proxy", "rpc"), adnlAddress))
 
 	return r
 }

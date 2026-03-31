@@ -16,7 +16,6 @@ import (
 
 type Config struct {
 	GreenfieldRPCEndpoint    string
-	GreenfieldSPEndpoint     string
 	GreenfieldPrivateKey     string
 	GreenfieldChainID        int
 	GreenfieldFeeGrantAmount string
@@ -47,7 +46,6 @@ func Load(adnlKey, dnsKey, dnsName string) (*Config, error) {
 	var errs []string
 
 	cfg.GreenfieldRPCEndpoint, errs = requireURL(errs, "GREENFIELD_RPC_ENDPOINT")
-	cfg.GreenfieldSPEndpoint, errs = requireURL(errs, "GREENFIELD_SP_ENDPOINT")
 	cfg.GreenfieldPrivateKey, errs = requireHex(errs, "GREENFIELD_PRIVATE_KEY", true)
 	cfg.GreenfieldChainID, errs = requireInt(errs, "GREENFIELD_CHAIN_ID")
 	cfg.GreenfieldFeeGrantAmount = envOrDefault("GREENFIELD_FEE_GRANT_AMOUNT_BNB", "0.001")
@@ -92,7 +90,6 @@ func (c *Config) LogFields() []any {
 		"port", c.Port,
 		"metrics_port", c.MetricsPort,
 		"greenfield_rpc", c.GreenfieldRPCEndpoint,
-		"greenfield_sp", c.GreenfieldSPEndpoint,
 		"greenfield_chain_id", c.GreenfieldChainID,
 		"fee_grant_amount", c.GreenfieldFeeGrantAmount,
 		"log_level", c.LogLevel,
