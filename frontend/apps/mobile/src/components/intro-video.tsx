@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Dimensions, Image, StyleSheet, View } from "react-native";
 import { MediaVideo } from "@ion/media-viewer";
 import type { MediaViewerSource } from "@ion/media-viewer";
@@ -20,22 +20,14 @@ const introSource: MediaViewerSource = {
 
 export function IntroVideo({ children }: IntroVideoProps) {
   const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  const handleLoad = useCallback(() => setIsLoaded(true), []);
 
   const handleError = useCallback((error: Error) => {
     console.error("IntroVideo playback error:", error);
     setHasError(true);
   }, []);
 
-  const containerStyle = useMemo(
-    () => [styles.container, !isLoaded && styles.containerPreload],
-    [isLoaded],
-  );
-
   return (
-    <View style={containerStyle}>
+    <View style={styles.container}>
       {!hasError && (
         <MediaVideo
           source={introSource}
@@ -44,7 +36,6 @@ export function IntroVideo({ children }: IntroVideoProps) {
           isLooping
           resizeMode="cover"
           style={styles.video}
-          onLoad={handleLoad}
           onError={handleError}
         />
       )}
@@ -57,9 +48,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000000",
-  },
-  containerPreload: {
-    backgroundColor: "#FFFFFF",
   },
   video: {
     position: "absolute",
