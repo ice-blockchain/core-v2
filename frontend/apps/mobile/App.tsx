@@ -6,11 +6,13 @@ import { ThemeProvider } from "@ion/ui";
 import { createLocalization, registerTranslations } from "@ion/localization";
 import { onboardingTranslations } from "@ion/onboarding-ui";
 import { authTranslations } from "@ion/auth-ui";
+import { chatTranslations } from "@ion/chat";
 import { SplashScreen } from "./src/components/splash-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
+registerTranslations(i18n, chatTranslations);
 
 function App() {
   return (
