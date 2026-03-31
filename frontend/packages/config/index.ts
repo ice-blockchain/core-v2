@@ -1,6 +1,9 @@
 export { environmentConfig } from './src/environment/environment';
 export type { AppEnvironment, EnvironmentConfig, LogLevel } from './src/environment/types';
 
+export { timingConfig } from './src/timing';
+export type { AppTimingConfig } from './src/timing';
+
 export {
   getFeatureFlag,
   getAllFeatureFlags,

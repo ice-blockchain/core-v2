@@ -1,10 +1,12 @@
 import { useMemo } from "react";
-import { Image, View } from "react-native";
-import type { ImageSourcePropType, ImageStyle, TextStyle, ViewStyle } from "react-native";
+import { View } from "react-native";
+import type { ImageStyle, TextStyle, ViewStyle } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
+import { MediaImage } from "@ion/media-viewer";
+import type { MediaViewerSource } from "@ion/media-viewer";
 
 export interface NotificationCardProps {
-  avatar: ImageSourcePropType;
+  avatar: MediaViewerSource;
   title: string;
   description: string;
   time: string;
@@ -85,7 +87,7 @@ export function NotificationCard({ avatar, title, description, time, showBadge, 
   return (
     <View style={s.card} testID={testID}>
       <View style={s.avatarContainer}>
-        <Image source={avatar} style={s.avatar} />
+        <MediaImage source={avatar} style={s.avatar} />
         {showBadge ? (
           <View style={s.badge}>
             <Icon name="login-ice-logo" size={s.scale(8)} color="#FFFFFF" />

@@ -6,6 +6,8 @@ import {
   type VideoFrameDetail,
   type VideoSafetyResult,
 } from '@ion/nsfw-detection';
+import { MediaImage } from '@ion/media-viewer';
+import type { MediaViewerSource } from '@ion/media-viewer';
 
 type Result = (SafetyResult | VideoSafetyResult) & { type: string };
 
@@ -101,17 +103,10 @@ function ProgressIndicator() {
 }
 
 function MediaPreview({ url }: { url: string }) {
+  const source: MediaViewerSource = { uri: url, mimeType: 'image/jpeg' };
   return (
     <div style={styles.previewContainer}>
-      <img
-        src={url}
-        alt="Selected media"
-        style={styles.previewImage}
-        onError={(e) => {
-          const target = e.currentTarget;
-          target.style.display = 'none';
-        }}
-      />
+      <MediaImage source={source} style={styles.previewImage as never} resizeMode="contain" />
     </div>
   );
 }
@@ -190,10 +185,13 @@ function FrameGrid({ frames }: { frames: VideoFrameDetail[] }) {
         const isFlagged = frame.categories.some((c) => c.isAboveThreshold);
         return (
           <div key={frame.index} style={styles.frameCard}>
-            <img src={frame.uri} alt={`Frame ${frame.index}`} style={{
-              ...styles.frameImage,
-              border: isFlagged ? '2px solid #c62828' : '2px solid #333',
-            }} />
+            <MediaImage
+              source={{ uri: frame.uri, mimeType: 'image/jpeg' }}
+              style={{
+                ...styles.frameImage,
+                border: isFlagged ? '2px solid #c62828' : '2px solid #333',
+              } as never}
+            />
             <p style={styles.frameLabel}>
               #{frame.index} {isFlagged ? '(flagged)' : ''}
             </p>

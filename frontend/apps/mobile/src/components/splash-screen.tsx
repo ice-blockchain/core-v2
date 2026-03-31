@@ -72,7 +72,8 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
   return (
     <GetStartedScreen
       onNavigateToRegister={nav.goToRegister}
-      onNavigateToVerifyPasskey={nav.goToVerifyPassword}
+      onNavigateToVerifyPassword={nav.goToVerifyPassword}
+      onNavigateToRestore={nav.goToGetStarted}
     />
   );
 }

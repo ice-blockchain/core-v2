@@ -24,8 +24,10 @@ export interface MediaVideoProps {
   autoPlay?: boolean;
   muted?: boolean;
   isLooping?: boolean;
+  resizeMode?: 'cover' | 'contain';
   style?: ViewStyle;
   onLoad?: () => void;
+  onEnd?: () => void;
   onError?: (error: Error) => void;
 }
 

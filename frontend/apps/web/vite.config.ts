@@ -145,6 +145,7 @@ export default defineConfig(({ mode, command }) => {
           replacement: path.resolve(__dirname, './src'),
         },
       ],
+      conditions: ['web'],
       dedupe: ['react', 'react-dom'],
     },
     define,

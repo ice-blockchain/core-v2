@@ -22,6 +22,7 @@
     "@ion/auth-ui": "workspace:*",
     "@ion/config": "workspace:*",
     "@ion/localization": "workspace:*",
+    "@ion/media-viewer": "workspace:*",
     "@ion/nsfw-detection": "workspace:*",
     "@ion/onboarding-ui": "workspace:*",
     "@ion/ui": "workspace:*",

@@ -15,6 +15,7 @@ const singletonNames = [
   'react-native-svg',
   'react-native-gesture-handler',
   'react-native-reanimated',
+  'react-native-video',
   // Keep native view managers sourced from one module instance in the monorepo.
   'lottie-react-native',
 ];

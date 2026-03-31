@@ -1,10 +1,18 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import type { CSSProperties } from "react";
+import { MediaVideo } from "@ion/media-viewer";
+import type { MediaViewerSource } from "@ion/media-viewer";
 
 interface IntroVideoProps {
   children: ReactNode;
 }
+
+const introSource: MediaViewerSource = {
+  uri: "/videos/intro.mp4",
+  mimeType: "video/mp4",
+};
 
 const containerStyle: CSSProperties = {
   position: "relative",
@@ -14,13 +22,12 @@ const containerStyle: CSSProperties = {
   backgroundColor: "#000000",
 };
 
-const videoStyle: CSSProperties = {
-  position: "absolute",
+const videoStyle = {
+  position: "absolute" as const,
   top: 0,
   left: 0,
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
+  width: "100%" as const,
+  height: "100%" as const,
 };
 
 const overlayStyle: CSSProperties = {
@@ -38,12 +45,12 @@ const overlayStyle: CSSProperties = {
 export function IntroVideo({ children }: IntroVideoProps) {
   return (
     <div style={containerStyle}>
-      <video
-        src="/videos/intro.mp4"
+      <MediaVideo
+        source={introSource}
         autoPlay
-        loop
         muted
-        playsInline
+        isLooping
+        resizeMode="cover"
         style={videoStyle}
       />
       <div style={overlayStyle}>{children}</div>
