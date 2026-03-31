@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { timingConfig } from "@ion/config";
 import {
   GetStartedScreen,
   PrimaryButton,
@@ -24,7 +25,8 @@ type Phase =
   | { name: "verify-passkey"; identityKeyName: string };
 
 function usePhaseNavigation() {
-  const [phase, setPhase] = useState<Phase>({ name: "splash" });
+  const initialPhase: Phase = timingConfig.splashDurationMs > 0 ? { name: "splash" } : { name: "intro" };
+  const [phase, setPhase] = useState<Phase>(initialPhase);
 
   return {
     phase,
@@ -72,7 +74,8 @@ function AuthSheetContent({ nav }: { nav: ReturnType<typeof usePhaseNavigation> 
   return (
     <GetStartedScreen
       onNavigateToRegister={nav.goToRegister}
-      onNavigateToVerifyPasskey={nav.goToVerifyPassword}
+      onNavigateToVerifyPassword={nav.goToVerifyPassword}
+      onNavigateToRestore={nav.goToGetStarted}
     />
   );
 }
