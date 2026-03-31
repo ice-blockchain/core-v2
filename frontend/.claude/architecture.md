@@ -59,7 +59,7 @@
 | `@ion/auth` | Auth flow orchestrator | In Progress |
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
 
-**Total: 24 packages**
+**Total: 23 packages**
 
 ---
 

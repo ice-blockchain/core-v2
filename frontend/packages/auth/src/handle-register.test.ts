@@ -94,9 +94,8 @@ describe('handleRegister', () => {
     );
     await handleRegister(deps(), { identityKeyName: 'frank', password: '' });
     expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_REGISTER' });
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({
       type: 'SET_ERROR',
-      error: expect.objectContaining({ code: IdentityErrorCode.PASSKEY_CANCELLED }),
     }));
     expect(onAuthSuccess).not.toHaveBeenCalled();
   });

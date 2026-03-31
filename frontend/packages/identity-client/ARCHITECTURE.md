@@ -6,7 +6,7 @@ Off-chain account management client for the ION Identity service. Handles user r
 
 Factory: `createIdentityClient(config)` returns `IdentityClient`.
 
-Convenience factory: `createDefaultIdentityClient(overrides?)` returns `IdentityClient` with httpClient, secureStorage, and appId auto-populated from `@ion/config`. Accepts optional `Partial<IdentityClientConfig>` to override any default.
+Convenience factory: `createDefaultIdentityClient(config)` returns `IdentityClient`. Requires `secureStorage: ISecureStorage`. Optionally accepts `httpClient` (defaults to `@ion/network` client) and `appId` (defaults to `@ion/config` value).
 
 ```text
 IdentityClientConfig {

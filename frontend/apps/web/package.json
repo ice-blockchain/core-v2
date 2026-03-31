@@ -14,6 +14,7 @@
     "@gorhom/bottom-sheet": "^5.2.8",
     "@gorhom/portal": "^1.0.14",
     "@ion/auth": "workspace:*",
+    "@ion/diagnostics": "workspace:*",
     "@ion/auth-ui": "workspace:*",
     "@ion/config": "workspace:*",
     "@ion/identity-client": "workspace:*",

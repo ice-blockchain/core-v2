@@ -27,6 +27,7 @@ export async function handleRegister(
     Logger.error('Registration failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName: data.identityKeyName } });
     if (!data.password && isPasskeyCancelledError(error)) {
       dispatch({ type: 'GO_TO_REGISTER' });
+      return;
     }
     dispatch({ type: 'SET_ERROR', error: mapIdentityError(error) });
   } finally {
@@ -55,3 +56,4 @@ function isPasskeyCancelledError(error: unknown): boolean {
       error.code === IdentityErrorCode.PASSKEY_NOT_AVAILABLE)
   );
 }
+
