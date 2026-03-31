@@ -1,6 +1,9 @@
+import { Platform } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import type { SemanticColors, ThemeTypography } from "../theme/theme-types";
 import type { ScaleFunctions } from "../scaling/scaling-types";
+
+const IS_WEB = Platform.OS === "web";
 
 export type TextFieldState = "default" | "focused" | "filled" | "error" | "verified" | "disabled";
 export type TextFieldTextVariant = "default" | "large";
@@ -44,7 +47,7 @@ const BORDER_RADIUS = 16;
 const BODY_LINE_HEIGHT = 18;
 const FLOATING_LABEL_PADDING = 16;
 const FLOATING_LABEL_PADDING_LARGE = 22;
-const MULTILINE_PADDING_TOP = 24;
+const MULTILINE_PADDING_TOP = 28;
 const MULTILINE_PADDING_BOTTOM = 8;
 
 interface ContainerStyleOptions {
@@ -120,8 +123,8 @@ function buildFontStyle(options: FontStyleOptions): TextStyle {
   };
 }
 
-// @ts-expect-error outlineStyle is a web-only CSS property not in RN TextStyle
-const WEB_INPUT_RESET: TextStyle = { outlineStyle: "none" };
+// @ts-expect-error outlineStyle/resize are web-only CSS properties not in RN TextStyle
+const WEB_INPUT_RESET: TextStyle = { outlineStyle: "none", resize: "none" };
 
 export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle {
   const { spec, isFloating, isMultiline, maxLines, typography, scale, textVariant } = options;
@@ -134,17 +137,23 @@ export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle 
   }
 
   const lineHeight = scale.scaleFont(BODY_LINE_HEIGHT);
-  const paddingTop = scale.scaleSize(MULTILINE_PADDING_TOP);
   const paddingBottom = scale.scaleSize(MULTILINE_PADDING_BOTTOM);
+  const renderTolerance = IS_WEB ? 0 : Math.round(lineHeight / 2);
   return {
     ...font,
     ...WEB_INPUT_RESET,
-    maxHeight: paddingTop + lineHeight * maxLines + paddingBottom,
-    paddingTop: isFloating ? paddingTop : 0,
+    maxHeight: lineHeight * maxLines + paddingBottom + renderTolerance,
+    paddingTop: 0,
     paddingBottom,
     paddingHorizontal: 0,
     textAlignVertical: "top",
   };
+}
+
+export function buildMultilineWrapperStyle(options: { isFloating: boolean; scale: ScaleFunctions }): ViewStyle {
+  const { isFloating, scale } = options;
+  const marginTop = isFloating ? scale.scaleSize(MULTILINE_PADDING_TOP) : 0;
+  return IS_WEB ? { marginTop } : { marginTop, overflow: "hidden" };
 }
 
 interface DeriveStateOptions {
