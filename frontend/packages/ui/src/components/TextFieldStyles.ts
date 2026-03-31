@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import type { SemanticColors, ThemeTypography } from "../theme/theme-types";
 import type { ScaleFunctions } from "../scaling/scaling-types";
@@ -43,7 +42,8 @@ const BASE_HEIGHT = 58;
 const HORIZONTAL_PADDING = 16;
 const BORDER_RADIUS = 16;
 const BODY_LINE_HEIGHT = 18;
-const FLOATING_LABEL_PADDING = 18;
+const FLOATING_LABEL_PADDING = 16;
+const FLOATING_LABEL_PADDING_LARGE = 22;
 const MULTILINE_PADDING_TOP = 24;
 const MULTILINE_PADDING_BOTTOM = 8;
 
@@ -105,7 +105,6 @@ function buildFontStyle(options: FontStyleOptions): TextStyle {
     return {
       fontFamily: typography.subtitle2.fontFamily,
       fontSize: scale.scaleFont(15),
-      fontWeight: Platform.OS === "web" ? "500" : undefined,
       lineHeight: scale.scaleFont(18),
       letterSpacing: 0,
       color,
@@ -115,7 +114,6 @@ function buildFontStyle(options: FontStyleOptions): TextStyle {
   return {
     fontFamily: body.fontFamily,
     fontSize: scale.scaleFont(body.fontSize),
-    fontWeight: Platform.OS === "web" ? body.fontWeight : undefined,
     lineHeight: body.lineHeight ? scale.scaleFont(body.lineHeight) : undefined,
     letterSpacing: body.letterSpacing,
     color,
@@ -130,7 +128,8 @@ export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle 
   const font = buildFontStyle({ typography, scale, color: spec.valueColor, textVariant });
 
   if (!isMultiline) {
-    const labelPadding = scale.scaleSize(FLOATING_LABEL_PADDING);
+    const padding = textVariant === "large" ? FLOATING_LABEL_PADDING_LARGE : FLOATING_LABEL_PADDING;
+    const labelPadding = scale.scaleSize(padding);
     return { ...font, ...WEB_INPUT_RESET, flex: 1, paddingTop: isFloating ? labelPadding : 0, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
   }
 

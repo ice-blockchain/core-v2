@@ -1,4 +1,3 @@
-import { Platform } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import type { SemanticColors } from "../theme/theme-types";
 import type { TextInputState, BorderColors } from "./text-input-types";
@@ -41,7 +40,6 @@ export function buildInputStyle(scale: (n: number) => number, primaryText: strin
     flex: 1,
     fontSize: scale(13),
     fontFamily: "NotoSans-SemiBold",
-    fontWeight: Platform.OS === "web" ? "600" : undefined,
     lineHeight: scale(18),
     color: primaryText,
     paddingVertical: 0,
@@ -55,7 +53,6 @@ export function buildFloatingLabelStyle(scale: (n: number) => number, color: str
   return {
     fontSize: scale(12),
     fontFamily: "NotoSans-Medium",
-    fontWeight: Platform.OS === "web" ? "500" : undefined,
     color,
   };
 }
