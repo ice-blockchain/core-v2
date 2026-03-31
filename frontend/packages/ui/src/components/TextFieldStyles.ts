@@ -87,7 +87,6 @@ export function buildTextFieldContainerStyle(options: ContainerStyleOptions): Vi
 
 interface InputStyleOptions {
   spec: TextFieldColorSpec;
-  isFloating: boolean;
   isMultiline: boolean;
   maxLines: number;
   typography: ThemeTypography;
@@ -127,13 +126,13 @@ function buildFontStyle(options: FontStyleOptions): TextStyle {
 const WEB_INPUT_RESET: TextStyle = { outlineStyle: "none", resize: "none" };
 
 export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle {
-  const { spec, isFloating, isMultiline, maxLines, typography, scale, textVariant } = options;
+  const { spec, isMultiline, maxLines, typography, scale, textVariant } = options;
   const font = buildFontStyle({ typography, scale, color: spec.valueColor, textVariant });
 
   if (!isMultiline) {
     const padding = textVariant === "large" ? FLOATING_LABEL_PADDING_LARGE : FLOATING_LABEL_PADDING;
     const labelPadding = scale.scaleSize(padding);
-    return { ...font, ...WEB_INPUT_RESET, flex: 1, paddingTop: isFloating ? labelPadding : 0, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
+    return { ...font, ...WEB_INPUT_RESET, flex: 1, paddingTop: labelPadding, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
   }
 
   const lineHeight = scale.scaleFont(BODY_LINE_HEIGHT);
@@ -150,9 +149,9 @@ export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle 
   };
 }
 
-export function buildMultilineWrapperStyle(options: { isFloating: boolean; scale: ScaleFunctions }): ViewStyle {
-  const { isFloating, scale } = options;
-  const marginTop = isFloating ? scale.scaleSize(MULTILINE_PADDING_TOP) : 0;
+export function buildMultilineWrapperStyle(options: { scale: ScaleFunctions }): ViewStyle {
+  const { scale } = options;
+  const marginTop = scale.scaleSize(MULTILINE_PADDING_TOP);
   return IS_WEB ? { marginTop } : { marginTop, overflow: "hidden" };
 }
 

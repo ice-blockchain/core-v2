@@ -123,13 +123,13 @@ function useTextFieldStyles(options: {
   );
 
   const inputStyle = useMemo(
-    () => buildTextFieldInputStyle({ spec, isFloating: isFocused || hasValue, isMultiline, maxLines: Math.max(maxLines, minLines), typography: theme.typography, scale: theme.scale, textVariant }),
-    [spec, isFocused, hasValue, isMultiline, maxLines, minLines, theme.typography, theme.scale, textVariant],
+    () => buildTextFieldInputStyle({ spec, isMultiline, maxLines: Math.max(maxLines, minLines), typography: theme.typography, scale: theme.scale, textVariant }),
+    [spec, isMultiline, maxLines, minLines, theme.typography, theme.scale, textVariant],
   );
 
   const multilineWrapperStyle = useMemo(
-    () => isMultiline ? buildMultilineWrapperStyle({ isFloating: isFocused || hasValue, scale: theme.scale }) : undefined,
-    [isMultiline, isFocused, hasValue, theme.scale],
+    () => isMultiline ? buildMultilineWrapperStyle({ scale: theme.scale }) : undefined,
+    [isMultiline, theme.scale],
   );
 
   return { derivedState, spec, containerStyle, inputStyle, isMultiline, multilineWrapperStyle };
