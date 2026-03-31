@@ -66,17 +66,22 @@ export async function getPasskeyAssertion(
   }
 }
 
-function extractErrorMessage(error: unknown): string {
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String(error.message);
-  }
-  return String(error);
+function isPasskeyErrorObject(error: unknown): error is { error: string; message: string } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'error' in error &&
+    'message' in error
+  );
 }
 
+const CANCELLATION_ERROR_CODES = new Set(['UserCancelled', 'Interrupted']);
+
 function mapNativePasskeyError(error: unknown): IdentityError {
-  const message = extractErrorMessage(error);
-  Logger.warning('Passkey native error', { tag: 'identity', data: { message } });
-  if (message.includes('cancel') || message.includes('Cancel')) {
+  const message = isPasskeyErrorObject(error) ? error.message : String(error);
+  const errorCode = isPasskeyErrorObject(error) ? error.error : '';
+  Logger.warning('Passkey native error', { tag: 'identity', data: { errorCode, message } });
+  if (CANCELLATION_ERROR_CODES.has(errorCode)) {
     return new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'Passkey operation cancelled', error);
   }
   return new IdentityError(IdentityErrorCode.PASSKEY_VALIDATION_FAILED, 'Passkey operation failed', error);
