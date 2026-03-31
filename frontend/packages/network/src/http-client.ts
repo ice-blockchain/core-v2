@@ -214,6 +214,7 @@ function rejectNonJsonContentType(contentType: string, data: unknown): void {
 
 function throwOnErrorStatus(status: number, response: InterceptedResponse): void {
   if (status >= 200 && status < 300) return;
+  if (status >= 400) Logger.warning('HTTP error response', { tag: 'network', data: { status, url: response.url, body: response.body } });
   if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body, requestUrl: response.url });
   if (status === 403) throw new NetworkError({ code: 'FORBIDDEN', message: 'Forbidden', status, responseBody: response.body });
   if (status >= 400 && status < 500) throw new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: response.body });
