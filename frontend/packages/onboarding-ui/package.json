@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ion/localization": "workspace:*",
+    "@ion/media-viewer": "workspace:*",
     "@ion/ui": "workspace:*",
     "@ion/onboarding": "workspace:*"
   },

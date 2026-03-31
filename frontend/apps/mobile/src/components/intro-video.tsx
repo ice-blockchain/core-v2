@@ -1,18 +1,27 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
-import Video, { type OnVideoErrorData } from "react-native-video";
+import { Dimensions, Image, StyleSheet, View } from "react-native";
+import { MediaVideo } from "@ion/media-viewer";
+import type { MediaViewerSource } from "@ion/media-viewer";
 
 interface IntroVideoProps {
   children: ReactNode;
 }
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
-const introSource = require("../../assets/videos/intro.mp4");
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("screen");
+
+const resolvedAsset = Image.resolveAssetSource(
+  require("../../assets/videos/intro.mp4"),
+);
+
+const introSource: MediaViewerSource = {
+  uri: resolvedAsset.uri,
+  mimeType: "video/mp4",
+};
 
 export function IntroVideo({ children }: IntroVideoProps) {
   const [hasError, setHasError] = useState(false);
 
-  const handleError = useCallback((error: OnVideoErrorData) => {
+  const handleError = useCallback((error: Error) => {
     console.error("IntroVideo playback error:", error);
     setHasError(true);
   }, []);
@@ -20,12 +29,13 @@ export function IntroVideo({ children }: IntroVideoProps) {
   return (
     <View style={styles.container}>
       {!hasError && (
-        <Video
+        <MediaVideo
           source={introSource}
-          style={styles.video}
-          resizeMode="cover"
+          autoPlay
           muted
-          repeat
+          isLooping
+          resizeMode="cover"
+          style={styles.video}
           onError={handleError}
         />
       )}

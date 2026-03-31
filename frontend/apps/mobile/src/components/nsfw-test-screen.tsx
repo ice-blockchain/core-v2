@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet, View } from "react-native";
+import { MediaImage } from "@ion/media-viewer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { launchImageLibrary } from "react-native-image-picker";
 import {
@@ -75,7 +76,7 @@ function FrameCard({ frame }: { frame: VideoFrameDetail }) {
   const borderColor = isFlagged ? "#c62828" : "#333";
   return (
     <View style={styles.frameCard}>
-      <Image source={{ uri: frame.uri }} style={[styles.frameImage, { borderColor }]} />
+      <MediaImage source={{ uri: frame.uri, mimeType: "image/jpeg" }} style={[styles.frameImage, { borderColor }]} />
       <Text variant="body2" style={styles.frameLabel}>
         #{frame.index}{isFlagged ? " (flagged)" : ""}
       </Text>
@@ -203,7 +204,7 @@ export function NsfwTestScreen() {
 
       {isLoading && <ActivityIndicator size="large" color={theme.colors.primaryAccent} style={styles.spinner} />}
       {previewUri && !isLoading && (
-        <Image source={{ uri: previewUri }} style={styles.preview} resizeMode="contain" />
+        <MediaImage source={{ uri: previewUri, mimeType: "image/jpeg" }} style={styles.preview} resizeMode="contain" />
       )}
       {error && <Text variant="body2" style={styles.errorText}>Error: {error}</Text>}
       {result && <ResultDisplay result={result} />}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { timingConfig } from "@ion/config";
 import {
   GetStartedScreen,
   IdentityKeyNotFoundModal,
@@ -14,10 +15,11 @@ import {
   VerifyPasswordBackground,
   VerifyPasswordOverlay,
 } from "@ion/auth-ui";
+import type { CSSProperties } from "react";
 import { SplashVideo } from "@/components/splash-video";
 import { IntroVideo } from "@/components/intro-video";
+import { IONLoader } from "@ion/ui";
 import { BottomSheet } from "@/components/bottom-sheet";
-import { LoadingAnimation } from "@/components/loading-animation";
 
 type Phase =
   | { name: "splash" }
@@ -48,7 +50,8 @@ function usePhaseCallbacks(setPhase: (p: Phase) => void, setRestoreSuccess: (s: 
 }
 
 function usePhaseNavigation() {
-  const [phase, setPhase] = useState<Phase>({ name: "splash" });
+  const initialPhase: Phase = timingConfig.splashDurationMs > 0 ? { name: "splash" } : { name: "intro" };
+  const [phase, setPhase] = useState<Phase>(initialPhase);
   const [keyNotFound, setKeyNotFound] = useState(false);
   const [restoreSuccess, setRestoreSuccess] = useState<string | null>(null);
   const callbacks = usePhaseCallbacks(setPhase, setRestoreSuccess, setKeyNotFound);
@@ -89,7 +92,7 @@ function renderRestorePhase(nav: Nav) {
 }
 
 function renderAuthPhase(nav: Nav) {
-  const loadingElement = <LoadingAnimation variant="onLightBackground" size={30} />;
+  const loadingElement = <IONLoader variant="light" size={30} />;
 
   if (nav.phase.name === "register") {
     return <RegisterScreen onBack={nav.goToGetStarted} onContinue={({ identityKeyName }) => nav.goToVerifyPassword(identityKeyName)} />;
@@ -119,6 +122,12 @@ function PasswordOverlay({ nav }: { nav: Nav }) {
   return <VerifyPasswordOverlay onConfirm={() => nav.goToVerifyPasskey(identityKeyName)} />;
 }
 
+const pageStyle: CSSProperties = {
+  position: "relative",
+  width: "100%",
+  height: "100vh",
+};
+
 export default function SplashPage() {
   const nav = usePhaseNavigation();
 
@@ -127,7 +136,7 @@ export default function SplashPage() {
   }
 
   return (
-    <>
+    <div style={pageStyle}>
       <IntroVideo>
         {nav.phase.name === "intro" ? (
           <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
@@ -147,6 +156,6 @@ export default function SplashPage() {
           <PasswordOverlay nav={nav} />
         </>
       )}
-    </>
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { ThemeProvider } from "@ion/ui";
 import { createLocalization, registerTranslations } from "@ion/localization";
 import { onboardingTranslations } from "@ion/onboarding-ui";
 import { authTranslations } from "@ion/auth-ui";
-import { AppContent } from "./src/components/app-content";
+import { SplashScreen } from "./src/components/splash-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -19,7 +19,7 @@ function App() {
         <ThemeProvider>
           <BottomSheetModalProvider>
             <StatusBar barStyle="light-content" />
-            <AppContent />
+            <SplashScreen />
           </BottomSheetModalProvider>
         </ThemeProvider>
       </SafeAreaProvider>
