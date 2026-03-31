@@ -13,6 +13,7 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['src/test-setup.ts'],
     env: {
       VITE_APP_ENV: 'staging',
       VITE_API_BASE_URL: 'https://test.local',

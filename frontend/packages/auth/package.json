@@ -15,7 +15,8 @@
   "dependencies": {
     "@ion/auth-ui": "workspace:*",
     "@ion/diagnostics": "workspace:*",
-    "@ion/identity-client": "workspace:*"
+    "@ion/identity-client": "workspace:*",
+    "@ion/localization": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19"

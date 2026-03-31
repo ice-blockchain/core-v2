@@ -305,6 +305,9 @@ importers:
       '@ion/identity-client':
         specifier: workspace:*
         version: link:../identity-client
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../localization
       react:
         specifier: '>=19'
         version: 19.2.4
