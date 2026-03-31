@@ -1,5 +1,6 @@
 import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
+import { Logger } from '@ion/diagnostics';
 import type { AuthFlowAction } from './types';
 import { mapIdentityError } from './error-messages';
 import { isValidIdentityKeyName } from '@ion/auth-ui';
@@ -23,6 +24,7 @@ export async function handleRegister(
   try {
     await executeRegistration(deps, data);
   } catch (error) {
+    Logger.error('Registration failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName: data.identityKeyName } });
     if (!data.password && isPasskeyCancelledError(error)) {
       dispatch({ type: 'GO_TO_REGISTER' });
     }
