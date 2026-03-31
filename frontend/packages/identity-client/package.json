@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@ion/config": "workspace:*",
     "@ion/diagnostics": "workspace:*",
     "@ion/network": "workspace:*",
     "@ion/storage": "workspace:*",
