@@ -30,7 +30,7 @@ permissions:
 jobs:
   validate-inputs:
     name: Validate Inputs
-    runs-on: ubuntu-latest
+    runs-on: getmac
     timeout-minutes: 1
     steps:
       - name: Validate inputs
@@ -55,7 +55,7 @@ jobs:
   verify:
     name: Verify
     needs: validate-inputs
-    runs-on: ubuntu-latest
+    runs-on: getmac
     timeout-minutes: 15
     defaults:
       run:
@@ -107,7 +107,7 @@ jobs:
   build-android:
     name: Build Android
     needs: verify
-    runs-on: macos-15
+    runs-on: getmac
     timeout-minutes: 45
     environment: ${{ inputs.environment }}
     defaults:
@@ -201,7 +201,7 @@ jobs:
   build-ios:
     name: Build iOS
     needs: verify
-    runs-on: macos-15
+    runs-on: getmac
     timeout-minutes: 45
     environment: ${{ inputs.environment }}
     defaults:
