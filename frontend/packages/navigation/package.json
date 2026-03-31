@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "peerDependencies": {
+    "@ion/ui": "workspace:*",
     "react": ">=19",
     "react-native": ">=0.76",
     "@react-navigation/native": ">=7.0.0",

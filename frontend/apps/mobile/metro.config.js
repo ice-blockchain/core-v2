@@ -12,17 +12,27 @@ const singletonNames = [
   'react',
   'react-native',
   'react-native-safe-area-context',
+  'react-native-screens',
   'react-native-svg',
   'react-native-gesture-handler',
   'react-native-reanimated',
   'react-native-video',
-  // Keep native view managers sourced from one module instance in the monorepo.
+  '@react-navigation/native',
+  '@react-navigation/native-stack',
   'lottie-react-native',
 ];
+const singletonResolvePaths = [mobileModules, path.resolve(workspaceRoot, 'node_modules')];
 const singletonPaths = {};
 for (const name of singletonNames) {
-  singletonPaths[name] = path.resolve(require.resolve(name, { paths: [mobileModules] }));
+  try {
+    singletonPaths[name] = path.resolve(
+      require.resolve(name, { paths: singletonResolvePaths }),
+    );
+  } catch {
+    // Optional singleton for this app variant; skip if not installed.
+  }
 }
+const resolvedSingletonNames = Object.keys(singletonPaths);
 
 const IMAGE_MIME = {
   png: 'image/png',
@@ -90,7 +100,7 @@ const config = {
       // Subpath match: e.g. 'react-native/Libraries/...'
       // Resolve from the mobile app's node_modules to prevent pnpm
       // from bundling duplicate react-native instances.
-      for (const name of singletonNames) {
+      for (const name of resolvedSingletonNames) {
         if (moduleName.startsWith(name + '/')) {
           return context.resolveRequest(
             { ...context, originModulePath: path.join(mobileModules, '.placeholder.js') },

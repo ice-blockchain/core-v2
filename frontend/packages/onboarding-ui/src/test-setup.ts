@@ -52,6 +52,27 @@ vi.mock("@ion/ui", () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock("@gorhom/bottom-sheet", () => ({
+  default: "BottomSheet",
+  BottomSheetScrollView: ({ children }: { children: React.ReactNode }) => children,
+  BottomSheetView: ({ children }: { children: React.ReactNode }) => children,
+  BottomSheetBackdrop: "BottomSheetBackdrop",
+  BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock("@ion/navigation", () => ({
+  useSheetNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), reset: vi.fn() }),
+  Sheet: ({ children }: { children: React.ReactNode }) => children,
+  Routes: {
+    Splash: "Splash", GetStarted: "GetStarted", Catalog: "Catalog",
+    Sheet: {
+      Register: "Sheet/Register", ProfileSetup: "Sheet/ProfileSetup",
+      SelectLanguages: "Sheet/SelectLanguages", DiscoverCreators: "Sheet/DiscoverCreators",
+      Notifications: "Sheet/Notifications",
+    },
+  },
+}));
+
 vi.mock("@ion/onboarding", () => ({
   saveProfile: vi.fn(), uploadAvatar: vi.fn(),
   validateNickname: vi.fn(), validateReferral: vi.fn(),

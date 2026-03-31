@@ -4,13 +4,12 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./src/*"],
-      "react-native": ["../../node_modules/react-native/types"]
+      "@/*": ["./src/*"]
     },
     "strict": true,
     "noEmit": true,
     "jsx": "react-jsx"
   },
   "include": ["src", "vite-env.d.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/stubs"]
 }

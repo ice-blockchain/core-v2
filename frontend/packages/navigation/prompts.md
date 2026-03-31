@@ -4,102 +4,6 @@
 > Execute in order. Each session assumes the previous one is complete and merged.
 > Always reference `packages/navigation/ARCHITECTURE.md` for design decisions.
 
----
-
-## Session 1: Dependencies and package scaffold
-
-```
-Read packages/navigation/ARCHITECTURE.md for full context.
-
-Install navigation dependencies in the monorepo:
-- @react-navigation/native
-- @react-navigation/native-stack
-- react-native-screens
-- @gorhom/bottom-sheet v5
-
-react-native-gesture-handler and react-native-reanimated are already installed
-via media-viewer — verify they're accessible from the navigation package (peer deps).
-
-In packages/navigation/:
-1. Create src/routes.ts with the Routes constant (Splash, GetStarted, Catalog, Sheet.*)
-2. Create src/route-params.ts with RootStackParamList and SheetStackParamList types
-3. Update src/index.ts to export routes and types
-4. Ensure package.json has correct peer dependencies
-5. Run lint and type-check: pnpm --filter @ion/navigation lint && pnpm --filter @ion/navigation type-check
-
-Do NOT create navigator components yet. This session is just the foundation:
-dependencies, route definitions, and types.
-```
-
----
-
-## Session 2: App shell with React Navigation
-
-```
-Read packages/navigation/ARCHITECTURE.md for full context.
-Read apps/mobile/App.tsx to understand the current state-based navigation.
-
-Create the root navigator in packages/navigation/:
-1. Create src/app-navigator.tsx — RootStack (native-stack) with three screens:
-   - Splash
-   - GetStarted
-   - Catalog
-   screenOptions: { headerShown: false, animation: "fade" }
-
-2. Create src/use-app-navigation.ts — typed navigation hook wrapping
-   useNavigation() with RootStackParamList
-
-3. Export AppNavigator and useAppNavigation from index.ts
-
-4. Update apps/mobile/App.tsx:
-   - Wrap with GestureHandlerRootView (from react-native-gesture-handler)
-   - Wrap with BottomSheetModalProvider (from @gorhom/bottom-sheet)
-   - Wrap with NavigationContainer (from @react-navigation/native)
-   - Render <AppNavigator /> instead of the current useState phase management
-   - Keep ThemeProvider and SafeAreaProvider in place
-
-5. For now, use placeholder components for each screen:
-   - Splash: just a View with the app's background color
-   - GetStarted: just a View with a "Log In" button that logs to console
-   - Catalog: render the existing CatalogScreen from @ion/ui
-
-The goal is: app launches -> shows Splash placeholder -> you can manually
-navigate to GetStarted -> you can manually navigate to Catalog. No videos,
-no bottom sheets yet. Just proving React Navigation works end to end.
-
-Run lint, type-check. Test on iOS simulator and mobile web.
-```
-
----
-
-## Session 3: SplashScreen with video
-
-```
-Read packages/navigation/ARCHITECTURE.md — specifically the video assets
-and splash screen sections.
-Read the Flutter splash implementation at:
-  /Users/user/Development/code/flutter/flutter-app/lib/app/features/core/views/pages/splash_page.dart
-for reference on behavior (not code — just the UX pattern).
-
-Video assets already exist at apps/mobile/assets/videos/logo_static.mp4
-
-Create or update the SplashScreen:
-1. Full screen, white background
-2. Play logo_static.mp4 centered, plays once (no loop)
-3. When video completes (onEnd): reset navigation to GetStarted
-   (navigation.reset({ index: 0, routes: [{ name: Routes.GetStarted }] }))
-   This is a one-way gate — no back to Splash.
-4. Fallback: if video doesn't trigger onEnd within 2 seconds, auto-advance
-   to GetStarted anyway (setTimeout as safety net, clear on unmount)
-5. Show a static logo/placeholder if the video fails to load entirely
-
-The screen should live in packages/onboarding-ui or a new appropriate
-location following the project's package structure. The navigator in
-@ion/navigation just references it.
-
-Run lint, type-check. Test on iOS simulator — should see video play then
-auto-transition to GetStarted.
-```
 
 ---
 
@@ -143,7 +47,7 @@ Read packages/navigation/ARCHITECTURE.md — specifically:
 This is the core architectural piece. Create SheetNavigator in
 packages/navigation/:
 
-1. Create src/sheet-navigator.tsx:
+Create src/sheet-navigator.tsx:
    - A gorhom BottomSheet component (not BottomSheetModal) with:
      snapPoints: ["92%"]
      enablePanDownToClose: true
@@ -152,39 +56,23 @@ packages/navigation/:
      Custom backdrop: semi-transparent, press-to-dismiss
      Visible handle indicator
    - Inside the sheet: a React Navigation native-stack navigator
-   - Screens registered: Register, ProfileSetup, SelectLanguages,
+   - Screens registered: ProfileSetup, SelectLanguages,
      DiscoverCreators, Notifications
-   - Initial route: Register
+   - Initial route: ProfileSetup
    - Stack screenOptions: { headerShown: false, animation: "slide_from_right" }
 
-2. The SheetNavigator is controlled via a ref (BottomSheet ref):
-   - Export a way for GetStartedScreen to open the sheet
-     (ref.current?.snapToIndex(0) or expand())
-   - Export a way for NotificationsScreen to dismiss the sheet
-     (ref.current?.close())
-
-3. When sheet is dismissed (onClose callback):
+When sheet is dismissed (onClose callback):
    - Reset the internal stack back to Register (so reopening starts fresh)
-
-4. Wire into GetStartedScreen:
-   - CTA button tap -> opens the SheetNavigator
-   - SheetNavigator renders over GetStartedScreen (video still playing behind)
-
-5. For now, use placeholder Views for all 5 sheet screens. Each one has:
-   - A title showing which screen it is
-   - A "Continue" button that pushes to the next screen in the stack
-   - A "Back" button that pops (except Register which has no back)
 
 6. NotificationsScreen "Continue" button:
    - Dismiss sheet
    - Reset RootStack to Catalog (one-way gate)
 
-Test the full flow: Splash -> GetStarted -> tap CTA -> sheet opens ->
-Register -> ProfileSetup -> SelectLanguages -> DiscoverCreators ->
+We would have a shorter flow for now: Splash -> sheet opens -> ProfileSetup -> SelectLanguages -> DiscoverCreators ->
 Notifications -> sheet closes -> Catalog. Also test: back within sheet,
 pull-to-close on sheet.
-
-Run lint, type-check.
+note: ProfileSetup, SelectLanguages, DiscoverCreators and NotificationsScreen - those screens already implemented in onboarding-ui package.
+so UI is settled for those. but instead of passing onContinue, onBack use navigation directly. and switch those to bottom sheets  
 ```
 
 ---

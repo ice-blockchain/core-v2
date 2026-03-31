@@ -1,13 +1,8 @@
-import { Image } from "react-native";
 import type { MediaViewerSource } from "@ion/media-viewer";
 import { SplashScreen as SplashScreenCore } from "@ion/splash-ui";
 
-const resolvedAsset = Image.resolveAssetSource(
-  require("../../assets/videos/logo_static.mp4"),
-);
-
 const splashSource: MediaViewerSource = {
-  uri: resolvedAsset.uri,
+  uri: "/videos/logo_static.mp4",
   mimeType: "video/mp4",
 };
 

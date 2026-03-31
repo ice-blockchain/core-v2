@@ -1,0 +1,2 @@
+export const SAFETY_TIMEOUT_MS = 2000;
+export const SPLASH_BACKGROUND_COLOR = "#FFFFFF";

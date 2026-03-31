@@ -1,11 +1,14 @@
 import { useCallback, useMemo } from "react";
 import { View } from "react-native";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import type { ViewStyle } from "react-native";
-import { BottomSheet, Button, useTheme } from "@ion/ui";
-import type { OnboardingScreenProps } from "../types";
+import { Button, useTheme } from "@ion/ui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSheetNavigation, Routes, Sheet } from "@ion/navigation";
 import { CreatorRow } from "../components/CreatorRow";
 import { CreatorRowSkeletonList } from "../components/CreatorRowSkeleton";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
+import { SheetScreenHeader } from "../components/SheetScreenHeader";
 import type { DiscoverCreatorsState } from "./discover-creators-hooks";
 import { useDiscoverCreators } from "./discover-creators-hooks";
 import { buildListContainerStyle, buildListContentStyle } from "./discover-creators-styles";
@@ -36,35 +39,51 @@ function CreatorList({ state, actions, contentStyle }: {
 function useScreenStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const insets = useSafeAreaInsets();
 
-  const listContainerStyle = useMemo(() => buildListContainerStyle(scale), [scale]);
-  const listContentStyle = useMemo(() => buildListContentStyle(scale), [scale]);
-
-  return { listContainerStyle, listContentStyle };
+  return {
+    container: useMemo(() => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }), [theme.colors]),
+    listContainer: useMemo(() => buildListContainerStyle(scale), [scale]),
+    listContent: useMemo(() => buildListContentStyle(scale), [scale]),
+    floatingFooter: useMemo((): ViewStyle => ({
+      position: "absolute",
+      bottom: scale(10) + insets.bottom,
+      left: 0,
+      right: 0,
+      paddingHorizontal: scale(16),
+    }), [scale, insets.bottom]),
+  };
 }
 
-export function DiscoverCreatorsScreen({ onContinue, onBack }: OnboardingScreenProps) {
-  const { listContainerStyle, listContentStyle } = useScreenStyles();
-  const [state, actions] = useDiscoverCreators(onContinue);
-  const handleClose = useCallback(() => onBack?.(), [onBack]);
+export function DiscoverCreatorsScreen() {
+  const navigation = useSheetNavigation();
+  const styles = useScreenStyles();
+
+  const navigateNext = useCallback(() => {
+    navigation.navigate(Routes.Sheet.Notifications);
+  }, [navigation]);
+
+  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
+  const [state, actions] = useDiscoverCreators(navigateNext);
 
   return (
-    <BottomSheet
-      isVisible
-      onClose={handleClose}
-      {...(onBack ? { onBack } : {})}
-      title="Discover creators"
-      floatingFooter={<Button label="Continue" onPress={actions.handleContinue} />}
-      testID="discover-creators-screen"
-    >
-      <OnboardingScreenTitle title="Discover creators" subtitle="Connect with visionaries and inspiring voices" />
-      {state.isLoading ? (
-        <View style={listContainerStyle}><CreatorRowSkeletonList /></View>
-      ) : (
-        <View style={listContainerStyle}>
-          <CreatorList state={state} actions={actions} contentStyle={listContentStyle} />
+    <Sheet onClose={handleBack}>
+      <View style={styles.container} testID="discover-creators-screen">
+        <SheetScreenHeader onBack={handleBack} />
+        <BottomSheetScrollView>
+          <OnboardingScreenTitle title="Discover creators" subtitle="Connect with visionaries and inspiring voices" />
+          {state.isLoading ? (
+            <View style={styles.listContainer}><CreatorRowSkeletonList /></View>
+          ) : (
+            <View style={styles.listContainer}>
+              <CreatorList state={state} actions={actions} contentStyle={styles.listContent} />
+            </View>
+          )}
+        </BottomSheetScrollView>
+        <View style={styles.floatingFooter}>
+          <Button label="Continue" onPress={actions.handleContinue} />
         </View>
-      )}
-    </BottomSheet>
+      </View>
+    </Sheet>
   );
 }
