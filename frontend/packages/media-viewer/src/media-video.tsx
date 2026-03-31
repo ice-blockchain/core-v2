@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import Video from 'react-native-video';
-import type { VideoRef } from 'react-native-video';
+import type { OnVideoErrorData, VideoRef } from 'react-native-video';
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { MediaVideoProps } from './types';
 import { getAspectRatioStyle } from './aspect-ratio';
@@ -22,7 +22,13 @@ export function MediaVideo(props: MediaVideoProps) {
   const handleLoad = useCallback(() => onLoad?.(), [onLoad]);
   const handleEnd = useCallback(() => onEnd?.(), [onEnd]);
   const handleError = useCallback(
-    () => onError?.(new Error('Video playback error')),
+    (data: OnVideoErrorData) => {
+      const detail = data.error;
+      const message = detail.errorString ?? detail.localizedDescription ?? detail.error ?? 'Video playback error';
+      const err = new Error(message);
+      Object.assign(err, { nativeError: detail });
+      onError?.(err);
+    },
     [onError],
   );
 

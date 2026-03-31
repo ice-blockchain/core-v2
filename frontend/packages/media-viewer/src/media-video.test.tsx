@@ -54,9 +54,13 @@ describe('MediaVideo callbacks', () => {
     expect(onEnd).toHaveBeenCalled();
   });
 
-  it('fires onError callback with Error object', () => {
+  it('fires onError callback with native error details', () => {
     const onError = jest.fn();
-    renderVideo({ onError }).props.onError();
-    expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    const nativeErrorData = { error: { errorString: 'Codec not supported', errorCode: '-1' } };
+    renderVideo({ onError }).props.onError(nativeErrorData);
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'Codec not supported',
+      nativeError: nativeErrorData.error,
+    }));
   });
 });
