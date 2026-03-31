@@ -1,4 +1,5 @@
 import type { IdentityClient } from '@ion/identity-client';
+import { Logger } from '@ion/diagnostics';
 import type { AuthFlowAction } from './types';
 import { mapIdentityError } from './error-messages';
 
@@ -19,6 +20,7 @@ export async function handlePasswordLogin(
     await identityClient.loginWithPassword({ username: identityKeyName, password });
     onAuthSuccess(identityKeyName);
   } catch (error) {
+    Logger.error('Password login failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName } });
     dispatch({ type: 'SET_ERROR', error: mapIdentityError(error) });
   } finally {
     dispatch({ type: 'SET_LOADING', isLoading: false });

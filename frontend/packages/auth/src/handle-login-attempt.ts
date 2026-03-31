@@ -1,5 +1,6 @@
 import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
+import { Logger } from '@ion/diagnostics';
 import type { AuthFlowAction } from './types';
 import { mapIdentityError } from './error-messages';
 import { isValidIdentityKeyName } from '@ion/auth-ui';
@@ -22,6 +23,7 @@ export async function handleLoginAttempt(
   try {
     await resolveLoginRoute(deps, identityKeyName);
   } catch (error) {
+    Logger.error('Login attempt failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName } });
     deps.dispatch({ type: 'SET_ERROR', error: mapIdentityError(error) });
   } finally {
     deps.dispatch({ type: 'SET_LOADING', isLoading: false });
@@ -62,6 +64,7 @@ async function attemptPasskeyLogin(
     onAuthSuccess(identityKeyName);
   } catch (error) {
     if (isPasskeyFallbackError(error) && supportsPassword) {
+      Logger.info('Passkey login failed, falling back to password', { tag: 'auth', data: { identityKeyName } });
       dispatch({ type: 'GO_TO_VERIFY_PASSWORD', identityKeyName });
       return;
     }
