@@ -5,6 +5,14 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import type { MediaVideoProps } from './types';
 import { getAspectRatioStyle } from './aspect-ratio';
 
+function buildVideoError(data: OnVideoErrorData): Error {
+  const detail = data.error;
+  const message = detail.errorString ?? detail.localizedDescription ?? detail.error ?? 'Video playback error';
+  const err = new Error(message);
+  Object.assign(err, { nativeError: detail });
+  return err;
+}
+
 function buildVideoStyle(
   style: ViewStyle | undefined,
   source: MediaVideoProps['source'],
@@ -22,13 +30,7 @@ export function MediaVideo(props: MediaVideoProps) {
   const handleLoad = useCallback(() => onLoad?.(), [onLoad]);
   const handleEnd = useCallback(() => onEnd?.(), [onEnd]);
   const handleError = useCallback(
-    (data: OnVideoErrorData) => {
-      const detail = data.error;
-      const message = detail.errorString ?? detail.localizedDescription ?? detail.error ?? 'Video playback error';
-      const err = new Error(message);
-      Object.assign(err, { nativeError: detail });
-      onError?.(err);
-    },
+    (data: OnVideoErrorData) => onError?.(buildVideoError(data)),
     [onError],
   );
 
