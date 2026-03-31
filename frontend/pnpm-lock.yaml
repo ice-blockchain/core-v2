@@ -63,6 +63,9 @@ importers:
       '@ion/localization':
         specifier: workspace:*
         version: link:../../packages/localization
+      '@ion/media-viewer':
+        specifier: workspace:*
+        version: link:../../packages/media-viewer
       '@ion/network':
         specifier: workspace:*
         version: link:../../packages/network
@@ -290,6 +293,9 @@ importers:
       '@ion/auth-ui':
         specifier: workspace:*
         version: link:../auth-ui
+      '@ion/diagnostics':
+        specifier: workspace:*
+        version: link:../diagnostics
       '@ion/identity-client':
         specifier: workspace:*
         version: link:../identity-client
@@ -584,9 +590,6 @@ importers:
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
-      expo-av:
-        specifier: '>=15'
-        version: 16.0.8(expo@55.0.8)(react-native-web@0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       expo-image:
         specifier: '>=2'
         version: 55.0.6(expo@55.0.8)(react-native-web@0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
@@ -602,6 +605,9 @@ importers:
       react-native-safe-area-context:
         specifier: '>=4.0'
         version: 5.7.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      react-native-video:
+        specifier: '>=6'
+        version: 6.19.1(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@testing-library/react-native':
         specifier: ^12.9.0
@@ -696,6 +702,9 @@ importers:
       '@ion/localization':
         specifier: workspace:*
         version: link:../localization
+      '@ion/media-viewer':
+        specifier: workspace:*
+        version: link:../media-viewer
       '@ion/onboarding':
         specifier: workspace:*
         version: link:../onboarding
@@ -4449,17 +4458,6 @@ packages:
       expo: '*'
       react: '*'
       react-native: '*'
-
-  expo-av@16.0.8:
-    resolution: {integrity: sha512-cmVPftGR/ca7XBgs7R6ky36lF3OC0/MM/lpgX/yXqfv0jASTsh7AYX9JxHCwFmF+Z6JEB1vne9FDx4GiLcGreQ==}
-    peerDependencies:
-      expo: '*'
-      react: '*'
-      react-native: '*'
-      react-native-web: '*'
-    peerDependenciesMeta:
-      react-native-web:
-        optional: true
 
   expo-camera@55.0.10:
     resolution: {integrity: sha512-ftDNJbGsAPNJ/QrM3j6g8/rQAOqTwZpqtvmzF7V9VX0movaCznZFdYsLi/Fff9WeEk1KzcnLIlmSz4Tj+BCrJA==}
@@ -11941,14 +11939,6 @@ snapshots:
       - supports-color
       - typescript
 
-  expo-av@16.0.8(expo@55.0.8)(react-native-web@0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4):
-    dependencies:
-      expo: 55.0.8(@babel/core@7.29.0)(@expo/dom-webview@55.0.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
-      react: 19.2.4
-      react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
-    optionalDependencies:
-      react-native-web: 0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-
   expo-camera@55.0.10(@types/emscripten@1.41.5)(expo@55.0.8)(react-native-web@0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4):
     dependencies:
       barcode-detector: 3.1.1(@types/emscripten@1.41.5)
@@ -14415,6 +14405,11 @@ snapshots:
     dependencies:
       react: 19.2.3
       react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3)
+
+  react-native-video@6.19.1(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
 
   react-native-web@0.19.13(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
