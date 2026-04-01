@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { startIonConnectProxy, stopIonConnectProxy, createIonConnectProxyClient } from '@ion/ion-connect-proxy';
 import type { HttpClient } from '@ion/network';
 
@@ -14,9 +14,6 @@ interface IonConnectProxyState {
 export function useIonConnectProxy(port: number): IonConnectProxyState {
   const [status, setStatus] = useState<ProxyStatus>('stopped');
   const [error, setError] = useState<string | null>(null);
-  const portRef = useRef(port);
-  portRef.current = port;
-
   useEffect(() => {
     let cancelled = false;
     setStatus('starting');
@@ -37,7 +34,7 @@ export function useIonConnectProxy(port: number): IonConnectProxyState {
     };
   }, [port]);
 
-  const createClient = (baseUrl: string) => createIonConnectProxyClient({ port: portRef.current, baseUrl });
+  const createClient = (baseUrl: string) => createIonConnectProxyClient({ baseUrl });
 
   return { status, proxyPort: port, error, createClient };
 }
