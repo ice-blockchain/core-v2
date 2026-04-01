@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	greenfieldclient "github.com/AudiusProject/ion/packages/greenfield-client"
 	"github.com/alicebob/miniredis/v2"
+	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"

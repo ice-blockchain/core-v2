@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	greenfieldclient "github.com/AudiusProject/ion/packages/greenfield-client"
-	"github.com/AudiusProject/ion/services/greenfield-ingester/internal/bullmq"
-	"github.com/AudiusProject/ion/services/greenfield-ingester/internal/parser"
+	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/greenfield-ingester/internal/bullmq"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
@@ -147,7 +146,7 @@ func (i *Ingester) collectJobs(
 	for _, abciEvent := range txEvent.Events {
 		switch abciEvent.Type {
 		case "greenfield.storage.EventCreateObject":
-			parsed, err := parser.ExtractCreateObjectEvent(txEvent, abciEvent)
+			parsed, err := greenfieldclient.ExtractCreateObjectEvent(txEvent, abciEvent)
 			if err != nil {
 				i.log.Warn().Err(err).Msg("parse CreateObject")
 				continue
@@ -165,7 +164,7 @@ func (i *Ingester) collectJobs(
 			})
 
 		case "greenfield.storage.EventUpdateObjectContent":
-			parsed, err := parser.ExtractUpdateObjectContentEvent(txEvent, abciEvent)
+			parsed, err := greenfieldclient.ExtractUpdateObjectContentEvent(txEvent, abciEvent)
 			if err != nil {
 				i.log.Warn().Err(err).Msg("parse UpdateObjectContent")
 				continue

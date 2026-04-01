@@ -1,6 +1,6 @@
-module github.com/AudiusProject/ion/packages/greenfield-client
+module github.com/ice-blockchain/ion/packages/greenfield-client
 
-go 1.26.1
+go 1.24.4
 
 require (
 	github.com/akuity/grpc-gateway-client v0.0.0-20240912082144-55a48e8b4b89

@@ -3,8 +3,6 @@ package greenfieldclient
 import (
 	"fmt"
 	"regexp"
-
-	"github.com/rs/zerolog"
 )
 
 // ValidEnvPattern matches valid environment names: lowercase alphanumeric and hyphens.
@@ -15,7 +13,7 @@ type Config struct {
 	RpcURLs    []string
 	ChainID    string
 	PrivateKey string
-	Logger     zerolog.Logger
+	Logger     Logger
 }
 
 // SenderTagKey returns the tag key used to identify the environment.
@@ -31,6 +29,18 @@ func DefaultQuery(onlineIOEnv string) string {
 	}
 	return fmt.Sprintf(
 		"tm.event='Tx' AND greenfield.storage.EventSetTag.tags CONTAINS '%s'",
+		onlineIOEnv,
+	)
+}
+
+// BagIndexQuery returns a Tendermint subscription query that filters for
+// transactions containing both the environment tag and an ion-bag-id tag.
+func BagIndexQuery(onlineIOEnv string) string {
+	if !ValidEnvPattern.MatchString(onlineIOEnv) {
+		panic(fmt.Sprintf("BagIndexQuery: invalid onlineIOEnv %q", onlineIOEnv))
+	}
+	return fmt.Sprintf(
+		"tm.event='Tx' AND greenfield.storage.EventSetTag.tags CONTAINS '%s' AND greenfield.storage.EventSetTag.tags CONTAINS 'ion-bag-id'",
 		onlineIOEnv,
 	)
 }

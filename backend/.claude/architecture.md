@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-03-27
+> Last updated: 2026-04-01
 
 ---
 
@@ -21,6 +21,7 @@
 | Service | Purpose | Status | Architecture |
 |---|---|---|---|
 | greenfield-ingester | Subscribe to Greenfield blockchain events, enqueue to BullMQ Redis | Active | [ARCHITECTURE.md](../../services/greenfield-ingester/ARCHITECTURE.md) |
+| ion-connect-storage | Virtual TON Storage node serving files from Greenfield. ADNL/RLDP, DHT registration, bag indexing, segment fetching | Active (Phase 2) | [ARCHITECTURE.md](../../services/ion-connect-storage/ARCHITECTURE.md) |
 | identity | Auth, users, wallets | Planned | -- |
 | wallet | Coin/NFT operations | Planned | -- |
 | feed | Posts, likes, reposts | Planned | -- |
@@ -35,7 +36,7 @@
 
 | Package | Purpose | Status | Architecture |
 |---|---|---|---|
-| greenfield-client | Go library for Greenfield RPC subscription and object download | Active | [ARCHITECTURE.md](../../packages/greenfield-client/ARCHITECTURE.md) |
+| greenfield-client | Go library for Greenfield RPC subscription, object download, event parsing (shared by ingester + storage) | Active | [ARCHITECTURE.md](../../packages/greenfield-client/ARCHITECTURE.md) |
 
 ---
 

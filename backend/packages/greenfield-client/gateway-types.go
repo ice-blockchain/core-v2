@@ -36,14 +36,20 @@ type latestBlockResponse struct {
 
 // txMessage is used to inspect the @type field of a message.
 type txMessage struct {
-	Type            string   `json:"@type"`
-	BucketName      string   `json:"bucket_name"`
-	ObjectName      string   `json:"object_name"`
-	Creator         string   `json:"creator"`
-	Operator        string   `json:"operator"`
-	ContentType     string   `json:"content_type"`
-	PayloadSize     string   `json:"payload_size"`
-	ExpectChecksums []string `json:"expect_checksums"`
-	CreateAt        string   `json:"create_at"`
-	Version         string   `json:"version"`
+	Type            string          `json:"@type"`
+	BucketName      string          `json:"bucket_name"`
+	ObjectName      string          `json:"object_name"`
+	Creator         string          `json:"creator"`
+	Operator        string          `json:"operator"`
+	ContentType     string          `json:"content_type"`
+	PayloadSize     string          `json:"payload_size"`
+	ExpectChecksums []string        `json:"expect_checksums"`
+	CreateAt        string          `json:"create_at"`
+	Version         string          `json:"version"`
+	Resource        string          `json:"resource"`
+	Tags            *setTagsPayload `json:"tags"`
+}
+
+type setTagsPayload struct {
+	Tags []TagEntry `json:"tags"`
 }

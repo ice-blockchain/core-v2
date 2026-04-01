@@ -1,6 +1,6 @@
 //go:build e2e
 
-package main
+package adnl_test
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	ionadnl "github.com/AudiusProject/ion/services/ion-connect-storage/internal/adnl"
+	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/dht"

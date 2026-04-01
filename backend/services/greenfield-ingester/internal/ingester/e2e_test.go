@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	greenfieldclient "github.com/AudiusProject/ion/packages/greenfield-client"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
 	sptypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +54,7 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 		RpcURLs:    []string{e2eRPCURL},
 		ChainID:    e2eChainID,
 		PrivateKey: privateKey,
-		Logger:     testLogger(),
+		Logger:     greenfieldclient.NewZerologAdapter(testLogger()),
 	})
 	require.NoError(t, err)
 	defer gfClient.Close()

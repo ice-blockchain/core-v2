@@ -1,11 +1,10 @@
-package parser
+package greenfieldclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
-
-	greenfieldclient "github.com/AudiusProject/ion/packages/greenfield-client"
 )
 
 // CreateObjectEvent holds parsed fields from EventCreateObject.
@@ -34,10 +33,24 @@ type UpdateObjectContentEvent struct {
 	Version     int64    `json:"version"`
 }
 
+// SetTagEvent holds parsed fields from EventSetTag.
+type SetTagEvent struct {
+	Resource   string
+	BucketName string
+	ObjectName string
+	Tags       []TagEntry
+}
+
+// TagEntry is a single key-value tag from a Greenfield SetTag event.
+type TagEntry struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // ExtractCreateObjectEvent parses a CreateObjectEvent from ABCI event attributes.
 func ExtractCreateObjectEvent(
-	txEvent *greenfieldclient.TxEvent,
-	abciEvent greenfieldclient.ABCIEvent,
+	txEvent *TxEvent,
+	abciEvent ABCIEvent,
 ) (*CreateObjectEvent, error) {
 	attrs := abciEvent.Attributes
 
@@ -82,8 +95,8 @@ func ExtractCreateObjectEvent(
 
 // ExtractUpdateObjectContentEvent parses an UpdateObjectContentEvent.
 func ExtractUpdateObjectContentEvent(
-	txEvent *greenfieldclient.TxEvent,
-	abciEvent greenfieldclient.ABCIEvent,
+	txEvent *TxEvent,
+	abciEvent ABCIEvent,
 ) (*UpdateObjectContentEvent, error) {
 	attrs := abciEvent.Attributes
 
@@ -117,6 +130,55 @@ func ExtractUpdateObjectContentEvent(
 		Checksums:   parseChecksums(attrs["checksums"]),
 		Version:     version,
 	}, nil
+}
+
+// ExtractSetTagEvent parses a SetTagEvent from ABCI event attributes.
+// It extracts the resource GRN, parses bucket/object from it, and parses the tags JSON.
+func ExtractSetTagEvent(abciEvent ABCIEvent) (*SetTagEvent, error) {
+	attrs := abciEvent.Attributes
+
+	resource, ok := attrs["resource"]
+	if !ok {
+		return nil, fmt.Errorf("missing resource attribute")
+	}
+
+	tagsRaw, ok := attrs["tags"]
+	if !ok {
+		return nil, fmt.Errorf("missing tags attribute")
+	}
+
+	var tagSet struct {
+		Tags []TagEntry `json:"tags"`
+	}
+	if err := json.Unmarshal([]byte(tagsRaw), &tagSet); err != nil {
+		return nil, fmt.Errorf("parse tags JSON: %w", err)
+	}
+
+	bucket, object, _ := ParseObjectGRN(resource)
+
+	return &SetTagEvent{
+		Resource:   resource,
+		BucketName: bucket,
+		ObjectName: object,
+		Tags:       tagSet.Tags,
+	}, nil
+}
+
+// ParseObjectGRN extracts bucket and object names from a Greenfield object GRN.
+// Format: grn:o::<bucket>/<object>
+// Returns empty strings and false for non-object GRNs.
+func ParseObjectGRN(grn string) (bucket, object string, ok bool) {
+	if !strings.HasPrefix(grn, "grn:o::") {
+		return "", "", false
+	}
+
+	path := strings.TrimPrefix(grn, "grn:o::")
+	idx := strings.IndexByte(path, '/')
+	if idx < 0 {
+		return "", "", false
+	}
+
+	return path[:idx], path[idx+1:], true
 }
 
 func parseOptionalInt64(attrs map[string]string, key string) (int64, error) {

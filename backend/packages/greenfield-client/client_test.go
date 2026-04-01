@@ -140,6 +140,7 @@ func TestHasOnlineIOTag(t *testing.T) {
 func TestRotateGateway(t *testing.T) {
 	c := &client{
 		rpcURLs: []string{"http://rpc1", "http://rpc2", "http://rpc3"},
+		log:     &nopLogger{},
 	}
 
 	c.rotateGateway()
@@ -170,6 +171,7 @@ func TestGetGnfdClient_ConcurrentWithRotate(t *testing.T) {
 	c := &client{
 		rpcURLs: []string{"http://rpc1", "http://rpc2", "http://rpc3"},
 		cfg:     Config{ChainID: "test-chain"},
+		log:     &nopLogger{},
 	}
 
 	var wg sync.WaitGroup

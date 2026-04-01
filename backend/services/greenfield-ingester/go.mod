@@ -1,9 +1,9 @@
-module github.com/AudiusProject/ion/services/greenfield-ingester
+module github.com/ice-blockchain/ion/services/greenfield-ingester
 
-go 1.26.1
+go 1.24.4
 
 require (
-	github.com/AudiusProject/ion/packages/greenfield-client v0.0.0
+	github.com/ice-blockchain/ion/packages/greenfield-client v0.0.0
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/bnb-chain/greenfield v1.9.1
 	github.com/bnb-chain/greenfield-go-sdk v1.7.4
@@ -153,7 +153,7 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/AudiusProject/ion/packages/greenfield-client => ../../packages/greenfield-client
+replace github.com/ice-blockchain/ion/packages/greenfield-client => ../../packages/greenfield-client
 
 replace (
 	cosmossdk.io/api => github.com/bnb-chain/greenfield-cosmos-sdk/api v0.0.0-20231129013257-1e407f209b02

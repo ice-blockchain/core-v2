@@ -12,7 +12,6 @@ import (
 	"github.com/akuity/grpc-gateway-client/pkg/grpc/gateway"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
-	"github.com/rs/zerolog"
 )
 
 const gatewayTimeout = 30 * time.Second
@@ -22,7 +21,7 @@ type client struct {
 	rpcURLs    []string
 	rpcIndex   atomic.Uint64
 	subscribed atomic.Bool
-	log        zerolog.Logger
+	log        Logger
 
 	account    *gnfdtypes.Account
 	clientsMu  sync.RWMutex
@@ -48,10 +47,16 @@ func New(cfg Config) (Client, error) {
 		return nil, fmt.Errorf("create greenfield sdk client: %w", err)
 	}
 
+	logger := cfg.Logger
+	if logger == nil {
+		logger = &nopLogger{}
+	}
+
 	c := &client{
-		cfg:        cfg,
-		rpcURLs:    cfg.RpcURLs,
-		log:        cfg.Logger.With().Str("component", "greenfield-client").Logger(),
+		cfg:     cfg,
+		rpcURLs: cfg.RpcURLs,
+		log:     logger.With().Str("component", "greenfield-client").Logger(),
+
 		account:    account,
 		gnfdClient: gnfd,
 	}

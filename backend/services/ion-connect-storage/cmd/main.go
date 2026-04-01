@@ -7,11 +7,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	ionadnl "github.com/AudiusProject/ion/services/ion-connect-storage/internal/adnl"
-	"github.com/AudiusProject/ion/services/ion-connect-storage/internal/config"
+	"github.com/cockroachdb/pebble/v2"
+	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/config"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
 )
 
 func main() {
@@ -25,6 +30,28 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
+
+	db, gfClient, err := openBagIndex(cfg, logger)
+	if err != nil {
+		logger.Error("open bag index failed", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+	defer gfClient.Close()
+
+	persister := index.NewPersister(db)
+	_ = greenfield.NewFetcher(gfClient, logger)
+
+	sub := index.NewSubscriber(gfClient, persister, cfg.OnlineIOEnv, logger)
+
+	var subscriberWg sync.WaitGroup
+	subscriberWg.Add(1)
+	go func() {
+		defer subscriberWg.Done()
+		if err := sub.Run(ctx); err != nil && ctx.Err() == nil {
+			logger.Error("subscriber failed", "error", err)
+		}
+	}()
 
 	server, err := createServer(ctx, cfg, logger)
 	if err != nil {
@@ -43,8 +70,29 @@ func main() {
 	<-ctx.Done()
 
 	logger.Info("shutdown signal received")
+	subscriberWg.Wait()
 	shutdownServer(server, logger)
 	logger.Info("ion-connect-storage stopped")
+}
+
+func openBagIndex(cfg config.Config, logger *slog.Logger) (*pebble.DB, greenfieldclient.Client, error) {
+	db, err := pebble.Open(cfg.DataDir, &pebble.Options{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	gfClient, err := greenfieldclient.New(greenfieldclient.Config{
+		RpcURLs:    cfg.GreenfieldRpcURLs,
+		ChainID:    cfg.GreenfieldChainID,
+		PrivateKey: cfg.GreenfieldPrivKey,
+		Logger:     greenfieldclient.NewSlogAdapter(logger),
+	})
+	if err != nil {
+		db.Close()
+		return nil, nil, err
+	}
+
+	return db, gfClient, nil
 }
 
 func createLogger() *slog.Logger {

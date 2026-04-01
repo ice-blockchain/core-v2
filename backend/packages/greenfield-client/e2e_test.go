@@ -131,7 +131,7 @@ func TestE2E_CatchUpBlockRange(t *testing.T) {
 
 	c := &client{
 		rpcURLs: []string{catchUpTestLCDURL},
-		log:     zerolog.New(zerolog.NewTestWriter(t)),
+		log:     NewZerologAdapter(zerolog.New(zerolog.NewTestWriter(t))),
 	}
 	c.gwClient = gateway.NewClient(catchUpTestLCDURL)
 
