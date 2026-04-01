@@ -1,19 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { HttpClient } from '@ion/network';
 import type { ISecureStorage } from '@ion/storage';
 import { createIdentityClient } from './create-identity-client';
-
-function createMockHttpClient(): HttpClient {
-  return {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
-    upload: vi.fn(),
-    head: vi.fn(),
-  };
-}
 
 function createMockSecureStorage(): ISecureStorage {
   return {
@@ -26,10 +13,10 @@ function createMockSecureStorage(): ISecureStorage {
 }
 
 describe('createIdentityClient', () => {
-  it('returns an object with all required methods', () => {
+  it('returns an object with all required methods and authStore', () => {
     const client = createIdentityClient({
-      httpClient: createMockHttpClient(),
       secureStorage: createMockSecureStorage(),
+      baseUrl: 'https://api.example.com',
       appId: 'com.example.app',
     });
 
@@ -41,5 +28,18 @@ describe('createIdentityClient', () => {
     expect(client.refreshToken).toBeTypeOf('function');
     expect(client.isAuthenticated).toBeTypeOf('function');
     expect(client.getLoginCapabilities).toBeTypeOf('function');
+    expect(client.getUser).toBeTypeOf('function');
+    expect(client.verifyEarlyAccessEmail).toBeTypeOf('function');
+    expect(client.listCredentials).toBeTypeOf('function');
+    expect(client.createRecoveryCredentials).toBeTypeOf('function');
+    expect(client.requestTwoFACode).toBeTypeOf('function');
+    expect(client.verifyTwoFACode).toBeTypeOf('function');
+    expect(client.deleteTwoFAMethod).toBeTypeOf('function');
+    expect(client.deleteAccount).toBeTypeOf('function');
+    expect(client.recoverAccount).toBeTypeOf('function');
+    expect(client.restoreAuth).toBeTypeOf('function');
+    expect(client.authStore).toBeDefined();
+    expect(client.authStore.getSnapshot).toBeTypeOf('function');
+    expect(client.authStore.subscribe).toBeTypeOf('function');
   });
 });

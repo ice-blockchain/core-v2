@@ -1,9 +1,8 @@
-import type { HttpClient } from '@ion/network';
 import type { ISecureStorage } from '@ion/storage';
 
 export interface IdentityClientConfig {
-  httpClient: HttpClient;
   secureStorage: ISecureStorage;
+  baseUrl: string;
   appId: string;
 }
 
@@ -27,14 +26,30 @@ export interface IdentityClient {
   logout(username: string): Promise<void>;
   refreshToken(username: string): Promise<void>;
   isAuthenticated(username: string): Promise<boolean>;
+  restoreAuth(): Promise<void>;
   getLoginCapabilities(username: string): Promise<LoginCapabilities>;
   getUser(username: string, userIdOrMasterKey: string): Promise<User>;
+  verifyEarlyAccessEmail(email: string): Promise<void>;
+  listCredentials(username: string): Promise<CredentialListItem[]>;
+  createRecoveryCredentials(username: string, signingContext: SigningContext): Promise<RecoveryCredentialsResult>;
+  requestTwoFACode(params: RequestTwoFACodeParams): Promise<RequestTwoFAResponse>;
+  verifyTwoFACode(params: VerifyTwoFACodeParams): Promise<void>;
+  deleteTwoFAMethod(input: DeleteTwoFAMethodInput): Promise<void>;
+  deleteAccount(username: string, signingContext: SigningContext): Promise<void>;
+  recoverAccount(input: RecoverAccountInput): Promise<void>;
+  authStore: AuthStore;
+}
+
+export interface AuthStore {
+  getSnapshot(): readonly string[];
+  subscribe(onStoreChange: () => void): () => void;
 }
 
 export interface LoginCapabilities {
   supportsPasskey: boolean;
   supportsPassword: boolean;
   identityFound: boolean;
+  twoFAOptionsCount: number | null;
 }
 
 export interface AuthTokens {
@@ -47,6 +62,7 @@ export interface UserRegistrationChallenge {
   rp: RelyingParty;
   user: UserInformation;
   challenge: string;
+  challengeIdentifier: string;
   attestation: string;
   pubKeyCredParams: PublicKeyCredentialParam[];
   excludeCredentials: CredentialDescriptor[];
@@ -136,6 +152,91 @@ export interface PasskeyAuthResult {
 }
 
 export type TwoFAOption = 'sms' | 'email' | 'totp_authenticator';
+
+// Signing context (used by User Action Signing)
+export interface PasswordSigningContext {
+  kind: 'password';
+  password: string;
+}
+
+export interface PasskeySigningContext {
+  kind: 'passkey';
+}
+
+export type SigningContext = PasswordSigningContext | PasskeySigningContext;
+
+// Credentials
+export interface CredentialListItem {
+  uuid: string | null;
+  kind: string;
+  name: string;
+}
+
+export interface RecoveryCredentialsResult {
+  identityKeyName: string;
+  recoveryKeyId: string;
+  recoveryCode: string;
+}
+
+// 2FA
+export interface RequestTwoFAInput {
+  '2FAVerificationCodes'?: Record<string, string>;
+  email?: string;
+  phoneNumber?: string;
+  replace?: string;
+}
+
+export type RequestTwoFAResponse = { TOTPAuthenticatorURL: string } | Record<string, never>;
+
+export interface TwoFAVerificationParam {
+  twoFAOptionVerificationValue: string;
+  twoFAOptionVerificationCode: string;
+}
+
+export interface RequestTwoFACodeParams {
+  username: string;
+  userId: string;
+  twoFAOption: string;
+  input: RequestTwoFAInput;
+  signingContext: SigningContext;
+}
+
+export interface VerifyTwoFACodeParams {
+  username: string;
+  userId: string;
+  twoFAOption: string;
+  code: string;
+  signingContext: SigningContext;
+}
+
+export interface DeleteTwoFAMethodInput {
+  username: string;
+  userId: string;
+  twoFAOption: string;
+  twoFAValue: string;
+  verificationParams: TwoFAVerificationParam[];
+  signingContext: SigningContext;
+}
+
+// Recovery
+export interface PasswordRecoveryInput {
+  username: string;
+  recoveryCode: string;
+  credentialId: string;
+  newCredentialKind: 'PasswordProtectedKey';
+  newPassword: string;
+  twoFAVerificationCodes?: Record<string, string>;
+}
+
+export interface PasskeyRecoveryInput {
+  username: string;
+  recoveryCode: string;
+  credentialId: string;
+  newCredentialKind: 'Fido2';
+  twoFAVerificationCodes?: Record<string, string>;
+}
+
+export type RecoverAccountInput = PasswordRecoveryInput | PasskeyRecoveryInput;
 
 export interface UserAssignedRelay {
   type: string;

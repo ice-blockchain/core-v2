@@ -1,9 +1,17 @@
-import type { IdentityClient, IdentityClientConfig } from './types';
+import { createHttpClient } from '@ion/network';
+import type { IdentityClient, IdentityClientConfig, SigningContext } from './types';
+import type { RequestTwoFACodeParams, VerifyTwoFACodeParams, DeleteTwoFAMethodInput, RecoverAccountInput } from './types';
 import { createRegistrationDataSource } from './data-sources/registration-data-source';
 import { createLoginDataSource } from './data-sources/login-data-source';
 import { createSessionDataSource } from './data-sources/session-data-source';
 import { createUserDataSource } from './data-sources/user-data-source';
+import { createUserActionDataSource } from './data-sources/user-action-data-source';
+import { createCredentialsDataSource } from './data-sources/credentials-data-source';
+import { createTwoFADataSource } from './data-sources/two-fa-data-source';
+import { createRecoveryDataSource } from './data-sources/recovery-data-source';
 import { createTokenManager } from './token/token-manager';
+import { createIdentityAuthInterceptor } from './interceptor/identity-auth-interceptor';
+import { createAuthStore } from './auth-store';
 import { withDefaultHeaders } from './http-client-with-headers';
 import { registerWithPasskey } from './auth/register-with-passkey';
 import { registerWithPassword } from './auth/register-with-password';
@@ -14,30 +22,83 @@ import { refreshToken } from './auth/refresh-token';
 import { isAuthenticated } from './auth/is-authenticated';
 import { getLoginCapabilities } from './auth/login-capabilities';
 import { getUser } from './users/get-user';
+import { verifyEarlyAccessEmail } from './auth/verify-early-access-email';
+import { listCredentials } from './auth/list-credentials';
+import { createRecoveryCredentials } from './auth/create-recovery-credentials';
+import { requestTwoFACode } from './auth/request-two-fa-code';
+import { verifyTwoFACode } from './auth/verify-two-fa-code';
+import { deleteTwoFAMethod } from './auth/delete-two-fa-method';
+import { deleteAccount } from './auth/delete-account';
+import { recoverAccount } from './auth/recover-account';
+import { restoreAuth } from './auth/restore-auth';
 
 export function createIdentityClient(config: IdentityClientConfig): IdentityClient {
-  const httpClient = withDefaultHeaders(config.httpClient, { 'X-Client-ID': config.appId });
-  const registrationDataSource = createRegistrationDataSource(httpClient);
-  const loginDataSource = createLoginDataSource(httpClient);
-  const sessionDataSource = createSessionDataSource(httpClient);
-  const userDataSource = createUserDataSource(httpClient);
-  const tokenManager = createTokenManager(config.secureStorage);
-  const origin = config.appId;
+  const ctx = buildContext(config);
+  return { ...buildAuthMethods(ctx), ...buildFeatureMethods(ctx), authStore: ctx.authStore };
+}
 
-  const regDeps = { registrationDataSource, tokenManager, origin };
-  const loginDeps = { loginDataSource, tokenManager, origin };
-  const sessionDeps = { sessionDataSource, tokenManager, refreshLocks: new Map<string, Promise<void>>() };
-  const userDeps = { userDataSource, tokenManager };
+function buildContext(config: IdentityClientConfig) {
+  const tokenManager = createTokenManager(config.secureStorage);
+  const authStore = createAuthStore();
+  const refreshLocks = new Map<string, Promise<void>>();
+
+  const lazyDeps = {} as { sessionDataSource: ReturnType<typeof createSessionDataSource> };
+  const refreshFn = (username: string) => refreshToken(username, { sessionDataSource: lazyDeps.sessionDataSource, tokenManager });
+  const interceptor = createIdentityAuthInterceptor({ tokenManager, refreshFn, refreshLocks });
+  const rawHttpClient = createHttpClient({ baseUrl: config.baseUrl, interceptors: [interceptor] });
+  const httpClient = withDefaultHeaders(rawHttpClient, { 'X-Client-ID': config.appId });
+  lazyDeps.sessionDataSource = createSessionDataSource(httpClient);
+  const { sessionDataSource } = lazyDeps;
 
   return {
-    registerWithPasskey: (username, earlyAccessEmail) => registerWithPasskey(username, regDeps, earlyAccessEmail),
-    registerWithPassword: (input) => registerWithPassword(input, regDeps),
-    loginWithPasskey: (username, twoFAVerificationCodes) => loginWithPasskey(username, loginDeps, twoFAVerificationCodes),
-    loginWithPassword: (input) => loginWithPassword(input, loginDeps),
-    logout: (username) => logout(username, sessionDeps),
-    refreshToken: (username) => refreshToken(username, sessionDeps),
-    isAuthenticated: (username) => isAuthenticated(username, sessionDeps),
-    getLoginCapabilities: (username) => getLoginCapabilities(username, loginDataSource),
-    getUser: (username, userIdOrMasterKey) => getUser(username, userIdOrMasterKey, userDeps),
+    httpClient, tokenManager, authStore, origin: config.appId,
+    loginDataSource: createLoginDataSource(httpClient),
+    sessionDataSource,
+    userActionDataSource: createUserActionDataSource(httpClient),
+    registrationDataSource: createRegistrationDataSource(httpClient),
+    userDataSource: createUserDataSource(httpClient),
+    credentialsDataSource: createCredentialsDataSource(httpClient),
+    twoFADataSource: createTwoFADataSource(httpClient),
+    recoveryDataSource: createRecoveryDataSource(httpClient),
+  };
+}
+
+type Ctx = ReturnType<typeof buildContext>;
+
+function buildAuthMethods(c: Ctx) {
+  const regDeps = { registrationDataSource: c.registrationDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore };
+  const loginDeps = { loginDataSource: c.loginDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore };
+  const sessionDeps = { sessionDataSource: c.sessionDataSource, tokenManager: c.tokenManager };
+  const logoutDeps = { sessionDataSource: c.sessionDataSource, tokenManager: c.tokenManager, authStore: c.authStore };
+  const userDeps = { userDataSource: c.userDataSource };
+  return {
+    registerWithPasskey: (username: string, email?: string) => registerWithPasskey(username, regDeps, email),
+    registerWithPassword: (input: Parameters<typeof registerWithPassword>[0]) => registerWithPassword(input, regDeps),
+    loginWithPasskey: (username: string, codes?: Record<string, string>) => loginWithPasskey(username, loginDeps, codes),
+    loginWithPassword: (input: Parameters<typeof loginWithPassword>[0]) => loginWithPassword(input, loginDeps),
+    logout: (username: string) => logout(username, logoutDeps),
+    refreshToken: (username: string) => refreshToken(username, sessionDeps),
+    isAuthenticated: (username: string) => isAuthenticated(username, { tokenManager: c.tokenManager }),
+    getLoginCapabilities: (username: string) => getLoginCapabilities(username, c.loginDataSource),
+    getUser: (username: string, id: string) => getUser(username, id, userDeps),
+    restoreAuth: () => restoreAuth({ tokenManager: c.tokenManager, authStore: c.authStore }),
+  };
+}
+
+function buildFeatureMethods(c: Ctx) {
+  const credDeps = { credentialsDataSource: c.credentialsDataSource, userActionDataSource: c.userActionDataSource, origin: c.origin };
+  const signedDeps = { userActionDataSource: c.userActionDataSource, httpClient: c.httpClient, origin: c.origin };
+  const twoFADeps = { twoFADataSource: c.twoFADataSource, userActionDataSource: c.userActionDataSource, origin: c.origin };
+  const deleteDeps = { ...signedDeps, tokenManager: c.tokenManager, authStore: c.authStore };
+  const recoveryDeps = { recoveryDataSource: c.recoveryDataSource, origin: c.origin };
+  return {
+    verifyEarlyAccessEmail: (email: string) => verifyEarlyAccessEmail(email, { httpClient: c.httpClient }),
+    listCredentials: (username: string) => listCredentials(username, credDeps),
+    createRecoveryCredentials: (username: string, ctx: SigningContext) => createRecoveryCredentials(username, ctx, credDeps),
+    requestTwoFACode: (params: RequestTwoFACodeParams) => requestTwoFACode(params, twoFADeps),
+    verifyTwoFACode: (params: VerifyTwoFACodeParams) => verifyTwoFACode(params, twoFADeps),
+    deleteTwoFAMethod: (input: DeleteTwoFAMethodInput) => deleteTwoFAMethod(input, twoFADeps),
+    deleteAccount: (username: string, ctx: SigningContext) => deleteAccount(username, ctx, deleteDeps),
+    recoverAccount: (input: RecoverAccountInput) => recoverAccount(input, recoveryDeps),
   };
 }

@@ -1,6 +1,7 @@
 export type {
   IdentityClient,
   IdentityClientConfig,
+  AuthStore,
   PasswordRegistrationInput,
   PasswordLoginInput,
   LoginCapabilities,
@@ -11,6 +12,18 @@ export type {
   User,
   UserAssignedRelay,
   TwoFAOption,
+  SigningContext,
+  PasswordSigningContext,
+  PasskeySigningContext,
+  CredentialListItem,
+  RecoveryCredentialsResult,
+  RequestTwoFAInput,
+  RequestTwoFAResponse,
+  TwoFAVerificationParam,
+  RequestTwoFACodeParams,
+  VerifyTwoFACodeParams,
+  DeleteTwoFAMethodInput,
+  RecoverAccountInput,
 } from './types';
 
 export { IdentityError, IdentityErrorCode } from './errors';
