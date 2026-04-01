@@ -27,7 +27,7 @@ concurrency:
 jobs:
   resolve-env:
     name: Resolve Environment
-    runs-on: ubuntu-latest
+    runs-on: getmac
     timeout-minutes: 1
     outputs:
       environment: ${{ steps.resolve.outputs.environment }}
@@ -47,7 +47,7 @@ jobs:
   verify:
     name: Verify
     needs: resolve-env
-    runs-on: ubuntu-latest
+    runs-on: getmac
     timeout-minutes: 15
     defaults:
       run:
@@ -74,7 +74,7 @@ jobs:
   build-and-deploy:
     name: Build & Deploy
     needs: [resolve-env, verify]
-    runs-on: ubuntu-latest
+    runs-on: getmac
     timeout-minutes: 20
     environment: ${{ needs.resolve-env.outputs.environment }}
     defaults:
