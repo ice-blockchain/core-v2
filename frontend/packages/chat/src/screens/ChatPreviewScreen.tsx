@@ -2,11 +2,13 @@ import { useCallback, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import { EmptyConversationsListScreen } from "./EmptyConversationsListScreen";
+import { LoadingConversationsListScreen } from "./LoadingConversationsListScreen";
 
-type PreviewScreen = "menu" | "empty-conversations";
+type PreviewScreen = "menu" | "empty-conversations" | "loading-conversations";
 
 const SCREEN_OPTIONS: Array<{ key: PreviewScreen; label: string }> = [
   { key: "empty-conversations", label: "Empty Conversations List" },
+  { key: "loading-conversations", label: "Loading Conversations List" },
 ];
 
 function useMenuStyles() {
@@ -61,6 +63,10 @@ export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
 
   if (activeScreen === "empty-conversations") {
     return <EmptyConversationsListScreen />;
+  }
+
+  if (activeScreen === "loading-conversations") {
+    return <LoadingConversationsListScreen />;
   }
 
   return <ScreenMenu onSelect={setActiveScreen} onBack={onBack} />;
