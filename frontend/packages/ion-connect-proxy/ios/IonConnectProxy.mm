@@ -1,5 +1,4 @@
 #import <React/RCTBridgeModule.h>
-#import <React-RCTAppDelegate/RCTRuntimeDependencyProvider.h>
 
 @interface RCT_EXTERN_MODULE(IonConnectProxy, NSObject)
 

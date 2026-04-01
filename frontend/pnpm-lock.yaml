@@ -60,6 +60,9 @@ importers:
       '@ion/media-viewer':
         specifier: workspace:*
         version: link:../../packages/media-viewer
+      '@ion/network':
+        specifier: workspace:*
+        version: link:../../packages/network
       '@ion/nsfw-detection':
         specifier: workspace:*
         version: link:../../packages/nsfw-detection
