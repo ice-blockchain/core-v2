@@ -16,7 +16,6 @@
   "peerDependencies": {
     "react": ">=19",
     "react-native": ">=0.84",
-    "expo-image": ">=2",
     "react-native-video": ">=6",
     "react-native-gesture-handler": ">=2.16",
     "react-native-reanimated": ">=3.10",

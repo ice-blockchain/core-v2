@@ -5,7 +5,6 @@ import type { ImageStyle, ViewStyle } from 'react-native';
 export interface MediaViewerSource {
   uri: string;
   mimeType: string;
-  blurhash?: string;
   width?: number;
   height?: number;
   thumbnailUri?: string;

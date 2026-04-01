@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from "react";
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import type { ImageStyle, ViewStyle } from "react-native";
 import { Icon, SmallButton, Text, useTheme } from "@ion/ui";
 import type { SemanticColors } from "@ion/ui";
+import { MediaImage } from "@ion/media-viewer";
 
 export interface CreatorRowProps {
   avatarUrl: string;
@@ -84,7 +85,7 @@ export function CreatorRow({ avatarUrl, name, handle, isVerified, isFollowing, o
   return (
     <View style={rowStyle} testID={testID}>
       <View style={leftStyle}>
-        {avatarUrl ? <Image source={{ uri: avatarUrl }} style={avatarStyle} /> : <View style={avatarStyle} />}
+        {avatarUrl ? <MediaImage source={{ uri: avatarUrl, mimeType: "image/*" }} style={avatarStyle} /> : <View style={avatarStyle} />}
         <View style={buildInfoStyle()}>
           <View style={nameRowStyle}>
             <Text variant="body" numberOfLines={1}>{name}</Text>

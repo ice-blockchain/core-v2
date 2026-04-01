@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
-import { Image } from 'expo-image';
+import { Image } from 'react-native';
 import type { MediaViewerSource } from './types';
 import { usePinchToZoom } from './use-pinch-to-zoom';
 import { useDismissGesture } from './use-dismiss-gesture';
@@ -32,9 +32,7 @@ export function FullscreenImageItem(props: FullscreenImageItemProps) {
           <Image
             source={{ uri: source.uri }}
             style={{ width, height }}
-            contentFit="contain"
-            placeholder={source.blurhash ? { blurhash: source.blurhash } : null}
-            cachePolicy="memory-disk"
+            resizeMode="contain"
           />
         </Animated.View>
       </Animated.View>

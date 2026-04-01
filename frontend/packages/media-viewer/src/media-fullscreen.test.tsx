@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { Modal, Text, View } from 'react-native';
+import { Image, Modal, Text, View } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MediaFullscreen } from './media-fullscreen';
 import type { MediaViewerSource } from './types';
@@ -12,18 +12,18 @@ const gestureBuilder = () => ({
   activeOffsetY: () => gestureBuilder(),
 });
 
-jest.mock('react-native-gesture-handler', () => ({
+vi.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
   Gesture: {
     Pinch: gestureBuilder,
     Tap: gestureBuilder,
     Pan: gestureBuilder,
-    Exclusive: jest.fn(),
-    Simultaneous: jest.fn(),
+    Exclusive: vi.fn(),
+    Simultaneous: vi.fn(),
   },
 }));
 
-jest.mock('react-native-reanimated', () => ({
+vi.mock('react-native-reanimated', () => ({
   default: { View },
   useSharedValue: (initial: number) => ({ value: initial }),
   useAnimatedStyle: (fn: () => unknown) => fn(),
@@ -34,17 +34,13 @@ jest.mock('react-native-reanimated', () => ({
   Extrapolation: { CLAMP: 'clamp' },
 }));
 
-jest.mock('react-native-safe-area-context', () => ({
+vi.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
 }));
 
-jest.mock('@ion/ui', () => ({ Text }));
+vi.mock('@ion/ui', () => ({ Text }));
 
-jest.mock('expo-image', () => ({
-  Image: (props: Record<string, unknown>) => <View testID="expo-image" {...props} />,
-}));
-
-jest.mock('expo-av', () => ({
+vi.mock('expo-av', () => ({
   Video: forwardRef((props: Record<string, unknown>, _ref) => (
     <View testID="expo-video" {...props} />
   )),
@@ -60,20 +56,20 @@ const imageSources: MediaViewerSource[] = [
 describe('MediaFullscreen - modal', () => {
   it('renders a modal', () => {
     const { UNSAFE_getByType } = render(
-      <MediaFullscreen sources={imageSources} onClose={jest.fn()} />,
+      <MediaFullscreen sources={imageSources} onClose={vi.fn()} />,
     );
     expect(UNSAFE_getByType(Modal)).toBeTruthy();
   });
 
   it('displays page indicator starting at first item', () => {
     const { getByText } = render(
-      <MediaFullscreen sources={imageSources} onClose={jest.fn()} />,
+      <MediaFullscreen sources={imageSources} onClose={vi.fn()} />,
     );
     expect(getByText('1 / 3')).toBeTruthy();
   });
 
   it('calls onClose when close button pressed', () => {
-    const onClose = jest.fn();
+    const onClose = vi.fn();
     const { getByText } = render(
       <MediaFullscreen sources={imageSources} onClose={onClose} />,
     );
@@ -84,15 +80,15 @@ describe('MediaFullscreen - modal', () => {
 
 describe('MediaFullscreen - media items', () => {
   it('renders image items for image mime types', () => {
-    const { getAllByTestId } = render(
-      <MediaFullscreen sources={imageSources} onClose={jest.fn()} />,
+    const { UNSAFE_getAllByType } = render(
+      <MediaFullscreen sources={imageSources} onClose={vi.fn()} />,
     );
-    expect(getAllByTestId('expo-image').length).toBeGreaterThanOrEqual(1);
+    expect(UNSAFE_getAllByType(Image).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders video items for video mime types', () => {
     const { getAllByTestId } = render(
-      <MediaFullscreen sources={imageSources} onClose={jest.fn()} />,
+      <MediaFullscreen sources={imageSources} onClose={vi.fn()} />,
     );
     expect(getAllByTestId('expo-video').length).toBeGreaterThanOrEqual(1);
   });
