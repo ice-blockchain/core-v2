@@ -3,7 +3,9 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaWrapper } from "../components/SafeAreaWrapper";
+import { DismissKeyboardView } from "../components/DismissKeyboardView";
 import { ThemeProvider } from "../theme/ThemeProvider";
 import { Text } from "../components/Text";
 import { Button } from "../components/Button";
@@ -47,25 +49,27 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
   const theme = useTheme();
 
   return (
-    <SafeAreaView edges={["bottom", "left", "right"]} style={{ flex: 1, backgroundColor: theme.colors.primaryBackground }}>
-    <ScrollView contentContainerStyle={{ padding: theme.spacing.lg, alignItems: "center" }}>
-      <View style={{ maxWidth: 420, width: "100%" }}>
-        <CatalogHeader onToggleMode={onToggleMode} />
-        {headerSlot}
-        <ColorCatalogSection />
-        <TypographyCatalogSection />
-        <IconCatalogSection />
-        <ButtonCatalogSection />
-        <SmallButtonCatalogSection />
-        <TextFieldCatalogSection />
-        <NotificationBarCatalogSection />
-        <IONLoaderCatalogSection />
-        <SeparatorCatalogSection />
-        <ListItemSkeletonCatalogSection />
-        <BottomSheetCatalogSection />
-      </View>
-    </ScrollView>
-    </SafeAreaView>
+    <SafeAreaWrapper edges={["bottom", "left", "right"]}>
+      <DismissKeyboardView>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.lg, alignItems: "center" }}>
+          <View style={{ maxWidth: 420, width: "100%" }}>
+            <CatalogHeader onToggleMode={onToggleMode} />
+            {headerSlot}
+            <ColorCatalogSection />
+            <TypographyCatalogSection />
+            <IconCatalogSection />
+            <ButtonCatalogSection />
+            <SmallButtonCatalogSection />
+            <TextFieldCatalogSection />
+            <NotificationBarCatalogSection />
+            <IONLoaderCatalogSection />
+            <SeparatorCatalogSection />
+            <ListItemSkeletonCatalogSection />
+            <BottomSheetCatalogSection />
+          </View>
+        </ScrollView>
+      </DismissKeyboardView>
+    </SafeAreaWrapper>
   );
 }
 

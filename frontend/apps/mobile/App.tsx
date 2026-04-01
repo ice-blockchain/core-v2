@@ -1,11 +1,12 @@
-import { StatusBar } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { ThemeProvider, CatalogScreen } from '@ion/ui';
-import { AppNavigator } from '@ion/navigation';
-import { createLocalization, registerTranslations } from '@ion/localization';
+import type { ReactNode } from "react";
+import { StatusBar, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { NavigationContainer } from "@react-navigation/native";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { ThemeProvider, useTheme, CatalogScreen } from "@ion/ui";
+import { AppNavigator } from "@ion/navigation";
+import { createLocalization, registerTranslations } from "@ion/localization";
 import {
   ProfileSetupScreen,
   SelectLanguagesScreen,
@@ -13,12 +14,12 @@ import {
   NotificationsScreen,
   NicknameReservedScreen,
   onboardingTranslations,
-} from '@ion/onboarding-ui';
-import { authTranslations, GetStartedScreen, RegisterScreen } from '@ion/auth-ui';
-import { chatTranslations } from '@ion/chat';
-import { splashTranslations } from '@ion/splash-ui';
-import { SplashScreen } from './src/components/splash-screen';
-import { IntroScreen } from './src/components/intro-screen';
+} from "@ion/onboarding-ui";
+import { authTranslations, GetStartedScreen, RegisterScreen } from "@ion/auth-ui";
+import { chatTranslations } from "@ion/chat";
+import { splashTranslations } from "@ion/splash-ui";
+import { SplashScreen } from "./src/components/splash-screen";
+import { IntroScreen } from "./src/components/intro-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -42,17 +43,28 @@ const authScreens = {
   Notifications: NotificationsScreen,
 };
 
+function ThemedRoot({ children }: { children: ReactNode }) {
+  const theme = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.secondaryBackground }}>
+      <StatusBar barStyle={theme.colorMode === "dark" ? "light-content" : "dark-content"} />
+      {children}
+    </View>
+  );
+}
+
 function App() {
   return (
     <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <NavigationContainer>
-            <BottomSheetModalProvider>
-              <StatusBar barStyle="light-content" />
-              <AppNavigator screens={screens} authScreens={authScreens} />
-            </BottomSheetModalProvider>
-          </NavigationContainer>
+          <ThemedRoot>
+            <NavigationContainer>
+              <BottomSheetModalProvider>
+                <AppNavigator screens={screens} authScreens={authScreens} />
+              </BottomSheetModalProvider>
+            </NavigationContainer>
+          </ThemedRoot>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

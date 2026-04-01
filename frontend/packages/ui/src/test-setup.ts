@@ -28,6 +28,11 @@ vi.mock("react-native-svg", () => ({
   G: "G",
 }));
 
+vi.mock("react-native-linear-gradient", () => ({
+  default: "LinearGradient",
+  LinearGradient: "LinearGradient",
+}));
+
 vi.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
