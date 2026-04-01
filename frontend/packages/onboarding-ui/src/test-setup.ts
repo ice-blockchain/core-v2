@@ -60,18 +60,28 @@ vi.mock("@gorhom/bottom-sheet", () => ({
   BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-vi.mock("@ion/navigation", () => ({
-  useSheetNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), reset: vi.fn() }),
-  Sheet: ({ children }: { children: React.ReactNode }) => children,
-  Routes: {
-    Splash: "Splash", GetStarted: "GetStarted", Catalog: "Catalog",
-    Sheet: {
-      Register: "Sheet/Register", ProfileSetup: "Sheet/ProfileSetup",
-      SelectLanguages: "Sheet/SelectLanguages", DiscoverCreators: "Sheet/DiscoverCreators",
-      Notifications: "Sheet/Notifications",
+vi.mock("@ion/navigation", () => {
+  const mockNavigation = {
+    navigate: vi.fn(), goBack: vi.fn(), reset: vi.fn(),
+    getParent: vi.fn(() => ({ reset: vi.fn() })),
+  };
+  return {
+    useSheetNavigation: () => mockNavigation,
+    useAuthNavigation: () => mockNavigation,
+    useAppNavigation: () => mockNavigation,
+    useSheetScroll: () => vi.fn(),
+    Sheet: ({ children }: { children: React.ReactNode }) => children,
+    Routes: {
+      Splash: "Splash", GetStarted: "GetStarted", Catalog: "Catalog",
+      Sheet: { Auth: "Sheet/Auth" },
+      Auth: {
+        GetStarted: "GetStarted", Register: "Register",
+        ProfileSetup: "ProfileSetup", SelectLanguages: "SelectLanguages",
+        DiscoverCreators: "DiscoverCreators", Notifications: "Notifications",
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock("@ion/onboarding", () => ({
   saveProfile: vi.fn(), uploadAvatar: vi.fn(),

@@ -1,13 +1,12 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { View } from "react-native";
 import type { ViewStyle } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Button, Icon, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { saveProfile } from "@ion/onboarding";
-import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
+import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { AvatarPicker } from "../components/AvatarPicker";
-import { NicknameReservedModal } from "../components/NicknameReservedModal";
 import { useProfileForm } from "./profile-setup-hooks";
 import { AuthHeader } from "./AuthHeader";
 import { ProfileSetupFields } from "./ProfileSetupFields";
@@ -100,29 +99,30 @@ function ProfileSetupContent({ formState, formActions, styles }: {
 }
 
 export function ProfileSetupScreen() {
-  const navigation = useSheetNavigation();
+  const authNavigation = useAuthNavigation();
+  const appNavigation = useAppNavigation();
   const [formState, formActions] = useProfileForm();
   const styles = useScreenStyles();
 
   const navigateNext = useCallback(() => {
-    navigation.navigate(Routes.Sheet.SelectLanguages);
-  }, [navigation]);
+    authNavigation.navigate(Routes.Auth.SelectLanguages);
+  }, [authNavigation]);
 
-  const handleClose = useCallback(() => navigation.goBack(), [navigation]);
   const handleSave = useSaveHandler(formState, formActions, navigateNext);
 
+  useEffect(() => {
+    if (formState.isNicknameReserved) {
+      appNavigation.navigate(Routes.Sheet.NicknameReserved);
+      formActions.dismissReservedModal();
+    }
+  }, [formState.isNicknameReserved, appNavigation, formActions]);
+
   return (
-    <Sheet onClose={handleClose} title={translate("onboarding:yourProfileTitle")}>
-      <View style={styles.container} testID="profile-setup-screen">
-        <ProfileSetupContent formState={formState} formActions={formActions} styles={styles} />
-        <View style={styles.footer}>
-          <SaveButton formState={formState} handleSave={handleSave} />
-        </View>
+    <View style={styles.container} testID="profile-setup-screen">
+      <ProfileSetupContent formState={formState} formActions={formActions} styles={styles} />
+      <View style={styles.footer}>
+        <SaveButton formState={formState} handleSave={handleSave} />
       </View>
-      <NicknameReservedModal
-        isVisible={formState.isNicknameReserved}
-        onClose={formActions.dismissReservedModal}
-      />
-    </Sheet>
+    </View>
   );
 }

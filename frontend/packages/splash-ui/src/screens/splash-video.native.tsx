@@ -25,7 +25,7 @@ export function SplashVideo({ source, onEnd, onError }: SplashVideoProps) {
         source={source}
         autoPlay
         muted
-        resizeMode="contain"
+        resizeMode="cover"
         onEnd={onEnd}
         onError={handleError}
         style={styles.video}
@@ -37,8 +37,6 @@ export function SplashVideo({ source, onEnd, onError }: SplashVideoProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: SPLASH_BACKGROUND_COLOR,
   },
   video: {

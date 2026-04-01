@@ -4,11 +4,16 @@ export const Routes = {
   Catalog: 'Catalog',
 
   Sheet: {
-    GetStarted: 'Sheet/GetStarted',
-    Register: 'Sheet/Register',
-    ProfileSetup: 'Sheet/ProfileSetup',
-    SelectLanguages: 'Sheet/SelectLanguages',
-    DiscoverCreators: 'Sheet/DiscoverCreators',
-    Notifications: 'Sheet/Notifications',
+    Auth: 'Sheet/Auth',
+    NicknameReserved: 'Sheet/NicknameReserved',
+  },
+
+  Auth: {
+    GetStarted: 'GetStarted',
+    Register: 'Register',
+    ProfileSetup: 'ProfileSetup',
+    SelectLanguages: 'SelectLanguages',
+    DiscoverCreators: 'DiscoverCreators',
+    Notifications: 'Notifications',
   },
 } as const;

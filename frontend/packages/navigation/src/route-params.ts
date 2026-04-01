@@ -3,10 +3,15 @@ export type RootStackParamList = {
   GetStarted: undefined;
   Onboarding: undefined;
   Catalog: undefined;
-  'Sheet/GetStarted': undefined;
-  'Sheet/Register': undefined;
-  'Sheet/ProfileSetup': undefined;
-  'Sheet/SelectLanguages': undefined;
-  'Sheet/DiscoverCreators': undefined;
-  'Sheet/Notifications': undefined;
+  'Sheet/Auth': undefined;
+  'Sheet/NicknameReserved': undefined;
+};
+
+export type AuthStackParamList = {
+  GetStarted: undefined;
+  Register: undefined;
+  ProfileSetup: undefined;
+  SelectLanguages: undefined;
+  DiscoverCreators: undefined;
+  Notifications: undefined;
 };

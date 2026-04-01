@@ -5,7 +5,7 @@ import type { ViewStyle } from "react-native";
 import { Button, SearchBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
+import { useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { CheckboxRow } from "../components/CheckboxRow";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
 import type { LanguageSelectionActions, LanguageSelectionState } from "./select-languages-hooks";
@@ -75,14 +75,13 @@ function SelectLanguagesContent({ state, actions, styles }: {
 }
 
 export function SelectLanguagesScreen() {
-  const navigation = useSheetNavigation();
+  const navigation = useAuthNavigation();
   const styles = useScreenStyles();
 
   const navigateNext = useCallback(() => {
-    navigation.navigate(Routes.Sheet.DiscoverCreators);
+    navigation.navigate(Routes.Auth.DiscoverCreators);
   }, [navigation]);
 
-  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
   const [state, actions] = useLanguageSelection(navigateNext);
 
   const continueButton = state.hasSelection
@@ -90,11 +89,9 @@ export function SelectLanguagesScreen() {
     : undefined;
 
   return (
-    <Sheet onClose={handleBack} title={translate("onboarding:selectLanguagesTitle")}>
-      <View style={styles.container} testID="select-languages-screen">
-        <SelectLanguagesContent state={state} actions={actions} styles={styles} />
-        {continueButton ? <View style={styles.floatingFooter}>{continueButton}</View> : null}
-      </View>
-    </Sheet>
+    <View style={styles.container} testID="select-languages-screen">
+      <SelectLanguagesContent state={state} actions={actions} styles={styles} />
+      {continueButton ? <View style={styles.floatingFooter}>{continueButton}</View> : null}
+    </View>
   );
 }

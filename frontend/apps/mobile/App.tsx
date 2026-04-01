@@ -11,9 +11,10 @@ import {
   SelectLanguagesScreen,
   DiscoverCreatorsScreen,
   NotificationsScreen,
+  NicknameReservedScreen,
   onboardingTranslations,
 } from '@ion/onboarding-ui';
-import { authTranslations, GetStartedSheetScreen, RegisterSheetScreen } from '@ion/auth-ui';
+import { authTranslations, GetStartedScreen, RegisterScreen } from '@ion/auth-ui';
 import { chatTranslations } from '@ion/chat';
 import { splashTranslations } from '@ion/splash-ui';
 import { SplashScreen } from './src/components/splash-screen';
@@ -29,12 +30,16 @@ const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
   Catalog: CatalogScreen,
-  'Sheet/GetStarted': GetStartedSheetScreen,
-  'Sheet/Register': RegisterSheetScreen,
-  'Sheet/ProfileSetup': ProfileSetupScreen,
-  'Sheet/SelectLanguages': SelectLanguagesScreen,
-  'Sheet/DiscoverCreators': DiscoverCreatorsScreen,
-  'Sheet/Notifications': NotificationsScreen,
+  NicknameReserved: NicknameReservedScreen,
+};
+
+const authScreens = {
+  GetStarted: GetStartedScreen,
+  Register: RegisterScreen,
+  ProfileSetup: ProfileSetupScreen,
+  SelectLanguages: SelectLanguagesScreen,
+  DiscoverCreators: DiscoverCreatorsScreen,
+  Notifications: NotificationsScreen,
 };
 
 function App() {
@@ -45,7 +50,7 @@ function App() {
           <NavigationContainer>
             <BottomSheetModalProvider>
               <StatusBar barStyle="light-content" />
-              <AppNavigator screens={screens} />
+              <AppNavigator screens={screens} authScreens={authScreens} />
             </BottomSheetModalProvider>
           </NavigationContainer>
         </ThemeProvider>

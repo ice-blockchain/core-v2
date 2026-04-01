@@ -1,6 +1,9 @@
+import { useCallback, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Icon, TextField } from "@ion/ui";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Icon, TextField, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
+import { useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
@@ -26,45 +29,95 @@ function GetStartedHeader() {
   );
 }
 
-interface GetStartedScreenProps {
-  onNavigateToRegister: () => void;
-  onNavigateToVerifyPassword: (identityKeyName: string) => void;
-  onNavigateToRestore: () => void;
+function useGetStartedNavigation() {
+  const navigation = useAuthNavigation();
+
+  return {
+    handleRegister: useCallback(() => {
+      navigation.navigate(Routes.Auth.Register);
+    }, [navigation]),
+    handleVerifyPassword: useCallback(() => {
+      navigation.navigate(Routes.Auth.ProfileSetup);
+    }, [navigation]),
+    handleRestore: useCallback(() => {
+      navigation.navigate(Routes.Auth.ProfileSetup);
+    }, [navigation]),
+  };
 }
 
-export function GetStartedScreen(props: GetStartedScreenProps) {
-  const identity = useIdentityKeyValidation();
+function GetStartedActions({ identity, nav }: {
+  identity: ReturnType<typeof useIdentityKeyValidation>;
+  nav: ReturnType<typeof useGetStartedNavigation>;
+}) {
+  const handleContinue = useCallback(() => {
+    if (identity.validate()) { nav.handleVerifyPassword(); }
+  }, [identity, nav]);
 
   return (
-    <View style={styles.page}>
-      <GetStartedHeader />
-      <TextField
-        label={translate("auth:identityKeyNameLabel")}
-        value={identity.value}
-        onChangeText={identity.setValue}
-        prefixIcon={<IdentityKeyIcon />}
-        hasPrefixDivider
-        suffixIcon={<InfoIcon />}
-        {...(identity.errorMessage ? { state: "error" as const, errorMessage: identity.errorMessage } : {})}
-        style={styles.field}
-      />
+    <>
       <View style={styles.continueWrapper}>
-        <PrimaryButton label={translate("auth:continueButton")} onPress={() => identity.validate() && props.onNavigateToVerifyPassword(identity.value)} />
+        <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} />
       </View>
       <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
-      <SecondaryButton label={translate("auth:registerButton")} onPress={props.onNavigateToRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} />} onPress={props.onNavigateToRestore} />
-      <View style={styles.footer}>
-        <SecuredByFooter />
-        <TermsFooter />
+      <SecondaryButton label={translate("auth:registerButton")} onPress={nav.handleRegister} leftIcon={<CreateAccountIcon />} />
+      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} />} onPress={nav.handleRestore} />
+    </>
+  );
+}
+
+function GetStartedContent({ identity, nav }: {
+  identity: ReturnType<typeof useIdentityKeyValidation>;
+  nav: ReturnType<typeof useGetStartedNavigation>;
+}) {
+  const sheetScroll = useSheetScroll();
+
+  return (
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
+      <View style={styles.page}>
+        <GetStartedHeader />
+        <TextField
+          label={translate("auth:identityKeyNameLabel")}
+          value={identity.value}
+          onChangeText={identity.setValue}
+          prefixIcon={<IdentityKeyIcon />}
+          hasPrefixDivider
+          suffixIcon={<InfoIcon />}
+          {...(identity.errorMessage ? { state: "error" as const, errorMessage: identity.errorMessage } : {})}
+          style={styles.field}
+        />
+        <GetStartedActions identity={identity} nav={nav} />
+        <View style={styles.footer}>
+          <SecuredByFooter />
+          <TermsFooter />
+        </View>
       </View>
+    </BottomSheetScrollView>
+  );
+}
+
+function useContainerStyle() {
+  const theme = useTheme();
+  return useMemo(
+    () => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }),
+    [theme.colors],
+  );
+}
+
+export function GetStartedScreen() {
+  const nav = useGetStartedNavigation();
+  const identity = useIdentityKeyValidation();
+  const containerStyle = useContainerStyle();
+
+  return (
+    <View style={containerStyle}>
+      <GetStartedContent identity={identity} nav={nav} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   page: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     width: "100%",
     paddingTop: 50,

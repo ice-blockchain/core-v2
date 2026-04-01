@@ -14,7 +14,7 @@ export interface SplashScreenProps {
 
 function SplashFallback() {
   return (
-    <View style={styles.container}>
+    <View style={styles.fallbackContainer}>
       <Icon name="login-ice-logo" size={148} color={colorPalette.sharkText} />
     </View>
   );
@@ -49,6 +49,10 @@ export function SplashScreen({ videoSource }: SplashScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: SPLASH_BACKGROUND_COLOR,
+  },
+  fallbackContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",

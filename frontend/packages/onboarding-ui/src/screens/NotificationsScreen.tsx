@@ -6,7 +6,7 @@ import { Button, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { requestNotificationPermission } from "@ion/onboarding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
+import { useSheetScroll, useAuthNavigation, Routes } from "@ion/navigation";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
 import { NotificationCard } from "../components/NotificationCard";
 import { DescriptionItem } from "../components/DescriptionItem";
@@ -74,27 +74,24 @@ function NotificationsContent({ styles }: { styles: ReturnType<typeof useScreenS
 }
 
 export function NotificationsScreen() {
-  const navigation = useSheetNavigation();
+  const navigation = useAuthNavigation();
   const styles = useScreenStyles();
-  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const handleContinue = useCallback(async () => {
     try { await requestNotificationPermission(); } catch { /* user denied or unavailable — proceed anyway */ }
-    navigation.reset({ index: 0, routes: [{ name: Routes.Catalog }] });
+    navigation.getParent()?.reset({ index: 0, routes: [{ name: Routes.Catalog }] });
   }, [navigation]);
 
   const sheetScroll = useSheetScroll();
 
   return (
-    <Sheet onClose={handleBack} title={translate("onboarding:notificationsTitle")}>
-      <View style={styles.container} testID="notifications-screen">
-        <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16}>
-          <NotificationsContent styles={styles} />
-        </BottomSheetScrollView>
-        <View style={styles.floatingFooter}>
-          <Button label={translate("onboarding:continueButton")} onPress={handleContinue} />
-        </View>
+    <View style={styles.container} testID="notifications-screen">
+      <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16}>
+        <NotificationsContent styles={styles} />
+      </BottomSheetScrollView>
+      <View style={styles.floatingFooter}>
+        <Button label={translate("onboarding:continueButton")} onPress={handleContinue} />
       </View>
-    </Sheet>
+    </View>
   );
 }

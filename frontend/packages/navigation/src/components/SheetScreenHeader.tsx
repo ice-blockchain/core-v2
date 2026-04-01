@@ -1,16 +1,15 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { Pressable, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Icon, Text, useTheme } from '@ion/ui';
-import { useSheetNavigation } from "../use-sheet-navigation";
-
 interface SheetScreenHeaderProps {
   canGoBack?: boolean;
   title?: string | undefined;
   titleOpacity?: number | undefined;
+  onBack?: (() => void) | undefined;
 }
 
-function buildHeaderStyle(scale: (n: number) => number): ViewStyle {
+function buildHeaderStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
   return {
     flexDirection: "row",
     alignItems: "center",
@@ -20,17 +19,15 @@ function buildHeaderStyle(scale: (n: number) => number): ViewStyle {
     paddingBottom: scale(16),
     borderTopLeftRadius: scale(30),
     borderTopRightRadius: scale(30),
+    backgroundColor,
   };
 }
 
-export function SheetScreenHeader({ canGoBack = true, title, titleOpacity = 0 }: SheetScreenHeaderProps) {
-  const navigation = useSheetNavigation();
+export function SheetScreenHeader({ canGoBack = true, title, titleOpacity = 0, onBack }: SheetScreenHeaderProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const headerStyle = useMemo(() => buildHeaderStyle(scale), [scale]);
+  const headerStyle = useMemo(() => buildHeaderStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors.secondaryBackground]);
   const spacerStyle = useMemo((): ViewStyle => ({ width: scale(24) }), [scale]);
-
-  const onBack = useCallback(() => navigation.goBack(), [navigation]);
 
   return (
     <View style={headerStyle}>

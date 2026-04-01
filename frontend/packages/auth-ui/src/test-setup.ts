@@ -12,3 +12,16 @@ jest.mock("@ion/localization", () => ({
     _options?: Record<string, unknown>,
   ) => translations[key] ?? key,
 }));
+
+jest.mock("@ion/navigation", () => ({
+  useAuthNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn(), reset: jest.fn() }),
+  Routes: {
+    Splash: "Splash", GetStarted: "GetStarted", Catalog: "Catalog",
+    Sheet: { Auth: "Sheet/Auth" },
+    Auth: {
+      GetStarted: "GetStarted", Register: "Register",
+      ProfileSetup: "ProfileSetup", SelectLanguages: "SelectLanguages",
+      DiscoverCreators: "DiscoverCreators", Notifications: "Notifications",
+    },
+  },
+}));

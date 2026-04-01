@@ -12,7 +12,7 @@ export function IntroScreen() {
   const insets = useSafeAreaInsets();
 
   const handleLogin = useCallback(() => {
-    navigation.navigate(Routes.Sheet.GetStarted);
+    navigation.navigate(Routes.Sheet.Auth);
   }, [navigation]);
 
   return (

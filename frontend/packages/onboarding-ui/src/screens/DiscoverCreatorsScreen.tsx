@@ -5,7 +5,7 @@ import type { ViewStyle } from "react-native";
 import { Button, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
+import { useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { CreatorRow } from "../components/CreatorRow";
 import { CreatorRowSkeletonList } from "../components/CreatorRowSkeleton";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
@@ -82,24 +82,21 @@ function DiscoverCreatorsContent({ state, actions, styles }: {
 }
 
 export function DiscoverCreatorsScreen() {
-  const navigation = useSheetNavigation();
+  const navigation = useAuthNavigation();
   const styles = useScreenStyles();
 
   const navigateNext = useCallback(() => {
-    navigation.navigate(Routes.Sheet.Notifications);
+    navigation.navigate(Routes.Auth.Notifications);
   }, [navigation]);
 
-  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
   const [state, actions] = useDiscoverCreators(navigateNext);
 
   return (
-    <Sheet onClose={handleBack} title={translate("onboarding:discoverCreatorsTitle")}>
-      <View style={styles.container} testID="discover-creators-screen">
-        <DiscoverCreatorsContent state={state} actions={actions} styles={styles} />
-        <View style={styles.floatingFooter}>
-          <Button label={translate("onboarding:continueButton")} onPress={actions.handleContinue} />
-        </View>
+    <View style={styles.container} testID="discover-creators-screen">
+      <DiscoverCreatorsContent state={state} actions={actions} styles={styles} />
+      <View style={styles.floatingFooter}>
+        <Button label={translate("onboarding:continueButton")} onPress={actions.handleContinue} />
       </View>
-    </Sheet>
+    </View>
   );
 }
