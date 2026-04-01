@@ -8,6 +8,7 @@ dist/
 build/
 out/
 .next/
+.cxx/
 
 # Turborepo
 .turbo/

@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <cstdlib>
+#include <cstring>
 #include "tonutils-proxy.h"
 
 static jstring toJStringAndFree(JNIEnv *env, char *cstr) {

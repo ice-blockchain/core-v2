@@ -22,7 +22,10 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
 
     companion object {
         const val NAME = "IonConnectProxy"
-        init { System.loadLibrary("ion-connect-proxy-jni") }
+        init {
+            System.loadLibrary("tonutils-proxy")
+            System.loadLibrary("ion-connect-proxy-jni")
+        }
     }
 
     private var proxyPort: Int = 0
