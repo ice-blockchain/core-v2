@@ -2310,7 +2310,7 @@ PODS:
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - IonConnectProxy (from `../../../packages/ion-connect-proxy`)
+  - "IonConnectProxy (from `../node_modules/@ion/ion-connect-proxy`)"
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
@@ -2410,7 +2410,7 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.9
   IonConnectProxy:
-    :path: "../../../packages/ion-connect-proxy"
+    :path: "../node_modules/@ion/ion-connect-proxy"
   lottie-react-native:
     :path: "../node_modules/lottie-react-native"
   NitroMmkv:
@@ -2672,6 +2672,6 @@ SPEC CHECKSUMS:
   TensorFlowLiteC: eac6d689a8d391d1b202dc59e3d9165ba64aaf73
   Yoga: c0b3f2c7e8d3e327e450223a2414ca3fa296b9a2
 
-PODFILE CHECKSUM: 7bbe673cf3492f3ffadc734f29b3632deccc1154
+PODFILE CHECKSUM: bbcc6f9caaa3bd2bd48b9b00e46f0a0b73169edc
 
 COCOAPODS: 1.16.2

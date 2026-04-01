@@ -24,6 +24,7 @@
     "@ion/chat": "workspace:*",
     "@ion/config": "workspace:*",
     "@ion/identity-client": "workspace:*",
+    "@ion/ion-connect-proxy": "workspace:*",
     "@ion/localization": "workspace:*",
     "@ion/media-viewer": "workspace:*",
     "@ion/navigation": "workspace:*",
