@@ -39,6 +39,7 @@ describe('getLoginCapabilities', () => {
       supportsPasskey: true,
       supportsPassword: true,
       identityFound: true,
+      twoFAOptionsCount: null,
     });
   });
 
@@ -50,7 +51,7 @@ describe('getLoginCapabilities', () => {
     expect(caps.identityFound).toBe(true);
   });
 
-  it('reports identity not found on client error', async () => {
+  it('reports identity not found on 404', async () => {
     const ds: LoginDataSource = {
       initLogin: vi.fn(() => Promise.reject(
         new NetworkError({ code: 'CLIENT_ERROR', message: 'Not found', status: 404 }),
@@ -62,6 +63,39 @@ describe('getLoginCapabilities', () => {
       supportsPasskey: false,
       supportsPassword: false,
       identityFound: false,
+      twoFAOptionsCount: null,
+    });
+  });
+
+  it('reports identity not found on 401', async () => {
+    const ds: LoginDataSource = {
+      initLogin: vi.fn(() => Promise.reject(
+        new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status: 401 }),
+      )),
+      completeLogin: vi.fn(),
+    };
+    const caps = await getLoginCapabilities('unknown', ds);
+    expect(caps).toEqual({
+      supportsPasskey: false,
+      supportsPassword: false,
+      identityFound: false,
+      twoFAOptionsCount: null,
+    });
+  });
+
+  it('returns twoFAOptionsCount from 403 response', async () => {
+    const ds: LoginDataSource = {
+      initLogin: vi.fn(() => Promise.reject(
+        new NetworkError({ code: 'CLIENT_ERROR', message: 'Forbidden', status: 403, responseBody: { data: { n: 2 } } }),
+      )),
+      completeLogin: vi.fn(),
+    };
+    const caps = await getLoginCapabilities('alice', ds);
+    expect(caps).toEqual({
+      supportsPasskey: false,
+      supportsPassword: false,
+      identityFound: true,
+      twoFAOptionsCount: 2,
     });
   });
 

@@ -3,6 +3,12 @@ import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { LoginCapabilities } from '../types';
 import { isPasskeyAvailable } from '../platform/passkey';
 
+function parseTwoFACount(error: NetworkError): number | null {
+  const body = error.responseBody as Record<string, unknown> | undefined;
+  const data = body?.data as Record<string, unknown> | undefined;
+  return typeof data?.n === 'number' ? data.n : null;
+}
+
 export async function getLoginCapabilities(
   username: string,
   loginDataSource: LoginDataSource,
@@ -15,10 +21,14 @@ export async function getLoginCapabilities(
       supportsPasskey: hasWebauthn && isPasskeyAvailable(),
       supportsPassword: hasPassword,
       identityFound: true,
+      twoFAOptionsCount: null,
     };
   } catch (error) {
-    if (error instanceof NetworkError && error.code === 'CLIENT_ERROR' && error.status === 404) {
-      return { supportsPasskey: false, supportsPassword: false, identityFound: false };
+    if (error instanceof NetworkError && error.status === 403) {
+      return { supportsPasskey: false, supportsPassword: false, identityFound: true, twoFAOptionsCount: parseTwoFACount(error) };
+    }
+    if (error instanceof NetworkError && (error.status === 401 || error.status === 404)) {
+      return { supportsPasskey: false, supportsPassword: false, identityFound: false, twoFAOptionsCount: null };
     }
     throw error;
   }

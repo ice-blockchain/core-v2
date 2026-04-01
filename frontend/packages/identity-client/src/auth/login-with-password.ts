@@ -1,16 +1,19 @@
 import { ed25519 } from '@noble/curves/ed25519';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
+import type { InternalAuthStore } from '../auth-store';
 import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
 import { parseSeedFromPem } from '../crypto/generate-key-pair';
 import { generateCredentialId } from '../crypto/generate-credential-id';
 import { signForLogin } from '../crypto/sign-for-login';
 import { IdentityError, IdentityErrorCode } from '../errors';
+import { parseUserIdFromToken } from '../token/parse-user-id-from-token';
 
 interface LoginWithPasswordDeps {
   loginDataSource: LoginDataSource;
   tokenManager: TokenManager;
+  authStore: InternalAuthStore;
   origin: string;
 }
 
@@ -46,7 +49,6 @@ function isValidEncryptedPrivateKey(value: unknown): value is EncryptedPrivateKe
   if (typeof value !== 'object' || value === null) return false;
   const obj = value as Record<string, unknown>;
   return (
-    (obj.version === undefined || typeof obj.version === 'string') &&
     typeof obj.salt === 'string' && obj.salt.length > 0 &&
     typeof obj.nonce === 'string' && obj.nonce.length > 0 &&
     typeof obj.ciphertext === 'string' && obj.ciphertext.length > 0 &&
@@ -110,5 +112,6 @@ export async function loginWithPassword(
   const payload = buildPasswordAssertion(signed, challenge.challengeIdentifier);
   const tokens = await deps.loginDataSource.completeLogin(payload);
   await deps.tokenManager.setTokens(input.username, tokens);
-  return input.username;
+  deps.authStore.addUser(input.username);
+  return parseUserIdFromToken(tokens.token) ?? input.username;
 }

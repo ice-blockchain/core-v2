@@ -16,13 +16,13 @@ describe('encryptPrivateKey / decryptPrivateKey', () => {
     await expect(decryptPrivateKey(encrypted, 'wrong')).rejects.toThrow();
   });
 
-  it('produces all required fields as base64 with version', async () => {
+  it('produces all required fields as base64', async () => {
     const kp = generateKeyPair();
     const encrypted = await encryptPrivateKey(kp.privateKeyPem, 'pass');
-    expect(encrypted.version).toBe('v1');
     expect(encrypted.salt).toBeTruthy();
     expect(encrypted.nonce).toBeTruthy();
     expect(encrypted.ciphertext).toBeTruthy();
     expect(encrypted.mac).toBeTruthy();
+    expect(Object.keys(encrypted).sort()).toEqual(['ciphertext', 'mac', 'nonce', 'salt']);
   });
 });
