@@ -4,6 +4,7 @@ export const Routes = {
   Catalog: 'Catalog',
 
   Sheet: {
+    GetStarted: 'Sheet/GetStarted',
     Register: 'Sheet/Register',
     ProfileSetup: 'Sheet/ProfileSetup',
     SelectLanguages: 'Sheet/SelectLanguages',

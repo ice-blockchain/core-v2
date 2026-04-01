@@ -1,5 +1,7 @@
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
+export { GetStartedSheetScreen } from "./get-started-sheet-screen";
+export { RegisterSheetScreen } from "./register-sheet-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { RegisterScreen } from "./register-screen";
 export { RestoreCredentialsScreen } from "./restore-credentials-screen";

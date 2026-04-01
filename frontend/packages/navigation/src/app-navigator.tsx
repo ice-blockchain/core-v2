@@ -17,6 +17,8 @@ interface AppNavigatorProps {
     Splash: ComponentType;
     GetStarted: ComponentType;
     Catalog: ComponentType;
+    'Sheet/GetStarted': ComponentType;
+    'Sheet/Register': ComponentType;
     'Sheet/ProfileSetup': ComponentType;
     'Sheet/SelectLanguages': ComponentType;
     'Sheet/DiscoverCreators': ComponentType;
@@ -35,6 +37,8 @@ export function AppNavigator({ screens }: AppNavigatorProps) {
         component={screens.GetStarted}
       />
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
+      <Stack.Screen name={Routes.Sheet.GetStarted} component={screens['Sheet/GetStarted']} options={TRANSPARENT_MODAL_OPTIONS} />
+      <Stack.Screen name={Routes.Sheet.Register} component={screens['Sheet/Register']} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.ProfileSetup} component={screens['Sheet/ProfileSetup']} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.SelectLanguages} component={screens['Sheet/SelectLanguages']} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.DiscoverCreators} component={screens['Sheet/DiscoverCreators']} options={TRANSPARENT_MODAL_OPTIONS} />

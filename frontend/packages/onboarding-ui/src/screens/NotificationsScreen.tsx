@@ -43,9 +43,9 @@ function useScreenStyles() {
 function NotificationCards({ innerStyle }: { innerStyle: ReturnType<typeof buildCardsInnerStyle> }) {
   return (
     <View style={innerStyle}>
-      <NotificationCard avatar={avatarReceivedIon} title="Received ION" description="You received 873 ION from @james" time="15m ago" showBadge testID="notification-received-ion" />
-      <NotificationCard avatar={avatarNewFollower} title="New follower" description="@curtis has started following you" time="24m ago" testID="notification-new-follower" />
-      <NotificationCard avatar={avatarNewMessage} title="New message" description="@marie has sent you a message" time="31m ago" testID="notification-new-message" />
+      <NotificationCard avatar={avatarReceivedIon} title={translate("onboarding:receivedIonTitle")} description={translate("onboarding:receivedIonDescription")} time={translate("onboarding:receivedIonTime")} showBadge testID="notification-received-ion" />
+      <NotificationCard avatar={avatarNewFollower} title={translate("onboarding:newFollowerTitle")} description={translate("onboarding:newFollowerDescription")} time={translate("onboarding:newFollowerTime")} testID="notification-new-follower" />
+      <NotificationCard avatar={avatarNewMessage} title={translate("onboarding:newMessageTitle")} description={translate("onboarding:newMessageDescription")} time={translate("onboarding:newMessageTime")} testID="notification-new-message" />
     </View>
   );
 }
@@ -53,9 +53,9 @@ function NotificationCards({ innerStyle }: { innerStyle: ReturnType<typeof build
 function NotificationDescriptions({ style }: { style: ReturnType<typeof buildDescriptionsContainerStyle> }) {
   return (
     <View style={style}>
-      <DescriptionItem iconName="button-receive" text="Receive notifications when your sending or receiving assets" testID="description-receive" />
-      <DescriptionItem iconName="articles" text="Stay up to date with the latest news" testID="description-news" />
-      <DescriptionItem iconName="chat-off" text="Chat and receive notifications even if the application is closed" testID="description-chat" />
+      <DescriptionItem iconName="button-receive" text={translate("onboarding:notificationDescriptionAssets")} testID="description-receive" />
+      <DescriptionItem iconName="articles" text={translate("onboarding:notificationDescriptionNews")} testID="description-news" />
+      <DescriptionItem iconName="chat-off" text={translate("onboarding:notificationDescriptionChat")} testID="description-chat" />
     </View>
   );
 }

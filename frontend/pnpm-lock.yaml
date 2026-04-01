@@ -335,6 +335,9 @@ importers:
       '@ion/localization':
         specifier: workspace:*
         version: link:../localization
+      '@ion/navigation':
+        specifier: workspace:*
+        version: link:../navigation
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
@@ -925,6 +928,9 @@ importers:
       react-native:
         specifier: '>=0.76'
         version: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
+      react-native-safe-area-context:
+        specifier: '>=4.0.0'
+        version: 5.7.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@types/react':
         specifier: ^19.0.0

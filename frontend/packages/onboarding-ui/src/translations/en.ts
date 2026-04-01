@@ -20,4 +20,27 @@ export const onboardingEN = {
   notificationsTitle: 'Turn on notifications',
   notificationsSubtitle:
     'Receive notifications when you transfer and receive funds',
+  receivedIonTitle: 'Received ION',
+  receivedIonDescription: 'You received 873 ION from @james',
+  receivedIonTime: '15m ago',
+  newFollowerTitle: 'New follower',
+  newFollowerDescription: '@curtis has started following you',
+  newFollowerTime: '24m ago',
+  newMessageTitle: 'New message',
+  newMessageDescription: '@marie has sent you a message',
+  newMessageTime: '31m ago',
+  notificationDescriptionAssets:
+    'Receive notifications when your sending or receiving assets',
+  notificationDescriptionNews: 'Stay up to date with the latest news',
+  notificationDescriptionChat:
+    'Chat and receive notifications even if the application is closed',
+  followingButton: 'Following',
+  followButton: 'Follow',
+  nicknameReservedError: 'Nickname is reserved',
+  nicknameAlreadyTakenError: 'Nickname is already taken',
+  nicknameInvalidCharactersError:
+    'Only letters, numbers, and dots are allowed',
+  validationFailedError: 'Validation failed',
+  nicknameDoesNotExistError: "Nickname doesn't exist",
+  cannotBeEmptyError: 'Cannot be empty',
 } as const;

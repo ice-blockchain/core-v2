@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { TextField } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { SheetHeader } from "./sheet-header";
 import { PrimaryButton } from "./primary-button";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasswordIcon } from "./register-password-icon";
@@ -17,7 +16,6 @@ import { validateIdentityKeyName } from "./identity-key-rules";
 import { buildPasswordRules, areAllPasswordRulesMet } from "./password-rules";
 
 interface RegisterScreenProps {
-  onBack: () => void;
   onContinue: (data: { identityKeyName: string; password: string }) => void;
 }
 
@@ -112,7 +110,7 @@ function RegisterFormFields({ form }: { form: FormState }) {
   );
 }
 
-export function RegisterScreen({ onBack, onContinue }: RegisterScreenProps) {
+export function RegisterScreen({ onContinue }: RegisterScreenProps) {
   const form = useRegisterPasswordForm();
 
   const handleContinue = useCallback(() => {
@@ -122,7 +120,6 @@ export function RegisterScreen({ onBack, onContinue }: RegisterScreenProps) {
 
   return (
     <View style={styles.page}>
-      <SheetHeader title="" onBack={onBack} />
       <RegisterHeader
         icon={<RegisterPasswordIcon />}
         title={translate("auth:registerTitle")}

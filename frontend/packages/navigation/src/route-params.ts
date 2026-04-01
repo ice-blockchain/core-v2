@@ -3,6 +3,7 @@ export type RootStackParamList = {
   GetStarted: undefined;
   Onboarding: undefined;
   Catalog: undefined;
+  'Sheet/GetStarted': undefined;
   'Sheet/Register': undefined;
   'Sheet/ProfileSetup': undefined;
   'Sheet/SelectLanguages': undefined;

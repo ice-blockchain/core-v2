@@ -14,18 +14,22 @@ import {
   NotificationsScreen,
   onboardingTranslations,
 } from '@ion/onboarding-ui';
-import { authTranslations } from '@ion/auth-ui';
+import { authTranslations, GetStartedSheetScreen, RegisterSheetScreen } from '@ion/auth-ui';
+import { splashTranslations } from '@ion/splash-ui';
 import { SplashScreen } from './components/splash-screen';
 import { IntroScreen } from './components/intro-screen';
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
+registerTranslations(i18n, splashTranslations);
 
 const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
   Catalog: CatalogScreen,
+  'Sheet/GetStarted': GetStartedSheetScreen,
+  'Sheet/Register': RegisterSheetScreen,
   'Sheet/ProfileSetup': ProfileSetupScreen,
   'Sheet/SelectLanguages': SelectLanguagesScreen,
   'Sheet/DiscoverCreators': DiscoverCreatorsScreen,
