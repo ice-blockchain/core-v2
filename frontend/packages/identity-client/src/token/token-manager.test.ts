@@ -88,6 +88,50 @@ describe('TokenManager', () => {
 
   it('stores tokens atomically as a single value', async () => {
     await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
-    expect(storage.setItem).toHaveBeenCalledTimes(1);
+    expect(storage.setItem).toHaveBeenCalledWith(
+      'ion_identity_tokens:alice',
+      expect.any(String),
+    );
+  });
+
+  describe('tracked users', () => {
+    it('returns empty array when no users tracked', async () => {
+      expect(await manager.getTrackedUsers()).toEqual([]);
+    });
+
+    it('adds username to tracked list on setTokens', async () => {
+      await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
+      expect(await manager.getTrackedUsers()).toEqual(['alice']);
+    });
+
+    it('does not duplicate username in tracked list', async () => {
+      await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
+      await manager.setTokens('alice', { token: 'b', refreshToken: 'r2' });
+      expect(await manager.getTrackedUsers()).toEqual(['alice']);
+    });
+
+    it('tracks multiple users', async () => {
+      await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
+      await manager.setTokens('bob', { token: 'b', refreshToken: 'r2' });
+      expect(await manager.getTrackedUsers()).toEqual(['alice', 'bob']);
+    });
+
+    it('removes username from tracked list on clearTokens', async () => {
+      await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
+      await manager.setTokens('bob', { token: 'b', refreshToken: 'r2' });
+      await manager.clearTokens('alice');
+      expect(await manager.getTrackedUsers()).toEqual(['bob']);
+    });
+
+    it('handles clearing untracked username gracefully', async () => {
+      await manager.setTokens('alice', { token: 'a', refreshToken: 'r' });
+      await manager.clearTokens('unknown');
+      expect(await manager.getTrackedUsers()).toEqual(['alice']);
+    });
+
+    it('returns empty array when stored JSON is corrupted', async () => {
+      await storage.setItem('ion_identity_tracked_users', '{corrupted');
+      expect(await manager.getTrackedUsers()).toEqual([]);
+    });
   });
 });

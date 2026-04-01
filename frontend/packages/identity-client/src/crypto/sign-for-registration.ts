@@ -1,6 +1,6 @@
 import { ed25519 } from '@noble/curves/ed25519';
 import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex } from '@noble/hashes/utils';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
 import { base64urlnopad } from '@scure/base';
 import type { KeyPair } from './generate-key-pair';
 import { encryptPrivateKey } from './encrypt-private-key';
@@ -22,12 +22,10 @@ interface SignForRegistrationInput {
   password: string;
 }
 
-const encoder = new TextEncoder();
-
 function buildAttestationData(clientData: string, keyPair: KeyPair): string {
-  const clientDataHash = bytesToHex(sha256(encoder.encode(clientData)));
+  const clientDataHash = bytesToHex(sha256(utf8ToBytes(clientData)));
   const fingerprint = buildSortedJson({ clientDataHash, publicKey: keyPair.publicKeyPem });
-  const signatureHex = bytesToHex(ed25519.sign(encoder.encode(fingerprint), keyPair.seed));
+  const signatureHex = bytesToHex(ed25519.sign(utf8ToBytes(fingerprint), keyPair.seed));
   return buildSortedJson({ publicKey: keyPair.publicKeyPem, signature: signatureHex });
 }
 
@@ -45,8 +43,8 @@ export async function signForRegistration(
     const encrypted = await encryptPrivateKey(keyPair.privateKeyPem, password);
     return {
       credId,
-      clientData: base64urlnopad.encode(encoder.encode(clientData)),
-      attestationData: base64urlnopad.encode(encoder.encode(attestationData)),
+      clientData: base64urlnopad.encode(utf8ToBytes(clientData)),
+      attestationData: base64urlnopad.encode(utf8ToBytes(attestationData)),
       encryptedPrivateKey: JSON.stringify(encrypted),
     };
   } finally {

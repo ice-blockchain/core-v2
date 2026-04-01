@@ -3,12 +3,14 @@ import type { AuthTokens } from '../types';
 import { parseJwtExpiry } from './parse-jwt-expiry';
 
 const EXPIRY_BUFFER_SECONDS = 30;
+const TRACKED_USERS_KEY = 'ion_identity_tracked_users';
 
 export interface TokenManager {
   getTokens(username: string): Promise<AuthTokens | null>;
   setTokens(username: string, tokens: AuthTokens): Promise<void>;
   clearTokens(username: string): Promise<void>;
   isTokenExpired(username: string): Promise<boolean>;
+  getTrackedUsers(): Promise<readonly string[]>;
 }
 
 function storageKey(username: string): string {
@@ -32,16 +34,35 @@ function readTokens(secureStorage: ISecureStorage, username: string): Promise<Au
   });
 }
 
+async function readTrackedUsers(secureStorage: ISecureStorage): Promise<string[]> {
+  const raw = await secureStorage.getItem(TRACKED_USERS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch { return []; }
+}
+
+async function writeTrackedUsers(secureStorage: ISecureStorage, usernames: string[]): Promise<void> {
+  await secureStorage.setItem(TRACKED_USERS_KEY, JSON.stringify(usernames));
+}
+
 export function createTokenManager(secureStorage: ISecureStorage): TokenManager {
   return {
     getTokens: (username) => readTokens(secureStorage, username),
 
     async setTokens(username, tokens) {
       await secureStorage.setItem(storageKey(username), JSON.stringify(tokens));
+      const tracked = await readTrackedUsers(secureStorage);
+      if (!tracked.includes(username)) {
+        await writeTrackedUsers(secureStorage, [...tracked, username]);
+      }
     },
 
     async clearTokens(username) {
       await secureStorage.removeItem(storageKey(username));
+      const tracked = await readTrackedUsers(secureStorage);
+      await writeTrackedUsers(secureStorage, tracked.filter((u) => u !== username));
     },
 
     async isTokenExpired(username) {
@@ -51,5 +72,7 @@ export function createTokenManager(secureStorage: ISecureStorage): TokenManager 
       if (!exp) return true;
       return Date.now() >= (exp - EXPIRY_BUFFER_SECONDS) * 1000;
     },
+
+    getTrackedUsers: () => readTrackedUsers(secureStorage),
   };
 }

@@ -9,7 +9,7 @@ export interface RefreshTokenInput {
 
 export interface SessionDataSource {
   refreshToken(input: RefreshTokenInput): Promise<{ token: string; refreshToken?: string }>;
-  logout(token: string, username: string): Promise<void>;
+  logout(username: string): Promise<void>;
 }
 
 export function createSessionDataSource(httpClient: HttpClient): SessionDataSource {
@@ -17,15 +17,15 @@ export function createSessionDataSource(httpClient: HttpClient): SessionDataSour
     async refreshToken(input) {
       const { body } = await httpClient.post<{ token: string; refreshToken?: string }>('/auth/login/delegated', {
         body: { username: input.username, refreshToken: input.refreshToken },
-        headers: { Authorization: `Bearer ${input.currentToken}` },
+        headers: { Authorization: `Bearer ${input.currentToken}`, 'X-Username': input.username },
       });
       validateRefreshTokenResponse(body);
       return body;
     },
 
-    async logout(token, username) {
+    async logout(username) {
       await httpClient.put<void>('/auth/logout', {
-        headers: { Authorization: `Bearer ${token}`, 'X-Username': username },
+        headers: { 'X-Username': username },
       });
     },
   };

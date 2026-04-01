@@ -20,10 +20,10 @@ describe('createUserDataSource', () => {
     vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: { masterPubKey: 'pk' } });
     const ds = createUserDataSource(httpClient);
 
-    const result = await ds.getUser('user-123', 'my-token');
+    const result = await ds.getUser('user-123', 'alice');
 
     expect(httpClient.get).toHaveBeenCalledWith('/auth/users/user-123', {
-      headers: { Authorization: 'Bearer my-token' },
+      headers: { 'X-Username': 'alice' },
     });
     expect(result).toEqual({ masterPubKey: 'pk' });
   });
@@ -33,10 +33,10 @@ describe('createUserDataSource', () => {
     vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: { masterPubKey: 'pk' } });
     const ds = createUserDataSource(httpClient);
 
-    await ds.getUser('../admin', 'tok');
+    await ds.getUser('../admin', 'alice');
 
     expect(httpClient.get).toHaveBeenCalledWith('/auth/users/..%2Fadmin', {
-      headers: { Authorization: 'Bearer tok' },
+      headers: { 'X-Username': 'alice' },
     });
   });
 
@@ -45,10 +45,10 @@ describe('createUserDataSource', () => {
     vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: { masterPubKey: 'pk' } });
     const ds = createUserDataSource(httpClient);
 
-    await ds.getUser('npub1abc', 'tok');
+    await ds.getUser('npub1abc', 'alice');
 
     expect(httpClient.get).toHaveBeenCalledWith('/auth/users/npub1abc', {
-      headers: { Authorization: 'Bearer tok' },
+      headers: { 'X-Username': 'alice' },
     });
   });
 });

@@ -1,5 +1,6 @@
 import type { RegistrationDataSource } from '../data-sources/registration-data-source';
 import type { TokenManager } from '../token/token-manager';
+import type { InternalAuthStore } from '../auth-store';
 import { isPasskeyAvailable, createPasskeyCredential } from '../platform/passkey';
 import { IdentityError, IdentityErrorCode } from '../errors';
 import { requireTemporaryToken } from './require-temporary-token';
@@ -7,6 +8,7 @@ import { requireTemporaryToken } from './require-temporary-token';
 interface RegisterWithPasskeyDeps {
   registrationDataSource: RegistrationDataSource;
   tokenManager: TokenManager;
+  authStore: InternalAuthStore;
 }
 
 export async function registerWithPasskey(
@@ -35,4 +37,5 @@ export async function registerWithPasskey(
     earlyAccessEmail,
   );
   await deps.tokenManager.setTokens(username, result.authentication);
+  deps.authStore.addUser(username);
 }

@@ -1,6 +1,6 @@
 import { IdentityError, IdentityErrorCode } from '../errors';
 
-const CHALLENGE_PATTERN = /^[A-Za-z0-9\-_]{16,256}$/;
+const CHALLENGE_PATTERN = /^[A-Za-z0-9\-_+/=.]{16,2048}$/;
 
 export function validateChallengeFormat(challenge: string): void {
   if (!CHALLENGE_PATTERN.test(challenge)) {

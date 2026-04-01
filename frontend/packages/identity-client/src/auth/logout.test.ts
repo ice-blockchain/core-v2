@@ -3,18 +3,23 @@ import type { SessionDataSource } from '../data-sources/session-data-source';
 import type { TokenManager } from '../token/token-manager';
 import { logout } from './logout';
 
+function createMockAuthStore() {
+  return { getSnapshot: () => [] as readonly string[], subscribe: () => () => {}, addUser: vi.fn(), removeUser: vi.fn() };
+}
+
 function createMockDeps() {
   const sessionDataSource: SessionDataSource = {
     refreshToken: vi.fn(() => Promise.resolve({ token: 'new-token' })),
-    logout: vi.fn((_token: string, _username: string) => Promise.resolve()),
+    logout: vi.fn((_username: string) => Promise.resolve()),
   };
   const tokenManager: TokenManager = {
     getTokens: vi.fn(() => Promise.resolve({ token: 'old-tok', refreshToken: 'ref-tok' })),
     setTokens: vi.fn(() => Promise.resolve()),
     clearTokens: vi.fn(() => Promise.resolve()),
     isTokenExpired: vi.fn(() => Promise.resolve(false)),
+    getTrackedUsers: vi.fn(() => Promise.resolve([])),
   };
-  return { sessionDataSource, tokenManager };
+  return { sessionDataSource, tokenManager, authStore: createMockAuthStore() };
 }
 
 describe('logout', () => {
@@ -26,7 +31,7 @@ describe('logout', () => {
 
   it('calls server logout and clears tokens', async () => {
     await logout('alice', deps);
-    expect(deps.sessionDataSource.logout).toHaveBeenCalledWith('old-tok', 'alice');
+    expect(deps.sessionDataSource.logout).toHaveBeenCalledWith('alice');
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
   });
 
@@ -36,10 +41,8 @@ describe('logout', () => {
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
   });
 
-  it('clears tokens even when no tokens exist', async () => {
-    vi.mocked(deps.tokenManager.getTokens).mockResolvedValueOnce(null);
+  it('removes user from auth store on logout', async () => {
     await logout('alice', deps);
-    expect(deps.sessionDataSource.logout).not.toHaveBeenCalled();
-    expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
+    expect(deps.authStore.removeUser).toHaveBeenCalledWith('alice');
   });
 });
