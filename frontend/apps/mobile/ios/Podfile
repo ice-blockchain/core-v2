@@ -27,6 +27,7 @@ end
 
 target 'mobile' do
   config = use_native_modules!
+  pod 'IonConnectProxy', :path => '../../../packages/ion-connect-proxy'
 
   use_react_native!(
     :path => config[:reactNativePath],
