@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { FullscreenImageItem } from './fullscreen-image-item';
 import type { MediaViewerSource } from './types';
@@ -12,18 +12,18 @@ const gestureBuilder = () => ({
   activeOffsetY: () => gestureBuilder(),
 });
 
-jest.mock('react-native-gesture-handler', () => ({
+vi.mock('react-native-gesture-handler', () => ({
   GestureDetector: ({ children }: { children: React.ReactNode }) => <View>{children}</View>,
   Gesture: {
     Pinch: gestureBuilder,
     Tap: gestureBuilder,
     Pan: gestureBuilder,
-    Exclusive: jest.fn(),
-    Simultaneous: jest.fn(),
+    Exclusive: vi.fn(),
+    Simultaneous: vi.fn(),
   },
 }));
 
-jest.mock('react-native-reanimated', () => ({
+vi.mock('react-native-reanimated', () => ({
   default: { View },
   useSharedValue: (initial: number) => ({ value: initial }),
   useAnimatedStyle: (fn: () => unknown) => fn(),
@@ -34,10 +34,6 @@ jest.mock('react-native-reanimated', () => ({
   Extrapolation: { CLAMP: 'clamp' },
 }));
 
-jest.mock('expo-image', () => ({
-  Image: (props: Record<string, unknown>) => <View testID="fullscreen-image" {...props} />,
-}));
-
 const source: MediaViewerSource = {
   uri: 'https://example.com/photo.jpg',
   mimeType: 'image/jpeg',
@@ -45,18 +41,18 @@ const source: MediaViewerSource = {
 
 describe('FullscreenImageItem', () => {
   it('renders the image with correct URI', () => {
-    const { getByTestId } = render(
-      <FullscreenImageItem source={source} onClose={jest.fn()} />,
+    const { UNSAFE_getByType } = render(
+      <FullscreenImageItem source={source} onClose={vi.fn()} />,
     );
-    const image = getByTestId('fullscreen-image');
+    const image = UNSAFE_getByType(Image);
     expect(image.props.source).toEqual({ uri: source.uri });
   });
 
-  it('uses contain content fit for fullscreen display', () => {
-    const { getByTestId } = render(
-      <FullscreenImageItem source={source} onClose={jest.fn()} />,
+  it('uses contain resize mode for fullscreen display', () => {
+    const { UNSAFE_getByType } = render(
+      <FullscreenImageItem source={source} onClose={vi.fn()} />,
     );
-    const image = getByTestId('fullscreen-image');
-    expect(image.props.contentFit).toBe('contain');
+    const image = UNSAFE_getByType(Image);
+    expect(image.props.resizeMode).toBe('contain');
   });
 });

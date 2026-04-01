@@ -6,7 +6,7 @@ React Native media display components. Provides image and video rendering with f
 
 ```typescript
 // Components
-export { MediaImage }       // Single image with blurhash placeholder
+export { MediaImage }       // Single image with resize modes
 export { MediaVideo }       // Single video with autoplay, poster, controls
 export { MediaFullscreen }  // Fullscreen modal with media pagination
 
@@ -20,7 +20,6 @@ export type { MediaViewerSource, MediaImageProps, MediaVideoProps, MediaFullscre
 interface MediaViewerSource {
   uri: string;
   mimeType: string;          // "image/*" or "video/*"
-  blurhash?: string;         // Placeholder for images
   width?: number;            // For aspect ratio calculation
   height?: number;
   thumbnailUri?: string;     // Video poster/thumbnail
@@ -30,13 +29,13 @@ interface MediaViewerSource {
 ## Component Hierarchy
 
 ```
-MediaImage (standalone)       -- expo-image with blurhash, resize modes
+MediaImage (standalone)       -- React Native Image with resize modes
 MediaVideo (standalone)       -- expo-av with autoplay, controls, poster
 
 MediaFullscreen (modal)
   FullscreenHeader            -- Index counter + close button
   FlatList (horizontal, paginated, windowSize=3)
-    FullscreenImageItem       -- expo-image + pinch-to-zoom + dismiss gesture
+    FullscreenImageItem       -- RN Image + pinch-to-zoom + dismiss gesture
     FullscreenVideoItem       -- MediaVideo + dismiss gesture
 ```
 
@@ -55,13 +54,13 @@ Gestures are composed with `Gesture.Exclusive()` to prevent conflicts.
 - **Type routing**: `MediaFullscreen` routes to image or video item based on `mimeType.startsWith('image/')`.
 - **Aspect ratio**: Uses `width/height` from source if available; falls back to 100% fill.
 - **FlatList optimization**: `getItemLayout` for scroll perf, `windowSize={3}` for memory.
-- **Blurhash placeholders**: Images show blurhash during load via `expo-image` placeholder prop.
+- **React Native Image**: Uses the built-in RN `Image` component for broad compatibility and minimal dependencies. Resize modes are mapped (`fill` -> `stretch`).
 - **Reanimated gestures**: All animations use `react-native-reanimated` worklets for UI thread performance.
 
 ## Dependencies
 
 - **Runtime**: `@ion/ui` (Text component in header)
-- **Peer deps**: `expo-image`, `expo-av`, `react-native-gesture-handler`, `react-native-reanimated`, `react-native-safe-area-context`
+- **Peer deps**: `expo-av`, `react-native-gesture-handler`, `react-native-reanimated`, `react-native-safe-area-context`
 - **Downstream**: `@ion/ui` (foundation)
 - **Upstream consumers**: Screens (chat, feed, profile)
 
