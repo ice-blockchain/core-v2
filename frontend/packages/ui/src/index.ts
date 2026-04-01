@@ -56,6 +56,9 @@ export type { AvatarPickerProps } from "./components/avatar-picker-types";
 export { PlusIconButton } from "./components/PlusIconButton";
 export type { PlusIconButtonProps } from "./components/PlusIconButton";
 
+export { StoryAvatar } from "./components/StoryAvatar";
+export type { StoryAvatarProps } from "./components/story-avatar-types";
+
 export { IONLoader } from "./components/IONLoader";
 export type { IONLoaderProps, IONLoaderVariant } from "./components/IONLoaderTypes";
 

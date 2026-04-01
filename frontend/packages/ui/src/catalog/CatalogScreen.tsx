@@ -20,6 +20,7 @@ import { TextFieldCatalogSection } from "./TextFieldCatalogSection";
 import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
 import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
 import { AvatarCatalogSection } from "./AvatarCatalogSection";
+import { StoryAvatarCatalogSection } from "./StoryAvatarCatalogSection";
 import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
 import { SeparatorCatalogSection } from "./SeparatorCatalogSection";
 import { ListItemSkeletonCatalogSection } from "./ListItemSkeletonCatalogSection";
@@ -61,6 +62,7 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
             <ListItemSkeletonCatalogSection />
             <BottomSheetCatalogSection />
             <AvatarCatalogSection />
+            <StoryAvatarCatalogSection />
           </View>
         </ScrollView>
       </DismissKeyboardView>
