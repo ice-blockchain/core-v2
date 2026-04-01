@@ -272,7 +272,11 @@ jobs:
         env:
           MATCH_KEYCHAIN_NAME: ${{ runner.temp }}/build.keychain-db
           MATCH_KEYCHAIN_PASSWORD: ""
-        run: bundle exec fastlane ios fetch_certs
+          MATCH_GIT_URL: ${{ secrets.MOBILE_MATCH_GIT_URL }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ format('{0}:{1}', secrets.ICE_CI_CD_BOT_GH_USERNAME, secrets.ICE_CI_CD_BOT_GH_PAT) }}
+        run: |
+          export MATCH_GIT_BASIC_AUTHORIZATION=$(echo -n "$MATCH_GIT_BASIC_AUTHORIZATION" | base64)
+          bundle exec fastlane ios fetch_certs
 
       - name: Allow codesign access
         run: |
