@@ -2,9 +2,11 @@ import type { Interceptor } from './interceptor-types';
 import type { RetryConfig } from './retry-types';
 import type { UploadProgress } from './shared-types';
 import type { RequestQueue } from './queue-types';
+import type { Transport } from './transport-types';
 
 export interface HttpClientConfig {
   baseUrl: string;
+  transport?: Transport;
   timeoutMs?: number;
   maxResponseSizeBytes?: number;
   maxRequestBodySizeBytes?: number;
