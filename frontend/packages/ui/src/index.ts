@@ -47,6 +47,15 @@ export type { DismissKeyboardViewProps } from "./components/DismissKeyboardView"
 export { SafeAreaWrapper } from "./components/SafeAreaWrapper";
 export type { SafeAreaWrapperProps } from "./components/SafeAreaWrapper";
 
+export { Avatar } from "./components/Avatar";
+export type { AvatarProps } from "./components/avatar-types";
+
+export { AvatarPicker } from "./components/AvatarPicker";
+export type { AvatarPickerProps } from "./components/avatar-picker-types";
+
+export { PlusIconButton } from "./components/PlusIconButton";
+export type { PlusIconButtonProps } from "./components/PlusIconButton";
+
 export { IONLoader } from "./components/IONLoader";
 export type { IONLoaderProps, IONLoaderVariant } from "./components/IONLoaderTypes";
 

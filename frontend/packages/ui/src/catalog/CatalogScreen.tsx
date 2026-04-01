@@ -19,23 +19,18 @@ import { SmallButtonCatalogSection } from "./SmallButtonCatalogSection";
 import { TextFieldCatalogSection } from "./TextFieldCatalogSection";
 import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
 import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
-import { NotificationBarProvider } from "../components/NotificationBarProvider";
+import { AvatarCatalogSection } from "./AvatarCatalogSection";
 import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
 import { SeparatorCatalogSection } from "./SeparatorCatalogSection";
 import { ListItemSkeletonCatalogSection } from "./ListItemSkeletonCatalogSection";
+import { NotificationBarProvider } from "../components/NotificationBarProvider";
 
 function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
-
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.xxl }}>
       <Text variant="headline1">UI Kit Catalog</Text>
-      <Button
-        height={44}
-        color="secondary"
-        label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"}
-        onPress={onToggleMode}
-      />
+      <Button height={44} color="secondary" label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"} onPress={onToggleMode} />
     </View>
   );
 }
@@ -47,7 +42,6 @@ interface CatalogContentProps {
 
 function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
   const theme = useTheme();
-
   return (
     <SafeAreaWrapper edges={["bottom", "left", "right"]}>
       <DismissKeyboardView>
@@ -66,6 +60,7 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
             <SeparatorCatalogSection />
             <ListItemSkeletonCatalogSection />
             <BottomSheetCatalogSection />
+            <AvatarCatalogSection />
           </View>
         </ScrollView>
       </DismissKeyboardView>

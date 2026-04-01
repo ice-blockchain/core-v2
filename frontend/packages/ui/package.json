@@ -28,8 +28,12 @@
     "react-native-svg": ">=13.0.0"
   },
   "peerDependenciesMeta": {
-    "lottie-react-native": { "optional": true },
-    "lottie-react": { "optional": true }
+    "lottie-react-native": {
+      "optional": true
+    },
+    "lottie-react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@gorhom/bottom-sheet": "^5.2.8",
