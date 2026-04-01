@@ -1,6 +1,7 @@
 import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
 import { Logger } from '@ion/diagnostics';
+import { translate } from '@ion/localization';
 import type { AuthFlowAction } from './types';
 import { mapIdentityError } from './error-messages';
 import { isValidIdentityKeyName } from '@ion/auth-ui';
@@ -17,7 +18,7 @@ export async function handleRegister(
 ): Promise<void> {
   const { dispatch } = deps;
   if (!isValidIdentityKeyName(data.identityKeyName)) {
-    dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', userMessage: 'Invalid identity key name.' } });
+    dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', userMessage: translate('auth:errorInvalidIdentityKeyName') } });
     return;
   }
   dispatch({ type: 'SET_LOADING', isLoading: true });

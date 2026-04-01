@@ -91,4 +91,5 @@ export const authFR: Record<keyof typeof authEN, string> = {
     'Considérez le nom de votre clé d\'identité comme un identifiant unique de votre compte. Vous en aurez besoin pour vous connecter et récupérer votre compte, alors conservez-le en sécurité et ne l\'oubliez pas.',
   identityKeyNameNoteSecuredBy:
     'Utilisez-le pour vous connecter à toute application sécurisée par',
+  errorInvalidIdentityKeyName: 'Nom de clé d\'identité invalide.',
 };

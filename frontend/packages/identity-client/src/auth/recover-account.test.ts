@@ -93,7 +93,7 @@ function createMockDeps(challenge?: ReturnType<typeof createMockChallenge>) {
 }
 
 describe('recoverAccount', () => {
-  it('recovers with password and stores new tokens', async () => {
+  it('recovers with password credential without storing tokens', async () => {
     const deps = createMockDeps();
     await recoverAccount(
       {
@@ -112,6 +112,24 @@ describe('recoverAccount', () => {
       }),
     );
     expect(deps.recoveryDataSource.completeRecovery).toHaveBeenCalled();
+  });
+
+  it('throws when temporary token is missing', async () => {
+    const challenge = createMockChallenge();
+    (challenge as { temporaryAuthenticationToken: string | null }).temporaryAuthenticationToken = null;
+    const deps = createMockDeps(challenge);
+    await expect(
+      recoverAccount(
+        {
+          username: 'alice',
+          recoveryCode: 'recovery-pass',
+          credentialId: 'rec-cred-1',
+          newCredentialKind: 'PasswordProtectedKey',
+          newPassword: 'new',
+        },
+        deps,
+      ),
+    ).rejects.toThrow();
   });
 
   it('recovers with passkey credential', async () => {

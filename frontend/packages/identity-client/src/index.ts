@@ -33,3 +33,6 @@ export { createIdentityClient } from './create-identity-client';
 export { createDefaultIdentityClient } from './create-default-identity-client';
 
 export { isPasskeyAvailable } from './platform/passkey';
+
+export type { Pbkdf2Fn } from './crypto/encrypt-private-key';
+export { setNativePbkdf2 } from './crypto/encrypt-private-key';

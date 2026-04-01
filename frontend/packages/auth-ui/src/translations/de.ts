@@ -92,4 +92,5 @@ export const authDE: Record<keyof typeof authEN, string> = {
     'Betrachte den Namen deines Identitätsschlüssels als eine eindeutige Kennung deines Kontos. Du brauchst ihn, um dich anzumelden und dein Konto wiederherzustellen. Bewahre ihn sicher auf und vergiss ihn nicht.',
   identityKeyNameNoteSecuredBy:
     'Verwende ihn, um dich bei jeder App anzumelden, die gesichert ist durch',
+  errorInvalidIdentityKeyName: 'Ungültiger Identitätsschlüsselname.',
 };

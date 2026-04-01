@@ -4,6 +4,7 @@ export interface IdentityClientConfig {
   secureStorage: ISecureStorage;
   baseUrl: string;
   appId: string;
+  nativePbkdf2?: (password: string, salt: Uint8Array, iterations: number, keyLength: number, hash: string) => Uint8Array;
 }
 
 export interface PasswordRegistrationInput {

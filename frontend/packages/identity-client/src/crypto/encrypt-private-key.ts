@@ -11,23 +11,20 @@ export interface EncryptedPrivateKey {
   mac: string;
 }
 
+export type Pbkdf2Fn = (password: string, salt: Uint8Array, iterations: number, keyLength: number, hash: string) => Uint8Array;
+
 const PBKDF2_ITERATIONS = 100_000;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const g = typeof globalThis !== 'undefined' ? (globalThis as any) : ({} as any);
+let nativePbkdf2: Pbkdf2Fn | null = null;
 
-function isNativePlatform(): boolean {
-  return typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
-}
-
-function hasNativePbkdf2(): boolean {
-  return isNativePlatform() && typeof g.__nativePbkdf2Sync === 'function';
+export function setNativePbkdf2(fn: Pbkdf2Fn): void {
+  nativePbkdf2 = fn;
 }
 
 async function deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
-  if (hasNativePbkdf2()) {
-    const buf = g.__nativePbkdf2Sync(password, new Uint8Array(salt), iterations, 32, 'sha256');
-    return buf instanceof Uint8Array ? new Uint8Array(buf) : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (nativePbkdf2) {
+    const buf: ArrayBufferView = nativePbkdf2(password, new Uint8Array(salt), iterations, 32, 'sha256');
+    return new Uint8Array(buf instanceof Uint8Array ? buf : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
   }
   return pbkdf2Async(sha256, password, salt, { c: iterations, dkLen: 32 });
 }

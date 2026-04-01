@@ -1,61 +1,99 @@
-import type * as ExpoSecureStoreType from "expo-secure-store";
+import type * as KeychainType from "react-native-keychain";
 import type { ISecureStorage } from "../types";
 
-type SecureStoreModule = typeof ExpoSecureStoreType;
+type KeychainModule = typeof KeychainType;
 
-function getSecureStore(): SecureStoreModule {
+const SERVICE_PREFIX = "ion.secure-storage.";
+const REGISTRY_SERVICE = "ion.secure-storage.__registry__";
+const REGISTRY_ACCOUNT = "key-registry";
+
+let cachedKeychain: KeychainModule | null = null;
+
+function getKeychain(): KeychainModule {
+  if (cachedKeychain) return cachedKeychain;
   // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-  return require("expo-secure-store") as SecureStoreModule;
+  cachedKeychain = require("react-native-keychain") as KeychainModule;
+  return cachedKeychain;
 }
 
-const KEY_REGISTRY = "__secure_storage_keys__";
-
 async function getKeyRegistry(): Promise<string[]> {
-  const raw = await getSecureStore().getItemAsync(KEY_REGISTRY);
-  if (!raw) return [];
-  return JSON.parse(raw) as string[];
+  const Keychain = getKeychain();
+  const result = await Keychain.getGenericPassword({
+    service: REGISTRY_SERVICE,
+  });
+  if (!result) return [];
+  const parsed: unknown = JSON.parse(result.password);
+  if (!Array.isArray(parsed)) return [];
+  return parsed as string[];
+}
+
+async function saveKeyRegistry(keys: string[]): Promise<void> {
+  const Keychain = getKeychain();
+  await Keychain.setGenericPassword(
+    REGISTRY_ACCOUNT,
+    JSON.stringify(keys),
+    { service: REGISTRY_SERVICE },
+  );
 }
 
 async function addToRegistry(key: string): Promise<void> {
   const keys = await getKeyRegistry();
   if (keys.includes(key)) return;
   keys.push(key);
-  await getSecureStore().setItemAsync(KEY_REGISTRY, JSON.stringify(keys));
+  await saveKeyRegistry(keys);
 }
 
 async function removeFromRegistry(key: string): Promise<void> {
   const keys = await getKeyRegistry();
   const filtered = keys.filter((k) => k !== key);
-  await getSecureStore().setItemAsync(KEY_REGISTRY, JSON.stringify(filtered));
+  await saveKeyRegistry(filtered);
 }
 
 export function createSecureStorage(): ISecureStorage {
   return {
     async getItem(key: string): Promise<string | null> {
-      return getSecureStore().getItemAsync(key);
+      const Keychain = getKeychain();
+      const result = await Keychain.getGenericPassword({
+        service: SERVICE_PREFIX + key,
+      });
+      if (!result) return null;
+      return result.password;
     },
 
     async setItem(key: string, value: string): Promise<void> {
-      await getSecureStore().setItemAsync(key, value);
+      const Keychain = getKeychain();
+      await Keychain.setGenericPassword(key, value, {
+        service: SERVICE_PREFIX + key,
+        accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK,
+      });
       await addToRegistry(key);
     },
 
     async removeItem(key: string): Promise<void> {
-      await getSecureStore().deleteItemAsync(key);
+      const Keychain = getKeychain();
+      await Keychain.resetGenericPassword({
+        service: SERVICE_PREFIX + key,
+      });
       await removeFromRegistry(key);
     },
 
     async hasItem(key: string): Promise<boolean> {
-      const value = await getSecureStore().getItemAsync(key);
-      return value !== null;
+      const Keychain = getKeychain();
+      const result = await Keychain.getGenericPassword({
+        service: SERVICE_PREFIX + key,
+      });
+      return result !== false;
     },
 
     async clear(): Promise<void> {
+      const Keychain = getKeychain();
       const keys = await getKeyRegistry();
       for (const key of keys) {
-        await getSecureStore().deleteItemAsync(key);
+        await Keychain.resetGenericPassword({
+          service: SERVICE_PREFIX + key,
+        });
       }
-      await getSecureStore().deleteItemAsync(KEY_REGISTRY);
+      await Keychain.resetGenericPassword({ service: REGISTRY_SERVICE });
     },
   };
 }

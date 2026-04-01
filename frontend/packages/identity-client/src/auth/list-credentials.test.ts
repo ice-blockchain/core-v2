@@ -22,4 +22,17 @@ describe('listCredentials', () => {
     expect(result).toEqual([{ uuid: 'u1', kind: 'Fido2', name: 'key-1' }]);
     expect(deps.credentialsDataSource.listCredentials).toHaveBeenCalledWith('alice');
   });
+
+  it('propagates errors from data source', async () => {
+    const deps = createMockDeps();
+    vi.mocked(deps.credentialsDataSource.listCredentials).mockRejectedValue(new Error('network failure'));
+    await expect(listCredentials('alice', deps)).rejects.toThrow('network failure');
+  });
+
+  it('returns empty array when no credentials exist', async () => {
+    const deps = createMockDeps();
+    vi.mocked(deps.credentialsDataSource.listCredentials).mockResolvedValue({ items: [] });
+    const result = await listCredentials('alice', deps);
+    expect(result).toEqual([]);
+  });
 });

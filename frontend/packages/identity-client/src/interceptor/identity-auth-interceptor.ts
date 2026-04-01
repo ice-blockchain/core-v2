@@ -1,5 +1,6 @@
 import type { Interceptor, InterceptedRequest, InterceptedResponse } from '@ion/network';
 import { NetworkError } from '@ion/network';
+import { Logger } from '@ion/diagnostics';
 import type { TokenManager } from '../token/token-manager';
 
 interface IdentityAuthInterceptorDeps {
@@ -30,21 +31,11 @@ async function injectAuthHeader(
   request: InterceptedRequest,
   usernameByRequest: Map<string, string>,
 ): Promise<InterceptedRequest> {
-  if (request.headers.Authorization) {
-    console.log(`[auth-interceptor] ${request.method} ${request.url} — skipped (Authorization already set)`);
-    return request;
-  }
+  if (request.headers.Authorization) return request;
   const username = request.headers['X-Username'];
-  if (!username) {
-    console.log(`[auth-interceptor] ${request.method} ${request.url} — skipped (no X-Username)`);
-    return request;
-  }
+  if (!username) return request;
   const tokens = await deps.tokenManager.getTokens(username);
-  if (!tokens) {
-    console.log(`[auth-interceptor] ${request.method} ${request.url} — skipped (no tokens for ${username})`);
-    return request;
-  }
-  console.log(`[auth-interceptor] ${request.method} ${request.url} — injected token for ${username}`);
+  if (!tokens) return request;
   usernameByRequest.set(requestKey(request.method, request.url), username);
   return {
     ...request,
@@ -56,10 +47,12 @@ async function cleanupTracking(
   response: InterceptedResponse,
   usernameByRequest: Map<string, string>,
 ): Promise<InterceptedResponse> {
-  for (const [key] of usernameByRequest) {
-    if (response.url && key.endsWith(response.url)) {
-      usernameByRequest.delete(key);
-      break;
+  if (response.url) {
+    for (const [key] of usernameByRequest) {
+      if (key === response.url || key.endsWith(`:${response.url}`)) {
+        usernameByRequest.delete(key);
+        break;
+      }
     }
   }
   return response;
@@ -69,8 +62,9 @@ function extractUsername(
   error: NetworkError,
   usernameByRequest: Map<string, string>,
 ): string | null {
+  if (!error.requestUrl) return null;
   for (const [key, username] of usernameByRequest) {
-    if (error.requestUrl && key.endsWith(error.requestUrl)) {
+    if (key === error.requestUrl || key.endsWith(`:${error.requestUrl}`)) {
       usernameByRequest.delete(key);
       return username;
     }
@@ -98,7 +92,8 @@ async function handleAuthError(
       status: error.status,
       shouldRetry: true,
     });
-  } catch {
+  } catch (refreshError) {
+    Logger.error('Token refresh failed', { tag: 'identity-auth-interceptor', error: refreshError instanceof Error ? refreshError : new Error(String(refreshError)), data: { username } });
     return error;
   }
 }

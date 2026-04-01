@@ -86,4 +86,5 @@ export const authEN = {
     'Think of your identity key name as a unique identifier of your account. You\'ll need it to log in and recover your account, so keep it safe and don\'t forget it.',
   identityKeyNameNoteSecuredBy:
     'Use it to log in on any app secured by',
+  errorInvalidIdentityKeyName: 'Invalid identity key name.',
 } as const;

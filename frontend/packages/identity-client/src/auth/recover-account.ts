@@ -7,6 +7,7 @@ import { createPasskeyCredential } from '../platform/passkey';
 import type { RecoveryDataSource } from '../data-sources/recovery-data-source';
 import type { UserRegistrationChallenge, AllowedRecoveryCredential } from '../types';
 import { IdentityError, IdentityErrorCode } from '../errors';
+import { requireTemporaryToken } from './require-temporary-token';
 
 interface RecoverAccountDeps {
   recoveryDataSource: RecoveryDataSource;
@@ -42,7 +43,8 @@ export async function recoverAccount(
     credential: recoveryCredential, recoveryCode: input.recoveryCode, challenge, origin: deps.origin,
   });
   const newCredential = await buildNewCredential(input, challenge, deps.origin);
-  await completeRecovery(deps, newCredential, recoverySign, challenge);
+  const temporaryToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
+  await completeRecovery({ deps, newCredential, recoverySign, temporaryToken });
 }
 
 function initRecoveryChallenge(
@@ -152,18 +154,19 @@ async function buildPasswordCredential(
   };
 }
 
-// eslint-disable-next-line max-params
-function completeRecovery(
-  deps: RecoverAccountDeps,
-  newCredential: Awaited<ReturnType<typeof buildNewCredential>>,
-  recoverySign: { credId: string; clientData: string; signature: string },
-  challenge: UserRegistrationChallenge,
-) {
-  return deps.recoveryDataSource.completeRecovery(
+interface CompleteRecoveryInput {
+  deps: RecoverAccountDeps;
+  newCredential: Awaited<ReturnType<typeof buildNewCredential>>;
+  recoverySign: { credId: string; clientData: string; signature: string };
+  temporaryToken: string;
+}
+
+function completeRecovery(input: CompleteRecoveryInput) {
+  return input.deps.recoveryDataSource.completeRecovery(
     {
-      newCredentials: { firstFactorCredential: newCredential },
-      recovery: buildRecoveryPayload(recoverySign),
+      newCredentials: { firstFactorCredential: input.newCredential },
+      recovery: buildRecoveryPayload(input.recoverySign),
     },
-    challenge.temporaryAuthenticationToken!,
+    input.temporaryToken,
   );
 }

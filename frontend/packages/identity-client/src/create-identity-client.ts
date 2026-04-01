@@ -12,6 +12,7 @@ import { createRecoveryDataSource } from './data-sources/recovery-data-source';
 import { createTokenManager } from './token/token-manager';
 import { createIdentityAuthInterceptor } from './interceptor/identity-auth-interceptor';
 import { createAuthStore } from './auth-store';
+import { setNativePbkdf2 } from './crypto/encrypt-private-key';
 import { withDefaultHeaders } from './http-client-with-headers';
 import { registerWithPasskey } from './auth/register-with-passkey';
 import { registerWithPassword } from './auth/register-with-password';
@@ -38,6 +39,7 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
 }
 
 function buildContext(config: IdentityClientConfig) {
+  if (config.nativePbkdf2) setNativePbkdf2(config.nativePbkdf2);
   const tokenManager = createTokenManager(config.secureStorage);
   const authStore = createAuthStore();
   const refreshLocks = new Map<string, Promise<void>>();

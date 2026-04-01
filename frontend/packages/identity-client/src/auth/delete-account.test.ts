@@ -48,6 +48,7 @@ describe('deleteAccount', () => {
       }),
     );
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
+    expect(deps.authStore.removeUser).toHaveBeenCalledWith('alice');
   });
 
   it('throws UNAUTHENTICATED when no tokens', async () => {

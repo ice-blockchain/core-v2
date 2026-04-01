@@ -77,8 +77,19 @@ async function buildRecoveryCredential(challenge: string, recoveryCode: string, 
 }
 
 const RECOVERY_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@%!$#';
+const CHARSET_LEN = RECOVERY_CHARSET.length;
+const REJECT_THRESHOLD = Math.floor(256 / CHARSET_LEN) * CHARSET_LEN;
+const CODE_LENGTH = 32;
 
 function generateRecoveryCode(): string {
-  const bytes = randomBytes(32);
-  return Array.from(bytes).map((b) => RECOVERY_CHARSET[b % RECOVERY_CHARSET.length]).join('');
+  const result: string[] = [];
+  while (result.length < CODE_LENGTH) {
+    const bytes = randomBytes(CODE_LENGTH - result.length + 16);
+    for (const b of bytes) {
+      if (b >= REJECT_THRESHOLD) continue;
+      result.push(RECOVERY_CHARSET[b % CHARSET_LEN] as string);
+      if (result.length === CODE_LENGTH) break;
+    }
+  }
+  return result.join('');
 }
