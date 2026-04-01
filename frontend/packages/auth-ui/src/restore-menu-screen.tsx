@@ -7,6 +7,7 @@ import { RestoreOptionCard } from "./restore-option-card";
 import { SecuredByFooter } from "./secured-by-footer";
 import { TermsFooter } from "./terms-footer";
 import { RestoreKeyIcon } from "./restore-key-icon";
+import { getCloudProvider } from "./cloud-provider";
 
 interface RestoreMenuScreenProps {
   onBack: () => void;
@@ -15,12 +16,13 @@ interface RestoreMenuScreenProps {
 }
 
 function RestoreOptions({ onSelectCloud, onSelectCredentials }: { onSelectCloud: () => void; onSelectCredentials: () => void }) {
+  const cloudProvider = getCloudProvider();
   return (
     <View style={styles.options}>
       <RestoreOptionCard
         icon={<Icon name="restore-cloud" size={48} />}
-        title={translate("auth:restoreFromCloudTitle")}
-        description={translate("auth:restoreFromCloudDescription")}
+        title={translate("auth:restoreFromCloudTitle", { cloudProvider })}
+        description={translate("auth:restoreFromCloudDescription", { cloudProvider })}
         onPress={onSelectCloud}
       />
       <RestoreOptionCard

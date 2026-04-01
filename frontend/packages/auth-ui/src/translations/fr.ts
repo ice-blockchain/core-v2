@@ -50,9 +50,9 @@ export const authFR: Record<keyof typeof authEN, string> = {
   restoreMenuTitle: 'Restaurer la clé d\'identité',
   restoreMenuSubtitle:
     'Sélectionnez le type de récupération de la clé d\'identité',
-  restoreFromCloudTitle: 'Restaurer depuis iCloud',
+  restoreFromCloudTitle: 'Restaurer depuis {{cloudProvider}}',
   restoreFromCloudDescription:
-    'Restaurez votre clé d\'identité à partir d\'une sauvegarde iCloud',
+    'Restaurez votre clé d\'identité à partir d\'une sauvegarde {{cloudProvider}}',
   restoreUsingCredentialsTitle:
     'Restaurer avec les identifiants de récupération',
   restoreUsingCredentialsDescription:
@@ -68,6 +68,7 @@ export const authFR: Record<keyof typeof authEN, string> = {
     'Veuillez entrer vos identifiants de récupération ci-dessous',
   recoveryKeyIdPlaceholder: 'ID de clé de récupération',
   recoveryCodePlaceholder: 'Code de récupération',
+  selectIdentityKeyNameLabel: 'Sélectionner le nom de la clé d\'identité',
   restoreButton: 'Restaurer',
   identityKeyNotFoundTitle:
     'Clé d\'identité introuvable',

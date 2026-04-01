@@ -17,6 +17,8 @@ import { CheckGreenIcon } from "./generated/CheckGreenIcon";
 import { CheckboxOffIcon } from "./generated/CheckboxOffIcon";
 import { CheckboxOnIcon } from "./generated/CheckboxOnIcon";
 import { CheckmarkIcon } from "./generated/CheckmarkIcon";
+import { ChevronDownIcon } from "./generated/ChevronDownIcon";
+import { ChevronUpIcon } from "./generated/ChevronUpIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
@@ -71,6 +73,8 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "checkbox-off": CheckboxOffIcon,
   "checkbox-on": CheckboxOnIcon,
   "checkmark": CheckmarkIcon,
+  "chevron-down": ChevronDownIcon,
+  "chevron-up": ChevronUpIcon,
   "clock": ClockIcon,
   "close": CloseIcon,
   "danger_triangle": DangerTriangleIcon,

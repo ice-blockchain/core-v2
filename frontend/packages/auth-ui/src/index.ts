@@ -4,6 +4,7 @@ export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { PasskeyRegisterScreen } from "./passkey-register-screen";
 export { PasswordRegisterScreen } from "./password-register-screen";
+export { RestoreCloudScreen } from "./restore-cloud-screen";
 export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";
 export { RestoreSuccessModal } from "./restore-success-modal";
