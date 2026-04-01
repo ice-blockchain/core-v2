@@ -36,6 +36,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
   const internals = buildInternals(config);
   return {
     get: <T>(url: string, opts?: RequestOptions) => executeRequest<T>({ internals, method: 'GET', url, options: opts }),
+    head: <T>(url: string, opts?: RequestOptions) => executeRequest<T>({ internals, method: 'HEAD', url, options: opts }),
     post: <T>(url: string, opts?: RequestOptionsWithBody) => executeRequest<T>({ internals, method: 'POST', url, options: opts }),
     put: <T>(url: string, opts?: RequestOptionsWithBody) => executeRequest<T>({ internals, method: 'PUT', url, options: opts }),
     patch: <T>(url: string, opts?: RequestOptionsWithBody) => executeRequest<T>({ internals, method: 'PATCH', url, options: opts }),

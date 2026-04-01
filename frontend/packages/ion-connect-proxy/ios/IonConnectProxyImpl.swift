@@ -1,11 +1,11 @@
 import Foundation
+import Network
 
 @objc(IonConnectProxy)
 class IonConnectProxyImpl: NSObject {
 
   private static let queue = DispatchQueue(label: "io.ion.ionconnectproxy", qos: .userInitiated)
   private var proxyPort: UInt16 = 0
-  private let proxySession = URLSession(configuration: .default)
 
   // MARK: - Lifecycle
 
@@ -37,67 +37,126 @@ class IonConnectProxyImpl: NSObject {
   // MARK: - HTTP Bridge
 
   @objc func proxyRequest(_ method: String, url: String, headersJSON: String, body: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    guard var request = buildProxyRequest(url) else { reject("PROXY_ERROR", "Invalid URL: \(url)", nil); return }
-    request.httpMethod = method
-    applyHeaders(headersJSON, to: &request)
-    if !body.isEmpty { request.httpBody = body.data(using: .utf8) }
-    proxySession.dataTask(with: request) { data, response, error in
-      if let error = error { reject("PROXY_ERROR", error.localizedDescription, error); return }
-      resolve(self.buildResponseJSON(data: data, response: response))
-    }.resume()
+    let raw = buildRawHttpRequest(method: method, url: url, headersJSON: headersJSON, body: body)
+    sendRawProxyRequest(rawHttp: raw, resolve: resolve, reject: reject)
   }
 
   @objc func proxyUpload(_ url: String, filePath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    guard var request = buildProxyRequest(url) else { reject("PROXY_ERROR", "Invalid URL: \(url)", nil); return }
-    request.httpMethod = "POST"
-    applyHeaders(headersJSON, to: &request)
-    let fileURL = URL(fileURLWithPath: filePath)
-    proxySession.uploadTask(with: request, fromFile: fileURL) { data, response, error in
-      if let error = error { reject("PROXY_ERROR", error.localizedDescription, error); return }
-      resolve(self.buildResponseJSON(data: data, response: response))
-    }.resume()
+    guard let fileData = FileManager.default.contents(atPath: filePath) else {
+      reject("PROXY_ERROR", "File not found: \(filePath)", nil); return
+    }
+    let fileBody = String(data: fileData, encoding: .utf8) ?? ""
+    let raw = buildRawHttpRequest(method: "POST", url: url, headersJSON: headersJSON, body: fileBody)
+    sendRawProxyRequest(rawHttp: raw, resolve: resolve, reject: reject)
   }
 
   @objc func proxyDownload(_ url: String, destPath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    guard var request = buildProxyRequest(url) else { reject("PROXY_ERROR", "Invalid URL: \(url)", nil); return }
-    request.httpMethod = "GET"
-    applyHeaders(headersJSON, to: &request)
-    proxySession.downloadTask(with: request) { tempURL, response, error in
-      if let error = error { reject("PROXY_ERROR", error.localizedDescription, error); return }
-      guard let tempURL = tempURL else { reject("PROXY_ERROR", "No file downloaded", nil); return }
-      do {
-        let dest = URL(fileURLWithPath: destPath)
-        try FileManager.default.moveItem(at: tempURL, to: dest)
-        resolve(self.buildResponseJSON(data: nil, response: response))
-      } catch {
-        reject("PROXY_ERROR", error.localizedDescription, error)
+    let raw = buildRawHttpRequest(method: "GET", url: url, headersJSON: headersJSON, body: "")
+    let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
+    conn.stateUpdateHandler = { state in
+      if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil) }
+    }
+    conn.start(queue: Self.queue)
+    conn.send(content: raw.data(using: .utf8), completion: .contentProcessed { error in
+      if let error = error { reject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
+      self.receiveFullResponse(conn: conn) { result in
+        conn.cancel()
+        switch result {
+        case .failure(let error): reject("PROXY_ERROR", error.localizedDescription, nil)
+        case .success(let responseData):
+          let dest = URL(fileURLWithPath: destPath)
+          let (status, headers, _) = self.parseHttpResponse(responseData)
+          do {
+            try self.extractBody(from: responseData).write(to: dest)
+            let json = self.encodeResponseJSON(status: status, headers: headers, body: "")
+            resolve(json)
+          } catch { reject("PROXY_ERROR", error.localizedDescription, nil) }
+        }
       }
-    }.resume()
+    })
   }
 
-  // MARK: - Helpers
+  // MARK: - Raw TCP Proxy
 
-  private func buildProxyRequest(_ url: String) -> URLRequest? {
-    guard let original = URL(string: url) else { return nil }
-    let path = original.path.isEmpty ? "/" : original.path
-    let query = original.query.map { "?\($0)" } ?? ""
-    guard let proxyURL = URL(string: "http://127.0.0.1:\(proxyPort)\(path)\(query)") else { return nil }
-    var request = URLRequest(url: proxyURL)
-    if let host = original.host { request.setValue(host, forHTTPHeaderField: "Host") }
-    return request
+  private func buildRawHttpRequest(method: String, url: String, headersJSON: String, body: String) -> String {
+    let host = URL(string: url)?.host ?? ""
+    var lines = ["\(method) \(url) HTTP/1.1", "Host: \(host)"]
+    if let data = headersJSON.data(using: .utf8),
+       let headers = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
+      for (key, value) in headers { lines.append("\(key): \(value)") }
+    }
+    if !body.isEmpty { lines.append("Content-Length: \(body.utf8.count)") }
+    lines.append("Connection: close")
+    lines.append("")
+    var raw = lines.joined(separator: "\r\n") + "\r\n"
+    if !body.isEmpty { raw += body }
+    return raw
   }
 
-  private func applyHeaders(_ headersJSON: String, to request: inout URLRequest) {
-    guard let data = headersJSON.data(using: .utf8),
-          let headers = try? JSONSerialization.jsonObject(with: data) as? [String: String] else { return }
-    for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
+  private func sendRawProxyRequest(rawHttp: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
+    conn.stateUpdateHandler = { state in
+      if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil) }
+    }
+    conn.start(queue: Self.queue)
+    conn.send(content: rawHttp.data(using: .utf8), completion: .contentProcessed { error in
+      if let error = error { reject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
+      self.receiveFullResponse(conn: conn) { result in
+        conn.cancel()
+        switch result {
+        case .failure(let error): reject("PROXY_ERROR", error.localizedDescription, nil)
+        case .success(let data):
+          let (status, headers, body) = self.parseHttpResponse(data)
+          resolve(self.encodeResponseJSON(status: status, headers: headers, body: body))
+        }
+      }
+    })
   }
 
-  private func buildResponseJSON(data: Data?, response: URLResponse?) -> String {
-    let httpResponse = response as? HTTPURLResponse
-    let status = httpResponse?.statusCode ?? 0
-    let headers = (httpResponse?.allHeaderFields as? [String: String]) ?? [:]
-    let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+  private func receiveFullResponse(conn: NWConnection, accumulated: Data = Data(), completion: @escaping (Result<Data, Error>) -> Void) {
+    conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, _, isComplete, error in
+      var buffer = accumulated
+      if let content = content { buffer.append(content) }
+      if isComplete || error != nil {
+        if buffer.isEmpty, let error = error { completion(.failure(error)) } else { completion(.success(buffer)) }
+        return
+      }
+      self.receiveFullResponse(conn: conn, accumulated: buffer, completion: completion)
+    }
+  }
+
+  // MARK: - HTTP Response Parsing
+
+  private func parseHttpResponse(_ data: Data) -> (Int, [String: String], String) {
+    guard let raw = String(data: data, encoding: .utf8) else { return (0, [:], "") }
+    guard let headerEnd = raw.range(of: "\r\n\r\n") else { return (0, [:], raw) }
+    let headerSection = String(raw[raw.startIndex..<headerEnd.lowerBound])
+    let body = String(raw[headerEnd.upperBound...])
+    let lines = headerSection.components(separatedBy: "\r\n")
+    let status = parseStatusCode(lines.first ?? "")
+    var headers: [String: String] = [:]
+    for line in lines.dropFirst() {
+      if let colonIndex = line.firstIndex(of: ":") {
+        let key = String(line[line.startIndex..<colonIndex]).trimmingCharacters(in: .whitespaces)
+        let value = String(line[line.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
+        headers[key] = value
+      }
+    }
+    return (status, headers, body)
+  }
+
+  private func parseStatusCode(_ statusLine: String) -> Int {
+    let parts = statusLine.split(separator: " ", maxSplits: 2)
+    guard parts.count >= 2 else { return 0 }
+    return Int(parts[1]) ?? 0
+  }
+
+  private func extractBody(from data: Data) -> Data {
+    guard let range = data.range(of: Data("\r\n\r\n".utf8)) else { return data }
+    return data.subdata(in: range.upperBound..<data.endIndex)
+  }
+
+  private func encodeResponseJSON(status: Int, headers: [String: String], body: String) -> String {
     let result: [String: Any] = ["status": status, "headers": headers, "body": body]
     guard let jsonData = try? JSONSerialization.data(withJSONObject: result) else { return "{}" }
     return String(data: jsonData, encoding: .utf8) ?? "{}"

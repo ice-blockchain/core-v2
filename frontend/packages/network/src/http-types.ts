@@ -43,6 +43,7 @@ export interface HttpResponse<T> {
 
 export interface HttpClient {
   get<T>(url: string, options?: RequestOptions): Promise<HttpResponse<T>>;
+  head<T>(url: string, options?: RequestOptions): Promise<HttpResponse<T>>;
   post<T>(url: string, options?: RequestOptionsWithBody): Promise<HttpResponse<T>>;
   put<T>(url: string, options?: RequestOptionsWithBody): Promise<HttpResponse<T>>;
   patch<T>(url: string, options?: RequestOptionsWithBody): Promise<HttpResponse<T>>;
