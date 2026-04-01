@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import { EmptyConversationsListScreen } from "./EmptyConversationsListScreen";
@@ -59,7 +59,6 @@ function ScreenMenu({ onSelect, onBack }: {
 
 export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
   const [activeScreen, setActiveScreen] = useState<PreviewScreen>("menu");
-  const goToMenu = useCallback(() => setActiveScreen("menu"), []);
 
   if (activeScreen === "empty-conversations") {
     return <EmptyConversationsListScreen />;
