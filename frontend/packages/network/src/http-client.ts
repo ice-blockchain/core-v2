@@ -17,6 +17,7 @@ const DEFAULT_MAX_REQUEST_BODY_SIZE = 50 * 1024 * 1024;
 
 interface ClientInternals {
   config: { timeoutMs: number; maxRequestBodySizeBytes: number };
+  baseUrl?: string | undefined;
   transport: Transport;
   interceptors: HttpClientConfig['interceptors'];
   requestQueue?: RequestQueue | undefined;
@@ -48,15 +49,18 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxRequestBodySizeBytes = config.maxRequestBodySizeBytes ?? DEFAULT_MAX_REQUEST_BODY_SIZE;
   const isProduction = config.isProduction ?? false;
-  const validateHttps = createHttpsValidator({ allowlist: config.httpsAllowlist ?? [], isProduction });
-  if (config.baseUrl) validateHttps(config.baseUrl);
+  if (!config.transport) {
+    const validateHttps = createHttpsValidator({ allowlist: config.httpsAllowlist ?? [], isProduction });
+    if (config.baseUrl) validateHttps(config.baseUrl);
+  }
   const transport = config.transport ?? createAxiosTransport({
     baseUrl: config.baseUrl,
     maxResponseSizeBytes: config.maxResponseSizeBytes ?? DEFAULT_MAX_RESPONSE_SIZE,
     maxBodyLength: maxRequestBodySizeBytes,
     retryConfig: config.retryConfig ?? DEFAULT_RETRY_CONFIG,
   });
-  return { config: { timeoutMs, maxRequestBodySizeBytes }, transport, interceptors: config.interceptors, requestQueue: config.requestQueue };
+  const baseUrl = config.transport ? config.baseUrl : undefined;
+  return { config: { timeoutMs, maxRequestBodySizeBytes }, baseUrl, transport, interceptors: config.interceptors, requestQueue: config.requestQueue };
 }
 
 async function executeRequest<T>(context: RequestContext): Promise<HttpResponse<T>> {
@@ -103,7 +107,8 @@ function mapProgress(onProgress?: (p: UploadProgress) => void) {
 
 async function buildInterceptedRequest(context: RequestContext): Promise<InterceptedRequest> {
   const { internals, method, url, options } = context;
-  const request: InterceptedRequest = { url, method, headers: options?.headers ?? {}, body: options?.body };
+  const fullUrl = internals.baseUrl ? `${internals.baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}` : url;
+  const request: InterceptedRequest = { url: fullUrl, method, headers: options?.headers ?? {}, body: options?.body };
   if (!internals.interceptors?.length) return request;
   return runRequestInterceptors({ request, interceptors: internals.interceptors });
 }
