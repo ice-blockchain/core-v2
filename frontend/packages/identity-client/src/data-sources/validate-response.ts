@@ -71,3 +71,10 @@ export function validateRefreshTokenResponse(value: unknown): void {
   }
   assertString(value, 'token');
 }
+
+export function validateUserActionResponse(value: unknown): void {
+  if (!isNonNullObject(value)) {
+    throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid user action response');
+  }
+  assertString(value, 'userAction');
+}
