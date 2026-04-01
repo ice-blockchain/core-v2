@@ -1,16 +1,20 @@
-import { useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import { Dimensions, KeyboardAvoidingView, Platform, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import BottomSheet, {
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
 import type {
   BottomSheetBackdropProps,
   BottomSheetBackgroundProps,
   BottomSheetHandleProps,
 } from '@gorhom/bottom-sheet';
 import { colorPalette } from '@ion/ui';
+import { SheetScreenHeader } from "./components/SheetScreenHeader";
+import { SheetScrollProvider } from "./sheet-scroll-context";
 
 const SNAP_POINTS = ['92%'];
-const CONTENT_STYLE = { flex: 1 } as const;
 const BACKDROP_COLOR = 'rgba(8, 21, 50, 0.7)' as const;
 
 const SHEET_BACKGROUND_STYLE = {
@@ -23,8 +27,7 @@ const SHEET_BACKGROUND_STYLE = {
 const HANDLE_CONTAINER_STYLE = {
   alignItems: 'center',
   paddingTop: 2,
-  paddingBottom: 10,
-  marginTop: -10,
+  paddingBottom: 8,
 } as const;
 
 const HANDLE_INDICATOR_STYLE = {
@@ -34,9 +37,27 @@ const HANDLE_INDICATOR_STYLE = {
   backgroundColor: colorPalette.sheetLine,
 } as const;
 
+const KEYBOARD_BEHAVIOR = Platform.select({ ios: 'padding' as const, default: 'height' as const });
+const SHEET_TOP_FRACTION = 0.08;
+const FLEX_ONE = { flex: 1 } as const;
+
+function useKeyboardVerticalOffset(): number {
+  return useMemo(() => {
+    const screenHeight = Dimensions.get('window').height;
+    return Math.round(screenHeight * SHEET_TOP_FRACTION);
+  }, []);
+}
+
 export interface SheetProps {
   children: ReactNode;
   onClose: () => void;
+  title?: string;
+}
+
+function computeTitleOpacity(scrollOffset: number): number {
+  if (scrollOffset <= 120) return 0;
+  if (scrollOffset >= 140) return 1;
+  return (scrollOffset - 120) / 20;
 }
 
 function renderBackdrop(backdropProps: BottomSheetBackdropProps) {
@@ -64,8 +85,18 @@ function SheetHandle(_: BottomSheetHandleProps) {
   );
 }
 
-export function Sheet({ children, onClose }: SheetProps) {
+function useScrollTitleOpacity() {
+  const [titleOpacity, setTitleOpacity] = useState(0);
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setTitleOpacity(computeTitleOpacity(event.nativeEvent.contentOffset.y));
+  }, []);
+  return { titleOpacity, handleScroll };
+}
+
+export function Sheet({ children, onClose, title }: SheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const { titleOpacity, handleScroll } = useScrollTitleOpacity();
+  const keyboardOffset = useKeyboardVerticalOffset();
 
   return (
     <BottomSheet
@@ -74,15 +105,19 @@ export function Sheet({ children, onClose }: SheetProps) {
       snapPoints={SNAP_POINTS}
       enablePanDownToClose
       enableDynamicSizing={false}
-      keyboardBehavior="interactive"
       backdropComponent={renderBackdrop}
       backgroundComponent={SheetBackground}
       handleComponent={SheetHandle}
       onClose={onClose}
     >
-      <BottomSheetView style={CONTENT_STYLE}>
-        {children}
-      </BottomSheetView>
+      <View style={FLEX_ONE}>
+        <SheetScreenHeader title={title} titleOpacity={titleOpacity} />
+        <KeyboardAvoidingView style={FLEX_ONE} behavior={KEYBOARD_BEHAVIOR} keyboardVerticalOffset={keyboardOffset}>
+          <SheetScrollProvider value={handleScroll}>
+            {children}
+          </SheetScrollProvider>
+        </KeyboardAvoidingView>
+      </View>
     </BottomSheet>
   );
 }

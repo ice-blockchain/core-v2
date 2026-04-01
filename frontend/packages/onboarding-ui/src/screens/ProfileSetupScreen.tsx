@@ -1,16 +1,18 @@
 import { useCallback, useMemo } from "react";
 import { View } from "react-native";
+import type { ViewStyle } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Button, Icon, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { saveProfile } from "@ion/onboarding";
-import { useSheetNavigation, Routes, Sheet } from "@ion/navigation";
+import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
 import { AvatarPicker } from "../components/AvatarPicker";
 import { NicknameReservedModal } from "../components/NicknameReservedModal";
 import { useProfileForm } from "./profile-setup-hooks";
 import { AuthHeader } from "./AuthHeader";
 import { ProfileSetupFields } from "./ProfileSetupFields";
 import { buildAvatarSectionStyle, buildContentContainerStyle, buildFieldsContainerStyle } from "./profile-setup-styles";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function useSaveHandler(
   formState: ReturnType<typeof useProfileForm>[0],
@@ -28,7 +30,7 @@ function useSaveHandler(
       };
       await saveProfile(input);
       onSaved();
-    } catch {
+    } finally {
       formActions.setSubmitting(false);
     }
   }, [formState, formActions, onSaved]);
@@ -37,13 +39,26 @@ function useSaveHandler(
 function useScreenStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const insets = useSafeAreaInsets();
 
   return {
-    container: useMemo(() => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }), [theme.colors]),
+    container: useMemo(
+      () => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }),
+      [theme.colors],
+    ),
     content: useMemo(() => buildContentContainerStyle(scale), [scale]),
     avatar: useMemo(() => buildAvatarSectionStyle(scale), [scale]),
     fields: useMemo(() => buildFieldsContainerStyle(scale), [scale]),
-    footer: useMemo(() => ({ paddingHorizontal: scale(44), paddingVertical: scale(12) }), [scale]),
+    footer: useMemo(
+      (): ViewStyle => ({
+        position: "absolute",
+        bottom: scale(10) + insets.bottom,
+        left: 0,
+        right: 0,
+        paddingHorizontal: scale(44),
+      }),
+      [scale, insets],
+    ),
   };
 }
 
@@ -69,8 +84,10 @@ function ProfileSetupContent({ formState, formActions, styles }: {
   formActions: ReturnType<typeof useProfileForm>[1];
   styles: ReturnType<typeof useScreenStyles>;
 }) {
+  const sheetScroll = useSheetScroll();
+
   return (
-    <BottomSheetScrollView keyboardShouldPersistTaps="handled">
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
       <View style={styles.content}>
         <AuthHeader />
         <View style={styles.avatar}>
@@ -95,14 +112,17 @@ export function ProfileSetupScreen() {
   const handleSave = useSaveHandler(formState, formActions, navigateNext);
 
   return (
-    <Sheet onClose={handleClose}>
+    <Sheet onClose={handleClose} title={translate("onboarding:yourProfileTitle")}>
       <View style={styles.container} testID="profile-setup-screen">
         <ProfileSetupContent formState={formState} formActions={formActions} styles={styles} />
         <View style={styles.footer}>
           <SaveButton formState={formState} handleSave={handleSave} />
         </View>
       </View>
-      <NicknameReservedModal isVisible={formState.isNicknameReserved} onClose={formActions.dismissReservedModal} />
+      <NicknameReservedModal
+        isVisible={formState.isNicknameReserved}
+        onClose={formActions.dismissReservedModal}
+      />
     </Sheet>
   );
 }

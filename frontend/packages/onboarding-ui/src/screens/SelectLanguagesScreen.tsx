@@ -5,10 +5,9 @@ import type { ViewStyle } from "react-native";
 import { Button, SearchBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSheetNavigation, Routes, Sheet } from "@ion/navigation";
+import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
 import { CheckboxRow } from "../components/CheckboxRow";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
-import { SheetScreenHeader } from "../components/SheetScreenHeader";
 import type { LanguageSelectionActions, LanguageSelectionState } from "./select-languages-hooks";
 import { useLanguageSelection } from "./select-languages-hooks";
 import { buildListSectionStyle, buildScrollContentStyle } from "./select-languages-styles";
@@ -49,6 +48,32 @@ function useScreenStyles() {
   };
 }
 
+function SelectLanguagesContent({ state, actions, styles }: {
+  state: LanguageSelectionState;
+  actions: LanguageSelectionActions;
+  styles: ReturnType<typeof useScreenStyles>;
+}) {
+  const sheetScroll = useSheetScroll();
+
+  return (
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
+      <OnboardingScreenTitle
+        title={translate("onboarding:selectLanguagesTitle")}
+        subtitle={translate("onboarding:selectLanguagesSubtitle")}
+      />
+      <View style={styles.listSection}>
+        <SearchBar
+          value={state.searchQuery}
+          onChangeText={actions.setSearchQuery}
+          placeholder={translate("onboarding:searchPlaceholder")}
+          testID="language-search"
+        />
+        <LanguageList state={state} actions={actions} style={styles.scrollContent} />
+      </View>
+    </BottomSheetScrollView>
+  );
+}
+
 export function SelectLanguagesScreen() {
   const navigation = useSheetNavigation();
   const styles = useScreenStyles();
@@ -65,16 +90,9 @@ export function SelectLanguagesScreen() {
     : undefined;
 
   return (
-    <Sheet onClose={handleBack}>
+    <Sheet onClose={handleBack} title={translate("onboarding:selectLanguagesTitle")}>
       <View style={styles.container} testID="select-languages-screen">
-        <SheetScreenHeader onBack={handleBack} />
-        <BottomSheetScrollView keyboardShouldPersistTaps="handled">
-          <OnboardingScreenTitle title={translate("onboarding:selectLanguagesTitle")} subtitle={translate("onboarding:selectLanguagesSubtitle")} />
-          <View style={styles.listSection}>
-            <SearchBar value={state.searchQuery} onChangeText={actions.setSearchQuery} placeholder={translate("onboarding:searchPlaceholder")} testID="language-search" />
-            <LanguageList state={state} actions={actions} style={styles.scrollContent} />
-          </View>
-        </BottomSheetScrollView>
+        <SelectLanguagesContent state={state} actions={actions} styles={styles} />
         {continueButton ? <View style={styles.floatingFooter}>{continueButton}</View> : null}
       </View>
     </Sheet>

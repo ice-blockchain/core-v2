@@ -3,13 +3,13 @@ import { View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import type { ViewStyle } from "react-native";
 import { Button, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { requestNotificationPermission } from "@ion/onboarding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSheetNavigation, Routes, Sheet } from "@ion/navigation";
+import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
 import { NotificationCard } from "../components/NotificationCard";
 import { DescriptionItem } from "../components/DescriptionItem";
-import { SheetScreenHeader } from "../components/SheetScreenHeader";
 import { avatarReceivedIon, avatarNewFollower, avatarNewMessage } from "./notification-images";
 import {
   buildScreenContentStyle,
@@ -63,7 +63,7 @@ function NotificationDescriptions({ style }: { style: ReturnType<typeof buildDes
 function NotificationsContent({ styles }: { styles: ReturnType<typeof useScreenStyles> }) {
   return (
     <View style={styles.screenContent}>
-      <OnboardingScreenTitle title="Turn on notifications" subtitle="Receive notifications when you transfer and receive funds" />
+      <OnboardingScreenTitle title={translate("onboarding:notificationsTitle")} subtitle={translate("onboarding:notificationsSubtitle")} />
       <View style={styles.cardsContainer}>
         <NotificationCards innerStyle={styles.cardsInner} />
       </View>
@@ -83,15 +83,16 @@ export function NotificationsScreen() {
     navigation.reset({ index: 0, routes: [{ name: Routes.Catalog }] });
   }, [navigation]);
 
+  const sheetScroll = useSheetScroll();
+
   return (
-    <Sheet onClose={handleBack}>
+    <Sheet onClose={handleBack} title={translate("onboarding:notificationsTitle")}>
       <View style={styles.container} testID="notifications-screen">
-        <SheetScreenHeader onBack={handleBack} />
-        <BottomSheetScrollView>
+        <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16}>
           <NotificationsContent styles={styles} />
         </BottomSheetScrollView>
         <View style={styles.floatingFooter}>
-          <Button label="Continue" onPress={handleContinue} />
+          <Button label={translate("onboarding:continueButton")} onPress={handleContinue} />
         </View>
       </View>
     </Sheet>

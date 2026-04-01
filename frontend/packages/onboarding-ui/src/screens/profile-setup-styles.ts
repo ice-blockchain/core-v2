@@ -12,7 +12,7 @@ export function buildAuthHeaderStyle(scale: (n: number) => number): ViewStyle {
   return {
     alignItems: "center",
     paddingHorizontal: scale(28),
-    gap: scale(20),
+    gap: scale(4),
   };
 }
 

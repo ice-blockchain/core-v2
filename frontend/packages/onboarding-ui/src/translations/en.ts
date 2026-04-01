@@ -15,4 +15,9 @@ export const onboardingEN = {
   nicknameReservedDescription:
     'If you would like to use this nickname, please send an email to hi@ice.io from your company\'s official email address. We will review your application and contact you as soon as possible.',
   closeModal: 'Close',
+  discoverCreatorsTitle: 'Discover creators',
+  discoverCreatorsSubtitle: 'Connect with visionaries and inspiring voices',
+  notificationsTitle: 'Turn on notifications',
+  notificationsSubtitle:
+    'Receive notifications when you transfer and receive funds',
 } as const;

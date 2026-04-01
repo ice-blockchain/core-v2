@@ -28,7 +28,7 @@ export function SplashScreen({ videoSource }: SplashScreenProps) {
   const advance = useCallback(() => {
     if (hasAdvanced.current) return;
     hasAdvanced.current = true;
-    navigation.reset({ index: 0, routes: [{ name: Routes.Sheet.ProfileSetup }] });
+    navigation.reset({ index: 0, routes: [{ name: Routes.GetStarted }] });
   }, [navigation]);
 
   useEffect(() => {

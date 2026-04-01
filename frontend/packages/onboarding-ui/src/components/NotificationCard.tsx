@@ -87,7 +87,7 @@ export function NotificationCard({ avatar, title, description, time, showBadge, 
   return (
     <View style={s.card} testID={testID}>
       <View style={s.avatarContainer}>
-        <MediaImage source={avatar} style={s.avatar} />
+        {/*<MediaImage source={avatar} style={s.avatar} />*/}
         {showBadge ? (
           <View style={s.badge}>
             <Icon name="login-ice-logo" size={s.scale(8)} color="#FFFFFF" />

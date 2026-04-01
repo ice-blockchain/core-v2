@@ -15,7 +15,9 @@
     "@ion/media-viewer": "workspace:*",
     "@ion/splash": "workspace:*",
     "@ion/ui": "workspace:*",
-    "@ion/navigation": "workspace:*"
+    "@ion/navigation": "workspace:*",
+    "@ion/auth-ui": "workspace:*",
+    "@ion/localization": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19",

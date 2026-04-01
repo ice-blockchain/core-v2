@@ -3,12 +3,12 @@ import { View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import type { ViewStyle } from "react-native";
 import { Button, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useSheetNavigation, Routes, Sheet } from "@ion/navigation";
+import { useSheetNavigation, useSheetScroll, Routes, Sheet } from "@ion/navigation";
 import { CreatorRow } from "../components/CreatorRow";
 import { CreatorRowSkeletonList } from "../components/CreatorRowSkeleton";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
-import { SheetScreenHeader } from "../components/SheetScreenHeader";
 import type { DiscoverCreatorsState } from "./discover-creators-hooks";
 import { useDiscoverCreators } from "./discover-creators-hooks";
 import { buildListContainerStyle, buildListContentStyle } from "./discover-creators-styles";
@@ -55,6 +55,32 @@ function useScreenStyles() {
   };
 }
 
+function DiscoverCreatorsContent({ state, actions, styles }: {
+  state: DiscoverCreatorsState;
+  actions: ReturnType<typeof useDiscoverCreators>[1];
+  styles: ReturnType<typeof useScreenStyles>;
+}) {
+  const sheetScroll = useSheetScroll();
+
+  return (
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16}>
+      <OnboardingScreenTitle
+        title={translate("onboarding:discoverCreatorsTitle")}
+        subtitle={translate("onboarding:discoverCreatorsSubtitle")}
+      />
+      {state.isLoading ? (
+        <View style={styles.listContainer}>
+          <CreatorRowSkeletonList />
+        </View>
+      ) : (
+        <View style={styles.listContainer}>
+          <CreatorList state={state} actions={actions} contentStyle={styles.listContent} />
+        </View>
+      )}
+    </BottomSheetScrollView>
+  );
+}
+
 export function DiscoverCreatorsScreen() {
   const navigation = useSheetNavigation();
   const styles = useScreenStyles();
@@ -67,21 +93,11 @@ export function DiscoverCreatorsScreen() {
   const [state, actions] = useDiscoverCreators(navigateNext);
 
   return (
-    <Sheet onClose={handleBack}>
+    <Sheet onClose={handleBack} title={translate("onboarding:discoverCreatorsTitle")}>
       <View style={styles.container} testID="discover-creators-screen">
-        <SheetScreenHeader onBack={handleBack} />
-        <BottomSheetScrollView>
-          <OnboardingScreenTitle title="Discover creators" subtitle="Connect with visionaries and inspiring voices" />
-          {state.isLoading ? (
-            <View style={styles.listContainer}><CreatorRowSkeletonList /></View>
-          ) : (
-            <View style={styles.listContainer}>
-              <CreatorList state={state} actions={actions} contentStyle={styles.listContent} />
-            </View>
-          )}
-        </BottomSheetScrollView>
+        <DiscoverCreatorsContent state={state} actions={actions} styles={styles} />
         <View style={styles.floatingFooter}>
-          <Button label="Continue" onPress={actions.handleContinue} />
+          <Button label={translate("onboarding:continueButton")} onPress={actions.handleContinue} />
         </View>
       </View>
     </Sheet>

@@ -6,6 +6,7 @@ import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
+import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
 import { ChannelPrivateIcon } from "./generated/ChannelPrivateIcon";
@@ -51,6 +52,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "at-sign": AtSignIcon,
   "back-arrow": BackArrowIcon,
   "badge-verify": BadgeVerifyIcon,
+  "button-next": ButtonNextIcon,
   "button-receive": ButtonReceiveIcon,
   "camera": CameraIcon,
   "channel-private": ChannelPrivateIcon,

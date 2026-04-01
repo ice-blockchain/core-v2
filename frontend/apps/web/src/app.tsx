@@ -16,18 +16,15 @@ import {
 } from '@ion/onboarding-ui';
 import { authTranslations } from '@ion/auth-ui';
 import { SplashScreen } from './components/splash-screen';
+import { IntroScreen } from './components/intro-screen';
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
 
-function GetStartedPlaceholder() {
-  return null;
-}
-
 const screens = {
   Splash: SplashScreen,
-  GetStarted: GetStartedPlaceholder,
+  GetStarted: IntroScreen,
   Catalog: CatalogScreen,
   'Sheet/ProfileSetup': ProfileSetupScreen,
   'Sheet/SelectLanguages': SelectLanguagesScreen,

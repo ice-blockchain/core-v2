@@ -73,6 +73,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
     justifyContent: "flex-end",
     alignItems: "center",
-    paddingBottom: 76,
+    paddingBottom: 0,
   },
 });
