@@ -2,7 +2,6 @@ import { ed25519 } from '@noble/curves/ed25519';
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
 import type { InternalAuthStore } from '../auth-store';
-import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
 import { isValidEncryptedPrivateKey } from '../crypto/validate-encrypted-private-key';
 import { parseSeedFromPem } from '../crypto/generate-key-pair';
