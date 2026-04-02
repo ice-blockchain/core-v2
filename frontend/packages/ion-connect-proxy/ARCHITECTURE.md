@@ -12,7 +12,7 @@ Manages the ION Connect proxy lifecycle and provides a `Transport` implementatio
 |--------|-------------|
 | `startIonConnectProxy(options)` | Start proxy on `127.0.0.1:port`, returns `"OK"` |
 | `stopIonConnectProxy()` | Stop the running proxy |
-| `createIonConnectProxyClient({ port?, baseUrl })` | Returns `HttpClient` from `@ion/network` that routes through the proxy |
+| `createIonConnectProxyClient({ baseUrl })` | Returns `HttpClient` from `@ion/network` that routes through the proxy |
 
 ## Dependencies
 - `@ion/network` — `Transport` and `HttpClient` interfaces, `createHttpClient` factory

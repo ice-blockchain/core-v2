@@ -116,7 +116,9 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
         try {
             val headers = JSONObject(headersJSON)
             headers.keys().forEach { key -> lines.add("$key: ${headers.getString(key)}") }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            android.util.Log.w("IonConnectProxy", "Failed to parse headers JSON", e)
+        }
         if (body.isNotEmpty()) lines.add("Content-Length: ${body.toByteArray().size}")
         lines.add("Connection: close")
         lines.add("")

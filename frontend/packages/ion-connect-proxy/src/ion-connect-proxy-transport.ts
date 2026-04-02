@@ -1,7 +1,7 @@
 import type { Transport } from '@ion/network';
 import NativeIonConnectProxy from './native-ion-connect-proxy';
 
-export function createIonConnectProxyTransport(options: { port: number }): Transport {
+export function createIonConnectProxyTransport(): Transport {
   return {
     async request(config) {
       const result = await NativeIonConnectProxy.proxyRequest(

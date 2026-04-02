@@ -7,6 +7,6 @@ export interface IonConnectProxyConfig {
 }
 
 export interface StartIonConnectProxyOptions {
-  port: number;
+  port?: number | undefined;
   config?: IonConnectProxyConfig | undefined;
 }

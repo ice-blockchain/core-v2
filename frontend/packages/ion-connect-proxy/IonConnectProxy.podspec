@@ -2,7 +2,7 @@ Pod::Spec.new do |s|
   s.name         = "IonConnectProxy"
   s.version      = "0.0.1"
   s.summary      = "ION Connect proxy TurboModule"
-  s.homepage     = "https://github.com/nicetip/Tonutils-Proxy"
+  s.homepage     = "https://github.com/ice-blockchain/Tonutils-Proxy"
   s.license      = "Apache-2.0"
   s.author       = "ION"
   s.source       = { :git => "." }
