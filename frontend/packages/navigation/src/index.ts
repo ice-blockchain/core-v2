@@ -8,3 +8,4 @@ export { useSheetNavigation } from './use-sheet-navigation';
 export { useAuthNavigation } from './use-auth-navigation';
 export { useSheetScroll } from './use-sheet-scroll';
 export { useNavigationTheme } from './use-navigation-theme';
+export { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
