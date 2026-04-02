@@ -4,7 +4,7 @@ import type { MediaViewerSource } from "@ion/media-viewer";
 
 import { Icon, colorPalette } from "@ion/ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
-import { SAFETY_TIMEOUT_MS, SPLASH_BACKGROUND_COLOR } from "@ion/splash";
+import { splashConfig } from "@ion/splash";
 
 import { SplashVideo } from "./splash-video";
 
@@ -32,7 +32,7 @@ export function SplashScreen({ videoSource }: SplashScreenProps) {
   }, [navigation]);
 
   useEffect(() => {
-    const timer = setTimeout(advance, SAFETY_TIMEOUT_MS);
+    const timer = setTimeout(advance, splashConfig.safetyTimeoutMs);
     return () => clearTimeout(timer);
   }, [advance]);
 
@@ -50,12 +50,12 @@ export function SplashScreen({ videoSource }: SplashScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: SPLASH_BACKGROUND_COLOR,
+    backgroundColor: splashConfig.backgroundColor,
   },
   fallbackContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: SPLASH_BACKGROUND_COLOR,
+    backgroundColor: splashConfig.backgroundColor,
   },
 });

@@ -5,8 +5,7 @@ Constants and logic for the splash screen flow. Minimal package providing shared
 ## Public API
 
 ```typescript
-export { SAFETY_TIMEOUT_MS }          // 2000ms — fallback if video fails to trigger onEnd
-export { SPLASH_BACKGROUND_COLOR }    // "#FFFFFF" — screen background during video
+export { splashConfig }  // { safetyTimeoutMs: 2000, backgroundColor: "#FFFFFF" }
 ```
 
 ## Dependencies

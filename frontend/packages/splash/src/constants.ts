@@ -1,2 +1,4 @@
-export const SAFETY_TIMEOUT_MS = 2000;
-export const SPLASH_BACKGROUND_COLOR = "#FFFFFF";
+export const splashConfig = {
+  safetyTimeoutMs: 2000,
+  backgroundColor: "#FFFFFF",
+} as const;

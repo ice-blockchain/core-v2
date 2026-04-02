@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { MediaVideo } from "@ion/media-viewer";
 import type { MediaViewerSource } from "@ion/media-viewer";
-import { SPLASH_BACKGROUND_COLOR } from "@ion/splash";
+import { splashConfig } from "@ion/splash";
 
 interface SplashVideoProps {
   source: MediaViewerSource;
@@ -30,7 +30,7 @@ const containerStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: SPLASH_BACKGROUND_COLOR,
+  backgroundColor: splashConfig.backgroundColor,
   width: "100%",
   height: "100%",
 };

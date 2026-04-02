@@ -1,1 +1,1 @@
-export { SAFETY_TIMEOUT_MS, SPLASH_BACKGROUND_COLOR } from "./constants";
+export { splashConfig } from "./constants";

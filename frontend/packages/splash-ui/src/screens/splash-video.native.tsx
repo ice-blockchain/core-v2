@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { MediaVideo } from "@ion/media-viewer";
 import type { MediaViewerSource } from "@ion/media-viewer";
-import { SPLASH_BACKGROUND_COLOR } from "@ion/splash";
+import { splashConfig } from "@ion/splash";
 
 interface SplashVideoProps {
   source: MediaViewerSource;
@@ -37,7 +37,7 @@ export function SplashVideo({ source, onEnd, onError }: SplashVideoProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: SPLASH_BACKGROUND_COLOR,
+    backgroundColor: splashConfig.backgroundColor,
   },
   video: {
     width: "100%",
