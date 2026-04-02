@@ -48,7 +48,7 @@ The client creates its own `HttpClient` internally with the auth interceptor bak
 | `requestTwoFACode(params)` | Request 2FA verification code (SMS, email, TOTP) |
 | `verifyTwoFACode(params)` | Verify 2FA code |
 | `deleteTwoFAMethod(input)` | Delete a 2FA method |
-| `deleteAccount(username, signingContext)` | Delete account (signed request) |
+| `deleteAccount(username, userAction)` | Delete account (caller provides signed event) |
 | `recoverAccount(input)` | Recover account using recovery credentials |
 | `authStore` | Reactive auth state store (getSnapshot, subscribe) |
 
@@ -202,14 +202,28 @@ Any authenticated request returns 401:
 ### Account Recovery
 ```text
 recoverAccount(input)
-  -> POST /auth/recover/init { username, credentialId }
+  -> POST /auth/recover/user/delegated { username, credentialId }
   <- UserRegistrationChallenge with allowedRecoveryCredentials
   -> decryptPrivateKey(encryptedRecoveryKey, recoveryCode)
-  -> signForLogin with recovery key
-  -> build new credential (password or passkey)
+  -> build new credential (password or passkey) using challenge
+  -> signForLogin with recovery key, signing base64url(JSON(newCredentials))
   -> POST /auth/recover/user (Authorization: Bearer {tempToken})
   -- Does NOT store tokens. User must login separately after recovery.
 ```
+
+### Account Deletion (NOT YET FUNCTIONAL)
+```text
+deleteAccount(username, userAction)
+  -> extract userId from stored JWT
+  -> DELETE /auth/users/{userId}
+     headers: X-Username, X-Useraction: {userAction}
+  -> tokenManager.clearTokens + authStore.removeUser
+```
+The `userAction` parameter must be a base64-encoded Nostr Kind 5 (deletion) event,
+created by the caller (app/actions layer). The identity-client does not create this event.
+
+Known issue: the actions layer does not yet produce the Nostr Kind 5 event for TypeScript.
+Until that is implemented, `deleteAccount` cannot be called successfully.
 
 ## Data Sources
 
