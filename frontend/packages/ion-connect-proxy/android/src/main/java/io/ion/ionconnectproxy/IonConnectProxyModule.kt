@@ -36,19 +36,50 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun startProxy(port: Double, promise: Promise) {
         thread {
-            val result = nativeStartProxy(port.toInt())
-            proxyPort = port.toInt()
-            promise.resolve(result)
+            try {
+                val result = nativeStartProxy(port.toInt())
+                if (result.startsWith("ERR:")) {
+                    promise.reject("PROXY_START_FAILED", result); return@thread
+                }
+                proxyPort = port.toInt()
+                awaitPortListening(proxyPort, promise, result)
+            } catch (e: UnsatisfiedLinkError) {
+                promise.reject("PROXY_UNSUPPORTED_ABI", "Native proxy library not available for this device architecture", e)
+            }
         }
     }
 
     @ReactMethod
     fun startProxyWithConfig(port: Double, configJSON: String, promise: Promise) {
         thread {
-            val result = nativeStartProxyWithConfig(port.toInt(), configJSON)
-            proxyPort = port.toInt()
-            promise.resolve(result)
+            try {
+                val result = nativeStartProxyWithConfig(port.toInt(), configJSON)
+                if (result.startsWith("ERR:")) {
+                    promise.reject("PROXY_START_FAILED", result); return@thread
+                }
+                proxyPort = port.toInt()
+                awaitPortListening(proxyPort, promise, result)
+            } catch (e: UnsatisfiedLinkError) {
+                promise.reject("PROXY_UNSUPPORTED_ABI", "Native proxy library not available for this device architecture", e)
+            }
         }
+    }
+
+    private fun awaitPortListening(port: Int, promise: Promise, result: String) {
+        val maxAttempts = 60
+        val delayMs = 500L
+        for (i in 1..maxAttempts) {
+            try {
+                Socket().use { socket ->
+                    socket.connect(InetSocketAddress("127.0.0.1", port), 1000)
+                }
+                promise.resolve(result)
+                return
+            } catch (_: Exception) {
+                Thread.sleep(delayMs)
+            }
+        }
+        promise.reject("PROXY_START_TIMEOUT", "Proxy not listening on port $port after ${maxAttempts * delayMs / 1000}s. StartProxy returned: \"$result\"")
     }
 
     @ReactMethod

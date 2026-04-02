@@ -12,8 +12,11 @@ class IonConnectProxyImpl: NSObject {
   @objc func startProxy(_ port: Double, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     Self.queue.async {
       let result = callGoFunction(StartProxy(UInt16(port)))
+      if result.hasPrefix("ERR:") {
+        reject("PROXY_START_FAILED", result, nil); return
+      }
       self.proxyPort = UInt16(port)
-      resolve(result)
+      self.awaitPortListening(port: self.proxyPort, result: result, resolve: resolve, reject: reject)
     }
   }
 
@@ -22,9 +25,33 @@ class IonConnectProxyImpl: NSObject {
       let cConfig = strdup(configJSON)
       let result = callGoFunction(StartProxyWithConfig(UInt16(port), cConfig))
       free(cConfig)
+      if result.hasPrefix("ERR:") {
+        reject("PROXY_START_FAILED", result, nil); return
+      }
       self.proxyPort = UInt16(port)
-      resolve(result)
+      self.awaitPortListening(port: self.proxyPort, result: result, resolve: resolve, reject: reject)
     }
+  }
+
+  private func awaitPortListening(port: UInt16, result: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    let maxAttempts = 60
+    let delayUs: UInt32 = 500_000
+    for _ in 1...maxAttempts {
+      var addr = sockaddr_in()
+      addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+      addr.sin_family = sa_family_t(AF_INET)
+      addr.sin_port = port.bigEndian
+      addr.sin_addr.s_addr = inet_addr("127.0.0.1")
+      let fd = socket(AF_INET, SOCK_STREAM, 0)
+      guard fd >= 0 else { usleep(delayUs); continue }
+      let connected = withUnsafePointer(to: &addr) {
+        $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
+      }
+      close(fd)
+      if connected == 0 { resolve(result); return }
+      usleep(delayUs)
+    }
+    reject("PROXY_START_TIMEOUT", "Proxy not listening on port \(port) after \(maxAttempts / 2)s. StartProxy returned: \"\(result)\"", nil)
   }
 
   @objc func stopProxy(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
