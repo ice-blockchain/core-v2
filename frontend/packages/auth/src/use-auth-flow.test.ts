@@ -25,7 +25,17 @@ function createMockClient(): IdentityClient {
     logout: vi.fn(),
     refreshToken: vi.fn(),
     isAuthenticated: vi.fn(),
+    restoreAuth: vi.fn(),
     getUser: vi.fn(),
+    verifyEarlyAccessEmail: vi.fn(),
+    listCredentials: vi.fn(),
+    createRecoveryCredentials: vi.fn(),
+    requestTwoFACode: vi.fn(),
+    verifyTwoFACode: vi.fn(),
+    deleteTwoFAMethod: vi.fn(),
+    deleteAccount: vi.fn(),
+    recoverAccount: vi.fn(),
+    authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} },
   };
 }
 
@@ -75,7 +85,7 @@ describe('useAuthFlow', () => {
   it('completes passkey login flow', async () => {
     const config = createConfig();
     vi.mocked(config.identityClient.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: false,
+      identityFound: true, supportsPasskey: true, supportsPassword: false, twoFAOptionsCount: null,
     });
     vi.mocked(config.identityClient.loginWithPasskey).mockResolvedValue('token');
     const { result } = renderHook(() => useAuthFlow(config));
@@ -89,7 +99,7 @@ describe('useAuthFlow', () => {
   it('falls back to password when passkey is cancelled', async () => {
     const config = createConfig();
     vi.mocked(config.identityClient.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: true,
+      identityFound: true, supportsPasskey: true, supportsPassword: true, twoFAOptionsCount: null,
     });
     vi.mocked(config.identityClient.loginWithPasskey).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
@@ -105,7 +115,7 @@ describe('useAuthFlow', () => {
   it('completes password login flow', async () => {
     const config = createConfig();
     vi.mocked(config.identityClient.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: false, supportsPassword: true,
+      identityFound: true, supportsPasskey: false, supportsPassword: true, twoFAOptionsCount: null,
     });
     vi.mocked(config.identityClient.loginWithPassword).mockResolvedValue('token');
     const { result } = renderHook(() => useAuthFlow(config));
@@ -120,7 +130,7 @@ describe('useAuthFlow', () => {
   it('shows error on failed login attempt', async () => {
     const config = createConfig();
     vi.mocked(config.identityClient.getLoginCapabilities).mockResolvedValue({
-      identityFound: false, supportsPasskey: false, supportsPassword: false,
+      identityFound: false, supportsPasskey: false, supportsPassword: false, twoFAOptionsCount: null,
     });
     const { result } = renderHook(() => useAuthFlow(config));
 
@@ -165,7 +175,7 @@ describe('useAuthFlow', () => {
   it('provides correct verifyPasskey props', async () => {
     const config = createConfig();
     vi.mocked(config.identityClient.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: false,
+      identityFound: true, supportsPasskey: true, supportsPassword: false, twoFAOptionsCount: null,
     });
     vi.mocked(config.identityClient.loginWithPasskey).mockResolvedValue('token');
     const { result } = renderHook(() => useAuthFlow(config));
@@ -210,7 +220,7 @@ describe('useAuthFlow', () => {
     const first = act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('alice'));
     await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('alice'));
 
-    resolveCapabilities!({ identityFound: false, supportsPasskey: false, supportsPassword: false });
+    resolveCapabilities!({ identityFound: false, supportsPasskey: false, supportsPassword: false, twoFAOptionsCount: null });
     await first;
 
     expect(config.identityClient.getLoginCapabilities).toHaveBeenCalledTimes(1);
