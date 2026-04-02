@@ -18,6 +18,7 @@ import { CheckmarkIcon } from "./generated/CheckmarkIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
+import { EditLinkIcon } from "./generated/EditLinkIcon";
 import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
@@ -62,6 +63,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "clock": ClockIcon,
   "close": CloseIcon,
   "danger_triangle": DangerTriangleIcon,
+  "edit-link": EditLinkIcon,
   "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,

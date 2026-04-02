@@ -19,6 +19,8 @@ import { NotificationBarCatalogSection } from "./NotificationBarCatalogSection";
 import { IONLoaderCatalogSection } from "./IONLoaderCatalogSection";
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
 import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
+import { SeparatorCatalogSection } from "./SeparatorCatalogSection";
+import { ListItemSkeletonCatalogSection } from "./ListItemSkeletonCatalogSection";
 
 function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
@@ -58,6 +60,8 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
         <TextFieldCatalogSection />
         <NotificationBarCatalogSection />
         <IONLoaderCatalogSection />
+        <SeparatorCatalogSection />
+        <ListItemSkeletonCatalogSection />
         <BottomSheetCatalogSection />
       </View>
     </ScrollView>

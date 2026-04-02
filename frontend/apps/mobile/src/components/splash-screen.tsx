@@ -9,6 +9,7 @@ import {
   VerifyPasswordOverlay,
 } from "@ion/auth-ui";
 import { CatalogScreen } from "@ion/ui";
+import { ChatPreviewScreen } from "@ion/chat";
 import { SplashVideo } from "./splash-video";
 import { IntroVideo } from "./intro-video";
 import { BottomSheet } from "./bottom-sheet";
@@ -18,6 +19,7 @@ type Phase =
   | { name: "splash" }
   | { name: "intro" }
   | { name: "catalog" }
+  | { name: "chat-preview" }
   | { name: "get-started" }
   | { name: "register" }
   | { name: "verify-password"; identityKeyName: string }
@@ -40,6 +42,7 @@ function usePhaseNavigation() {
       [],
     ),
     goToCatalog: useCallback(() => setPhase({ name: "catalog" }), []),
+    goToChatPreview: useCallback(() => setPhase({ name: "chat-preview" }), []),
   };
 }
 
@@ -95,6 +98,10 @@ export function SplashScreen() {
     return <CatalogScreen />;
   }
 
+  if (nav.phase.name === "chat-preview") {
+    return <ChatPreviewScreen onBack={nav.goToIntro} />;
+  }
+
   return (
     <View style={styles.container}>
       <IntroVideo>
@@ -102,6 +109,7 @@ export function SplashScreen() {
           <View style={styles.introButtons}>
             <PrimaryButton label="Log In" onPress={nav.goToGetStarted} />
             <PrimaryButton label="UI Catalog" onPress={nav.goToCatalog} />
+            <PrimaryButton label="Chat Screens" onPress={nav.goToChatPreview} />
           </View>
         ) : null}
       </IntroVideo>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { TextInput as RNTextInput, View } from "react-native";
+import { Platform, TextInput as RNTextInput, View } from "react-native";
 import type { StyleProp, ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { Icon } from "../icons/Icon";
@@ -18,7 +18,7 @@ function buildContainerStyle(scale: (n: number) => number, backgroundColor: stri
     alignItems: "center",
     borderRadius: scale(16),
     backgroundColor,
-    height: scale(40),
+    height: scale(36),
     paddingHorizontal: scale(12),
     gap: scale(6),
   };
@@ -29,7 +29,7 @@ function buildInputStyle(scale: (n: number) => number, primaryText: string): Tex
     flex: 1,
     fontSize: scale(13),
     fontFamily: "NotoSans-SemiBold",
-    fontWeight: "600",
+    ...(Platform.OS !== "ios" && { fontWeight: "600" as const }),
     color: primaryText,
     paddingVertical: 0,
     paddingHorizontal: 0,
