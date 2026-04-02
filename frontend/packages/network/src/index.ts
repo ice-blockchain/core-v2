@@ -51,6 +51,9 @@ export type {
   ReplayResult,
 } from './queue-types';
 
+// Platform
+export { createNetworkStateProvider } from './platform/network-state';
+
 // Implementations
 export { NetworkError } from './network-error';
 export { createConnectionStateMachine } from './connection-state';

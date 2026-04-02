@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createProxyManager } from './create-proxy-manager';
+import type { ProxyManagerConfig } from './types';
 
 vi.mock('./start-ion-connect-proxy', () => ({
   startIonConnectProxy: vi.fn().mockResolvedValue('OK'),
@@ -27,9 +28,25 @@ const { stopIonConnectProxy } = await import('./stop-ion-connect-proxy');
 
 beforeEach(() => vi.clearAllMocks());
 
+function createTestConfig(overrides?: Partial<ProxyManagerConfig>): ProxyManagerConfig {
+  return {
+    networkStateProvider: {
+      isOnline: () => true,
+      onNetworkInterfaceChange: () => () => {},
+      onStateChange: () => () => {},
+      dispose: vi.fn(),
+    },
+    appStateProvider: {
+      getCurrentState: () => 'active',
+      onStateChange: () => () => {},
+    },
+    ...overrides,
+  };
+}
+
 describe('createProxyManager', () => {
   it('starts proxy and transitions to connected', async () => {
-    const manager = createProxyManager({ port: 9999 });
+    const manager = createProxyManager(createTestConfig({ port: 9999 }));
     const states: string[] = [];
     manager.onStatusChange((s) => states.push(s));
     await manager.start();
@@ -40,7 +57,7 @@ describe('createProxyManager', () => {
   });
 
   it('stops proxy and transitions to disconnected', async () => {
-    const manager = createProxyManager({});
+    const manager = createProxyManager(createTestConfig());
     await manager.start();
     await manager.stop();
     expect(stopIonConnectProxy).toHaveBeenCalled();
@@ -49,7 +66,7 @@ describe('createProxyManager', () => {
   });
 
   it('creates a resilient transport', async () => {
-    const manager = createProxyManager({});
+    const manager = createProxyManager(createTestConfig());
     await manager.start();
     const transport = manager.createTransport();
     expect(transport.request).toBeDefined();
@@ -59,7 +76,7 @@ describe('createProxyManager', () => {
   });
 
   it('creates an HttpClient via createClient', async () => {
-    const manager = createProxyManager({});
+    const manager = createProxyManager(createTestConfig());
     await manager.start();
     const client = manager.createClient({ baseUrl: 'http://test.ton' });
     expect(client.get).toBeDefined();
@@ -68,7 +85,7 @@ describe('createProxyManager', () => {
   });
 
   it('onStatusChange returns unsubscribe function', async () => {
-    const manager = createProxyManager({});
+    const manager = createProxyManager(createTestConfig());
     const states: string[] = [];
     const unsub = manager.onStatusChange((s) => states.push(s));
     await manager.start();

@@ -71,7 +71,7 @@ describe('setupEventSubscriptions', () => {
   it('restarts proxy on network interface change', () => {
     const ctx = createContext();
     const network = createNetworkProvider();
-    setupEventSubscriptions(ctx, { networkStateProvider: network });
+    setupEventSubscriptions(ctx, { networkStateProvider: network, appStateProvider: createAppStateProvider() });
     network.triggerInterfaceChange();
     expect(mockRestart).toHaveBeenCalledWith(ctx);
   });
@@ -79,7 +79,7 @@ describe('setupEventSubscriptions', () => {
   it('transitions to disconnected when going offline', () => {
     const ctx = createContext();
     const network = createNetworkProvider();
-    setupEventSubscriptions(ctx, { networkStateProvider: network });
+    setupEventSubscriptions(ctx, { networkStateProvider: network, appStateProvider: createAppStateProvider() });
     network.triggerStateChange(false);
     expect(ctx.transition).toHaveBeenCalledWith('disconnected');
   });
@@ -88,7 +88,7 @@ describe('setupEventSubscriptions', () => {
     const ctx = createContext();
     ctx.getStatus = vi.fn().mockReturnValue('disconnected');
     const network = createNetworkProvider();
-    setupEventSubscriptions(ctx, { networkStateProvider: network });
+    setupEventSubscriptions(ctx, { networkStateProvider: network, appStateProvider: createAppStateProvider() });
     network.triggerStateChange(true);
     expect(mockRestart).toHaveBeenCalledWith(ctx);
   });
@@ -97,7 +97,7 @@ describe('setupEventSubscriptions', () => {
     mockHealthCheck.mockResolvedValue(false);
     const ctx = createContext();
     const appState = createAppStateProvider();
-    setupEventSubscriptions(ctx, { appStateProvider: appState });
+    setupEventSubscriptions(ctx, { networkStateProvider: createNetworkProvider(), appStateProvider: appState });
     appState.triggerStateChange('background');
     appState.triggerStateChange('active');
     await vi.waitFor(() => expect(mockHealthCheck).toHaveBeenCalled());
@@ -108,7 +108,7 @@ describe('setupEventSubscriptions', () => {
     mockHealthCheck.mockResolvedValue(true);
     const ctx = createContext();
     const appState = createAppStateProvider();
-    setupEventSubscriptions(ctx, { appStateProvider: appState });
+    setupEventSubscriptions(ctx, { networkStateProvider: createNetworkProvider(), appStateProvider: appState });
     appState.triggerStateChange('background');
     appState.triggerStateChange('active');
     await vi.waitFor(() => expect(mockHealthCheck).toHaveBeenCalled());

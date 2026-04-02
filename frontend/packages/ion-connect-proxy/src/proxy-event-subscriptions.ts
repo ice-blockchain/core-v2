@@ -8,19 +8,13 @@ const TAG = 'proxy';
 
 export function setupEventSubscriptions(
   context: ProxyManagerContext,
-  options: { networkStateProvider?: NetworkStateProvider | undefined; appStateProvider?: AppStateProvider | undefined },
+  options: { networkStateProvider: NetworkStateProvider; appStateProvider: AppStateProvider },
 ): () => void {
-  const cleanups: Array<() => void> = [];
-
-  if (options.networkStateProvider) {
-    cleanups.push(subscribeNetworkInterface(context, options.networkStateProvider));
-    cleanups.push(subscribeOnlineState(context, options.networkStateProvider));
-  }
-
-  if (options.appStateProvider) {
-    cleanups.push(subscribeAppState(context, options.appStateProvider));
-  }
-
+  const cleanups: Array<() => void> = [
+    subscribeNetworkInterface(context, options.networkStateProvider),
+    subscribeOnlineState(context, options.networkStateProvider),
+    subscribeAppState(context, options.appStateProvider),
+  ];
   return () => { for (const cleanup of cleanups) cleanup(); };
 }
 

@@ -31,8 +31,8 @@ export type ProxyStatus = ConnectionState;
 export interface ProxyManagerConfig {
   port?: number | undefined;
   config?: IonConnectProxyConfig | undefined;
-  networkStateProvider?: NetworkStateProvider | undefined;
-  appStateProvider?: AppStateProvider | undefined;
+  networkStateProvider: NetworkStateProvider;
+  appStateProvider: AppStateProvider;
   healthCheckIntervalMs?: number | undefined;
   healthCheckTimeoutMs?: number | undefined;
   maxRestartAttempts?: number | undefined;

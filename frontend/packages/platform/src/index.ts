@@ -13,8 +13,8 @@ export { getInstallReferrer } from "./install-referrer";
 export type { InstallReferrer } from "./types";
 
 // App lifecycle
-export { getCurrentAppState, onAppStateChange } from "./app-lifecycle";
-export type { AppLifecycleState, AppLifecycleListener } from "./types";
+export { getCurrentAppState, onAppStateChange, createAppStateProvider } from "./app-lifecycle";
+export type { AppLifecycleState, AppLifecycleListener, AppStateProvider } from "./types";
 
 // Screen dimensions
 export {

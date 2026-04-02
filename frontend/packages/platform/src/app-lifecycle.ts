@@ -1,5 +1,5 @@
 import { AppState } from "react-native";
-import type { AppLifecycleState, AppLifecycleListener } from "./types";
+import type { AppLifecycleState, AppLifecycleListener, AppStateProvider } from "./types";
 
 function mapNativeState(nativeState: string): AppLifecycleState {
   if (nativeState === "active") return "active";
@@ -17,4 +17,11 @@ export function onAppStateChange(callback: AppLifecycleListener): () => void {
   });
 
   return () => subscription.remove();
+}
+
+export function createAppStateProvider(): AppStateProvider {
+  return {
+    getCurrentState: getCurrentAppState,
+    onStateChange: (handler) => onAppStateChange(handler),
+  };
 }
