@@ -12,6 +12,7 @@ import (
 
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
+	sptypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/stretchr/testify/require"
@@ -56,22 +57,31 @@ func UploadToGreenfield(
 	sps, err := sdkClient.ListStorageProviders(ctx, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, sps)
-	primarySP := sps[0].GetOperatorAddress()
 
-	createE2EBucket(t, ctx, sdkClient, bucketName, primarySP)
+	// Try SPs in order; some testnet SPs may be unreachable.
+	pickReachableSP(t, ctx, sdkClient, sps, bucketName)
 	uploadE2EObject(t, ctx, sdkClient, bucketName, objectName, payload, bagID)
 	uploadE2EMetadataObject(t, ctx, sdkClient, bucketName, objectName, ionStorageData)
 }
 
-func createE2EBucket(t *testing.T, ctx context.Context, client gnfdclient.IClient, bucket, primarySP string) {
+func pickReachableSP(t *testing.T, ctx context.Context, client gnfdclient.IClient, sps []sptypes.StorageProvider, bucket string) string {
 	t.Helper()
 	tags := &storagetypes.ResourceTags{
 		Tags: []storagetypes.ResourceTags_Tag{{Key: "onlineioEnv", Value: E2EEnv}},
 	}
-	_, err := client.CreateBucket(ctx, bucket, primarySP, gnfdtypes.CreateBucketOptions{
-		Visibility: storagetypes.VISIBILITY_TYPE_PRIVATE, Tags: tags,
-	})
-	require.NoError(t, err)
+	for _, sp := range sps {
+		addr := sp.GetOperatorAddress()
+		_, err := client.CreateBucket(ctx, bucket, addr, gnfdtypes.CreateBucketOptions{
+			Visibility: storagetypes.VISIBILITY_TYPE_PRIVATE, Tags: tags,
+		})
+		if err == nil {
+			t.Logf("using SP: %s", addr)
+			return addr
+		}
+		t.Logf("SP %s failed: %v, trying next", addr, err)
+	}
+	t.Fatal("no reachable storage provider found")
+	return ""
 }
 
 func uploadE2EObject(t *testing.T, ctx context.Context, client gnfdclient.IClient, bucket, object string, payload []byte, bagID [32]byte) {

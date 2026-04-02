@@ -64,13 +64,12 @@ func TestGenerateMerkleProofSinglePiece(t *testing.T) {
 
 	proofCell, err := cell.FromBOC(proof)
 	require.NoError(t, err)
-	require.Equal(t, tree.Hash(), proofCell.Hash())
+	require.NoError(t, cell.CheckProof(proofCell, tree.Hash()))
 }
 
 func TestGenerateMerkleProofFourPieces(t *testing.T) {
 	hashes := makeTestHashes(4)
 	tree := boc.BuildMerkleTree(hashes)
-	rootHash := tree.Hash()
 
 	for i := range 4 {
 		proof, err := boc.GenerateMerkleProof(tree, i, 4)
@@ -78,14 +77,13 @@ func TestGenerateMerkleProofFourPieces(t *testing.T) {
 
 		proofCell, err := cell.FromBOC(proof)
 		require.NoError(t, err)
-		require.Equal(t, rootHash, proofCell.Hash(), "piece %d", i)
+		require.NoError(t, cell.CheckProof(proofCell, tree.Hash()), "piece %d", i)
 	}
 }
 
 func TestGenerateMerkleProofEightPieces(t *testing.T) {
 	hashes := makeTestHashes(8)
 	tree := boc.BuildMerkleTree(hashes)
-	rootHash := tree.Hash()
 
 	for i := range 8 {
 		proof, err := boc.GenerateMerkleProof(tree, i, 8)
@@ -93,14 +91,13 @@ func TestGenerateMerkleProofEightPieces(t *testing.T) {
 
 		proofCell, err := cell.FromBOC(proof)
 		require.NoError(t, err)
-		require.Equal(t, rootHash, proofCell.Hash(), "piece %d", i)
+		require.NoError(t, cell.CheckProof(proofCell, tree.Hash()), "piece %d", i)
 	}
 }
 
 func TestGenerateMerkleProofNonPowerOfTwo(t *testing.T) {
 	hashes := makeTestHashes(33)
 	tree := boc.BuildMerkleTree(hashes)
-	rootHash := tree.Hash()
 
 	for _, idx := range []int{0, 16, 32} {
 		proof, err := boc.GenerateMerkleProof(tree, idx, 33)
@@ -108,7 +105,7 @@ func TestGenerateMerkleProofNonPowerOfTwo(t *testing.T) {
 
 		proofCell, err := cell.FromBOC(proof)
 		require.NoError(t, err)
-		require.Equal(t, rootHash, proofCell.Hash(), "piece %d", idx)
+		require.NoError(t, cell.CheckProof(proofCell, tree.Hash()), "piece %d", idx)
 	}
 }
 

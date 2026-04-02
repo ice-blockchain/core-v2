@@ -232,6 +232,6 @@ func TestMerkleProofMatchesRootHash(t *testing.T) {
 
 		proofCell, err := cell.FromBOC(proof)
 		require.NoError(t, err, "piece %d", i)
-		require.Equal(t, rootHash, proofCell.Hash(), "proof root must match tree root for piece %d", i)
+		require.NoError(t, cell.CheckProof(proofCell, rootHash), "proof verification failed for piece %d", i)
 	}
 }

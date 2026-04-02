@@ -4,26 +4,43 @@
 
 Virtual TON Storage protocol node that serves files cached from BNB Greenfield. Listens on ADNL/RLDP, implements TON storage RPC methods, and uses an LRU+TTL disk cache. Designed to scale to millions of bags using lazy DHT registration, CRDT-based cluster coordination, and hot/cold classification.
 
-## Current State: Phase 3 (Caching Layer)
+## Current State: Phase 4 (RPC Storage Methods)
 
-Phase 1 (ADNL server, DHT registration, overlay management) and Phase 2 (Greenfield event subscription, bag index, metadata/segment fetching) are complete. Phase 3 adds torrent header parsing, per-file disk caching with TTL eviction, PebbleDB metadata persistence with fetch-on-miss, and TeeReader-based streaming from Greenfield to cache.
+Phases 1-3 complete (ADNL server, Greenfield indexing, caching layer). Phase 4 adds TON Storage protocol handlers (`getTorrentInfo`, `addUpdate`, `getPiece`, `overlay.getRandomPeers`), RLDP overlay query dispatch, bidirectional session initialization, and merkle proof generation. End-to-end verified: tonutils-storage client downloads bags from ion-connect-storage over real ADNL/RLDP.
 
-## .ionstorage Format
+## .ionstorage Format (v2)
 
-The `.ionstorage` companion object on Greenfield stores both the TorrentInfo BoC and the serialized torrent header in a length-prefixed format:
+The `.ionstorage` companion object on Greenfield stores the TorrentInfo BoC, the full merkle tree, and the serialized torrent header:
 
 ```
-[4 bytes LE: TorrentInfo BoC length]
-[TorrentInfo BoC bytes]
+[1 byte: version = 0x02]
+[4 bytes LE: TorrentInfo BoC length][TorrentInfo BoC bytes]
+[4 bytes LE: merkle tree BoC length][merkle tree BoC bytes]
 [serialized torrent header bytes (TL-boxed)]
 ```
 
 - **TorrentInfo BoC**: Standard TVM cell (compatible with tonutils-storage). Layout: `pieceSize(32) | fileSize(64) | rootHash(256) | headerSize(64) | headerHash(256) | description(8)`. Description is stored inline (not as reference). BagID = `SHA256(CellRepr(torrentInfoCell))`.
-- **Torrent header**: TL-boxed binary format (`torrent_header#9128aab7`). Contains file names, sizes, and directory structure. Parsed via `boc.ParseTorrentHeader`, serialized via `boc.SerializeTorrentHeader`.
-- **FileSize**: Raw file data size only (excludes torrent header). Pieces are hashed over the raw file data.
+- **Merkle tree BoC**: Full binary merkle tree of piece hashes. Stored to enable O(log N) proof generation without re-hashing pieces at runtime.
+- **Torrent header**: TL-boxed binary format (`torrent_header#9128aab7`). Contains file names, sizes, and directory structure.
+- **FileSize**: `headerSize + dataSize` (total). Pieces are hashed over `headerBytes + payload`, matching tonutils-storage's `CreateTorrent` format exactly.
 - **headerHash**: `SHA256(serializedTorrentHeader)`. headerSize = length of serialized header bytes.
+- **Greenfield stores payload only**: the raw file data. Header bytes are embedded in `.ionstorage`. When serving pieces, the handler prepends header bytes before payload data.
 
-Note: tonutils-storage's `CreateTorrent` hashes pieces over `headerData + fileData` and sets `FileSize = headerSize + dataSize`. ION hashes pieces over file data only. The `boc` package's primitives (merkle tree, cell builder, header serializer) are compatible with both approaches, verified by compatibility tests against `tonutils-storage.CreateTorrentWithInitialHeader`.
+## Piece Serving: Header Prepending
+
+TON Storage pieces cover `headerBytes + payload`. Greenfield stores only the raw payload. When `getPiece` is called:
+
+```
+Piece byte range:    [pieceStart, pieceEnd)
+Header byte range:   [0, headerSize)
+Payload byte range:  [headerSize, fileSize)
+
+Case 1: pieceEnd <= headerSize     -> piece is entirely header data (from metadata)
+Case 2: pieceStart >= headerSize   -> piece is entirely payload (from segment cache / Greenfield)
+Case 3: spans boundary             -> concat tail of header + head of payload
+```
+
+The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases with explicit copies to avoid pinning 16MB segment backing arrays.
 
 ## Data Structures
 
@@ -36,9 +53,19 @@ Note: tonutils-storage's `CreateTorrent` hashes pieces over `headerData + fileDa
 - Wraps `adnl.Gateway` (UDP transport) and `dht.Client` (Kademlia DHT)
 - Owns `DHTRegistrar` and `OverlayManager`
 - Binds on `0.0.0.0:PORT`, advertises `ADNL_EXTERNAL_ADDR` in DHT
-- Extracts DHT bootstrap nodes from TON global config for the sweeper
-- `Start`: binds UDP, sets external address list, registers self in DHT, starts sweep goroutine
+- `Start`: binds UDP (single listener thread), sets external address list, registers self in DHT, starts sweep goroutine, registers ADNL connection handler for RLDP overlay dispatch
 - `Stop`: stops registrar, closes DHT client, closes gateway
+- `PrivateKey()`: accessor for overlay node signing and storage handler
+
+### Connection Handler (`internal/adnl/connection_handler.go`)
+- Registered via `gateway.SetConnectionHandler` in `Start`
+- For each incoming ADNL peer: wraps with `overlay.CreateExtendedADNL` + `overlay.CreateExtendedRLDP`
+- Routes overlay-wrapped ADNL queries to `OverlayManager.HandleIncomingQuery`
+- Routes overlay-wrapped RLDP queries (large payloads like pieces) to the same handler via `SendAnswer`
+- Detects Ping messages (constructor `0x44f3f211`) and triggers bidirectional session initialization via `OverlayManager.NotifyNewSession`
+
+### Overlay ID (`internal/adnl/overlay_id.go`)
+- `ComputeOverlayID(bagID)`: derives overlay ID as `tl.Hash(keys.PublicKeyOverlay{Key: bagID})`, matching tonutils-storage's convention
 
 ### DHTRegistrar (`internal/adnl/dht_registrar.go`)
 - Uses `dht.Client.StoreOverlayNodes` for immediate per-bag registration (instant discoverability)
@@ -55,73 +82,97 @@ Note: tonutils-storage's `CreateTorrent` hashes pieces over `headerData + fileDa
 - `buildOverlayValue`: constructs `dht.Value` with `UpdateRuleOverlayNodes` for overlay node announcements
 
 ### OverlayManager (`internal/adnl/overlay_manager.go`)
-- LRU cache capped at `ActiveDHTLimit`
-- Overlays joined on demand only (lazy), never at startup
-- Overlay query handling (GetRandomPeers, storage RPC) deferred to Phase 4
+- LRU cache capped at `ActiveDHTLimit`, mapping `overlayID -> bagID` (key = `ComputeOverlayID(bagID)`, value = `bagID`). Incoming overlay queries carry overlayID; handlers need bagID.
+- `SetQueryHandler`: registers the storage handler for incoming queries
+- `SetSessionCallback`: registers callback for bidirectional session init (Ping detection)
+- `HandleIncomingQuery`: validates overlay is active, resolves bagID, delegates to query handler
+- `NotifyNewSession`: triggers session callback with RLDP connection for reverse UpdateInit
 
-### Persister (`internal/index/persist.go`)
-- Two-tier bag index: in-memory `xsync.Map[[32]byte, BagLocation]` for fast reads, backed by PebbleDB for durability
-- `LookupBag`: checks memory first, falls back to PebbleDB and promotes on hit (lazy warm-up after restart)
-- `PersistBagsAndHeight`: atomic `pebble.Batch` writes all bag entries + block height, then updates in-memory index
-- `LoadLastHeight`: reads last processed block height for subscription resume
-- Key scheme: `idx/height` (8-byte big-endian int64), `idx/bag/<32-byte-bagID>` (JSON `{bucket, object}`)
-- `BagLocation{BucketName, ObjectName}` maps a bag ID to its Greenfield coordinates
+### Handler (`internal/storage/handler.go`)
+- Central RPC dispatch. Holds refs to `MetadataStore`, `SegmentCache`, `Fetcher`, `Persister`, ADNL private key.
+- `HandleOverlayQuery(ctx, bagID, rawQuery)`: reads TL constructor ID, dispatches to specific handler
+- `ensureBagLoaded(ctx, bagID)`: lazy metadata loader. Checks MetadataStore (PebbleDB hit or Greenfield fetch-on-miss). Single entry point for all handlers.
+- Supported constructors: `getTorrentInfo`, `getPiece`, `addUpdate`, `ping`, `getRandomPeers`
 
-### Subscriber (`internal/index/subscriber.go`)
-- Consumes Greenfield blockchain events via `greenfield-client.Subscribe`
-- Query: filters for transactions with both `onlineioEnv` and `ion-bag-id` tags (`BagIndexQuery`)
-- **Event correlation**: scans `EventCreateObject`/`EventUpdateObjectContent` to build known objects set, then matches `EventSetTag` events by GRN-parsed bucket+object. Only SetTag events with a matching CreateObject/UpdateObject are indexed.
-- Extracts `ion-bag-id` hex from tag JSON, decodes to `[32]byte`
-- Delegates persistence to `Persister.PersistBagsAndHeight`
+### TL Schema (`internal/storage/tl_schema.go`)
+- TL constructor IDs as constants (verified via `tl.CRC` against tonutils-storage definitions)
+- Manual TL serialization/deserialization helpers -- no `tl.Register` to avoid global registry conflicts with tonutils-storage in tests
+- `serializeTorrentInfoResponse`, `serializePieceResponse`, `serializeOkResponse`, `serializePongResponse`
+- `buildFullBitfield(pieceCount)`: all-ones bitfield for UpdateInit
+- `appendTLBytes`: TL bytes wire format (length prefix + padding)
 
-### Fetcher (`internal/greenfield/fetcher.go`)
-- Downloads `.ionstorage` metadata and 16MB data segments from Greenfield
-- Embedded `singleflight.Group` deduplicates concurrent requests for the same resource
-- `FetchMetadata`: downloads `<object>.ionstorage`, parses into `BagMetadata` via `boc.ParseIonStorageBoC`
-- `FetchSegment`: downloads a 16MB segment via `GetObject` with `Range` header. Accepts optional `io.Writer` for TeeReader-based simultaneous caching. Reader closed immediately after `io.ReadAll`.
-- When `w != nil`, `io.TeeReader(greenfieldStream, w)` streams to the writer during read. Singleflight is preserved -- first concurrent caller's writer receives the tee data, all callers share the returned `[]byte`.
+### GetTorrentInfo (`internal/storage/torrent_info.go`)
+- Extracts TorrentInfo BoC section from v2 `.ionstorage` raw bytes (skip version byte + read length-prefixed BoC)
+- Returns `storage.torrentInfo { data: bocBytes }`
+
+### AddUpdate (`internal/storage/add_update.go`)
+- Responds with `storage.ok` to incoming AddUpdate requests
+- The seeder's own UpdateInit (bitfield) is sent as a separate bidirectional message via `SessionInitiator`
+
+### GetPiece (`internal/storage/get_piece.go`)
+- Hot path. Loads metadata, determines piece boundaries (header/payload/boundary), assembles piece data
+- Fetches payload segments from cache or Greenfield (with TeeReader to cache on miss)
+- Generates TVM MerkleProof exotic cell via `boc.GenerateMerkleProof`
+- Returns `storage.piece { proof: bocBytes, data: pieceBytes }`
+- `sync.Pool` for 16MB segment buffers to reduce GC churn
+
+### Piece Slicer (`internal/storage/piece_slicer.go`)
+- `slicePieceData`: extracts piece bytes from header and/or segment data, handling all three boundary cases
+- Explicit `copy` for payload slices to avoid pinning 16MB backing arrays
+- `payloadSegmentIndex`: computes which Greenfield segment contains data for a given piece
+
+### GetRandomPeers (`internal/storage/random_peers.go`)
+- Returns this node as sole peer via `overlay.NewNode(bagID, privateKey)`
+- Phase 4 single-node mode: always returns self. Phase 8 will query CRDT for bag owner.
+- Uses `tl.Serialize(overlay.NodesList{})` -- overlay types are registered by tonutils-go, no conflict
+
+### Session Initiator (`internal/storage/session_initiator.go`)
+- Sends the seeder's `AddUpdate(UpdateInit)` bitfield back to the downloader
+- Triggered by `OverlayManager.NotifyNewSession` when a Ping is detected from a new session
+- Tracks initiated sessions by `(bagID, sessionID)` to avoid duplicates
+- Sends via RLDP `DoQuery` with manually serialized overlay-wrapped AddUpdate payload
 
 ### BagMetadata (`internal/boc/bag_metadata.go`)
-- Parsed from `.ionstorage` format (length-prefixed BoC + torrent header)
-- Fields: BagID, PieceSize, FileSize, HeaderSize, HeaderHash, RootHash, PieceCount, Header (*TorrentHeader), RawBoC
-- `ParseIonStorageBoC`: reads 4-byte BoC length, parses TorrentInfo cell, parses trailing header bytes
-- `BuildIonStorageBytes`: constructs the `.ionstorage` format from BoC + header bytes
+- Parsed from `.ionstorage` v2 format (version byte + TorrentInfo BoC + merkle tree BoC + header)
+- Fields: BagID, PieceSize, FileSize, HeaderSize, HeaderHash, RootHash, PieceCount, MerkleTree (*cell.Cell), Header (*TorrentHeader), RawBoC
+- `ParseIonStorageBoC`: reads version byte (must be 0x02), parses TorrentInfo section, merkle tree section, trailing header bytes
+- `BuildIonStorageBytes(torrentInfoBoC, merkleTreeBoC, headerBytes)`: constructs v2 format
+
+### Merkle Tree (`internal/boc/merkle_tree.go`)
+- `BuildMerkleTree(hashes)`: binary tree of TVM cells, padded to next power of 2 with zero-hash cells. Uses `cell.FromRawUnsafe` for exact tonutils-storage compatibility.
+- `ComputePieceHashes(data, pieceSize)`: SHA256 hash per piece
+- `GenerateMerkleProof(tree, leafIndex, totalLeaves)`: builds a TVM MerkleProof exotic cell using `cell.CreateProof` with a `ProofSkeleton` tracing root-to-leaf path. Passes `cell.CheckProof(proof, rootHash)` verification.
 
 ### TorrentHeader (`internal/boc/torrent_header.go`)
 - Parsed from TL-boxed binary format (`torrent_header#9128aab7`)
 - Wire format (little-endian): `TL_ID(4) | FilesCount(4) | TotalNameSize(8) | TotalDataSize(8) | FEC_ID(4) | DirNameSize(4) | DirName | NameIndex[] | DataIndex[] | Names`
-- `SerializeTorrentHeader`: produces TL-boxed bytes identical to `tl.Serialize(tonstorage.TorrentHeader{}, true)`
-- `ParseTorrentHeader`: manual binary parse (non-standard TL array layout)
-- `FileEntry{Name, Size, Offset}`: per-file metadata extracted from indices
-- Compatibility with tonutils-storage verified by `compatibility_test.go` using `CreateTorrentWithInitialHeader`
-
-### Constants (`internal/boc/constants.go`)
-- `SegmentSize = 16MB`, `PieceSize = 512KB`, `PiecesPerSegment = 32`
+- Compatibility with tonutils-storage verified by `compatibility_test.go`
 
 ### Testing Helpers (`internal/boc/testing_helpers.go`)
-- `BuildIonStorageBoC(payload, pieceSize, header)`: constructs `.ionstorage` from payload + header
-- `BuildTorrentInfoCell`: builds standard TorrentInfo TVM cell (inline description, no refs)
-- `BuildMerkleTree`: binary merkle tree of TVM cells, padded to power of 2 with zero-hash cells (matches tonutils-storage)
+- `BuildIonStorageBoC(payload, pieceSize, header)`: constructs v2 `.ionstorage`. Hashes pieces over `headerBytes + payload` (matching tonutils-storage). Greenfield stores only raw payload.
+- `BuildTorrentInfoCell`: builds standard TorrentInfo TVM cell
 - `SingleFileHeader(name, size)`: convenience for single-file torrent headers
-- `Must*` variants with `t.Helper()` for test use
 
 ### MetadataStore (`internal/cache/metadata_store.go`)
 - PebbleDB-backed metadata cache with Greenfield fetch-on-miss
 - Key scheme: `meta/<32-byte-bagID>` (raw .ionstorage bytes), disjoint from `idx/` prefix
-- `GetBagMetadata(ctx, bagID)`: checks PebbleDB first. On miss, looks up bag location in index, fetches `.ionstorage` from Greenfield, stores in PebbleDB, returns parsed `*BagMetadata`
-- Single entry point for metadata -- Phase 4 handlers call this, not the fetcher directly
+- Single entry point for metadata -- all Phase 4 handlers call this
 
 ### SegmentCache (`internal/cache/segment_cache.go`)
 - Per-file disk cache with TTL eviction via `hashicorp/golang-lru/v2/expirable`
-- Cache structure: `<cacheDir>/<hex(bagID)>/<fileName>` -- one file per torrent entry, pre-allocated via `Truncate`
-- No `_header` file -- torrent header lives in PebbleDB metadata store
-- `OpenBag(bagID, layout)`: creates directory, pre-allocates files from `BagFileLayout`
-- `SegmentWriter(bagID, segIdx)`: returns `io.WriteCloser` that distributes bytes to correct files via `WriteAt`. Files opened/closed per operation (minimal FD usage)
-- `MarkSegmentWritten(bagID, segIdx)`: records segment as cached in `xsync.Map`
-- `GetSegment(bagID, segIdx)`: reads from files via `ReadAt`, assembles contiguous buffer
-- `BagFileLayout{Files, TotalSize}`: describes file structure for segment distribution. TotalSize = raw file data (no header)
+- Cache structure: `<cacheDir>/<hex(bagID)>/<fileName>`
 - Eviction callback: `os.RemoveAll(bagDir)`, deregister DHT + leave overlay
-- `segmentDistributor`: `io.WriteCloser` that maps sequential segment bytes to correct cache files based on offset layout, handling cross-file boundaries
+
+### Persister (`internal/index/persist.go`)
+- Two-tier bag index: in-memory `xsync.Map` + PebbleDB
+- Key scheme: `idx/height`, `idx/bag/<32-byte-bagID>`
+
+### Subscriber (`internal/index/subscriber.go`)
+- Consumes Greenfield blockchain events, correlates SetTag with CreateObject, persists bag index
+
+### Fetcher (`internal/greenfield/fetcher.go`)
+- Downloads `.ionstorage` metadata and 16MB segments from Greenfield
+- singleflight coalescing, TeeReader streaming to cache
 
 ## API Surface
 
@@ -134,6 +185,7 @@ NewServer(ctx, ServerConfig, *slog.Logger) (*Server, error)
 (*Server) OverlayManager() *OverlayManager
 (*Server) Gateway() *adnl.Gateway
 (*Server) DHTClient() *dht.Client
+(*Server) PrivateKey() ed25519.PrivateKey
 ```
 
 ### DHTRegistrar (public type, private constructor)
@@ -149,7 +201,24 @@ NewServer(ctx, ServerConfig, *slog.Logger) (*Server, error)
 ```go
 (*OverlayManager) Join(ctx, bagID [32]byte) error
 (*OverlayManager) Leave(bagID [32]byte) error
+(*OverlayManager) SetQueryHandler(QueryHandler)
+(*OverlayManager) SetSessionCallback(SessionCallback)
+(*OverlayManager) LookupBagID(overlayID [32]byte) ([32]byte, bool)
+(*OverlayManager) HandleIncomingQuery(ctx, overlayID [32]byte, rawQuery []byte) ([]byte, error)
+(*OverlayManager) NotifyNewSession(rldp RLDPDoQueryer, overlayID []byte, bagID [32]byte, sessionID int64)
 (*OverlayManager) ActiveCount() int
+```
+
+### Handler (public)
+```go
+NewHandler(HandlerConfig) *Handler
+(*Handler) HandleOverlayQuery(ctx, bagID [32]byte, rawQuery []byte) ([]byte, error)
+```
+
+### SessionInitiator (public)
+```go
+NewSessionInitiator(handler *Handler, logger *slog.Logger) *SessionInitiator
+(*SessionInitiator) OnNewSession(rldp RLDPDoQueryer, overlayID []byte, bagID [32]byte, sessionID int64)
 ```
 
 ### Persister (public)
@@ -173,21 +242,21 @@ NewFetcher(client greenfieldclient.Client, logger *slog.Logger) *Fetcher
 (*Fetcher) FetchSegment(ctx, bucket, object string, segmentIndex int, w io.Writer) ([]byte, error)
 ```
 
-### BagMetadata / TorrentHeader (public, in boc package)
+### BagMetadata / MerkleTree / TorrentHeader (public, in boc package)
 ```go
 ParseIonStorageBoC(data []byte, logger *slog.Logger) (*BagMetadata, error)
-BuildIonStorageBytes(torrentInfoBoC, headerBytes []byte) []byte
+BuildIonStorageBytes(torrentInfoBoC, merkleTreeBoC, headerBytes []byte) []byte
+BuildMerkleTree(hashes [][32]byte) *cell.Cell
+ComputePieceHashes(data []byte, pieceSize uint32) [][32]byte
+GenerateMerkleProof(tree *cell.Cell, leafIndex, totalLeaves int) ([]byte, error)
+ComputeOverlayID(bagID [32]byte) [32]byte
 SerializeTorrentHeader(header *TorrentHeader) ([]byte, error)
 ParseTorrentHeader(data []byte) (*TorrentHeader, error)
-BuildTorrentInfoCell(pieceSize, fileSize, rootHash, headerHash, headerSize) (*cell.Cell, error)
-BuildMerkleTree(hashes [][32]byte) *cell.Cell
-BuildIonStorageBoC(payload []byte, pieceSize uint32, header *TorrentHeader) ([32]byte, []byte, error)
-SingleFileHeader(name string, dataSize uint64) *TorrentHeader
 ```
 
 ### MetadataStore (public)
 ```go
-NewMetadataStore(db *pebble.DB, fetcher *greenfield.Fetcher, persister *index.Persister, logger) *MetadataStore
+NewMetadataStore(db, fetcher, persister, logger) *MetadataStore
 (*MetadataStore) PutBagMetadata(bagID [32]byte, rawBoC []byte) error
 (*MetadataStore) GetBagMetadata(ctx, bagID [32]byte) (*boc.BagMetadata, error)
 (*MetadataStore) DeleteBagMetadata(bagID [32]byte) error
@@ -196,7 +265,7 @@ NewMetadataStore(db *pebble.DB, fetcher *greenfield.Fetcher, persister *index.Pe
 
 ### SegmentCache (public)
 ```go
-NewSegmentCache(directory string, ttl time.Duration, onEvict func(bagID [32]byte), logger) *SegmentCache
+NewSegmentCache(directory, ttl, onEvict, logger) *SegmentCache
 (*SegmentCache) OpenBag(bagID [32]byte, layout BagFileLayout) error
 (*SegmentCache) SegmentWriter(bagID [32]byte, segmentIndex int) (io.WriteCloser, error)
 (*SegmentCache) MarkSegmentWritten(bagID [32]byte, segmentIndex int)
@@ -209,8 +278,8 @@ NewSegmentCache(directory string, ttl time.Duration, onEvict func(bagID [32]byte
 
 | Package | Purpose |
 |---------|---------|
-| `github.com/xssnick/tonutils-go` | ADNL gateway, DHT client, overlay networking, TL serialization, TVM cell parsing |
-| `github.com/xssnick/tonutils-storage` | Test-only: compatibility verification via `CreateTorrentWithInitialHeader` |
+| `github.com/xssnick/tonutils-go` | ADNL gateway, DHT, overlay, RLDP, TL serialization, TVM cells, merkle proofs |
+| `github.com/xssnick/tonutils-storage` | Test-only: e2e download client, compatibility verification |
 | `github.com/hashicorp/golang-lru/v2` | LRU cache with eviction callbacks, TTL-based expirable cache |
 | `github.com/cockroachdb/pebble/v2` | PebbleDB for durable bag index, block height, and metadata cache |
 | `github.com/ice-blockchain/ion/packages/greenfield-client` | Greenfield RPC subscription, object download, event parsing |
@@ -219,7 +288,6 @@ NewSegmentCache(directory string, ttl time.Duration, onEvict func(bagID [32]byte
 | `github.com/stretchr/testify` | Test assertions |
 
 ## Design Decisions
-
 - **`PORT` + `ADNL_EXTERNAL_ADDR` required**: no auto-detection of IPs or random ports in production code. Test helpers handle port allocation and external IP detection.
 - **Provide Sweep via raw ADNL**: tonutils-go's DHT internals are all unexported. The sweeper sends `dht.FindNode`/`dht.Store` TL messages directly via `gateway.RegisterClient` + `peer.Query`.
 - **Region index for O(1) sweep lookups**: with millions of bags, iterating all LRU keys per region tick is prohibitive. A secondary `map[uint8]map[[32]byte]struct{}` provides direct access.
@@ -227,11 +295,14 @@ NewSegmentCache(directory string, ttl time.Duration, onEvict func(bagID [32]byte
 - **Event correlation**: subscriber only indexes SetTag events that have a matching CreateObject/UpdateObject in the same transaction. Prevents indexing orphaned tags.
 - **Subscription query**: `BagIndexQuery` filters at the Tendermint level for both `onlineioEnv` and `ion-bag-id` CONTAINS, reducing irrelevant events.
 - **Catch-up includes MsgSetTag**: the greenfield-client catch-up path handles `MsgSetTag` messages from historical blocks, ensuring no events are missed after restart.
-- **singleflight with TeeReader**: `FetchSegment` coalesces concurrent requests. When `w != nil`, the first caller's writer receives the tee data. All callers share the returned `[]byte`.
-- **Per-file disk cache**: cache mirrors torrent file structure (`<dir>/<hex(bagID)>/<fileName>`). Files pre-allocated via `Truncate`. No `_header` file -- header in PebbleDB. FDs opened/closed per operation.
 - **MetadataStore fetch-on-miss**: single entry point for metadata. PebbleDB hit returns cached BoC. Miss triggers Greenfield fetch, caches result, returns parsed metadata.
-- **.ionstorage format**: length-prefixed BoC + torrent header. TorrentInfo cell uses standard format (compatible with tonutils-storage). Torrent header appended after BoC for self-contained metadata.
-- **ION vs standard TON piece hashing**: ION hashes pieces over raw file data only. Standard TON hashes over header+payload. Both approaches use the same primitives (merkle tree, cell builder). Compatibility verified in tests.
-- **slog over zerolog**: master-plan specifies `slog.Logger` (stdlib). greenfield-client abstracted via Logger interface with zerolog/slog adapters.
-- **CGO_ENABLED=0**: tonutils-go and PebbleDB are pure Go, no C dependencies.
-- **No `tl.Register` in production**: avoids global TL registry conflicts when tonutils-storage is imported in tests. Header serialization uses manual binary encoding matching TL wire format.
+- **Pieces hash over header+payload**: matches tonutils-storage's `CreateTorrent` format exactly. FileSize = headerSize + dataSize. Verified by e2e test: tonutils-storage client downloads and verifies pieces served by ion-connect-storage.
+- **Merkle tree stored in .ionstorage v2**: full tree persisted to enable O(log N) proof generation. Proofs use TVM MerkleProof exotic cells via `cell.CreateProof(skeleton)`, passing `cell.CheckProof` verification.
+- **Manual TL serialization**: storage protocol messages (`getTorrentInfo`, `getPiece`, etc.) are serialized manually without `tl.Register`. Avoids global TL registry conflicts when tonutils-storage is imported in test code.
+- **Overlay ID = `tl.Hash(PublicKeyOverlay{Key: bagID})`**: matches tonutils-storage convention. The overlay manager LRU maps overlayID -> bagID for reverse lookup on incoming queries.
+- **Bidirectional session init**: when a Ping arrives, the seeder sends its own `AddUpdate(UpdateInit)` with all-ones bitfield back to the downloader via RLDP. Required by tonutils-storage protocol -- both sides must exchange bitfields.
+- **RLDP connection handler**: `gateway.SetConnectionHandler` fires asynchronously (goroutine). The handler wraps each peer with `overlay.CreateExtendedADNL` + `overlay.CreateExtendedRLDP` for overlay query dispatch. `Start()` must be called on the downloader torrent before `ConnectToNode` to initialize `globalCtx`.
+- **Greenfield stores payload only**: header embedded in `.ionstorage`. Segment cache stores raw Greenfield data. Piece slicer prepends header at serve time.
+- **singleflight with TeeReader**: `FetchSegment` coalesces concurrent requests. Cache populated on first fetch via TeeReader.
+- **Per-file disk cache**: mirrors torrent file structure. No `_header` file -- header in PebbleDB.
+- **CGO_ENABLED=0**: tonutils-go and PebbleDB are pure Go.

@@ -6,18 +6,28 @@ import (
 	"log/slog"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/xssnick/tonutils-go/tl"
 )
 
 // QueryHandler processes a storage protocol query for a given bagID.
 // The raw query is the inner TL payload (after overlay unwrapping).
 type QueryHandler func(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
 
+// SessionCallback is called when a new peer session is detected.
+type SessionCallback func(rldp RLDPDoQueryer, overlayID []byte, bagID [32]byte, sessionID int64)
+
+// RLDPDoQueryer can send RLDP queries to a peer.
+type RLDPDoQueryer interface {
+	DoQuery(ctx context.Context, maxAnswerSize uint64, query, result tl.Serializable) error
+}
+
 // OverlayManager tracks active per-bag overlays with an LRU cache.
 // Maps overlayID (SHA256(bagID)) -> bagID for reverse lookup.
 type OverlayManager struct {
-	overlays     *lru.Cache[[32]byte, [32]byte]
-	queryHandler QueryHandler
-	logger       *slog.Logger
+	overlays        *lru.Cache[[32]byte, [32]byte]
+	queryHandler    QueryHandler
+	sessionCallback SessionCallback
+	logger          *slog.Logger
 }
 
 func newOverlayManager(limit int, logger *slog.Logger) *OverlayManager {
@@ -34,6 +44,18 @@ func newOverlayManager(limit int, logger *slog.Logger) *OverlayManager {
 // SetQueryHandler registers the storage handler for incoming overlay queries.
 func (m *OverlayManager) SetQueryHandler(handler QueryHandler) {
 	m.queryHandler = handler
+}
+
+// SetSessionCallback registers a callback for new peer sessions.
+func (m *OverlayManager) SetSessionCallback(cb SessionCallback) {
+	m.sessionCallback = cb
+}
+
+// NotifyNewSession triggers the session callback for a new peer connection.
+func (m *OverlayManager) NotifyNewSession(rldp RLDPDoQueryer, overlayID []byte, bagID [32]byte, sessionID int64) {
+	if cb := m.sessionCallback; cb != nil {
+		cb(rldp, overlayID, bagID, sessionID)
+	}
 }
 
 // Join registers a bag's overlay in the LRU.

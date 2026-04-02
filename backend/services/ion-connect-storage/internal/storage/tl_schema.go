@@ -61,6 +61,11 @@ func serializePongResponse() []byte {
 	return appendUint32(nil, tlPong)
 }
 
+// serializeOkResponse encodes storage.ok.
+func serializeOkResponse() []byte {
+	return appendUint32(nil, tlOk)
+}
+
 func serializeState(buf []byte, willUpload, wantDownload bool) []byte {
 	buf = appendUint32(buf, tlState)
 	buf = appendBool(buf, willUpload)

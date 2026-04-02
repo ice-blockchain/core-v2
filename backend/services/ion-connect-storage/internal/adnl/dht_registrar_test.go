@@ -120,12 +120,12 @@ func TestComputeOverlayID_Deterministic(t *testing.T) {
 	bag1 := [32]byte{0x00}
 	bag2 := [32]byte{0xFF}
 
-	key1 := computeOverlayID(bag1)
-	key2 := computeOverlayID(bag2)
+	key1 := computeOverlayKey(bag1)
+	key2 := computeOverlayKey(bag2)
 
 	require.NotEqual(t, key1, key2)
 	require.Len(t, key1, 32)
-	require.Equal(t, key1, computeOverlayID(bag1))
+	require.Equal(t, key1, computeOverlayKey(bag1))
 }
 
 func TestDHTRegistrar_StopClean(t *testing.T) {

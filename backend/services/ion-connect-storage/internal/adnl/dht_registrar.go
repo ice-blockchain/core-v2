@@ -79,7 +79,7 @@ func (r *DHTRegistrar) Register(ctx context.Context, bagID [32]byte) error {
 	r.addToRegionIndex(bagID)
 	r.logger.Info("bag registered in DHT", "bag_id_prefix", bagID[:4], "count", r.registered.Len())
 
-	overlayKey := computeOverlayID(bagID)
+	overlayKey := computeOverlayKey(bagID)
 	node, err := overlay.NewNode(overlayKey, r.ownerKey)
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func (r *DHTRegistrar) sweepRegion(ctx context.Context, region uint8) {
 func (r *DHTRegistrar) buildRegionValues(bags [][32]byte) ([]*dht.Value, error) {
 	values := make([]*dht.Value, 0, len(bags))
 	for _, bagID := range bags {
-		overlayKey := computeOverlayID(bagID)
+		overlayKey := computeOverlayKey(bagID)
 		node, err := overlay.NewNode(overlayKey, r.ownerKey)
 		if err != nil {
 			return nil, err
@@ -210,9 +210,10 @@ func (r *DHTRegistrar) buildRegionValues(bags [][32]byte) ([]*dht.Value, error) 
 	return values, nil
 }
 
-func computeOverlayID(bagID [32]byte) []byte {
-	id := ComputeOverlayID(bagID)
-	return id[:]
+// computeOverlayKey returns the raw overlay key (bagID) for DHT registration.
+// This is passed to buildOverlayValue which computes the DHT address from it.
+func computeOverlayKey(bagID [32]byte) []byte {
+	return bagID[:]
 }
 
 func overlayRegion(bagID [32]byte) uint8 {
@@ -221,8 +222,7 @@ func overlayRegion(bagID [32]byte) uint8 {
 }
 
 func overlayDHTKey(bagID [32]byte) []byte {
-	overlayKey := computeOverlayID(bagID)
-	id := keys.PublicKeyOverlay{Key: overlayKey}
+	id := keys.PublicKeyOverlay{Key: bagID[:]}
 	idKey, _ := tl.Hash(id)
 	return idKey
 }

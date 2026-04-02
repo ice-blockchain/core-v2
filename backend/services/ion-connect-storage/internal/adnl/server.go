@@ -81,7 +81,7 @@ func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*
 
 func (s *Server) Start(ctx context.Context) error {
 	bindAddr := fmt.Sprintf("0.0.0.0:%d", s.port)
-	if err := s.gateway.StartServer(bindAddr); err != nil {
+	if err := s.gateway.StartServer(bindAddr, 1); err != nil {
 		return fmt.Errorf("start ADNL gateway: %w", err)
 	}
 

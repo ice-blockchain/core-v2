@@ -1,9 +1,15 @@
 package adnl
 
-import "crypto/sha256"
+import (
+	"github.com/xssnick/tonutils-go/adnl/keys"
+	"github.com/xssnick/tonutils-go/tl"
+)
 
 // ComputeOverlayID derives the overlay network ID from a bag ID.
-// The overlay ID is SHA256(bagID).
+// Uses tl.Hash(PublicKeyOverlay{Key: bagID}) matching tonutils-storage.
 func ComputeOverlayID(bagID [32]byte) [32]byte {
-	return sha256.Sum256(bagID[:])
+	hashBytes, _ := tl.Hash(keys.PublicKeyOverlay{Key: bagID[:]})
+	var result [32]byte
+	copy(result[:], hashBytes)
+	return result
 }

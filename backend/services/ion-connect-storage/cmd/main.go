@@ -76,6 +76,8 @@ func main() {
 		Logger:        logger,
 	})
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
+	sessionInit := storage.NewSessionInitiator(storageHandler, logger)
+	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
 	go startHealthServer(ctx, cfg.HttpPort, logger)

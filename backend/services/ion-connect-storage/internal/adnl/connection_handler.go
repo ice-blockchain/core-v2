@@ -2,7 +2,9 @@ package adnl
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/hex"
+	"log/slog"
 
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
@@ -10,21 +12,26 @@ import (
 	"github.com/xssnick/tonutils-go/tl"
 )
 
+const tlPingConstructor uint32 = 0x44f3f211
+
 // handleNewConnection is called when a new ADNL peer connects.
-// Sets up RLDP with overlay query dispatching.
 func (s *Server) handleNewConnection(client adnl.Peer) error {
-	extADNL := overlay.CreateExtendedADNL(client)
-	extADNL.SetOnUnknownOverlayQuery(s.handleADNLOverlayQuery(extADNL))
-
-	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
-	rl.SetOnUnknownOverlayQuery(s.handleRLDPOverlayQuery(rl))
-
-	s.logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
+	setupOverlayRLDP(client, s.overlays, s.logger)
 	return nil
 }
 
-// handleADNLOverlayQuery handles non-RLDP overlay queries (small messages).
-func (s *Server) handleADNLOverlayQuery(peer *overlay.ADNLWrapper) func(query *adnl.MessageQuery) error {
+// setupOverlayRLDP wires ADNL + RLDP overlay query dispatch for a peer.
+func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, logger *slog.Logger) {
+	extADNL := overlay.CreateExtendedADNL(client)
+	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
+
+	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, logger))
+	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, logger))
+
+	logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
+}
+
+func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, logger *slog.Logger) func(query *adnl.MessageQuery) error {
 	return func(query *adnl.MessageQuery) error {
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
@@ -39,10 +46,11 @@ func (s *Server) handleADNLOverlayQuery(peer *overlay.ADNLWrapper) func(query *a
 			return nil
 		}
 
+		checkPingAndNotify(rawQuery, overlays, rl, overlayIDBytes, overlayID)
+
 		ctx := context.Background()
-		resp, err := s.overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
+		resp, err := overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
 		if err != nil {
-			s.logger.Debug("ADNL overlay query failed", "error", err)
 			return err
 		}
 
@@ -50,8 +58,7 @@ func (s *Server) handleADNLOverlayQuery(peer *overlay.ADNLWrapper) func(query *a
 	}
 }
 
-// handleRLDPOverlayQuery handles RLDP overlay queries (large payloads like pieces).
-func (s *Server) handleRLDPOverlayQuery(peer *overlay.RLDPWrapper) func(transferID []byte, query *rldp.Query) error {
+func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
 	return func(transferID []byte, query *rldp.Query) error {
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
@@ -67,9 +74,9 @@ func (s *Server) handleRLDPOverlayQuery(peer *overlay.RLDPWrapper) func(transfer
 		}
 
 		ctx := context.Background()
-		resp, err := s.overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
+		resp, err := overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
 		if err != nil {
-			s.logger.Debug("RLDP overlay query failed", "error", err)
+			logger.Debug("RLDP overlay query failed", "error", err)
 			return err
 		}
 
@@ -77,7 +84,23 @@ func (s *Server) handleRLDPOverlayQuery(peer *overlay.RLDPWrapper) func(transfer
 	}
 }
 
-// extractRawTL extracts raw bytes from a TL deserialized object.
+// checkPingAndNotify detects Ping messages and triggers session initialization.
+func checkPingAndNotify(rawQuery []byte, overlays *OverlayManager, rl *overlay.RLDPWrapper, overlayIDBytes []byte, overlayID [32]byte) {
+	if len(rawQuery) < 12 {
+		return
+	}
+	constructorID := binary.LittleEndian.Uint32(rawQuery[:4])
+	if constructorID != tlPingConstructor {
+		return
+	}
+	sessionID := int64(binary.LittleEndian.Uint64(rawQuery[4:12]))
+	bagID, ok := overlays.LookupBagID(overlayID)
+	if !ok {
+		return
+	}
+	overlays.NotifyNewSession(rl, overlayIDBytes, bagID, sessionID)
+}
+
 func extractRawTL(obj tl.Serializable) []byte {
 	switch v := obj.(type) {
 	case tl.Raw:
