@@ -83,6 +83,12 @@ vi.mock("@ion/navigation", () => {
   };
 });
 
+vi.mock("@ion/media-viewer", () => ({
+  MediaImage: "MediaImage",
+  MediaVideo: "MediaVideo",
+  MediaFullscreen: "MediaFullscreen",
+}));
+
 vi.mock("@ion/onboarding", () => ({
   saveProfile: vi.fn(), uploadAvatar: vi.fn(),
   validateNickname: vi.fn(), validateReferral: vi.fn(),
