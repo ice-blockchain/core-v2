@@ -4,17 +4,11 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okio.buffer
-import okio.sink
 import org.json.JSONObject
 import java.io.File
 import java.net.InetSocketAddress
-import java.net.Proxy
+import java.net.Socket
+import java.net.URL
 import kotlin.concurrent.thread
 
 class IonConnectProxyModule(reactContext: ReactApplicationContext) :
@@ -29,11 +23,6 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     }
 
     private var proxyPort: Int = 0
-    private val proxyClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", proxyPort)))
-            .build()
-    }
 
     override fun getName(): String = NAME
 
@@ -76,12 +65,10 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     fun proxyRequest(method: String, url: String, headersJSON: String, body: String, promise: Promise) {
         thread {
             try {
-                val requestBody = if (body.isNotEmpty()) {
-                    body.toRequestBody("application/json".toMediaTypeOrNull())
-                } else null
-                val request = buildRequest(url, method, headersJSON, requestBody)
-                val response = proxyClient.newCall(request).execute()
-                promise.resolve(buildResponseJSON(response))
+                val raw = buildRawHttpRequest(method, url, headersJSON, body)
+                val responseData = sendRawProxyRequest(raw)
+                val (status, headers, responseBody) = parseHttpResponse(responseData)
+                promise.resolve(encodeResponseJSON(status, headers, responseBody))
             } catch (e: Exception) {
                 promise.reject("PROXY_ERROR", e.message, e)
             }
@@ -92,11 +79,11 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     fun proxyUpload(url: String, filePath: String, headersJSON: String, promise: Promise) {
         thread {
             try {
-                val file = File(filePath)
-                val requestBody = file.asRequestBody("application/octet-stream".toMediaTypeOrNull())
-                val request = buildRequest(url, "POST", headersJSON, requestBody)
-                val response = proxyClient.newCall(request).execute()
-                promise.resolve(buildResponseJSON(response))
+                val fileBody = File(filePath).readText()
+                val raw = buildRawHttpRequest("POST", url, headersJSON, fileBody)
+                val responseData = sendRawProxyRequest(raw)
+                val (status, headers, responseBody) = parseHttpResponse(responseData)
+                promise.resolve(encodeResponseJSON(status, headers, responseBody))
             } catch (e: Exception) {
                 promise.reject("PROXY_ERROR", e.message, e)
             }
@@ -107,38 +94,89 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     fun proxyDownload(url: String, destPath: String, headersJSON: String, promise: Promise) {
         thread {
             try {
-                val request = buildRequest(url, "GET", headersJSON, null)
-                val response = proxyClient.newCall(request).execute()
-                val dest = File(destPath)
-                response.body?.let { body ->
-                    dest.sink().buffer().use { sink -> sink.writeAll(body.source()) }
-                }
-                promise.resolve(buildResponseJSON(response, skipBody = true))
+                val raw = buildRawHttpRequest("GET", url, headersJSON, "")
+                val responseBytes = sendRawProxyRequestBytes(raw)
+                val separatorIndex = findHeaderEnd(responseBytes)
+                val headerPart = String(responseBytes, 0, separatorIndex)
+                val bodyPart = responseBytes.copyOfRange(separatorIndex + 4, responseBytes.size)
+                File(destPath).writeBytes(bodyPart)
+                val (status, headers, _) = parseHttpResponse(headerPart)
+                promise.resolve(encodeResponseJSON(status, headers, ""))
             } catch (e: Exception) {
                 promise.reject("PROXY_ERROR", e.message, e)
             }
         }
     }
 
-    // Helpers
+    // Raw TCP proxy helpers
 
-    private fun buildRequest(url: String, method: String, headersJSON: String, body: okhttp3.RequestBody?): Request {
-        val builder = Request.Builder().url(url)
+    private fun buildRawHttpRequest(method: String, url: String, headersJSON: String, body: String): String {
+        val host = URL(url).host ?: ""
+        val lines = mutableListOf("$method $url HTTP/1.1", "Host: $host")
         try {
             val headers = JSONObject(headersJSON)
-            headers.keys().forEach { key -> builder.addHeader(key, headers.getString(key)) }
-        } catch (_: Exception) { /* ignore malformed headers */ }
-        builder.method(method, body)
-        return builder.build()
+            headers.keys().forEach { key -> lines.add("$key: ${headers.getString(key)}") }
+        } catch (_: Exception) {}
+        if (body.isNotEmpty()) lines.add("Content-Length: ${body.toByteArray().size}")
+        lines.add("Connection: close")
+        lines.add("")
+        var raw = lines.joinToString("\r\n") + "\r\n"
+        if (body.isNotEmpty()) raw += body
+        return raw
     }
 
-    private fun buildResponseJSON(response: okhttp3.Response, skipBody: Boolean = false): String {
-        val headers = JSONObject()
-        response.headers.forEach { (name, value) -> headers.put(name, value) }
+    private fun sendRawProxyRequest(rawHttp: String): String {
+        return String(sendRawProxyRequestBytes(rawHttp))
+    }
+
+    private fun sendRawProxyRequestBytes(rawHttp: String): ByteArray {
+        Socket().use { socket ->
+            socket.connect(InetSocketAddress("127.0.0.1", proxyPort), 10_000)
+            socket.soTimeout = 30_000
+            socket.getOutputStream().write(rawHttp.toByteArray())
+            socket.getOutputStream().flush()
+            return socket.getInputStream().readBytes()
+        }
+    }
+
+    private fun parseHttpResponse(raw: String): Triple<Int, Map<String, String>, String> {
+        val headerEnd = raw.indexOf("\r\n\r\n")
+        if (headerEnd == -1) return Triple(0, emptyMap(), raw)
+        val headerSection = raw.substring(0, headerEnd)
+        val body = raw.substring(headerEnd + 4)
+        val lines = headerSection.split("\r\n")
+        val status = parseStatusCode(lines.firstOrNull() ?: "")
+        val headers = mutableMapOf<String, String>()
+        for (line in lines.drop(1)) {
+            val colonIndex = line.indexOf(':')
+            if (colonIndex != -1) {
+                headers[line.substring(0, colonIndex).trim()] = line.substring(colonIndex + 1).trim()
+            }
+        }
+        return Triple(status, headers, body)
+    }
+
+    private fun parseStatusCode(statusLine: String): Int {
+        val parts = statusLine.split(" ", limit = 3)
+        return if (parts.size >= 2) parts[1].toIntOrNull() ?: 0 else 0
+    }
+
+    private fun findHeaderEnd(data: ByteArray): Int {
+        val separator = "\r\n\r\n".toByteArray()
+        for (i in 0..data.size - separator.size) {
+            if (data[i] == separator[0] && data[i + 1] == separator[1] &&
+                data[i + 2] == separator[2] && data[i + 3] == separator[3]) return i
+        }
+        return data.size
+    }
+
+    private fun encodeResponseJSON(status: Int, headers: Map<String, String>, body: String): String {
+        val headersJson = JSONObject()
+        headers.forEach { (key, value) -> headersJson.put(key, value) }
         val result = JSONObject()
-        result.put("status", response.code)
-        result.put("headers", headers)
-        result.put("body", if (skipBody) "" else (response.body?.string() ?: ""))
+        result.put("status", status)
+        result.put("headers", headersJson)
+        result.put("body", body)
         return result.toString()
     }
 }
