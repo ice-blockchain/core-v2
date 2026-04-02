@@ -19,6 +19,7 @@
     "react-native": "*"
   },
   "dependencies": {
+    "@ion/diagnostics": "workspace:*",
     "@ion/network": "workspace:*"
   },
   "scripts": {
