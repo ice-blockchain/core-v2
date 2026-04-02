@@ -66,6 +66,7 @@ function buildContext(config: IdentityClientConfig) {
 
   return {
     httpClient, tokenManager, authStore, origin: config.appId,
+    refreshLocks, refreshFn,
     loginDataSource: createLoginDataSource(httpClient),
     sessionDataSource,
     userActionDataSource: createUserActionDataSource(httpClient),
@@ -84,7 +85,6 @@ type Ctx = ReturnType<typeof buildContext>;
 function buildAuthMethods(c: Ctx) {
   const regDeps = { registrationDataSource: c.registrationDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore };
   const loginDeps = { loginDataSource: c.loginDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore };
-  const sessionDeps = { sessionDataSource: c.sessionDataSource, tokenManager: c.tokenManager };
   const logoutDeps = { sessionDataSource: c.sessionDataSource, tokenManager: c.tokenManager, authStore: c.authStore };
   const userDeps = { userDataSource: c.userDataSource };
   return {
@@ -93,12 +93,24 @@ function buildAuthMethods(c: Ctx) {
     loginWithPasskey: (username: string, codes?: Record<string, string>) => loginWithPasskey(username, loginDeps, codes),
     loginWithPassword: (input: Parameters<typeof loginWithPassword>[0]) => loginWithPassword(input, loginDeps),
     logout: (username: string) => logout(username, logoutDeps),
-    refreshToken: (username: string) => refreshToken(username, sessionDeps),
+    refreshToken: (username: string) => deduplicatedRefresh(username, c.refreshLocks, c.refreshFn),
     isAuthenticated: (username: string) => isAuthenticated(username, { tokenManager: c.tokenManager }),
     getLoginCapabilities: (username: string) => getLoginCapabilities(username, c.loginDataSource),
     getUser: (username: string, id: string) => getUser(username, id, userDeps),
     restoreAuth: () => restoreAuth({ tokenManager: c.tokenManager, authStore: c.authStore }),
   };
+}
+
+async function deduplicatedRefresh(
+  username: string,
+  locks: Map<string, Promise<void>>,
+  refreshFn: (username: string) => Promise<void>,
+): Promise<void> {
+  const existing = locks.get(username);
+  if (existing) { await existing; return; }
+  const promise = refreshFn(username);
+  locks.set(username, promise);
+  try { await promise; } finally { locks.delete(username); }
 }
 
 function buildFeatureMethods(c: Ctx) {

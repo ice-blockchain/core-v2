@@ -8,7 +8,9 @@ interface RestoreAuthDeps {
 
 async function hasValidTokens(username: string, tokenManager: TokenManager): Promise<boolean> {
   const tokens = await tokenManager.getTokens(username);
-  return tokens !== null;
+  if (!tokens) return false;
+  const isExpired = await tokenManager.isTokenExpired(username);
+  return !isExpired;
 }
 
 export async function restoreAuth(deps: RestoreAuthDeps): Promise<void> {

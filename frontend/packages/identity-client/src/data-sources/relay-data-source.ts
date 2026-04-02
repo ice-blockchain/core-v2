@@ -14,6 +14,12 @@ function normalizeRelayUrl(url: string): string {
   return url.replace(/^(wss:\/\/[^/:]+):443(\/|$)/, '$1$2');
 }
 
+function assertValidRelayUrl(url: string): void {
+  if (!url.startsWith('wss://') && !url.startsWith('https://')) {
+    throw new Error('Invalid relay URL scheme: must be wss:// or https://');
+  }
+}
+
 function buildRepeatedParams(key: string, values: string[]): string {
   return values.map((v) => `${key}=${encodeURIComponent(v)}`).join('&');
 }
@@ -61,6 +67,7 @@ async function sendGetAvailableRelays(
   httpClient: HttpClient,
   options: { username: string; userId: string; currentRelayUrl: string },
 ): Promise<IonConnectRelay[]> {
+  assertValidRelayUrl(options.currentRelayUrl);
   const { body } = await httpClient.get<{ ionConnectRelays: IonConnectRelay[] }>(
     `/v1/users/${encodeURIComponent(options.userId)}/all-available-ion-connect-relays`,
     {

@@ -69,6 +69,17 @@ describe('restoreAuth', () => {
     expect(tokenManager.clearTokens).toHaveBeenCalledWith('bob');
   });
 
+  it('does not restore user with expired tokens', async () => {
+    const tokenManager = createMockTokenManager({ alice: true });
+    const authStore = createMockAuthStore();
+    vi.mocked(tokenManager.isTokenExpired).mockResolvedValue(true);
+
+    await restoreAuth({ tokenManager, authStore });
+
+    expect(authStore.addUser).not.toHaveBeenCalled();
+    expect(tokenManager.clearTokens).toHaveBeenCalledWith('alice');
+  });
+
   it('handles mixed valid and stale users', async () => {
     const tokenManager = createMockTokenManager({ alice: false, bob: true, carol: false });
     const authStore = createMockAuthStore();

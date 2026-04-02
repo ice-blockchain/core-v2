@@ -80,7 +80,7 @@ async function handleAuthError(
   if (error.code !== 'AUTH_EXPIRED') return error;
   const username = extractUsername(error, usernameByRequest);
   if (!username) return error;
-  if (error.requestUrl?.includes('/auth/login/delegated')) {
+  if (error.requestUrl?.endsWith('/auth/login/delegated')) {
     await deps.tokenManager.clearTokens(username);
     return error;
   }

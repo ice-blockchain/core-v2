@@ -1,7 +1,7 @@
 import { IdentityError, IdentityErrorCode } from '../errors';
 
 function isNonNullObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function assertString(obj: Record<string, unknown>, field: string): void {

@@ -126,6 +126,12 @@ describe('createRelayDataSource', () => {
       expect(callArgs[1]?.headers).toEqual({ 'X-Username': 'bob' });
     });
 
+    it('rejects invalid relay URL scheme', async () => {
+      const httpClient = createMockHttpClient();
+      const ds = createRelayDataSource(httpClient);
+      await expect(ds.getAvailableRelays('alice', 'u1', 'javascript://evil')).rejects.toThrow('Invalid relay URL scheme');
+    });
+
     it('does not strip :443 from non-wss URLs', async () => {
       const httpClient = createMockHttpClient();
       vi.mocked(httpClient.get).mockResolvedValueOnce({

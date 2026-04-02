@@ -38,6 +38,15 @@ describe('validateActionChallengeResponse', () => {
   it('rejects missing allowCredentials', () => {
     expect(() => validateActionChallengeResponse({ ...valid, allowCredentials: null })).toThrow('missing allowCredentials');
   });
+
+  it('rejects allowCredentials as array', () => {
+    const response = {
+      challenge: 'c', challengeIdentifier: 'ci',
+      rp: { id: 'r', name: 'n' },
+      allowCredentials: [],
+    };
+    expect(() => validateActionChallengeResponse(response)).toThrow();
+  });
 });
 
 describe('validateRegistrationChallengeResponse', () => {

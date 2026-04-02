@@ -107,6 +107,19 @@ describe('createIdentityAuthInterceptor', () => {
       expect(refreshFn).not.toHaveBeenCalled();
     });
 
+    it('does not clear tokens for URLs that merely contain the delegated path', async () => {
+      const interceptor = createIdentityAuthInterceptor(createDeps({ tokenManager, refreshFn }));
+      await interceptor.onRequest!({
+        url: '/auth/login/delegated-extended', method: 'POST',
+        headers: { 'X-Username': 'alice' },
+      });
+      const error = makeAuthError('/auth/login/delegated-extended');
+      const result = await interceptor.onError!(error);
+      expect(result.shouldRetry).toBe(true);
+      expect(tokenManager.clearTokens).not.toHaveBeenCalled();
+      expect(refreshFn).toHaveBeenCalledWith('alice');
+    });
+
     it('passes through non-AUTH_EXPIRED errors unchanged', async () => {
       const interceptor = createIdentityAuthInterceptor(createDeps({ tokenManager, refreshFn }));
       const error = new NetworkError({ code: 'NETWORK_TIMEOUT', message: 'Timeout', status: 408 });
