@@ -1,5 +1,5 @@
-import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import { isValidEncryptedPrivateKey } from '../crypto/validate-encrypted-private-key';
 import { signForLogin } from '../crypto/sign-for-login';
 import { signForRegistration } from '../crypto/sign-for-registration';
 import { generateKeyPair } from '../crypto/generate-key-pair';
@@ -87,9 +87,22 @@ interface RecoverySignInput {
   origin: string;
 }
 
+function parseEncryptedRecoveryKey(raw: string) {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new IdentityError(IdentityErrorCode.INVALID_RECOVERY_CREDENTIALS, 'Malformed encrypted recovery key', error);
+  }
+  if (!isValidEncryptedPrivateKey(parsed)) {
+    throw new IdentityError(IdentityErrorCode.INVALID_RECOVERY_CREDENTIALS, 'Malformed encrypted recovery key');
+  }
+  return parsed;
+}
+
 async function signWithRecoveryKey(input: RecoverySignInput) {
-  const encrypted = JSON.parse(input.credential.encryptedRecoveryKey) as EncryptedPrivateKey;
-  const privateKeyPem = await decryptPrivateKey(encrypted, input.recoveryCode);
+  const parsed = parseEncryptedRecoveryKey(input.credential.encryptedRecoveryKey);
+  const privateKeyPem = await decryptPrivateKey(parsed, input.recoveryCode);
   const challenge = base64urlnopad.encode(utf8ToBytes(JSON.stringify(input.newCredentialsPayload)));
   return signForLogin({
     challenge,

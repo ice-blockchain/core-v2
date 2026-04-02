@@ -37,7 +37,7 @@ async function sendGetIonConnectIndexers(
   username: string,
 ): Promise<string[]> {
   const { body } = await httpClient.get<{ ionConnectIndexers: string[] }>(
-    `/v1/users/${userId}/ion-connect-indexers`,
+    `/v1/users/${encodeURIComponent(userId)}/ion-connect-indexers`,
     { headers: { 'X-Username': username } },
   );
   return body.ionConnectIndexers;
@@ -48,7 +48,7 @@ async function sendSetIonConnectRelays(
   options: { userId: string; username: string; followeeList: string[] },
 ): Promise<IonConnectRelay[]> {
   const { body } = await httpClient.patch<{ ionConnectRelays: IonConnectRelay[] }>(
-    `/v1/users/${options.userId}/ion-connect-relays`,
+    `/v1/users/${encodeURIComponent(options.userId)}/ion-connect-relays`,
     {
       body: { followeeList: options.followeeList },
       headers: { 'X-Username': options.username },
@@ -62,7 +62,7 @@ async function sendGetAvailableRelays(
   options: { username: string; userId: string; currentRelayUrl: string },
 ): Promise<IonConnectRelay[]> {
   const { body } = await httpClient.get<{ ionConnectRelays: IonConnectRelay[] }>(
-    `/v1/users/${options.userId}/all-available-ion-connect-relays`,
+    `/v1/users/${encodeURIComponent(options.userId)}/all-available-ion-connect-relays`,
     {
       query: { 'ion-connect-relay': normalizeRelayUrl(options.currentRelayUrl) },
       headers: { 'X-Username': options.username },

@@ -52,7 +52,7 @@ async function sendUpdateSocialProfile(
 ): Promise<UpdateSocialProfileResult> {
   try {
     const { body } = await httpClient.patch<UpdateSocialProfileResult>(
-      `/v1/users/${options.userId}/profiles/social`,
+      `/v1/users/${encodeURIComponent(options.userId)}/profiles/social`,
       { body: options.input, headers: { 'X-Username': options.username } },
     );
     return body;

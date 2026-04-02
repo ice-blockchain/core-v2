@@ -26,7 +26,7 @@ export async function deleteTwoFAMethod(
   params: DeleteTwoFAMethodParams,
   deps: DeleteTwoFAMethodDeps,
 ): Promise<void> {
-  const httpPath = `/v1/users/${params.userId}/2fa/${params.twoFAOption}/values/${params.twoFAValue}`;
+  const httpPath = `/v1/users/${encodeURIComponent(params.userId)}/2fa/${encodeURIComponent(params.twoFAOption)}/values/${encodeURIComponent(params.twoFAValue)}`;
   const userAction = await signUserAction(
     { username: params.username, httpMethod: 'DELETE', httpPath, body: {}, signingContext: params.signingContext },
     { userActionDataSource: deps.userActionDataSource, origin: deps.origin },

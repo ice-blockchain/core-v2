@@ -1,6 +1,6 @@
 import type { UserActionDataSource } from '../data-sources/user-action-data-source';
-import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import { isValidEncryptedPrivateKey } from '../crypto/validate-encrypted-private-key';
 import { signForLogin } from '../crypto/sign-for-login';
 import { getPasskeyAssertion } from '../platform/passkey';
 import { IdentityError, IdentityErrorCode } from '../errors';
@@ -114,8 +114,11 @@ async function decryptCredential(rawJson: string, password: string): Promise<str
   } catch (error) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted key', error);
   }
+  if (!isValidEncryptedPrivateKey(parsed)) {
+    throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted key');
+  }
   try {
-    return await decryptPrivateKey(parsed as EncryptedPrivateKey, password);
+    return await decryptPrivateKey(parsed, password);
   } catch (error) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Failed to decrypt key', error);
   }

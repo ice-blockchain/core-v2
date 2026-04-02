@@ -29,7 +29,7 @@ export async function requestTwoFACode(
   params: RequestTwoFACodeParams,
   deps: RequestTwoFACodeDeps,
 ): Promise<RequestTwoFAResponse> {
-  const url = `/v1/users/${params.userId}/2fa/${params.twoFAOption}/verification-requests`;
+  const url = `/v1/users/${encodeURIComponent(params.userId)}/2fa/${encodeURIComponent(params.twoFAOption)}/verification-requests`;
   const userAction = await signUserAction(
     { username: params.username, httpMethod: 'PUT', httpPath: url, body: params.input, signingContext: params.signingContext },
     { userActionDataSource: deps.userActionDataSource, origin: deps.origin },

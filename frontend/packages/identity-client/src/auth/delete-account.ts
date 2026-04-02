@@ -19,7 +19,7 @@ export async function deleteAccount(
   deps: DeleteAccountDeps,
 ): Promise<void> {
   const userId = await extractUserId(username, deps.tokenManager);
-  await deps.httpClient.delete(`/auth/users/${userId}`, {
+  await deps.httpClient.delete(`/auth/users/${encodeURIComponent(userId)}`, {
     headers: {
       'X-Username': username,
       'X-Useraction': userAction,

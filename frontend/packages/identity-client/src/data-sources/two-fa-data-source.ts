@@ -69,7 +69,7 @@ function buildDeleteQuery(params: TwoFAVerificationParam[]): Record<string, stri
 }
 
 function buildVerificationUrl(userId: string, twoFAOption: string): string {
-  return `/v1/users/${userId}/2fa/${twoFAOption}/verification-requests`;
+  return `/v1/users/${encodeURIComponent(userId)}/2fa/${encodeURIComponent(twoFAOption)}/verification-requests`;
 }
 
 async function sendRequestCode(
@@ -106,7 +106,7 @@ async function sendVerifyCode(
 
 async function sendDeleteMethod(httpClient: HttpClient, options: TwoFADeleteOptions): Promise<void> {
   try {
-    const url = `/v1/users/${options.userId}/2fa/${options.twoFAOption}/values/${options.twoFAValue}`;
+    const url = `/v1/users/${encodeURIComponent(options.userId)}/2fa/${encodeURIComponent(options.twoFAOption)}/values/${encodeURIComponent(options.twoFAValue)}`;
     await httpClient.delete<void>(url, {
       headers: buildHeaders(options.username, options.userAction),
       query: buildDeleteQuery(options.verificationParams),

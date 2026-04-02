@@ -82,7 +82,7 @@ describe('createUserProfileDataSource', () => {
       const input = { displayName: 'Alice' };
       const result = await dataSource.updateSocialProfile('u1', 'alice', input);
       expect(result).toEqual(updateResult);
-      expect(httpClient.patch).toHaveBeenCalledWith('/v1/users/u1/profiles/social', {
+      expect(httpClient.patch).toHaveBeenCalledWith(`/v1/users/${encodeURIComponent('u1')}/profiles/social`, {
         body: input,
         headers: { 'X-Username': 'alice' },
       });

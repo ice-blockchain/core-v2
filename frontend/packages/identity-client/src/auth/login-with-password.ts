@@ -4,6 +4,7 @@ import type { TokenManager } from '../token/token-manager';
 import type { InternalAuthStore } from '../auth-store';
 import type { EncryptedPrivateKey } from '../crypto/encrypt-private-key';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import { isValidEncryptedPrivateKey } from '../crypto/validate-encrypted-private-key';
 import { parseSeedFromPem } from '../crypto/generate-key-pair';
 import { generateCredentialId } from '../crypto/generate-credential-id';
 import { signForLogin } from '../crypto/sign-for-login';
@@ -43,17 +44,6 @@ function buildPasswordAssertion(signed: ReturnType<typeof signForLogin>, challen
       },
     },
   };
-}
-
-function isValidEncryptedPrivateKey(value: unknown): value is EncryptedPrivateKey {
-  if (typeof value !== 'object' || value === null) return false;
-  const obj = value as Record<string, unknown>;
-  return (
-    typeof obj.salt === 'string' && obj.salt.length > 0 &&
-    typeof obj.nonce === 'string' && obj.nonce.length > 0 &&
-    typeof obj.ciphertext === 'string' && obj.ciphertext.length > 0 &&
-    typeof obj.mac === 'string' && obj.mac.length > 0
-  );
 }
 
 async function decryptCredentialKey(rawJson: string, password: string): Promise<string> {

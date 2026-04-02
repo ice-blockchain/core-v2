@@ -83,7 +83,7 @@ describe('createRelayDataSource', () => {
       const result = await ds.setIonConnectRelays('u1', 'alice', ['url1']);
 
       expect(httpClient.patch).toHaveBeenCalledWith(
-        '/v1/users/u1/ion-connect-relays',
+        `/v1/users/${encodeURIComponent('u1')}/ion-connect-relays`,
         {
           body: { followeeList: ['url1'] },
           headers: { 'X-Username': 'alice' },
@@ -105,7 +105,7 @@ describe('createRelayDataSource', () => {
       await ds.getAvailableRelays('alice', 'u1', 'wss://relay.ice.io:443/');
 
       expect(httpClient.get).toHaveBeenCalledWith(
-        '/v1/users/u1/all-available-ion-connect-relays',
+        `/v1/users/${encodeURIComponent('u1')}/all-available-ion-connect-relays`,
         {
           query: { 'ion-connect-relay': 'wss://relay.ice.io/' },
           headers: { 'X-Username': 'alice' },
