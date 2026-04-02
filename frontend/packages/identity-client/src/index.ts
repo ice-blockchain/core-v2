@@ -26,6 +26,16 @@ export type {
   RecoverAccountInput,
 } from './types';
 
+export type {
+  SocialProfile,
+  UpdateSocialProfileInput,
+  UpdateSocialProfileResult,
+  IonConnectRelay,
+  UserRelayInfo,
+  SearchUsersParams,
+  GetContentCreatorsParams,
+} from './users/types';
+
 export { IdentityError, IdentityErrorCode } from './errors';
 
 export { createIdentityClient } from './create-identity-client';

@@ -33,6 +33,15 @@ The client creates its own `HttpClient` internally with the auth interceptor bak
 | `restoreAuth()` | Restore authStore from persisted tokens on app start |
 | `getLoginCapabilities(username)` | Query which auth methods a user supports |
 | `getUser(username, userIdOrMasterKey)` | Fetch user profile data |
+| `getSocialProfile(username, userIdOrMasterKey)` | Fetch social profile (displayName, avatar, bio, referral) |
+| `updateSocialProfile(username, userId, input)` | Update social profile fields |
+| `verifyNickname(username, nickname)` | Check if nickname is available |
+| `getIonConnectRelays(username, masterPubkeys)` | Get relay info for multiple users by master public keys |
+| `getIonConnectIndexers(username, userId)` | Get ION Connect indexer URLs for a user |
+| `setIonConnectRelays(username, userId, followeeList)` | Update user's relay configuration |
+| `getAvailableRelays(username, userId, currentRelayUrl)` | List all available relays |
+| `getContentCreators(username, params)` | Discover content creators with exclusion filtering |
+| `searchUsers(username, params)` | Search users by keyword (startsWith/contains) with optional social filters |
 | `verifyEarlyAccessEmail(email)` | Verify early access email |
 | `listCredentials(username)` | List user's registered credentials |
 | `createRecoveryCredentials(username, signingContext)` | Create recovery key pair + recovery code |
@@ -112,11 +121,32 @@ IdentityError extends Error {
   cause?: unknown
 }
 
+SocialProfile {
+  username: string | null
+  displayName: string | null
+  avatar: string | null
+  bio: string | null
+  referral: string | null
+  referralMasterKey: string | null
+  referralCount: number
+}
+
+UserRelayInfo {
+  masterPubKey: string
+  ionConnectRelays: IonConnectRelay[]
+  username: string
+  displayName: string
+  avatar: string | null
+}
+
+IonConnectRelay { url: string; type: 'read' | 'write' | null }
+
 IdentityErrorCode:
   PASSKEY_NOT_AVAILABLE | PASSKEY_CANCELLED | PASSKEY_VALIDATION_FAILED
   INVALID_CREDENTIALS | USER_NOT_FOUND | USER_ALREADY_EXISTS
   USER_DEACTIVATED | TOKEN_EXPIRED | UNAUTHENTICATED
   INVALID_RECOVERY_CREDENTIALS | NETWORK_ERROR | UNKNOWN
+  INVALID_NICKNAME | NICKNAME_ALREADY_EXISTS | NICKNAME_RESERVED
 
 EncryptedPrivateKey { salt: string; nonce: string; ciphertext: string; mac: string }
   -- base64-encoded. PBKDF2 (100k iterations, SHA256) + AES-GCM-256.
@@ -193,6 +223,8 @@ recoverAccount(input)
 | `two-fa-data-source` | `/auth/2fa/*` |
 | `user-action-data-source` | `/auth/action/init`, `/auth/action` |
 | `recovery-data-source` | `/auth/recover/init`, `/auth/recover/user` |
+| `user-profile-data-source` | `/v1/users/{id}/profiles/social`, `/v1/users/verify-username-availability` |
+| `relay-data-source` | `/v1/users/ion-connect-relays`, `/v1/users/{id}/ion-connect-indexers`, `/v1/users/{id}/ion-connect-relays`, `/v1/users/{id}/all-available-ion-connect-relays`, `/v1/users/get-content-creators`, `/v1/user-social-profiles` |
 
 Data sources are thin HTTP wrappers. They set `X-Username` header; the interceptor injects `Authorization`.
 
