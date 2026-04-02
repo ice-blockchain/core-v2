@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import type { TextStyle, ViewStyle } from "react-native";
 import { useTheme } from "@ion/ui";
 import type { SemanticColors } from "@ion/ui";
@@ -101,9 +101,6 @@ function InputColumn({ props, setFocused, hasError, showLabel, labelText, labelS
     </View>
   );
 }
-
-// RN Text imported via named import from react-native for the label
-import { Text } from "react-native";
 
 export function FormInput(props: FormInputProps) {
   const theme = useTheme();
