@@ -48,22 +48,30 @@ async function writeTrackedUsers(secureStorage: ISecureStorage, usernames: strin
 }
 
 export function createTokenManager(secureStorage: ISecureStorage): TokenManager {
+  let mutationLock: Promise<void> = Promise.resolve();
+
+  function withLock<T>(fn: () => Promise<T>): Promise<T> {
+    const next = mutationLock.then(fn, fn);
+    mutationLock = next.then(() => {}, () => {});
+    return next;
+  }
+
   return {
     getTokens: (username) => readTokens(secureStorage, username),
 
-    async setTokens(username, tokens) {
+    setTokens: (username, tokens) => withLock(async () => {
       await secureStorage.setItem(storageKey(username), JSON.stringify(tokens));
       const tracked = await readTrackedUsers(secureStorage);
       if (!tracked.includes(username)) {
         await writeTrackedUsers(secureStorage, [...tracked, username]);
       }
-    },
+    }),
 
-    async clearTokens(username) {
+    clearTokens: (username) => withLock(async () => {
       await secureStorage.removeItem(storageKey(username));
       const tracked = await readTrackedUsers(secureStorage);
       await writeTrackedUsers(secureStorage, tracked.filter((u) => u !== username));
-    },
+    }),
 
     async isTokenExpired(username) {
       const tokens = await readTokens(secureStorage, username);

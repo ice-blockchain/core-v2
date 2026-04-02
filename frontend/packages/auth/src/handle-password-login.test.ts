@@ -4,37 +4,25 @@ import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
 import { handlePasswordLogin } from './handle-password-login';
 import type { AuthFlowAction } from './types';
 
+function buildIdentityStub(): Record<string, ReturnType<typeof vi.fn>> {
+  const methods = [
+    'getLoginCapabilities', 'loginWithPasskey', 'loginWithPassword',
+    'registerWithPassword', 'registerWithPasskey', 'logout', 'refreshToken',
+    'isAuthenticated', 'restoreAuth', 'getUser', 'verifyEarlyAccessEmail',
+    'listCredentials', 'createRecoveryCredentials', 'requestTwoFACode',
+    'verifyTwoFACode', 'deleteTwoFAMethod', 'deleteAccount', 'recoverAccount',
+    'getSocialProfile', 'updateSocialProfile', 'verifyNickname',
+    'getIonConnectRelays', 'getIonConnectIndexers', 'setIonConnectRelays',
+    'getAvailableRelays', 'getContentCreators', 'searchUsers',
+  ] as const;
+  return Object.fromEntries(methods.map((m) => [m, vi.fn()]));
+}
+
 function createMockClient(): IdentityClient {
   return {
-    getLoginCapabilities: vi.fn(),
-    loginWithPasskey: vi.fn(),
-    loginWithPassword: vi.fn(),
-    registerWithPassword: vi.fn(),
-    registerWithPasskey: vi.fn(),
-    logout: vi.fn(),
-    refreshToken: vi.fn(),
-    isAuthenticated: vi.fn(),
-    restoreAuth: vi.fn(),
-    getUser: vi.fn(),
-    verifyEarlyAccessEmail: vi.fn(),
-    listCredentials: vi.fn(),
-    createRecoveryCredentials: vi.fn(),
-    requestTwoFACode: vi.fn(),
-    verifyTwoFACode: vi.fn(),
-    deleteTwoFAMethod: vi.fn(),
-    deleteAccount: vi.fn(),
-    recoverAccount: vi.fn(),
-    getSocialProfile: vi.fn(),
-    updateSocialProfile: vi.fn(),
-    verifyNickname: vi.fn(),
-    getIonConnectRelays: vi.fn(),
-    getIonConnectIndexers: vi.fn(),
-    setIonConnectRelays: vi.fn(),
-    getAvailableRelays: vi.fn(),
-    getContentCreators: vi.fn(),
-    searchUsers: vi.fn(),
+    ...buildIdentityStub(),
     authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} },
-  };
+  } as unknown as IdentityClient;
 }
 
 describe('handlePasswordLogin', () => {

@@ -40,12 +40,7 @@ describe('validateActionChallengeResponse', () => {
   });
 
   it('rejects allowCredentials as array', () => {
-    const response = {
-      challenge: 'c', challengeIdentifier: 'ci',
-      rp: { id: 'r', name: 'n' },
-      allowCredentials: [],
-    };
-    expect(() => validateActionChallengeResponse(response)).toThrow();
+    expect(() => validateActionChallengeResponse({ ...valid, allowCredentials: [] })).toThrow();
   });
 });
 

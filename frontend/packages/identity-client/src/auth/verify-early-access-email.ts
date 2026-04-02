@@ -17,7 +17,7 @@ export async function verifyEarlyAccessEmail(
   } catch (error) {
     if (error instanceof NetworkError) {
       const body = error.responseBody as Record<string, unknown> | undefined;
-      if (body && body.code != null) {
+      if (body && body.code === 'INVALID_EMAIL') {
         throw new IdentityError(IdentityErrorCode.INVALID_EMAIL, 'Email is not eligible for early access');
       }
     }

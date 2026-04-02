@@ -33,7 +33,7 @@ describe('createSessionDataSource', () => {
     expect(result).toEqual({ token: 'new-tok' });
   });
 
-  it('sends PUT to logout endpoint with auth and username headers', async () => {
+  it('sends PUT to logout endpoint with X-Username header only', async () => {
     const httpClient = createMockHttpClient();
     vi.mocked(httpClient.put).mockResolvedValueOnce({ status: 204, headers: {}, body: undefined });
     const ds = createSessionDataSource(httpClient);
@@ -43,5 +43,7 @@ describe('createSessionDataSource', () => {
     expect(httpClient.put).toHaveBeenCalledWith('/auth/logout', {
       headers: { 'X-Username': 'alice' },
     });
+    const callHeaders = vi.mocked(httpClient.put).mock.calls[0]![1]!.headers as Record<string, string>;
+    expect(callHeaders).not.toHaveProperty('Authorization');
   });
 });

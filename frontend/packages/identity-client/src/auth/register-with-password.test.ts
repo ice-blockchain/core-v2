@@ -65,6 +65,7 @@ describe('registerWithPassword', () => {
       token: 'access-tok',
       refreshToken: 'refresh-tok',
     });
+    expect(deps.authStore.addUser).toHaveBeenCalledWith('alice@example.com');
   });
 
   it('throws when temporary auth token is null', async () => {
