@@ -111,7 +111,13 @@ describe('recoverAccount', () => {
         credentialId: 'rec-cred-1',
       }),
     );
-    expect(deps.recoveryDataSource.completeRecovery).toHaveBeenCalled();
+    expect(deps.recoveryDataSource.completeRecovery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        newCredentials: expect.any(Object),
+        recovery: expect.any(Object),
+      }),
+      'temp-token',
+    );
   });
 
   it('throws when temporary token is missing', async () => {

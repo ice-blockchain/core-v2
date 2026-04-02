@@ -32,7 +32,7 @@ export async function executeSignedRequest<T>(
   );
   const headers = {
     'X-Username': input.username,
-    'X-Useraction': userAction,
+    'X-Useraction': btoa(userAction),
   };
   return sendRequest<T>(deps.httpClient, input, headers);
 }

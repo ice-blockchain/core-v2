@@ -40,13 +40,13 @@ describe('executeSignedRequest', () => {
     expect(deps.httpClient.post).toHaveBeenCalledWith('/auth/credentials', {
       headers: {
         'X-Username': 'alice',
-        'X-Useraction': 'ua-token',
+        'X-Useraction': btoa('ua-token'),
       },
       body: { key: 'value' },
     });
   });
 
-  it('sends DELETE with X-Useraction header', async () => {
+  it('sends DELETE with base64-encoded X-Useraction header', async () => {
     const deps = createMockDeps();
     await executeSignedRequest(
       {
@@ -58,7 +58,7 @@ describe('executeSignedRequest', () => {
       deps,
     );
     expect(deps.httpClient.delete).toHaveBeenCalledWith('/auth/users/123', {
-      headers: expect.objectContaining({ 'X-Useraction': 'ua-token' }),
+      headers: expect.objectContaining({ 'X-Useraction': btoa('ua-token') }),
     });
   });
 });
