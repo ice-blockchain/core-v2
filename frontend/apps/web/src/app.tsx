@@ -55,13 +55,15 @@ function AppContent() {
 }
 
 export function App() {
-  const [colorMode, setColorMode] = useState<ColorMode>('light');
+  const [colorMode, setColorMode] = useState<ColorMode | null>(null);
 
   useEffect(() => {
     getFeatureFlag('darkModeEnabled').then((isDark) => {
       setColorMode(isDark ? 'dark' : 'light');
     });
   }, []);
+
+  if (colorMode === null) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>
