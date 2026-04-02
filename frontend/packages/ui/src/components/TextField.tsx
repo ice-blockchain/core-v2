@@ -101,7 +101,7 @@ function useFocusInput(ref: React.ForwardedRef<TextInput>, inputRef: React.RefOb
   }, [ref, inputRef]);
 }
 
-function useTextFieldStyles(options: {
+interface TextFieldStyleOptions {
   theme: Theme;
   explicitState: TextFieldProps["state"];
   isFocused: boolean;
@@ -109,7 +109,9 @@ function useTextFieldStyles(options: {
   minLines: number;
   maxLines: number;
   textVariant?: TextFieldTextVariant;
-}) {
+}
+
+function useTextFieldStyles(options: TextFieldStyleOptions) {
   const { theme, explicitState, isFocused, hasValue, minLines, maxLines, textVariant = "default" } = options;
   const isMultiline = maxLines > 1 || minLines > 1;
 
