@@ -16,7 +16,7 @@ concurrency:
 jobs:
   verify:
     name: Verify
-    runs-on: ubuntu-latest
+    runs-on: getmac
     timeout-minutes: 15
     defaults:
       run:
