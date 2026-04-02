@@ -9,7 +9,7 @@ const baseSource: MediaViewerSource = {
   mimeType: 'image/jpeg',
 };
 
-function flattenStyle(image: { props: { style: unknown } }) {
+function flattenStyle(image: { props: Record<string, unknown> }) {
   return ([] as Record<string, unknown>[]).concat(image.props.style as never).filter(Boolean);
 }
 
