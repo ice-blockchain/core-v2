@@ -29,6 +29,8 @@ function useSaveHandler(
       };
       await saveProfile(input);
       onSaved();
+    } catch (error) {
+      console.error("Failed to save profile", error);
     } finally {
       formActions.setSubmitting(false);
     }

@@ -1,6 +1,6 @@
 # @ion/splash-ui Architecture
 
-Cross-platform splash screen with video playback. Plays `logo_static.mp4` on app launch, then navigates to `Onboarding` via `@ion/navigation`.
+Cross-platform splash screen with video playback. Plays `logo_static.mp4` on app launch, then navigates to `GetStarted` via `@ion/navigation`.
 
 ## Public API
 
@@ -11,7 +11,7 @@ export { SplashScreen }   // Full-screen splash with video + fallback icon
 ## Screen Flow
 
 1. SplashScreen mounts, starts video playback
-2. Video ends (or 2s safety timeout fires) -> `navigation.reset()` to `Routes.Onboarding`
+2. Video ends (or 2s safety timeout fires) -> `navigation.reset()` to `Routes.GetStarted`
 3. On video error -> shows `login-ice-logo` icon fallback, timeout still advances
 
 ## Future Direction
@@ -42,7 +42,7 @@ export { SplashScreen }   // Full-screen splash with video + fallback icon
 
 ## File Structure
 
-```
+```text
 src/
   index.ts
   assets.d.ts

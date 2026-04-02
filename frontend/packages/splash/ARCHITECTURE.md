@@ -16,8 +16,8 @@ export { SPLASH_BACKGROUND_COLOR }    // "#FFFFFF" — screen background during 
 
 ## File Structure
 
-```
+```text
 src/
   index.ts
-  types.ts          # Constants
+  constants.ts      # Runtime constants (timeout, background color)
 ```

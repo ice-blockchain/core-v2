@@ -6,4 +6,4 @@ export { Sheet } from './sheet-navigator';
 export { DynamicSheet } from './DynamicSheet';
 export { useSheetNavigation } from './use-sheet-navigation';
 export { useAuthNavigation } from './use-auth-navigation';
-export { useSheetScroll } from './sheet-scroll-context';
+export { useSheetScroll } from './use-sheet-scroll';

@@ -18,7 +18,7 @@
 
 ## Layer Position
 
-```
+```text
 App (screens)
   |
 Actions (@ion/actions)
@@ -56,7 +56,7 @@ Screens import `@ion/navigation` for: navigator components, route types, modal p
 
 ## Screen Flow
 
-```
+```text
 SplashScreen ──reset──> GetStartedScreen ──push──> [BottomSheet opens]
                         (full screen)                     │
                         (no back to splash)               │
@@ -129,7 +129,7 @@ Android copies: `apps/mobile/android/app/src/main/assets/custom/`
 
 ## Navigator Structure
 
-```
+```text
 GestureHandlerRootView
 └── BottomSheetModalProvider
     └── NavigationContainer

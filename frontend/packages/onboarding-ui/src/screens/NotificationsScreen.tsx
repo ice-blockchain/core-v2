@@ -78,7 +78,11 @@ export function NotificationsScreen() {
   const styles = useScreenStyles();
 
   const handleContinue = useCallback(async () => {
-    try { await requestNotificationPermission(); } catch { /* user denied or unavailable — proceed anyway */ }
+    try {
+      await requestNotificationPermission();
+    } catch (error) {
+      console.warn("Notification permission denied or unavailable", error);
+    }
     navigation.getParent()?.reset({ index: 0, routes: [{ name: Routes.Catalog }] });
   }, [navigation]);
 
