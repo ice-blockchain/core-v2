@@ -54,7 +54,7 @@ export interface IdentityClient {
   requestTwoFACode(params: RequestTwoFACodeParams): Promise<RequestTwoFAResponse>;
   verifyTwoFACode(params: VerifyTwoFACodeParams): Promise<void>;
   deleteTwoFAMethod(input: DeleteTwoFAMethodInput): Promise<void>;
-  deleteAccount(username: string, signingContext: SigningContext): Promise<void>;
+  deleteAccount(username: string, userAction: string): Promise<void>;
   recoverAccount(input: RecoverAccountInput): Promise<void>;
   authStore: AuthStore;
 }

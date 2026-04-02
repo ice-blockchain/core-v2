@@ -103,9 +103,8 @@ function buildAuthMethods(c: Ctx) {
 
 function buildFeatureMethods(c: Ctx) {
   const credDeps = { credentialsDataSource: c.credentialsDataSource, userActionDataSource: c.userActionDataSource, origin: c.origin };
-  const signedDeps = { userActionDataSource: c.userActionDataSource, httpClient: c.httpClient, origin: c.origin };
   const twoFADeps = { twoFADataSource: c.twoFADataSource, userActionDataSource: c.userActionDataSource, origin: c.origin };
-  const deleteDeps = { ...signedDeps, tokenManager: c.tokenManager, authStore: c.authStore };
+  const deleteDeps = { tokenManager: c.tokenManager, authStore: c.authStore, httpClient: c.httpClient };
   const recoveryDeps = { recoveryDataSource: c.recoveryDataSource, origin: c.origin };
   return {
     verifyEarlyAccessEmail: (email: string) => verifyEarlyAccessEmail(email, { httpClient: c.httpClient }),
@@ -114,7 +113,7 @@ function buildFeatureMethods(c: Ctx) {
     requestTwoFACode: (params: RequestTwoFACodeParams) => requestTwoFACode(params, twoFADeps),
     verifyTwoFACode: (params: VerifyTwoFACodeParams) => verifyTwoFACode(params, twoFADeps),
     deleteTwoFAMethod: (input: DeleteTwoFAMethodInput) => deleteTwoFAMethod(input, twoFADeps),
-    deleteAccount: (username: string, ctx: SigningContext) => deleteAccount(username, ctx, deleteDeps),
+    deleteAccount: (username: string, userAction: string) => deleteAccount(username, userAction, deleteDeps),
     recoverAccount: (input: RecoverAccountInput) => recoverAccount(input, recoveryDeps),
   };
 }

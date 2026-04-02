@@ -120,6 +120,24 @@ describe('recoverAccount', () => {
     );
   });
 
+  it('signs recovery assertion using base64url-encoded newCredentials', async () => {
+    const { signForLogin } = await import('../crypto/sign-for-login');
+    const deps = createMockDeps();
+    await recoverAccount(
+      {
+        username: 'alice',
+        recoveryCode: 'recovery-pass',
+        credentialId: 'rec-cred-1',
+        newCredentialKind: 'PasswordProtectedKey',
+        newPassword: 'new-pass',
+      },
+      deps,
+    );
+    const callArgs = vi.mocked(signForLogin).mock.calls[0]![0];
+    expect(callArgs.challenge).not.toBe('Y2hhbGxlbmdl');
+    expect(callArgs.credentialId).toBe('rec-cred-1');
+  });
+
   it('throws when temporary token is missing', async () => {
     const challenge = createMockChallenge();
     (challenge as { temporaryAuthenticationToken: string | null }).temporaryAuthenticationToken = null;

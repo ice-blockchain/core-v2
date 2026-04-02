@@ -8,6 +8,8 @@ import type { RecoveryDataSource } from '../data-sources/recovery-data-source';
 import type { UserRegistrationChallenge, AllowedRecoveryCredential } from '../types';
 import { IdentityError, IdentityErrorCode } from '../errors';
 import { requireTemporaryToken } from './require-temporary-token';
+import { base64urlnopad } from '@scure/base';
+import { utf8ToBytes } from '@noble/hashes/utils';
 
 interface RecoverAccountDeps {
   recoveryDataSource: RecoveryDataSource;
@@ -39,10 +41,14 @@ export async function recoverAccount(
 ): Promise<void> {
   const challenge = await initRecoveryChallenge(input, deps);
   const recoveryCredential = findRecoveryCredential(challenge, input.credentialId);
-  const recoverySign = await signWithRecoveryKey({
-    credential: recoveryCredential, recoveryCode: input.recoveryCode, challenge, origin: deps.origin,
-  });
   const newCredential = await buildNewCredential(input, challenge, deps.origin);
+  const newCredentialsPayload = { firstFactorCredential: newCredential };
+  const recoverySign = await signWithRecoveryKey({
+    credential: recoveryCredential,
+    recoveryCode: input.recoveryCode,
+    newCredentialsPayload,
+    origin: deps.origin,
+  });
   const temporaryToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   await completeRecovery({ deps, newCredential, recoverySign, temporaryToken });
 }
@@ -77,15 +83,16 @@ function findRecoveryCredential(
 interface RecoverySignInput {
   credential: AllowedRecoveryCredential;
   recoveryCode: string;
-  challenge: UserRegistrationChallenge;
+  newCredentialsPayload: Record<string, unknown>;
   origin: string;
 }
 
 async function signWithRecoveryKey(input: RecoverySignInput) {
   const encrypted = JSON.parse(input.credential.encryptedRecoveryKey) as EncryptedPrivateKey;
   const privateKeyPem = await decryptPrivateKey(encrypted, input.recoveryCode);
+  const challenge = base64urlnopad.encode(utf8ToBytes(JSON.stringify(input.newCredentialsPayload)));
   return signForLogin({
-    challenge: input.challenge.challenge,
+    challenge,
     origin: input.origin,
     privateKeyPem,
     credentialId: input.credential.id,

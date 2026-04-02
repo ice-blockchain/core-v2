@@ -1,12 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { HttpClient } from '@ion/network';
 import { IdentityErrorCode } from '../errors';
 import { deleteAccount } from './delete-account';
-
-vi.mock('./execute-signed-request', () => ({
-  executeSignedRequest: vi.fn(() => Promise.resolve()),
-}));
-
-import { executeSignedRequest } from './execute-signed-request';
 
 // Build a mock JWT with userId in the payload
 function buildMockJwt(userId: string): string {
@@ -17,7 +12,6 @@ function buildMockJwt(userId: string): string {
 
 function createMockDeps(jwt?: string) {
   return {
-    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
     tokenManager: {
       getTokens: vi.fn(() => Promise.resolve({ token: jwt ?? buildMockJwt('user-123'), refreshToken: 'ref' })),
       setTokens: vi.fn(),
@@ -26,27 +20,27 @@ function createMockDeps(jwt?: string) {
       getTrackedUsers: vi.fn(() => Promise.resolve([])),
     },
     authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {}, addUser: vi.fn(), removeUser: vi.fn() },
-    httpClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn() },
-    origin: 'https://example.com',
+    httpClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: {} })),
+      upload: vi.fn(),
+    } as unknown as HttpClient,
   };
 }
 
 describe('deleteAccount', () => {
-  it('extracts userId from JWT and executes signed DELETE', async () => {
+  it('extracts userId from JWT and sends DELETE with userAction header', async () => {
     const deps = createMockDeps();
-    await deleteAccount('alice', { kind: 'password', password: 'pass' }, deps);
-    expect(executeSignedRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        username: 'alice',
-        httpMethod: 'DELETE',
-        httpPath: '/auth/users/user-123',
-      }),
-      expect.objectContaining({
-        userActionDataSource: deps.userActionDataSource,
-        httpClient: deps.httpClient,
-        origin: deps.origin,
-      }),
-    );
+    await deleteAccount('alice', 'pre-signed-event', deps);
+    expect(deps.httpClient.delete).toHaveBeenCalledWith('/auth/users/user-123', {
+      headers: {
+        'X-Username': 'alice',
+        'X-Useraction': 'pre-signed-event',
+      },
+    });
     expect(deps.tokenManager.clearTokens).toHaveBeenCalledWith('alice');
     expect(deps.authStore.removeUser).toHaveBeenCalledWith('alice');
   });
@@ -55,14 +49,14 @@ describe('deleteAccount', () => {
     const deps = createMockDeps();
     (deps.tokenManager as unknown as Record<string, unknown>).getTokens = vi.fn(() => Promise.resolve(null));
     await expect(
-      deleteAccount('alice', { kind: 'password', password: 'pass' }, deps),
+      deleteAccount('alice', 'event', deps),
     ).rejects.toMatchObject({ code: IdentityErrorCode.UNAUTHENTICATED });
   });
 
   it('throws on invalid JWT format', async () => {
     const deps = createMockDeps('not-a-jwt');
     await expect(
-      deleteAccount('alice', { kind: 'password', password: 'pass' }, deps),
+      deleteAccount('alice', 'event', deps),
     ).rejects.toMatchObject({ code: IdentityErrorCode.UNKNOWN });
   });
 });
