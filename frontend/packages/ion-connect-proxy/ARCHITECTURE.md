@@ -8,6 +8,20 @@ Manages the ION Connect proxy lifecycle and provides a `Transport` implementatio
 - `StartIonConnectProxyOptions` — `{ port, config? }`
 
 ## API Surface
+
+### High-level (recommended)
+| Export | Description |
+|--------|-------------|
+| `createProxyManager(config)` | Resilient proxy orchestrator with auto-reconnection, health checks, and status callbacks |
+
+`ProxyManager` interface:
+- `start()` / `stop()` — lifecycle control
+- `getStatus()` / `onStatusChange(handler)` — status: `idle | connecting | connected | reconnecting | disconnected`
+- `createTransport()` — resilient `Transport` that retries once after proxy restart
+- `createClient({ baseUrl })` — `HttpClient` backed by the resilient transport
+- `dispose()` — cleanup all subscriptions and timers
+
+### Low-level
 | Export | Description |
 |--------|-------------|
 | `startIonConnectProxy(options)` | Start proxy on `127.0.0.1:port`, returns `"OK"` |
@@ -101,6 +115,19 @@ The `.so` is loaded at runtime by JNI (`IonConnectProxyJNI.cpp`) and linked via 
 1. Replace the artifacts in `packages/ion-connect-proxy/ios/` or `android/src/main/jniLibs/`
 2. iOS: run `pnpm pods` to re-integrate the xcframework
 3. Android: Gradle picks up the new `.so` automatically on next build
+
+## Proxy Hardening
+
+The `ProxyManager` handles four failure scenarios:
+
+| Scenario | Detection | Recovery |
+|----------|-----------|----------|
+| WiFi/cellular switch | `NetworkStateProvider.onNetworkInterfaceChange()` | Stop + restart proxy |
+| iOS backgrounding (UDP sockets die) | `AppStateProvider.onStateChange('active')` after background | Health check, restart if unhealthy |
+| Proxy crash | Periodic TCP health check (30s) or request failure | Stop + restart with exponential backoff |
+| Goes offline | `NetworkStateProvider.onStateChange(false)` | Mark disconnected, restart when online |
+
+Both providers are injected via DI (no direct `@ion/platform` dependency). The `checkProxy()` native method performs a TCP SYN/ACK to `127.0.0.1:port` with 2s timeout. A shared `isRestarting` flag prevents concurrent restart races.
 
 ## Design Decisions
 | Decision | Rationale |

@@ -15,6 +15,10 @@ RCT_EXTERN_METHOD(startProxyWithConfig:(double)port
 RCT_EXTERN_METHOD(stopProxy:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject)
 
+// Health check
+RCT_EXTERN_METHOD(checkProxy:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject)
+
 // HTTP bridge
 RCT_EXTERN_METHOD(proxyRequest:(NSString *)method
                   url:(NSString *)url

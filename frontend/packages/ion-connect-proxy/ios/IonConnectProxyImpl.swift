@@ -34,6 +34,28 @@ class IonConnectProxyImpl: NSObject {
     }
   }
 
+  // MARK: - Health Check
+
+  @objc func checkProxy(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard proxyPort > 0 else { resolve(false); return }
+    let port = proxyPort
+    let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
+    var resolved = false
+    conn.stateUpdateHandler = { state in
+      guard !resolved else { return }
+      if case .ready = state {
+        resolved = true; conn.cancel(); resolve(true)
+      } else if case .failed = state {
+        resolved = true; conn.cancel(); resolve(false)
+      }
+    }
+    conn.start(queue: Self.queue)
+    Self.queue.asyncAfter(deadline: .now() + 2) {
+      guard !resolved else { return }
+      resolved = true; conn.cancel(); resolve(false)
+    }
+  }
+
   // MARK: - HTTP Bridge
 
   @objc func proxyRequest(_ method: String, url: String, headersJSON: String, body: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {

@@ -59,6 +59,22 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
         }
     }
 
+    // Health check
+
+    @ReactMethod
+    fun checkProxy(promise: Promise) {
+        thread {
+            try {
+                Socket().use { socket ->
+                    socket.connect(InetSocketAddress("127.0.0.1", proxyPort), 2000)
+                }
+                promise.resolve(true)
+            } catch (_: Exception) {
+                promise.resolve(false)
+            }
+        }
+    }
+
     // HTTP bridge
 
     @ReactMethod

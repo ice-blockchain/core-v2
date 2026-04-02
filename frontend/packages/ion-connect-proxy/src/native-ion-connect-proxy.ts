@@ -8,6 +8,7 @@ export interface Spec extends TurboModule {
   proxyRequest(method: string, url: string, headersJSON: string, body: string): Promise<string>;
   proxyUpload(url: string, filePath: string, headersJSON: string): Promise<string>;
   proxyDownload(url: string, destPath: string, headersJSON: string): Promise<string>;
+  checkProxy(): Promise<boolean>;
 }
 
 const NativeModule = TurboModuleRegistry.get<Spec>('IonConnectProxy');
