@@ -13,7 +13,7 @@ interface HandleRegisterDeps {
 
 export async function handleRegister(
   deps: HandleRegisterDeps,
-  data: { identityKeyName: string; password: string },
+  data: { identityKeyName: string; password?: string },
 ): Promise<void> {
   const { dispatch } = deps;
   if (!isValidIdentityKeyName(data.identityKeyName)) {
@@ -25,7 +25,7 @@ export async function handleRegister(
     await executeRegistration(deps, data);
   } catch (error) {
     Logger.error('Registration failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName: data.identityKeyName } });
-    if (!data.password && isPasskeyCancelledError(error)) {
+    if ((data.password === undefined || data.password === null) && isPasskeyCancelledError(error)) {
       dispatch({ type: 'GO_TO_REGISTER' });
       return;
     }
@@ -37,10 +37,10 @@ export async function handleRegister(
 
 async function executeRegistration(
   deps: HandleRegisterDeps,
-  data: { identityKeyName: string; password: string },
+  data: { identityKeyName: string; password?: string },
 ): Promise<void> {
   const { identityClient, onAuthSuccess } = deps;
-  const usePasskey = !data.password;
+  const usePasskey = data.password === undefined || data.password === null;
   if (usePasskey) {
     await identityClient.registerWithPasskey(data.identityKeyName);
   } else {

@@ -31,8 +31,12 @@ function iterationsForVersion(version: string): number {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const g = typeof globalThis !== 'undefined' ? (globalThis as any) : ({} as any);
 
+function isNativePlatform(): boolean {
+  return typeof navigator !== 'undefined' && navigator.product === 'ReactNative';
+}
+
 function hasNativePbkdf2(): boolean {
-  return typeof g.__nativePbkdf2Sync === 'function';
+  return isNativePlatform() && typeof g.__nativePbkdf2Sync === 'function';
 }
 
 async function deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
