@@ -45,7 +45,7 @@ function InnerSheetHeader() {
   );
 }
 
-function InnerSheetForm({ onConfirm }: { onConfirm: () => void }) {
+function InnerSheetForm({ onConfirm }: { onConfirm: (password: string) => void }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -67,7 +67,7 @@ function InnerSheetForm({ onConfirm }: { onConfirm: () => void }) {
           style={styles.fieldWidth}
         />
       </View>
-      <Pressable style={styles.confirmButton} onPress={onConfirm}>
+      <Pressable style={styles.confirmButton} onPress={() => { if (password.trim()) onConfirm(password); }}>
         <Text style={styles.confirmLabel}>{translate("auth:confirmButton")}</Text>
       </Pressable>
     </View>
@@ -75,7 +75,7 @@ function InnerSheetForm({ onConfirm }: { onConfirm: () => void }) {
 }
 
 interface VerifyPasswordOverlayProps {
-  onConfirm: () => void;
+  onConfirm: (password: string) => void;
 }
 
 export function VerifyPasswordOverlay({ onConfirm }: VerifyPasswordOverlayProps) {

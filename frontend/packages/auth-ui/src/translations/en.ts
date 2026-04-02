@@ -23,6 +23,7 @@ export const authEN = {
   confirmButton: 'Confirm',
   identityKeyCharactersError:
     'Lowercase, numbers, dots, hyphens only',
+  identityKeyMaxLengthError: 'Identity key name is too long',
   enterIdentityKeyNameError: 'Enter identity key name',
   passwordRuleLength: 'Must be over 8 characters',
   passwordRuleNumber: 'Must contain 1 number',
@@ -67,4 +68,15 @@ export const authEN = {
   identityKeyNotFoundDescription:
     'The identity key for recovery was not found.',
   closeButton: 'Close',
+  errorUserNotFound: 'Account not found. Check your identity key name.',
+  errorUserAlreadyExists: 'This identity key is already taken.',
+  errorInvalidCredentials: 'Incorrect password. Try again.',
+  errorPasskeyCancelled: 'Passkey verification was cancelled.',
+  errorPasskeyNotAvailable: 'Passkey is not available on this device.',
+  errorPasskeyValidationFailed: 'Passkey validation failed. Try again.',
+  errorNetworkError: 'Connection failed. Check your internet and try again.',
+  errorUserDeactivated: 'This account has been deactivated.',
+  errorTokenExpired: 'Session expired. Please sign in again.',
+  errorUnauthenticated: 'Authentication required. Please sign in.',
+  errorUnknown: 'Something went wrong. Please try again.',
 } as const;

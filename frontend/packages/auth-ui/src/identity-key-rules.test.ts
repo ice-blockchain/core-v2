@@ -1,4 +1,27 @@
-import { validateIdentityKeyName } from "./identity-key-rules";
+import { validateIdentityKeyName, isValidIdentityKeyName } from "./identity-key-rules";
+
+describe("isValidIdentityKeyName", () => {
+  it("accepts valid names", () => {
+    expect(isValidIdentityKeyName("alice")).toBe(true);
+    expect(isValidIdentityKeyName("bob.123")).toBe(true);
+  });
+
+  it("rejects empty string", () => {
+    expect(isValidIdentityKeyName("")).toBe(false);
+  });
+
+  it("rejects uppercase", () => {
+    expect(isValidIdentityKeyName("Alice")).toBe(false);
+  });
+
+  it("rejects names exceeding 64 characters", () => {
+    expect(isValidIdentityKeyName("a".repeat(65))).toBe(false);
+  });
+
+  it("accepts names at exactly 64 characters", () => {
+    expect(isValidIdentityKeyName("a".repeat(64))).toBe(true);
+  });
+});
 
 describe("validateIdentityKeyName with valid input", () => {
   it("returns null for valid lowercase alphanumeric names", () => {

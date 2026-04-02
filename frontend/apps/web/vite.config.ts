@@ -7,6 +7,7 @@ const stubsDir = path.resolve(__dirname, 'src/stubs');
 const REQUIRED_ENV_VARS = [
   'VITE_APP_ENV',
   'VITE_API_BASE_URL',
+  'VITE_IDENTITY_APP_ID',
   'VITE_RELAY_URL',
   'VITE_LOG_LEVEL',
 ] as const;

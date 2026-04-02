@@ -17,7 +17,6 @@ import { EyeIcon } from "./eye-icon";
 import { validateIdentityKeyName } from "./identity-key-rules";
 import { buildPasswordRules, areAllPasswordRulesMet } from "./password-rules";
 
-
 function useRegisterPasswordForm() {
   const [identityKeyName, setIdentityKeyName] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +28,9 @@ function useRegisterPasswordForm() {
   const isIdentityKeyValid = identityKeyName.trim().length > 0 && !identityKeyError;
   const isPasswordValid = areAllPasswordRulesMet(password);
   const isPasswordMatch = password.length > 0 && password === confirmPassword;
-  const isFormValid = isIdentityKeyValid && isPasswordValid && isPasswordMatch;
+  const isPasswordEmpty = password.length === 0 && confirmPassword.length === 0;
+  const isPasswordFormValid = isPasswordValid && isPasswordMatch;
+  const isFormValid = isIdentityKeyValid && (isPasswordFormValid || isPasswordEmpty);
 
   return {
     identityKeyName, setIdentityKeyName,

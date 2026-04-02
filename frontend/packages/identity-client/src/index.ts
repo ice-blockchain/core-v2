@@ -16,3 +16,7 @@ export type {
 export { IdentityError, IdentityErrorCode } from './errors';
 
 export { createIdentityClient } from './create-identity-client';
+
+export { createDefaultIdentityClient } from './create-default-identity-client';
+
+export { isPasskeyAvailable } from './platform/passkey';

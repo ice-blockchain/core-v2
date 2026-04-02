@@ -26,6 +26,7 @@ export const authFR: Record<keyof typeof authEN, string> = {
   confirmButton: 'Confirmer',
   identityKeyCharactersError:
     'Minuscules, chiffres, points et tirets uniquement',
+  identityKeyMaxLengthError: 'Le nom de la clé d\'identité est trop long',
   enterIdentityKeyNameError: 'Entrez le nom de la clé d\'identité',
   passwordRuleLength: 'Doit contenir plus de 8 caractères',
   passwordRuleNumber: 'Doit contenir 1 chiffre',
@@ -72,4 +73,15 @@ export const authFR: Record<keyof typeof authEN, string> = {
   identityKeyNotFoundDescription:
     'La clé d\'identité pour la récupération n\'a pas été trouvée.',
   closeButton: 'Fermer',
+  errorUserNotFound: 'Compte introuvable. Vérifiez le nom de votre clé d\'identité.',
+  errorUserAlreadyExists: 'Cette clé d\'identité est déjà prise.',
+  errorInvalidCredentials: 'Mot de passe incorrect. Réessayez.',
+  errorPasskeyCancelled: 'La vérification par clé d\'accès a été annulée.',
+  errorPasskeyNotAvailable: 'La clé d\'accès n\'est pas disponible sur cet appareil.',
+  errorPasskeyValidationFailed: 'La validation de la clé d\'accès a échoué. Réessayez.',
+  errorNetworkError: 'La connexion a échoué. Vérifiez votre connexion internet et réessayez.',
+  errorUserDeactivated: 'Ce compte a été désactivé.',
+  errorTokenExpired: 'Session expirée. Veuillez vous reconnecter.',
+  errorUnauthenticated: 'Authentification requise. Veuillez vous connecter.',
+  errorUnknown: 'Une erreur est survenue. Veuillez réessayer.',
 };

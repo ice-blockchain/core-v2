@@ -87,7 +87,7 @@ function configureRetry(instance: AxiosInstance, retryConfig: RetryConfig): void
       const exponential = Math.min(retryConfig.baseDelayMs * Math.pow(2, retryCount), retryConfig.maxDelayMs);
       return exponential + Math.random() * retryConfig.jitterFactor * exponential;
     },
-    retryCondition: () => true,
+    retryCondition: (error) => axiosRetry.isNetworkError(error),
   });
 }
 
@@ -189,8 +189,13 @@ function parseResponseData<T>(response: AxiosResponse): T {
   const contentType: string = response.headers['content-type'] ?? '';
   rejectNonJsonContentType(contentType, response.data);
   if (typeof response.data === 'string') {
-    const suffix = contentType ? ` (content-type: ${contentType})` : '';
-    throw new NetworkError({ code: 'PARSE_ERROR', message: `Failed to parse response as JSON${suffix}`, rawBody: response.data });
+    if (response.data.length === 0) return undefined as T;
+    try {
+      return JSON.parse(response.data) as T;
+    } catch {
+      const suffix = contentType ? ` (content-type: ${contentType})` : '';
+      throw new NetworkError({ code: 'PARSE_ERROR', message: `Failed to parse response as JSON${suffix}`, rawBody: response.data });
+    }
   }
   if (contentType && !contentType.includes('application/json')) {
     Logger.warning('Unexpected content type, attempting JSON parse', { tag: 'network', data: { contentType } });
@@ -209,6 +214,7 @@ function rejectNonJsonContentType(contentType: string, data: unknown): void {
 
 function throwOnErrorStatus(status: number, response: InterceptedResponse): void {
   if (status >= 200 && status < 300) return;
+  if (status >= 400) Logger.warning('HTTP error response', { tag: 'network', data: { status, url: response.url } });
   if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body, requestUrl: response.url });
   if (status === 403) throw new NetworkError({ code: 'FORBIDDEN', message: 'Forbidden', status, responseBody: response.body });
   if (status >= 400 && status < 500) throw new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: response.body });

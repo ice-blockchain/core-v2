@@ -36,9 +36,11 @@ function useGetStartedNavigation() {
     handleRegister: useCallback(() => {
       navigation.navigate(Routes.Auth.Register);
     }, [navigation]),
+    // TODO: wire to actual password verification before navigating
     handleVerifyPassword: useCallback(() => {
       navigation.navigate(Routes.Auth.ProfileSetup);
     }, [navigation]),
+    // TODO: wire to actual credential restore before navigating
     handleRestore: useCallback(() => {
       navigation.navigate(Routes.Auth.ProfileSetup);
     }, [navigation]),

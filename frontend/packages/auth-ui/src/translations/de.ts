@@ -26,6 +26,7 @@ export const authDE: Record<keyof typeof authEN, string> = {
   confirmButton: 'Bestätigen',
   identityKeyCharactersError:
     'Nur Kleinbuchstaben, Zahlen, Punkte und Bindestriche',
+  identityKeyMaxLengthError: 'Name des Identitätsschlüssels ist zu lang',
   enterIdentityKeyNameError:
     'Gib den Namen des Identitätsschlüssels ein',
   passwordRuleLength: 'Muss mehr als 8 Zeichen haben',
@@ -73,4 +74,15 @@ export const authDE: Record<keyof typeof authEN, string> = {
   identityKeyNotFoundDescription:
     'Der Identitätsschlüssel zur Wiederherstellung wurde nicht gefunden.',
   closeButton: 'Schließen',
+  errorUserNotFound: 'Konto nicht gefunden. Überprüfe den Namen deines Identitätsschlüssels.',
+  errorUserAlreadyExists: 'Dieser Identitätsschlüssel ist bereits vergeben.',
+  errorInvalidCredentials: 'Falsches Passwort. Versuche es erneut.',
+  errorPasskeyCancelled: 'Passkey-Verifizierung wurde abgebrochen.',
+  errorPasskeyNotAvailable: 'Passkey ist auf diesem Gerät nicht verfügbar.',
+  errorPasskeyValidationFailed: 'Passkey-Validierung fehlgeschlagen. Versuche es erneut.',
+  errorNetworkError: 'Verbindung fehlgeschlagen. Überprüfe deine Internetverbindung und versuche es erneut.',
+  errorUserDeactivated: 'Dieses Konto wurde deaktiviert.',
+  errorTokenExpired: 'Sitzung abgelaufen. Bitte melde dich erneut an.',
+  errorUnauthenticated: 'Authentifizierung erforderlich. Bitte melde dich an.',
+  errorUnknown: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
 };

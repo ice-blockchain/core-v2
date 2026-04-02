@@ -111,8 +111,16 @@ describe('createPasskeyCredential', () => {
     expect(callArg).not.toHaveProperty('authenticatorSelection');
   });
 
-  it('maps cancel error to PASSKEY_CANCELLED', async () => {
-    mockPasskeyCreate.mockRejectedValueOnce(new Error('User cancelled the operation'));
+  it('maps UserCancelled error to PASSKEY_CANCELLED', async () => {
+    mockPasskeyCreate.mockRejectedValueOnce({ error: 'UserCancelled', message: 'The user cancelled the request.' });
+
+    await expect(createPasskeyCredential(mockRegistrationChallenge)).rejects.toMatchObject({
+      code: IdentityErrorCode.PASSKEY_CANCELLED,
+    });
+  });
+
+  it('maps Interrupted error to PASSKEY_CANCELLED', async () => {
+    mockPasskeyCreate.mockRejectedValueOnce({ error: 'Interrupted', message: 'The operation was interrupted and may be retried.' });
 
     await expect(createPasskeyCredential(mockRegistrationChallenge)).rejects.toMatchObject({
       code: IdentityErrorCode.PASSKEY_CANCELLED,
@@ -120,6 +128,14 @@ describe('createPasskeyCredential', () => {
   });
 
   it('maps generic error to PASSKEY_VALIDATION_FAILED', async () => {
+    mockPasskeyCreate.mockRejectedValueOnce({ error: 'RequestFailed', message: 'The request failed.' });
+
+    await expect(createPasskeyCredential(mockRegistrationChallenge)).rejects.toMatchObject({
+      code: IdentityErrorCode.PASSKEY_VALIDATION_FAILED,
+    });
+  });
+
+  it('maps plain Error to PASSKEY_VALIDATION_FAILED', async () => {
     mockPasskeyCreate.mockRejectedValueOnce(new Error('Something went wrong'));
 
     await expect(createPasskeyCredential(mockRegistrationChallenge)).rejects.toMatchObject({
@@ -199,8 +215,8 @@ describe('getPasskeyAssertion', () => {
     expect(callArg).not.toHaveProperty('allowCredentials');
   });
 
-  it('maps Cancel error to PASSKEY_CANCELLED', async () => {
-    mockPasskeyGet.mockRejectedValueOnce(new Error('Cancel'));
+  it('maps UserCancelled error to PASSKEY_CANCELLED', async () => {
+    mockPasskeyGet.mockRejectedValueOnce({ error: 'UserCancelled', message: 'The user cancelled the request.' });
 
     await expect(getPasskeyAssertion(mockActionChallenge)).rejects.toMatchObject({
       code: IdentityErrorCode.PASSKEY_CANCELLED,
