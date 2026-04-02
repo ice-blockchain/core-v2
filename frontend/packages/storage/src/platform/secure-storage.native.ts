@@ -49,51 +49,45 @@ async function removeFromRegistry(key: string): Promise<void> {
   await saveKeyRegistry(filtered);
 }
 
+async function keychainGetItem(key: string): Promise<string | null> {
+  const result = await getKeychain().getGenericPassword({ service: SERVICE_PREFIX + key });
+  return result ? result.password : null;
+}
+
+async function keychainSetItem(key: string, value: string): Promise<void> {
+  const Keychain = getKeychain();
+  await Keychain.setGenericPassword(key, value, {
+    service: SERVICE_PREFIX + key,
+    accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK,
+  });
+  await addToRegistry(key);
+}
+
+async function keychainRemoveItem(key: string): Promise<void> {
+  await getKeychain().resetGenericPassword({ service: SERVICE_PREFIX + key });
+  await removeFromRegistry(key);
+}
+
+async function keychainHasItem(key: string): Promise<boolean> {
+  const result = await getKeychain().getGenericPassword({ service: SERVICE_PREFIX + key });
+  return result !== false;
+}
+
+async function keychainClear(): Promise<void> {
+  const Keychain = getKeychain();
+  const keys = await getKeyRegistry();
+  for (const key of keys) {
+    await Keychain.resetGenericPassword({ service: SERVICE_PREFIX + key });
+  }
+  await Keychain.resetGenericPassword({ service: REGISTRY_SERVICE });
+}
+
 export function createSecureStorage(): ISecureStorage {
   return {
-    async getItem(key: string): Promise<string | null> {
-      const Keychain = getKeychain();
-      const result = await Keychain.getGenericPassword({
-        service: SERVICE_PREFIX + key,
-      });
-      if (!result) return null;
-      return result.password;
-    },
-
-    async setItem(key: string, value: string): Promise<void> {
-      const Keychain = getKeychain();
-      await Keychain.setGenericPassword(key, value, {
-        service: SERVICE_PREFIX + key,
-        accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK,
-      });
-      await addToRegistry(key);
-    },
-
-    async removeItem(key: string): Promise<void> {
-      const Keychain = getKeychain();
-      await Keychain.resetGenericPassword({
-        service: SERVICE_PREFIX + key,
-      });
-      await removeFromRegistry(key);
-    },
-
-    async hasItem(key: string): Promise<boolean> {
-      const Keychain = getKeychain();
-      const result = await Keychain.getGenericPassword({
-        service: SERVICE_PREFIX + key,
-      });
-      return result !== false;
-    },
-
-    async clear(): Promise<void> {
-      const Keychain = getKeychain();
-      const keys = await getKeyRegistry();
-      for (const key of keys) {
-        await Keychain.resetGenericPassword({
-          service: SERVICE_PREFIX + key,
-        });
-      }
-      await Keychain.resetGenericPassword({ service: REGISTRY_SERVICE });
-    },
+    getItem: keychainGetItem,
+    setItem: keychainSetItem,
+    removeItem: keychainRemoveItem,
+    hasItem: keychainHasItem,
+    clear: keychainClear,
   };
 }
