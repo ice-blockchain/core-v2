@@ -28,7 +28,7 @@ async function executeRestart(context: ProxyManagerContext): Promise<void> {
   await retryProxyStart(context);
 }
 
-async function stopProxySilently(): Promise<void> {
+export async function stopProxySilently(): Promise<void> {
   try {
     await stopIonConnectProxy();
   } catch {

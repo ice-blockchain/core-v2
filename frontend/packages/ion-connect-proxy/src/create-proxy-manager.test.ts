@@ -23,6 +23,13 @@ vi.mock('@ion/diagnostics', () => ({
   Logger: { info: vi.fn(), warning: vi.fn(), error: vi.fn(), debug: vi.fn(), addBreadcrumb: vi.fn() },
 }));
 
+vi.mock('@ion/platform', () => ({
+  createAppStateProvider: vi.fn().mockReturnValue({
+    getCurrentState: () => 'active',
+    onStateChange: () => () => {},
+  }),
+}));
+
 const { startIonConnectProxy } = await import('./start-ion-connect-proxy');
 const { stopIonConnectProxy } = await import('./stop-ion-connect-proxy');
 

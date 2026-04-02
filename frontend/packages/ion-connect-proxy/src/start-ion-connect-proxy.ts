@@ -2,14 +2,13 @@ import { Logger } from '@ion/diagnostics';
 import { getNativeIonConnectProxy } from './native-ion-connect-proxy';
 import type { StartIonConnectProxyOptions } from './types';
 
-const DEFAULT_PROXY_PORT = 8888;
 const TAG = 'proxy';
 
-export async function startIonConnectProxy(options?: StartIonConnectProxyOptions): Promise<string> {
+export async function startIonConnectProxy(options: StartIonConnectProxyOptions): Promise<string> {
   const nativeModule = getNativeIonConnectProxy();
-  const port = options?.port ?? DEFAULT_PROXY_PORT;
+  const { port } = options;
   try {
-    const result = options?.configJSON
+    const result = options.configJSON
       ? await nativeModule.startProxyWithConfig(port, options.configJSON)
       : await nativeModule.startProxy(port);
     if (result.startsWith('ERR:')) throw new Error(result);

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setupEventSubscriptions } from './proxy-event-subscriptions';
-import type { ProxyManagerContext, AppStateProvider } from './types';
+import type { ProxyManagerContext } from './types';
+import type { AppStateProvider } from '@ion/platform';
 import type { NetworkStateProvider } from '@ion/network';
 
 vi.mock('./proxy-health-check', () => ({

@@ -1,11 +1,11 @@
-import { createConnectionStateMachine, createHttpClient } from '@ion/network';
+import { createConnectionStateMachine, createHttpClient, createNetworkStateProvider } from '@ion/network';
 import type { Transport, HttpClient } from '@ion/network';
+import { createAppStateProvider } from '@ion/platform';
 import { Logger } from '@ion/diagnostics';
 import { startIonConnectProxy } from './start-ion-connect-proxy';
-import { stopIonConnectProxy } from './stop-ion-connect-proxy';
 import { createIonConnectProxyTransport } from './ion-connect-proxy-transport';
 import { setupEventSubscriptions } from './proxy-event-subscriptions';
-import { restartProxy } from './proxy-lifecycle';
+import { restartProxy, stopProxySilently } from './proxy-lifecycle';
 import { runProxyHealthCheck } from './proxy-health-check';
 import { createResilientProxyTransport } from './resilient-proxy-transport';
 import type { ProxyManager, ProxyManagerConfig, ProxyManagerContext, ProxyStatus } from './types';
@@ -17,7 +17,7 @@ const DEFAULT_HEALTH_TIMEOUT_MS = 3_000;
 const DEFAULT_MAX_RESTART_ATTEMPTS = 3;
 const DEFAULT_RESTART_BASE_DELAY_MS = 1_000;
 
-export function createProxyManager(config: ProxyManagerConfig): ProxyManager {
+export function createProxyManager(config: ProxyManagerConfig = {}): ProxyManager {
   const stateMachine = createConnectionStateMachine();
   const context = buildContext(config, stateMachine);
   let cleanupSubscriptions: (() => void) | null = null;
@@ -60,7 +60,12 @@ async function startManager(
   onStarted: () => void,
 ): Promise<void> {
   context.transition('connecting');
-  await startIonConnectProxy({ port: context.port, configJSON: context.configJSON });
+  try {
+    await startIonConnectProxy({ port: context.port, configJSON: context.configJSON });
+  } catch (error) {
+    context.transition('disconnected');
+    throw error;
+  }
   context.transition('connected');
   onStarted();
   scheduleHealthCheck(context);
@@ -70,7 +75,7 @@ async function stopManager(context: ProxyManagerContext, cleanup: () => void): P
   stopHealthCheck(context);
   cleanup();
   if (context.getStatus() !== 'idle') {
-    try { await stopIonConnectProxy(); } catch { /* proxy may already be stopped */ }
+    await stopProxySilently();
     context.transition('disconnected');
   }
   Logger.info('Proxy manager stopped', { tag: TAG });
@@ -80,13 +85,14 @@ function disposeManager(context: ProxyManagerContext, cleanup: () => void): void
   context.disposed = true;
   stopHealthCheck(context);
   cleanup();
+  void stopProxySilently();
   Logger.info('Proxy manager disposed', { tag: TAG });
 }
 
 function setupSubscriptions(context: ProxyManagerContext, config: ProxyManagerConfig): () => void {
   return setupEventSubscriptions(context, {
-    networkStateProvider: config.networkStateProvider,
-    appStateProvider: config.appStateProvider,
+    networkStateProvider: config.networkStateProvider ?? createNetworkStateProvider(),
+    appStateProvider: config.appStateProvider ?? createAppStateProvider(),
   });
 }
 

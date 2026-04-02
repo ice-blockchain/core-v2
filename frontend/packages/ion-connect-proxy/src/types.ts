@@ -1,4 +1,5 @@
 import type { ConnectionState, NetworkStateProvider, Transport, HttpClient } from '@ion/network';
+import type { AppStateProvider } from '@ion/platform';
 
 // --- Proxy Config ---
 
@@ -6,17 +7,8 @@ import type { ConnectionState, NetworkStateProvider, Transport, HttpClient } fro
 export type TonGlobalConfigJSON = string;
 
 export interface StartIonConnectProxyOptions {
-  port?: number | undefined;
+  port: number;
   configJSON?: TonGlobalConfigJSON | undefined;
-}
-
-// --- App State Provider (DI interface for @ion/platform) ---
-
-export type ProxyAppState = 'active' | 'inactive' | 'background';
-
-export interface AppStateProvider {
-  getCurrentState(): ProxyAppState;
-  onStateChange(handler: (state: ProxyAppState) => void): () => void;
 }
 
 // --- Proxy Manager ---
@@ -26,8 +18,8 @@ export type ProxyStatus = ConnectionState;
 export interface ProxyManagerConfig {
   port?: number | undefined;
   configJSON?: TonGlobalConfigJSON | undefined;
-  networkStateProvider: NetworkStateProvider;
-  appStateProvider: AppStateProvider;
+  networkStateProvider?: NetworkStateProvider | undefined;
+  appStateProvider?: AppStateProvider | undefined;
   healthCheckIntervalMs?: number | undefined;
   healthCheckTimeoutMs?: number | undefined;
   maxRestartAttempts?: number | undefined;

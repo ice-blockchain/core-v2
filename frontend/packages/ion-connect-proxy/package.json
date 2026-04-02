@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@ion/diagnostics": "workspace:*",
-    "@ion/network": "workspace:*"
+    "@ion/network": "workspace:*",
+    "@ion/platform": "workspace:*"
   },
   "scripts": {
     "lint": "eslint src/",
