@@ -86,21 +86,33 @@ class IonConnectProxyImpl: NSObject {
   // MARK: - HTTP Bridge
 
   @objc func proxyRequest(_ method: String, url: String, headersJSON: String, body: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    let raw = buildRawHttpRequest(method: method, url: url, headersJSON: headersJSON, body: body)
+    guard let raw = buildRawHttpRequest(method: method, url: url, headersJSON: headersJSON, body: body) else {
+      reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
+    }
     sendRawProxyRequest(rawHttp: raw, resolve: resolve, reject: reject)
   }
 
   @objc func proxyUpload(_ url: String, filePath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    do { try assertSandboxPath(filePath) } catch {
+      reject("PROXY_ERROR", "File path outside app sandbox", nil); return
+    }
     guard let fileData = FileManager.default.contents(atPath: filePath) else {
-      reject("PROXY_ERROR", "File not found: \(filePath)", nil); return
+      reject("PROXY_ERROR", "File not found", nil); return
     }
     let fileBody = String(data: fileData, encoding: .utf8) ?? ""
-    let raw = buildRawHttpRequest(method: "POST", url: url, headersJSON: headersJSON, body: fileBody)
+    guard let raw = buildRawHttpRequest(method: "POST", url: url, headersJSON: headersJSON, body: fileBody) else {
+      reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
+    }
     sendRawProxyRequest(rawHttp: raw, resolve: resolve, reject: reject)
   }
 
   @objc func proxyDownload(_ url: String, destPath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    let raw = buildRawHttpRequest(method: "GET", url: url, headersJSON: headersJSON, body: "")
+    do { try assertSandboxPath(destPath) } catch {
+      reject("PROXY_ERROR", "Destination path outside app sandbox", nil); return
+    }
+    guard let raw = buildRawHttpRequest(method: "GET", url: url, headersJSON: headersJSON, body: "") else {
+      reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
+    }
     let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
     conn.stateUpdateHandler = { state in
       if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil) }
@@ -125,14 +137,33 @@ class IonConnectProxyImpl: NSObject {
     })
   }
 
+  // MARK: - Input Validation
+
+  private static func containsCRLF(_ value: String) -> Bool {
+    return value.contains("\r") || value.contains("\n")
+  }
+
+  private func assertSandboxPath(_ path: String) throws {
+    let resolved = (path as NSString).resolvingSymlinksInPath
+    let tmpDir = NSTemporaryDirectory()
+    let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.path ?? ""
+    guard resolved.hasPrefix(tmpDir) || resolved.hasPrefix(cacheDir) else {
+      throw NSError(domain: "IonConnectProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Path outside app sandbox"])
+    }
+  }
+
   // MARK: - Raw TCP Proxy
 
-  private func buildRawHttpRequest(method: String, url: String, headersJSON: String, body: String) -> String {
+  private func buildRawHttpRequest(method: String, url: String, headersJSON: String, body: String) -> String? {
+    if Self.containsCRLF(method) || Self.containsCRLF(url) { return nil }
     let host = URL(string: url)?.host ?? ""
     var lines = ["\(method) \(url) HTTP/1.1", "Host: \(host)"]
     if let data = headersJSON.data(using: .utf8),
        let headers = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
-      for (key, value) in headers { lines.append("\(key): \(value)") }
+      for (key, value) in headers {
+        if Self.containsCRLF(key) || Self.containsCRLF(value) { return nil }
+        lines.append("\(key): \(value)")
+      }
     }
     if !body.isEmpty { lines.append("Content-Length: \(body.utf8.count)") }
     lines.append("Connection: close")

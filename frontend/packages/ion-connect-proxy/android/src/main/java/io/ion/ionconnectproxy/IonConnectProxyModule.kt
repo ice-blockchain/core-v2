@@ -126,6 +126,7 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     fun proxyUpload(url: String, filePath: String, headersJSON: String, promise: Promise) {
         thread {
             try {
+                assertSandboxPath(filePath)
                 val fileBody = File(filePath).readText()
                 val raw = buildRawHttpRequest("POST", url, headersJSON, fileBody)
                 val responseData = sendRawProxyRequest(raw)
@@ -141,6 +142,7 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
     fun proxyDownload(url: String, destPath: String, headersJSON: String, promise: Promise) {
         thread {
             try {
+                assertSandboxPath(destPath)
                 val raw = buildRawHttpRequest("GET", url, headersJSON, "")
                 val responseBytes = sendRawProxyRequestBytes(raw)
                 val separatorIndex = findHeaderEnd(responseBytes)
@@ -155,14 +157,36 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
         }
     }
 
+    // Input validation
+
+    private fun containsCRLF(value: String): Boolean {
+        return value.contains("\r") || value.contains("\n")
+    }
+
+    private fun assertSandboxPath(path: String) {
+        val resolved = File(path).canonicalPath
+        val cacheDir = reactApplicationContext.cacheDir.canonicalPath
+        val filesDir = reactApplicationContext.filesDir.canonicalPath
+        require(resolved.startsWith(cacheDir) || resolved.startsWith(filesDir)) {
+            "Path outside app sandbox"
+        }
+    }
+
     // Raw TCP proxy helpers
 
     private fun buildRawHttpRequest(method: String, url: String, headersJSON: String, body: String): String {
+        require(!containsCRLF(method) && !containsCRLF(url)) { "Invalid characters in request parameters" }
         val host = URL(url).host ?: ""
         val lines = mutableListOf("$method $url HTTP/1.1", "Host: $host")
         try {
             val headers = JSONObject(headersJSON)
-            headers.keys().forEach { key -> lines.add("$key: ${headers.getString(key)}") }
+            headers.keys().forEach { key ->
+                val value = headers.getString(key)
+                require(!containsCRLF(key) && !containsCRLF(value)) { "Invalid characters in header" }
+                lines.add("$key: $value")
+            }
+        } catch (e: IllegalArgumentException) {
+            throw e
         } catch (e: Exception) {
             android.util.Log.w("IonConnectProxy", "Failed to parse headers JSON", e)
         }
