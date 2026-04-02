@@ -39,7 +39,7 @@ const overlayStyle: CSSProperties = {
   justifyContent: "flex-end",
   width: "100%",
   height: "100%",
-  paddingBottom: 76,
+  paddingBottom: 0,
 };
 
 export function IntroVideo({ children }: IntroVideoProps) {

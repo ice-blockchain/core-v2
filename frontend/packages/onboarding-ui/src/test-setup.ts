@@ -52,6 +52,43 @@ vi.mock("@ion/ui", () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock("@gorhom/bottom-sheet", () => ({
+  default: "BottomSheet",
+  BottomSheetScrollView: ({ children }: { children: React.ReactNode }) => children,
+  BottomSheetView: ({ children }: { children: React.ReactNode }) => children,
+  BottomSheetBackdrop: "BottomSheetBackdrop",
+  BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock("@ion/navigation", () => {
+  const mockNavigation = {
+    navigate: vi.fn(), goBack: vi.fn(), reset: vi.fn(),
+    getParent: vi.fn(() => ({ reset: vi.fn() })),
+  };
+  return {
+    useSheetNavigation: () => mockNavigation,
+    useAuthNavigation: () => mockNavigation,
+    useAppNavigation: () => mockNavigation,
+    useSheetScroll: () => vi.fn(),
+    Sheet: ({ children }: { children: React.ReactNode }) => children,
+    Routes: {
+      Splash: "Splash", GetStarted: "GetStarted", Catalog: "Catalog",
+      Sheet: { Auth: "Sheet/Auth" },
+      Auth: {
+        GetStarted: "GetStarted", Register: "Register",
+        ProfileSetup: "ProfileSetup", SelectLanguages: "SelectLanguages",
+        DiscoverCreators: "DiscoverCreators", Notifications: "Notifications",
+      },
+    },
+  };
+});
+
+vi.mock("@ion/media-viewer", () => ({
+  MediaImage: "MediaImage",
+  MediaVideo: "MediaVideo",
+  MediaFullscreen: "MediaFullscreen",
+}));
+
 vi.mock("@ion/onboarding", () => ({
   saveProfile: vi.fn(), uploadAvatar: vi.fn(),
   validateNickname: vi.fn(), validateReferral: vi.fn(),

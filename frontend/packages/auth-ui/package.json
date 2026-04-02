@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@ion/localization": "workspace:*",
+    "@ion/navigation": "workspace:*",
     "@ion/ui": "workspace:*"
   },
   "peerDependencies": {
+    "@gorhom/bottom-sheet": ">=5.0.0",
     "react": ">=19",
     "react-native": ">=0.76",
     "react-native-svg": ">=15"

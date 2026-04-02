@@ -4,7 +4,8 @@
     "outDir": "dist",
     "rootDir": ".",
     "lib": ["ES2022", "DOM"],
-    "types": ["jest", "node"]
+    "types": ["vitest/globals", "node"]
   },
-  "include": ["src", "index.ts"]
+  "include": ["src", "index.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

@@ -21,4 +21,5 @@ export const colorPalette = {
   white: "#FFFFFF",
   ink: "#0E0E0E",
   slate: "#494949",
+  sheetLine: "#B8BCCA",
 } as const;

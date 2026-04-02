@@ -1,8 +1,11 @@
 import { useCallback, useMemo } from "react";
 import { View } from "react-native";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import type { ViewStyle } from "react-native";
-import { BottomSheet, Button, useTheme } from "@ion/ui";
-import type { OnboardingScreenProps } from "../types";
+import { Button, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { CreatorRow } from "../components/CreatorRow";
 import { CreatorRowSkeletonList } from "../components/CreatorRowSkeleton";
 import { OnboardingScreenTitle } from "../components/OnboardingScreenTitle";
@@ -36,35 +39,64 @@ function CreatorList({ state, actions, contentStyle }: {
 function useScreenStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const insets = useSafeAreaInsets();
 
-  const listContainerStyle = useMemo(() => buildListContainerStyle(scale), [scale]);
-  const listContentStyle = useMemo(() => buildListContentStyle(scale), [scale]);
-
-  return { listContainerStyle, listContentStyle };
+  return {
+    container: useMemo(() => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }), [theme.colors]),
+    listContainer: useMemo(() => buildListContainerStyle(scale), [scale]),
+    listContent: useMemo(() => buildListContentStyle(scale), [scale]),
+    floatingFooter: useMemo((): ViewStyle => ({
+      position: "absolute",
+      bottom: scale(10) + insets.bottom,
+      left: 0,
+      right: 0,
+      paddingHorizontal: scale(16),
+    }), [scale, insets.bottom]),
+  };
 }
 
-export function DiscoverCreatorsScreen({ onContinue, onBack }: OnboardingScreenProps) {
-  const { listContainerStyle, listContentStyle } = useScreenStyles();
-  const [state, actions] = useDiscoverCreators(onContinue);
-  const handleClose = useCallback(() => onBack?.(), [onBack]);
+function DiscoverCreatorsContent({ state, actions, styles }: {
+  state: DiscoverCreatorsState;
+  actions: ReturnType<typeof useDiscoverCreators>[1];
+  styles: ReturnType<typeof useScreenStyles>;
+}) {
+  const sheetScroll = useSheetScroll();
 
   return (
-    <BottomSheet
-      isVisible
-      onClose={handleClose}
-      {...(onBack ? { onBack } : {})}
-      title="Discover creators"
-      floatingFooter={<Button label="Continue" onPress={actions.handleContinue} />}
-      testID="discover-creators-screen"
-    >
-      <OnboardingScreenTitle title="Discover creators" subtitle="Connect with visionaries and inspiring voices" />
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16}>
+      <OnboardingScreenTitle
+        title={translate("onboarding:discoverCreatorsTitle")}
+        subtitle={translate("onboarding:discoverCreatorsSubtitle")}
+      />
       {state.isLoading ? (
-        <View style={listContainerStyle}><CreatorRowSkeletonList /></View>
+        <View style={styles.listContainer}>
+          <CreatorRowSkeletonList />
+        </View>
       ) : (
-        <View style={listContainerStyle}>
-          <CreatorList state={state} actions={actions} contentStyle={listContentStyle} />
+        <View style={styles.listContainer}>
+          <CreatorList state={state} actions={actions} contentStyle={styles.listContent} />
         </View>
       )}
-    </BottomSheet>
+    </BottomSheetScrollView>
+  );
+}
+
+export function DiscoverCreatorsScreen() {
+  const navigation = useAuthNavigation();
+  const styles = useScreenStyles();
+
+  const navigateNext = useCallback(() => {
+    navigation.navigate(Routes.Auth.Notifications);
+  }, [navigation]);
+
+  const [state, actions] = useDiscoverCreators(navigateNext);
+
+  return (
+    <View style={styles.container} testID="discover-creators-screen">
+      <DiscoverCreatorsContent state={state} actions={actions} styles={styles} />
+      <View style={styles.floatingFooter}>
+        <Button label={translate("onboarding:continueButton")} onPress={actions.handleContinue} />
+      </View>
+    </View>
   );
 }

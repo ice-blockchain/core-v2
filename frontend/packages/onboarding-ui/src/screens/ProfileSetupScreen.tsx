@@ -1,55 +1,130 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { View } from "react-native";
-import { BottomSheet, Button, Icon, useTheme } from "@ion/ui";
+import type { ViewStyle } from "react-native";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Button, Icon, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { saveProfile } from "@ion/onboarding";
-import type { OnboardingScreenProps } from "../types";
+import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { AvatarPicker } from "../components/AvatarPicker";
-import { NicknameReservedModal } from "../components/NicknameReservedModal";
 import { useProfileForm } from "./profile-setup-hooks";
 import { AuthHeader } from "./AuthHeader";
 import { ProfileSetupFields } from "./ProfileSetupFields";
 import { buildAvatarSectionStyle, buildContentContainerStyle, buildFieldsContainerStyle } from "./profile-setup-styles";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function useSaveHandler(formState: ReturnType<typeof useProfileForm>[0], formActions: ReturnType<typeof useProfileForm>[1], onContinue: () => void) {
+function useSaveHandler(
+  formState: ReturnType<typeof useProfileForm>[0],
+  formActions: ReturnType<typeof useProfileForm>[1],
+  onSaved: () => void,
+) {
   return useCallback(async () => {
     if (!formState.isFormValid) return;
     formActions.setSubmitting(true);
     try {
-      await saveProfile({ displayName: formState.name.value, nickname: formState.nickname.value, ...(formState.referral.value ? { referredBy: formState.referral.value } : {}) });
-      onContinue();
-    } catch {
+      const input = {
+        displayName: formState.name.value,
+        nickname: formState.nickname.value,
+        ...(formState.referral.value ? { referredBy: formState.referral.value } : {}),
+      };
+      await saveProfile(input);
+      onSaved();
+    } catch (error) {
+      console.error("Failed to save profile", error);
+    } finally {
       formActions.setSubmitting(false);
     }
-  }, [formState, formActions, onContinue]);
+  }, [formState, formActions, onSaved]);
 }
 
-export function ProfileSetupScreen({ onContinue, onBack }: OnboardingScreenProps) {
+function useScreenStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const [formState, formActions] = useProfileForm();
-  const handleSave = useSaveHandler(formState, formActions, onContinue);
+  const insets = useSafeAreaInsets();
 
-  const contentStyle = useMemo(() => buildContentContainerStyle(scale), [scale]);
-  const avatarStyle = useMemo(() => buildAvatarSectionStyle(scale), [scale]);
-  const fieldsStyle = useMemo(() => buildFieldsContainerStyle(scale), [scale]);
-  const handleClose = useCallback(() => { onBack?.(); }, [onBack]);
+  return {
+    container: useMemo(
+      () => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }),
+      [theme.colors],
+    ),
+    content: useMemo(() => buildContentContainerStyle(scale), [scale]),
+    avatar: useMemo(() => buildAvatarSectionStyle(scale), [scale]),
+    fields: useMemo(() => buildFieldsContainerStyle(scale), [scale]),
+    footer: useMemo(
+      (): ViewStyle => ({
+        position: "absolute",
+        bottom: scale(10) + insets.bottom,
+        left: 0,
+        right: 0,
+        paddingHorizontal: scale(44),
+      }),
+      [scale, insets],
+    ),
+  };
+}
 
-  const saveButton = (
-    <Button label={translate("onboarding:saveButton")} icon={<Icon name="profile-save" size={scale(24)} color={theme.colors.onPrimaryAccent} />} iconPosition="left" height={56} isDisabled={!formState.isFormValid} isLoading={formState.isSubmitting} onPress={handleSave} />
-  );
-
-  const reservedOverlay = <NicknameReservedModal isVisible={formState.isNicknameReserved} onClose={formActions.dismissReservedModal} />;
+function SaveButton({ formState, handleSave }: { formState: ReturnType<typeof useProfileForm>[0]; handleSave: () => void }) {
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
 
   return (
-    <BottomSheet isVisible onClose={handleClose} title={translate("onboarding:yourProfileTitle")} {...(onBack ? { onBack } : {})} bottomButton={saveButton} overlay={reservedOverlay} testID="profile-setup-screen">
-      <View style={contentStyle}>
+    <Button
+      label={translate("onboarding:saveButton")}
+      icon={<Icon name="profile-save" size={scale(24)} color={theme.colors.onPrimaryAccent} />}
+      iconPosition="left"
+      height={56}
+      isDisabled={!formState.isFormValid}
+      isLoading={formState.isSubmitting}
+      onPress={handleSave}
+    />
+  );
+}
+
+function ProfileSetupContent({ formState, formActions, styles }: {
+  formState: ReturnType<typeof useProfileForm>[0];
+  formActions: ReturnType<typeof useProfileForm>[1];
+  styles: ReturnType<typeof useScreenStyles>;
+}) {
+  const sheetScroll = useSheetScroll();
+
+  return (
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
+      <View style={styles.content}>
         <AuthHeader />
-        <View style={avatarStyle}>
+        <View style={styles.avatar}>
           <AvatarPicker isLoading={formState.isAvatarLoading} onPress={() => {}} testID="avatar-picker" />
         </View>
-        <ProfileSetupFields formState={formState} formActions={formActions} style={fieldsStyle} />
+        <ProfileSetupFields formState={formState} formActions={formActions} style={styles.fields} />
       </View>
-    </BottomSheet>
+    </BottomSheetScrollView>
+  );
+}
+
+export function ProfileSetupScreen() {
+  const authNavigation = useAuthNavigation();
+  const appNavigation = useAppNavigation();
+  const [formState, formActions] = useProfileForm();
+  const styles = useScreenStyles();
+
+  const navigateNext = useCallback(() => {
+    authNavigation.navigate(Routes.Auth.SelectLanguages);
+  }, [authNavigation]);
+
+  const handleSave = useSaveHandler(formState, formActions, navigateNext);
+
+  useEffect(() => {
+    if (formState.isNicknameReserved) {
+      appNavigation.navigate(Routes.Sheet.NicknameReserved);
+      formActions.dismissReservedModal();
+    }
+  }, [formState.isNicknameReserved, appNavigation, formActions]);
+
+  return (
+    <View style={styles.container} testID="profile-setup-screen">
+      <ProfileSetupContent formState={formState} formActions={formActions} styles={styles} />
+      <View style={styles.footer}>
+        <SaveButton formState={formState} handleSave={handleSave} />
+      </View>
+    </View>
   );
 }

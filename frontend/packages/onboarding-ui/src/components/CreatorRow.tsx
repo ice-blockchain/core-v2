@@ -3,6 +3,7 @@ import { View } from "react-native";
 import type { ImageStyle, ViewStyle } from "react-native";
 import { Icon, SmallButton, Text, useTheme } from "@ion/ui";
 import type { SemanticColors } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { MediaImage } from "@ion/media-viewer";
 
 export interface CreatorRowProps {
@@ -65,7 +66,7 @@ function FollowButton({ isFollowing, onToggleFollow, scale, colors }: {
     <SmallButton
       color={isFollowing ? "primaryOutlined" : "primary"}
       icon={icon}
-      label={isFollowing ? "Following" : "Follow"}
+      label={isFollowing ? translate("onboarding:followingButton") : translate("onboarding:followButton")}
       onPress={onToggleFollow}
     />
   );

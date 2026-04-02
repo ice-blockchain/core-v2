@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TextInputState } from "@ion/ui";
+import { translate } from "@ion/localization";
 import { fetchReservedNicknames, validateNickname, validateReferral } from "@ion/onboarding";
 
 const NICKNAME_PATTERN = /^[a-z0-9.]+$/;
@@ -49,8 +50,8 @@ async function getClipboardText(): Promise<string> {
 }
 
 function applyNicknameResult(value: string, result: { isReserved: boolean; isAvailable: boolean }): FieldState {
-  if (result.isReserved) return { value, inputState: "error", errorMessage: "Nickname is reserved" };
-  if (!result.isAvailable) return { value, inputState: "error", errorMessage: "Nickname is already taken" };
+  if (result.isReserved) return { value, inputState: "error", errorMessage: translate("onboarding:nicknameReservedError") };
+  if (!result.isAvailable) return { value, inputState: "error", errorMessage: translate("onboarding:nicknameAlreadyTakenError") };
   return { value, inputState: "valid" };
 }
 
@@ -70,7 +71,7 @@ function useNicknameField(reservedRef: React.RefObject<Set<string>>) {
 
   const validate = useCallback(async (value: string) => {
     if (!NICKNAME_PATTERN.test(value)) {
-      setState({ value, inputState: "error", errorMessage: "Only letters, numbers, and dots are allowed" });
+      setState({ value, inputState: "error", errorMessage: translate("onboarding:nicknameInvalidCharactersError") });
       return;
     }
     try {
@@ -78,7 +79,7 @@ function useNicknameField(reservedRef: React.RefObject<Set<string>>) {
       if (result.isReserved) setReserved(true);
       setState(applyNicknameResult(value, result));
     } catch {
-      setState({ value, inputState: "error", errorMessage: "Validation failed" });
+      setState({ value, inputState: "error", errorMessage: translate("onboarding:validationFailedError") });
     }
   }, [reservedRef]);
 
@@ -99,9 +100,9 @@ function useReferralField() {
       const result = await validateReferral(value);
       setState(result.isValid
         ? { value, inputState: "valid" }
-        : { value, inputState: "error", errorMessage: "Nickname doesn't exist" });
+        : { value, inputState: "error", errorMessage: translate("onboarding:nicknameDoesNotExistError") });
     } catch {
-      setState({ value, inputState: "error", errorMessage: "Validation failed" });
+      setState({ value, inputState: "error", errorMessage: translate("onboarding:validationFailedError") });
     }
   }, []);
 
@@ -143,7 +144,7 @@ function useNameField() {
   const onChange = useCallback((v: string) => {
     if (v.length > 0) wasTouched.current = true;
     if (v.length === 0 && wasTouched.current) {
-      setState({ value: v, inputState: "error", errorMessage: "Cannot be empty" });
+      setState({ value: v, inputState: "error", errorMessage: translate("onboarding:cannotBeEmptyError") });
       return;
     }
     setState({ value: v, inputState: v.length > 0 ? "valid" : "empty" });
