@@ -11,7 +11,7 @@ const DEFAULT_BORDER_RADIUS = 20;
 const DEFAULT_CAMERA_SIZE = 36;
 
 function resolveImageUrl(props: AvatarPickerProps): string | undefined {
-  return props.localImageUri ?? props.currentImageUrl;
+  return props.localImageUri || props.currentImageUrl;
 }
 
 function CameraButton(props: { style: ReturnType<typeof buildCameraButtonStyle>; isProcessing: boolean; onPress: () => void; iconSize: number; iconColor: string }) {
