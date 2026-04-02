@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image, View } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { Icon } from "../icons/Icon";
@@ -14,6 +14,8 @@ export function Avatar({ size, imageUrl, imageElement, fallback, badge, borderRa
   const scale = theme.scale.scaleSize;
   const resolvedRadius = borderRadius ?? size * 0.3;
   const [hasImageError, setHasImageError] = useState(false);
+
+  useEffect(() => setHasImageError(false), [imageUrl]);
 
   const styleOptions = useMemo(
     () => ({ size, borderRadius: resolvedRadius, scale, colors: theme.colors }),

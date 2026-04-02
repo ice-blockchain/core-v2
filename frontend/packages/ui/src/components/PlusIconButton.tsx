@@ -7,6 +7,7 @@ import { Icon } from "../icons/Icon";
 export interface PlusIconButtonProps {
   size?: number;
   onPress: () => void;
+  accessibilityLabel?: string;
   testID?: string;
 }
 
@@ -28,7 +29,7 @@ function buildButtonStyle(options: { size: number; scale: (n: number) => number;
   };
 }
 
-export function PlusIconButton({ size = DEFAULT_SIZE, onPress, testID }: PlusIconButtonProps) {
+export function PlusIconButton({ size = DEFAULT_SIZE, onPress, accessibilityLabel = "Add", testID }: PlusIconButtonProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -40,7 +41,7 @@ export function PlusIconButton({ size = DEFAULT_SIZE, onPress, testID }: PlusIco
   const iconSize = scale(size * (2 / 3));
 
   return (
-    <Pressable style={buttonStyle} onPress={onPress} accessibilityRole="button" testID={testID}>
+    <Pressable style={buttonStyle} onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} testID={testID}>
       <Icon name="plus-createchannel" size={iconSize} color={theme.colors.secondaryBackground} />
     </Pressable>
   );
