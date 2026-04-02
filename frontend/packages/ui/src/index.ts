@@ -32,11 +32,19 @@ export type { SearchBarProps } from "./components/SearchBar";
 export { HorizontalSeparator } from "./components/HorizontalSeparator";
 export type { HorizontalSeparatorProps } from "./components/HorizontalSeparator";
 
+export { VerticalSeparator } from "./components/VerticalSeparator";
+
 export { SkeletonPulse } from "./components/SkeletonPulse";
 export type { SkeletonPulseProps } from "./components/SkeletonPulse";
 
 export { ListItemSkeleton } from "./components/ListItemSkeleton";
 export type { ListItemSkeletonProps } from "./components/ListItemSkeleton";
+
+export { DismissKeyboardView } from "./components/DismissKeyboardView";
+export type { DismissKeyboardViewProps } from "./components/DismissKeyboardView";
+
+export { SafeAreaWrapper } from "./components/SafeAreaWrapper";
+export type { SafeAreaWrapperProps } from "./components/SafeAreaWrapper";
 
 export { IONLoader } from "./components/IONLoader";
 export type { IONLoaderProps, IONLoaderVariant } from "./components/IONLoaderTypes";

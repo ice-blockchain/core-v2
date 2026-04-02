@@ -42,6 +42,7 @@
     "react-native-create-thumbnail": "^2.2.0",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-image-picker": "^7.1.2",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-mmkv": "^4.3.0",
     "react-native-nitro-modules": "^0.35.2",
     "react-native-nitro-tflite": "^0.0.1",
