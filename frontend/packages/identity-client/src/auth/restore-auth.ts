@@ -6,20 +6,13 @@ interface RestoreAuthDeps {
   authStore: InternalAuthStore;
 }
 
-async function hasValidTokens(username: string, tokenManager: TokenManager): Promise<boolean> {
-  const tokens = await tokenManager.getTokens(username);
-  if (!tokens) return false;
-  const isExpired = await tokenManager.isTokenExpired(username);
-  return !isExpired;
-}
-
 export async function restoreAuth(deps: RestoreAuthDeps): Promise<void> {
   const trackedUsers = await deps.tokenManager.getTrackedUsers();
   if (trackedUsers.length === 0) return;
 
   for (const username of trackedUsers) {
-    const isValid = await hasValidTokens(username, deps.tokenManager);
-    if (isValid) {
+    const tokens = await deps.tokenManager.getTokens(username);
+    if (tokens) {
       deps.authStore.addUser(username);
     } else {
       await deps.tokenManager.clearTokens(username);

@@ -45,4 +45,10 @@ describe('logout', () => {
     await logout('alice', deps);
     expect(deps.authStore.removeUser).toHaveBeenCalledWith('alice');
   });
+
+  it('removes user from auth store even when clearTokens throws', async () => {
+    vi.mocked(deps.tokenManager.clearTokens).mockRejectedValueOnce(new Error('storage error'));
+    await expect(logout('alice', deps)).rejects.toThrow('storage error');
+    expect(deps.authStore.removeUser).toHaveBeenCalledWith('alice');
+  });
 });

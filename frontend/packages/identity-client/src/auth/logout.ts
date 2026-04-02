@@ -15,7 +15,7 @@ export async function logout(
   try {
     await deps.sessionDataSource.logout(username);
   } finally {
-    await deps.tokenManager.clearTokens(username);
     deps.authStore.removeUser(username);
+    await deps.tokenManager.clearTokens(username);
   }
 }
