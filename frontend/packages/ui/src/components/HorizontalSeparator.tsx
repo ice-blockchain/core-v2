@@ -15,7 +15,7 @@ const LOCATIONS = [0, 0.5, 1];
 export function HorizontalSeparator({ height = 0.5, style }: HorizontalSeparatorProps) {
   const fillColor = useTheme().colors.onTertiaryFill;
 
-  const colors = useMemo(
+  const gradientColors = useMemo(
     () => [`${fillColor}00`, fillColor, `${fillColor}00`],
     [fillColor],
   );
@@ -26,6 +26,6 @@ export function HorizontalSeparator({ height = 0.5, style }: HorizontalSeparator
   );
 
   return (
-    <LinearGradient colors={colors} start={START} end={END} locations={LOCATIONS} style={[gradientStyle, style]} />
+    <LinearGradient colors={gradientColors} start={START} end={END} locations={LOCATIONS} style={[gradientStyle, style]} />
   );
 }
