@@ -1,13 +1,14 @@
-import NativeIonConnectProxy from './native-ion-connect-proxy';
+import { getNativeIonConnectProxy } from './native-ion-connect-proxy';
 import type { StartIonConnectProxyOptions } from './types';
 
 const DEFAULT_PROXY_PORT = 8888;
 
 export async function startIonConnectProxy(options?: StartIonConnectProxyOptions): Promise<string> {
+  const nativeModule = getNativeIonConnectProxy();
   const port = options?.port ?? DEFAULT_PROXY_PORT;
   const result = options?.config
-    ? await NativeIonConnectProxy.startProxyWithConfig(port, JSON.stringify(options.config))
-    : await NativeIonConnectProxy.startProxy(port);
+    ? await nativeModule.startProxyWithConfig(port, JSON.stringify(options.config))
+    : await nativeModule.startProxy(port);
   if (result.startsWith('ERR:')) throw new Error(result);
   return result;
 }

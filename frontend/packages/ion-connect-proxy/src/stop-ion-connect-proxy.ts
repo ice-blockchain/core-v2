@@ -1,5 +1,5 @@
-import NativeIonConnectProxy from './native-ion-connect-proxy';
+import { getNativeIonConnectProxy } from './native-ion-connect-proxy';
 
 export async function stopIonConnectProxy(): Promise<string> {
-  return NativeIonConnectProxy.stopProxy();
+  return getNativeIonConnectProxy().stopProxy();
 }

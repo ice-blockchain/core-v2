@@ -10,4 +10,11 @@ export interface Spec extends TurboModule {
   proxyDownload(url: string, destPath: string, headersJSON: string): Promise<string>;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('IonConnectProxy');
+const NativeModule = TurboModuleRegistry.get<Spec>('IonConnectProxy');
+
+export function getNativeIonConnectProxy(): Spec {
+  if (!NativeModule) {
+    throw new Error('IonConnectProxy is not available. This package requires iOS or Android.');
+  }
+  return NativeModule;
+}
