@@ -11,7 +11,7 @@ import (
 
 var upstreamTransport = &http.Transport{
 	DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
-	ResponseHeaderTimeout: 30 * time.Second,
+	ResponseHeaderTimeout: 60 * time.Second,
 	IdleConnTimeout:       90 * time.Second,
 	MaxIdleConnsPerHost:   10,
 }

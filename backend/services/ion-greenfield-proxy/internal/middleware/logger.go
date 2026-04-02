@@ -6,13 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"ion-greenfield-proxy/internal/rpcbody"
 )
 
 const (
-	ContextKeyUserID        = "user_id"
-	ContextKeyUserMasterKey = "user_master_key"
-	ContextKeyADNLAddress   = "adnl_address"
-	ContextKeyADNLRLDPID    = "adnl_rldp_id"
+	ContextKeyADNLAddress = "adnl_address"
+	ContextKeyADNLRLDPID  = "adnl_rldp_id"
 )
 
 func Logger(logger *slog.Logger) gin.HandlerFunc {
@@ -39,19 +39,18 @@ func Logger(logger *slog.Logger) gin.HandlerFunc {
 			"response_size", c.Writer.Size(),
 		}
 
-		if uid, ok := c.Get(ContextKeyUserID); ok {
-			fields = append(fields, "user_id", uid)
-		}
-		if mk, ok := c.Get(ContextKeyUserMasterKey); ok {
-			if s, ok := mk.(string); ok {
-				fields = append(fields, "user_master_key", maskKey(s))
-			}
-		}
 		if addr, ok := c.Get(ContextKeyADNLAddress); ok {
 			fields = append(fields, "adnl_address", addr)
 		}
 		if rldp, ok := c.Get(ContextKeyADNLRLDPID); ok {
 			fields = append(fields, "adnl_rldp_id", rldp)
+		}
+
+		if parsed := rpcbody.FromContext(c); parsed != nil {
+			fields = append(fields, "rpc_method", parsed.Method)
+			if parsed.ABCIPath != "" {
+				fields = append(fields, "rpc_abci_path", parsed.ABCIPath)
+			}
 		}
 
 		if errs := c.Errors; len(errs) > 0 {
@@ -60,11 +59,4 @@ func Logger(logger *slog.Logger) gin.HandlerFunc {
 
 		logger.Info("request", fields...)
 	}
-}
-
-func maskKey(key string) string {
-	if len(key) <= 10 {
-		return "***"
-	}
-	return key[:6] + "..." + key[len(key)-4:]
 }

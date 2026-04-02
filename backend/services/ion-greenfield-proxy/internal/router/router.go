@@ -7,6 +7,7 @@ import (
 
 	"ion-greenfield-proxy/internal/adnl"
 	"ion-greenfield-proxy/internal/config"
+	gf "ion-greenfield-proxy/internal/greenfield"
 	"ion-greenfield-proxy/internal/handler"
 	"ion-greenfield-proxy/internal/middleware"
 
@@ -23,6 +24,7 @@ type Params struct {
 	Registry          *prometheus.Registry
 	MetricsCollectors *middleware.MetricsCollectors
 	Key               *adnl.Key
+	Provisioner       *gf.BucketProvisioner
 }
 
 func New(p Params) *gin.Engine {
@@ -36,11 +38,20 @@ func New(p Params) *gin.Engine {
 	}
 	logger = logger.With("component", "router")
 
+	var proxyAddr string
+	if p.Provisioner != nil {
+		proxyAddr = p.Provisioner.ProxyAddress()
+	}
+
+	adnlAddress := p.Key.Address
+
 	r := gin.New()
 	r.Use(
 		adnl.ADNLContextMiddleware(),
 		middleware.CORS(),
-		middleware.FeeGuarantee(),
+		middleware.RPCParser(),
+		middleware.RPCIntercept(logger, p.Config.GreenfieldRPCEndpoint, adnlAddress, p.Provisioner),
+		middleware.FeeGuarantee(logger, p.Provisioner, proxyAddr),
 		middleware.RateLimiter(),
 		middleware.Logger(logger),
 	)
@@ -58,7 +69,6 @@ func New(p Params) *gin.Engine {
 		panic("invalid Greenfield RPC endpoint URL: " + err.Error())
 	}
 
-	adnlAddress := p.Key.Address
 	logger.Info("Starting proxy",
 		"upstream_rpc", rpcURL.String(),
 		"adnl_address", adnlAddress,

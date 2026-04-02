@@ -14,15 +14,10 @@ import (
 )
 
 // ProxySP handles requests at /sp/{base64Target}[/subpath...].
-// It validates the Host header matches the expected ADNL address, decodes
-// the base64-encoded original SP URL, and forwards the request there.
+// It decodes the base64-encoded original SP URL and forwards the request.
+// Only HTTPS SP origins are accepted to prevent SSRF to arbitrary hosts.
 func ProxySP(logger *slog.Logger, adnlAddress string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !strings.EqualFold(c.Request.Host, adnlAddress) {
-			apperror.WriteError(c, apperror.New(http.StatusForbidden, "INVALID_SP_HOST", "request does not match this node"))
-			return
-		}
-
 		raw := strings.TrimPrefix(c.Param("path"), "/")
 		if raw == "" {
 			apperror.WriteError(c, apperror.New(http.StatusBadRequest, "MISSING_TARGET_SP", "missing target SP in path"))
@@ -39,10 +34,15 @@ func ProxySP(logger *slog.Logger, adnlAddress string) gin.HandlerFunc {
 			return
 		}
 
-		urlParsed, err := url.Parse(string(decoded))
-		if err != nil {
-			c.Error(err)
+		spURL, err := url.Parse(string(decoded))
+		if err != nil || spURL.Host == "" {
 			apperror.WriteError(c, apperror.New(http.StatusBadRequest, "INVALID_TARGET_SP", "invalid URL in target SP"))
+			return
+		}
+
+		// Only allow proxying to HTTPS SP endpoints.
+		if spURL.Scheme != "https" {
+			apperror.WriteError(c, apperror.New(http.StatusForbidden, "INVALID_SP_SCHEME", "only HTTPS storage providers are allowed"))
 			return
 		}
 
@@ -51,13 +51,37 @@ func ProxySP(logger *slog.Logger, adnlAddress string) gin.HandlerFunc {
 			forwardPath = "/" + subPath
 		}
 
-		proxy := newReverseProxy(urlParsed, logger)
+		// The SDK sets req.Host to the real SP host (including bucket
+		// subdomain for virtual-hosted style). Use it directly.
+		host := c.Request.Host
+		if host == "" || host == adnlAddress {
+			host = spURL.Host
+		}
+
+		// Validate that the Host header matches the decoded SP origin
+		// (either exact or as a subdomain). Prevents forwarding to
+		// arbitrary hosts.
+		if host != spURL.Host && !strings.HasSuffix(host, "."+spURL.Host) {
+			apperror.WriteError(c, apperror.New(http.StatusForbidden, "INVALID_SP_HOST", "host does not match target SP"))
+			return
+		}
+
+		// If the Host has a bucket subdomain (virtual-hosted style),
+		// strip the bucket prefix from the forwarded path.
+		if bucket, ok := strings.CutSuffix(host, "."+spURL.Host); ok && bucket != "" {
+			forwardPath = strings.TrimPrefix(forwardPath, "/"+bucket)
+			if forwardPath == "" {
+				forwardPath = "/"
+			}
+		}
+
+		proxy := newReverseProxy(spURL, logger)
 		proxy.Rewrite = func(req *httputil.ProxyRequest) {
-			req.Out.URL.Scheme = urlParsed.Scheme
-			req.Out.URL.Host = urlParsed.Host
+			req.Out.URL.Scheme = spURL.Scheme
+			req.Out.URL.Host = host
 			req.Out.URL.RawQuery = c.Request.URL.RawQuery
 			req.Out.URL.Path = forwardPath
-			req.Out.Host = ""
+			req.Out.Host = host
 		}
 		proxy.ServeHTTP(c.Writer, c.Request)
 	}
