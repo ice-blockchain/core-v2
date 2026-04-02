@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"log/slog"
@@ -21,10 +20,10 @@ import (
 	"github.com/cockroachdb/pebble/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
 	"github.com/stretchr/testify/require"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
 const (
@@ -44,82 +43,6 @@ func generateRandomPayload(t *testing.T, size int) []byte {
 	_, err := rand.Read(buf)
 	require.NoError(t, err)
 	return buf
-}
-
-// computeIonStorageMetadata builds a .ionstorage BoC from raw payload data.
-// Uses tonutils-go cell builder. tonutils-storage is NOT imported in production code.
-func computeIonStorageMetadata(t *testing.T, payload []byte) ([32]byte, []byte) {
-	t.Helper()
-
-	pieceSize := uint32(greenfield.PieceSize)
-	pieceCount := (len(payload) + int(pieceSize) - 1) / int(pieceSize)
-
-	// Hash each piece
-	pieceHashes := make([][32]byte, pieceCount)
-	for i := 0; i < pieceCount; i++ {
-		start := i * int(pieceSize)
-		end := start + int(pieceSize)
-		if end > len(payload) {
-			end = len(payload)
-		}
-		pieceHashes[i] = sha256.Sum256(payload[start:end])
-	}
-
-	// Build merkle tree of TVM cells
-	merkleRoot := buildMerkleTree(t, pieceHashes)
-	var rootHash [32]byte
-	copy(rootHash[:], merkleRoot.Hash())
-
-	// Build torrent header (minimal: just file size)
-	headerData := []byte(fmt.Sprintf(`{"files":[{"name":"data","size":%d}]}`, len(payload)))
-	headerHash := sha256.Sum256(headerData)
-
-	// Build TorrentInfo cell
-	descCell := cell.BeginCell().MustStoreStringSnake("").EndCell()
-	torrentInfoCell := cell.BeginCell().
-		MustStoreUInt(uint64(pieceSize), 32).
-		MustStoreUInt(uint64(len(payload)), 64).
-		MustStoreSlice(rootHash[:], 256).
-		MustStoreUInt(uint64(len(headerData)), 64).
-		MustStoreSlice(headerHash[:], 256).
-		MustStoreRef(descCell).
-		EndCell()
-
-	var bagID [32]byte
-	copy(bagID[:], torrentInfoCell.Hash())
-
-	boc := torrentInfoCell.ToBOC()
-	return bagID, boc
-}
-
-// buildMerkleTree constructs a binary merkle tree of TVM cells over piece hashes.
-func buildMerkleTree(t *testing.T, hashes [][32]byte) *cell.Cell {
-	t.Helper()
-	if len(hashes) == 0 {
-		return cell.BeginCell().EndCell()
-	}
-
-	// Build leaf cells
-	nodes := make([]*cell.Cell, len(hashes))
-	for i, h := range hashes {
-		nodes[i] = cell.BeginCell().MustStoreSlice(h[:], 256).EndCell()
-	}
-
-	// Build tree bottom-up
-	for len(nodes) > 1 {
-		var next []*cell.Cell
-		for i := 0; i < len(nodes); i += 2 {
-			if i+1 < len(nodes) {
-				parent := cell.BeginCell().MustStoreRef(nodes[i]).MustStoreRef(nodes[i+1]).EndCell()
-				next = append(next, parent)
-			} else {
-				next = append(next, nodes[i])
-			}
-		}
-		nodes = next
-	}
-
-	return nodes[0]
 }
 
 func createTestBucketAndObject(
@@ -248,12 +171,6 @@ func TestE2E_SubscriberIndexesBagWithMetadata(t *testing.T) {
 
 	logger := e2eLogger()
 
-	// Generate >16MB payload (2 segments)
-	payload := generateRandomPayload(t, payloadSize)
-	bagID, ionStorageBoC := computeIonStorageMetadata(t, payload)
-	bagIDHex := hex.EncodeToString(bagID[:])
-	t.Logf("computed bag ID: %s", bagIDHex)
-
 	// Create Greenfield SDK client
 	account, err := gnfdtypes.NewAccountFromPrivateKey("e2e-test", privateKey)
 	require.NoError(t, err)
@@ -269,6 +186,11 @@ func TestE2E_SubscriberIndexesBagWithMetadata(t *testing.T) {
 
 	bucketName := fmt.Sprintf("e2e-storage-%d", time.Now().UnixNano()%100000)
 	objectName := "test-data"
+
+	payload := generateRandomPayload(t, payloadSize)
+	bagID, ionStorageBoC := boc.MustBuildIonStorageBoC(t, payload, boc.PieceSize, boc.SingleFileHeader(objectName, uint64(len(payload))))
+	bagIDHex := hex.EncodeToString(bagID[:])
+	t.Logf("computed bag ID: %s", bagIDHex)
 
 	// Open temp PebbleDB
 	db, err := pebble.Open(t.TempDir(), &pebble.Options{})
@@ -341,22 +263,22 @@ func TestE2E_SubscriberIndexesBagWithMetadata(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, bagID, meta.BagID)
 			require.Equal(t, uint64(payloadSize), meta.FileSize)
-			require.Equal(t, uint32(greenfield.PieceSize), meta.PieceSize)
-			require.Equal(t, 34, meta.PieceCount)
+			require.Equal(t, uint32(boc.PieceSize), meta.PieceSize)
+			require.Equal(t, 34, meta.PieceCount) // ceil(17MB / 512KB)
 			t.Logf("metadata verified: file_size=%d piece_count=%d", meta.FileSize, meta.PieceCount)
 
 			// Verify segment 0 (16MB)
-			seg0, err := fetcher.FetchSegment(ctx, bucketName, objectName, 0)
+			seg0, err := fetcher.FetchSegment(ctx, bucketName, objectName, 0, nil)
 			require.NoError(t, err)
-			require.Equal(t, greenfield.SegmentSize, len(seg0))
-			require.True(t, bytes.Equal(payload[:greenfield.SegmentSize], seg0))
+			require.Equal(t, boc.SegmentSize, len(seg0))
+			require.True(t, bytes.Equal(payload[:boc.SegmentSize], seg0))
 			t.Logf("segment 0 verified: %d bytes", len(seg0))
 
 			// Verify segment 1 (remaining 1MB)
-			seg1, err := fetcher.FetchSegment(ctx, bucketName, objectName, 1)
+			seg1, err := fetcher.FetchSegment(ctx, bucketName, objectName, 1, nil)
 			require.NoError(t, err)
-			require.Equal(t, payloadSize-greenfield.SegmentSize, len(seg1))
-			require.True(t, bytes.Equal(payload[greenfield.SegmentSize:], seg1))
+			require.Equal(t, payloadSize-boc.SegmentSize, len(seg1))
+			require.True(t, bytes.Equal(payload[boc.SegmentSize:], seg1))
 			t.Logf("segment 1 verified: %d bytes", len(seg1))
 
 			subCancel()

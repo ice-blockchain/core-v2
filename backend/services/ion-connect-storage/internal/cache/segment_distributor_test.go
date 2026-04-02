@@ -1,0 +1,95 @@
+package cache
+
+import (
+	"crypto/rand"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
+	"github.com/stretchr/testify/require"
+)
+
+func TestSegmentCacheCrossFileBoundary(t *testing.T) {
+	layout := BagFileLayout{
+		Files: []boc.FileEntry{
+			{Name: "file1.dat", Size: 200, Offset: 0},
+			{Name: "file2.dat", Size: 300, Offset: 200},
+		},
+		TotalSize: 500,
+	}
+
+	cache := NewSegmentCache(t.TempDir(), time.Hour, nil, testLogger())
+	bagID := testBagID()
+	require.NoError(t, cache.OpenBag(bagID, layout))
+
+	payload := make([]byte, layout.TotalSize)
+	_, err := rand.Read(payload)
+	require.NoError(t, err)
+
+	wc, err := cache.SegmentWriter(bagID, 0)
+	require.NoError(t, err)
+	_, err = wc.Write(payload)
+	require.NoError(t, err)
+	require.NoError(t, wc.Close())
+	cache.MarkSegmentWritten(bagID, 0)
+
+	dirPath := bagDirPath(cache.dir, bagID)
+
+	file1Data, err := os.ReadFile(filepath.Join(dirPath, "file1.dat"))
+	require.NoError(t, err)
+	require.Equal(t, payload[:200], file1Data)
+
+	file2Data, err := os.ReadFile(filepath.Join(dirPath, "file2.dat"))
+	require.NoError(t, err)
+	require.Equal(t, payload[200:500], file2Data)
+
+	data, ok, err := cache.GetSegment(bagID, 0)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, payload, data)
+}
+
+func TestSegmentCacheConcurrentSegmentWrites(t *testing.T) {
+	layout := BagFileLayout{
+		Files: []boc.FileEntry{
+			{Name: "big.dat", Size: 2048, Offset: 0},
+		},
+		TotalSize: 2048,
+	}
+
+	cache := NewSegmentCache(t.TempDir(), time.Hour, nil, testLogger())
+	bagID := testBagID()
+	require.NoError(t, cache.OpenBag(bagID, layout))
+
+	seg0 := make([]byte, 1024)
+	seg1 := make([]byte, 1024)
+	_, _ = rand.Read(seg0)
+	_, _ = rand.Read(seg1)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	writeSegment := func(segIdx int, data []byte) {
+		defer wg.Done()
+		dist := newSegmentDistributor(
+			bagDirPath(cache.dir, bagID),
+			layout,
+			int64(segIdx)*1024,
+		)
+		_, err := dist.Write(data)
+		require.NoError(t, err)
+		require.NoError(t, dist.Close())
+	}
+
+	go writeSegment(0, seg0)
+	go writeSegment(1, seg1)
+	wg.Wait()
+
+	dirPath := bagDirPath(cache.dir, bagID)
+	fullData, err := os.ReadFile(filepath.Join(dirPath, "big.dat"))
+	require.NoError(t, err)
+	require.Equal(t, seg0, fullData[:1024])
+	require.Equal(t, seg1, fullData[1024:])
+}

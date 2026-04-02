@@ -14,6 +14,7 @@ import (
 	"github.com/cockroachdb/pebble/v2"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/config"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
@@ -40,7 +41,7 @@ func main() {
 	defer gfClient.Close()
 
 	persister := index.NewPersister(db)
-	_ = greenfield.NewFetcher(gfClient, logger)
+	fetcher := greenfield.NewFetcher(gfClient, logger)
 
 	sub := index.NewSubscriber(gfClient, persister, cfg.OnlineIOEnv, logger)
 
@@ -58,6 +59,15 @@ func main() {
 		logger.Error("create server failed", "error", err)
 		os.Exit(1)
 	}
+
+	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
+	segmentCache := cache.NewSegmentCache(cfg.CacheDir, cfg.CacheTTL, func(bagID [32]byte) {
+		server.DHTRegistrar().Deregister(bagID)
+		_ = server.OverlayManager().Leave(bagID)
+	}, logger)
+	_ = metadataStore // consumed by Phase 4 storage handler
+	_ = segmentCache  // consumed by Phase 4 storage handler
+	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
 	go startHealthServer(ctx, cfg.HttpPort, logger)
 

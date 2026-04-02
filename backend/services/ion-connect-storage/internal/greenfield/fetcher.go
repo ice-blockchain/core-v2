@@ -3,9 +3,11 @@ package greenfield
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -26,7 +28,7 @@ func NewFetcher(client greenfieldclient.Client, logger *slog.Logger) *Fetcher {
 
 // FetchMetadata downloads and parses the .ionstorage BoC for the given object.
 // Concurrent calls for the same object share a single Greenfield request.
-func (f *Fetcher) FetchMetadata(ctx context.Context, bucket, object string) (*BagMetadata, error) {
+func (f *Fetcher) FetchMetadata(ctx context.Context, bucket, object string) (*boc.BagMetadata, error) {
 	key := fmt.Sprintf("%s/%s.meta", bucket, object)
 	val, err, _ := f.do(key, func() (interface{}, error) {
 		return fetchMetadata(ctx, f.client, bucket, object, f.logger)
@@ -34,16 +36,17 @@ func (f *Fetcher) FetchMetadata(ctx context.Context, bucket, object string) (*Ba
 	if err != nil {
 		return nil, err
 	}
-	return val.(*BagMetadata), nil
+	return val.(*boc.BagMetadata), nil
 }
 
 // FetchSegment downloads a 16 MB segment by index.
-// Concurrent calls for the same segment share a single Greenfield request.
-// Callers must not mutate the returned slice.
-func (f *Fetcher) FetchSegment(ctx context.Context, bucket, object string, segmentIndex int) ([]byte, error) {
+// If w is non-nil, the stream is tee'd to w during reading (for simultaneous caching).
+// Concurrent calls for the same segment share a single Greenfield request via singleflight.
+// When coalesced, only the first caller's w receives the tee data.
+func (f *Fetcher) FetchSegment(ctx context.Context, bucket, object string, segmentIndex int, w io.Writer) ([]byte, error) {
 	key := fmt.Sprintf("%s/%s:seg:%d", bucket, object, segmentIndex)
 	val, err, _ := f.do(key, func() (interface{}, error) {
-		return fetchSegment(ctx, f.client, bucket, object, segmentIndex, f.logger)
+		return fetchSegment(ctx, f.client, bucket, object, segmentIndex, w, f.logger)
 	})
 	if err != nil {
 		return nil, err

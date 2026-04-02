@@ -45,7 +45,7 @@ func TestFetcherCoalescesSegmentRequests(t *testing.T) {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
-			results[idx], errs[idx] = fetcher.FetchSegment(context.Background(), "b", "o", 0)
+			results[idx], errs[idx] = fetcher.FetchSegment(context.Background(), "b", "o", 0, nil)
 		}(i)
 	}
 	wg.Wait()
