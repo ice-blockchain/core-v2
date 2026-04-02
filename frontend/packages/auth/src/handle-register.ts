@@ -40,8 +40,7 @@ async function executeRegistration(
   data: { identityKeyName: string; password?: string },
 ): Promise<void> {
   const { identityClient, onAuthSuccess } = deps;
-  const usePasskey = data.password === undefined || data.password === null;
-  if (usePasskey) {
+  if (data.password === undefined || data.password === null) {
     await identityClient.registerWithPasskey(data.identityKeyName);
   } else {
     await identityClient.registerWithPassword({ username: data.identityKeyName, password: data.password });
