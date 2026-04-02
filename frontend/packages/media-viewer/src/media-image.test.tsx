@@ -9,38 +9,32 @@ const baseSource: MediaViewerSource = {
   mimeType: 'image/jpeg',
 };
 
+function flattenStyle(image: { props: { style: unknown } }) {
+  return ([] as Record<string, unknown>[]).concat(image.props.style as never).filter(Boolean);
+}
+
 describe('MediaImage - rendering', () => {
   it('renders with the provided URI', () => {
     const { UNSAFE_getByType } = render(<MediaImage source={baseSource} />);
-    const image = UNSAFE_getByType(Image);
-    expect(image.props.source).toEqual({ uri: baseSource.uri });
+    expect(UNSAFE_getByType(Image).props.source).toEqual({ uri: baseSource.uri });
   });
 
   it('maps fill resize mode to stretch', () => {
     const { UNSAFE_getByType } = render(<MediaImage source={baseSource} resizeMode="fill" />);
-    const image = UNSAFE_getByType(Image);
-    expect(image.props.resizeMode).toBe('stretch');
+    expect(UNSAFE_getByType(Image).props.resizeMode).toBe('stretch');
   });
 
   it('applies aspect ratio when dimensions provided', () => {
     const source = { ...baseSource, width: 1920, height: 1080 };
     const { UNSAFE_getByType } = render(<MediaImage source={source} />);
-    const image = UNSAFE_getByType(Image);
-    const flatStyle = [].concat(image.props.style).filter(Boolean);
-    const hasAspectRatio = flatStyle.some(
-      (s: Record<string, unknown>) => typeof s.aspectRatio === 'number',
-    );
-    expect(hasAspectRatio).toBe(true);
+    const styles = flattenStyle(UNSAFE_getByType(Image));
+    expect(styles.some((s) => typeof s.aspectRatio === 'number')).toBe(true);
   });
 
   it('fills container when no dimensions provided', () => {
     const { UNSAFE_getByType } = render(<MediaImage source={baseSource} />);
-    const image = UNSAFE_getByType(Image);
-    const flatStyle = [].concat(image.props.style).filter(Boolean);
-    const hasFill = flatStyle.some(
-      (s: Record<string, unknown>) => s.width === '100%' && s.height === '100%',
-    );
-    expect(hasFill).toBe(true);
+    const styles = flattenStyle(UNSAFE_getByType(Image));
+    expect(styles.some((s) => s.width === '100%' && s.height === '100%')).toBe(true);
   });
 });
 
