@@ -2,7 +2,7 @@ import { Logger } from '@ion/diagnostics';
 import type { NetworkStateProvider } from '@ion/network';
 import { runProxyHealthCheck } from './proxy-health-check';
 import { restartProxy } from './proxy-lifecycle';
-import type { AppLifecycleState, AppStateProvider } from '@ion/platform';
+import type { AppStateProvider } from '@ion/platform';
 import type { ProxyManagerContext } from './types';
 
 const TAG = 'proxy';
@@ -42,7 +42,7 @@ function subscribeOnlineState(context: ProxyManagerContext, provider: NetworkSta
 
 function subscribeAppState(context: ProxyManagerContext, provider: AppStateProvider): () => void {
   let wasBackgrounded = false;
-  return provider.onStateChange((state: AppLifecycleState) => {
+  return provider.onStateChange((state) => {
     if (context.disposed) return;
     if (state === 'background') {
       wasBackgrounded = true;
