@@ -1,5 +1,5 @@
-import { forwardRef, useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Platform, Pressable, TextInput, View } from "react-native";
 import type {
   StyleProp,
   TextInputProps as RNTextInputProps,
@@ -13,10 +13,11 @@ import { TextFieldClearButton } from "./TextFieldClearButton";
 import {
   buildTextFieldContainerStyle,
   buildTextFieldInputStyle,
+  buildMultilineWrapperStyle,
   deriveTextFieldState,
   resolveTextFieldColorSpec,
 } from "./TextFieldStyles";
-import type { TextFieldColorSpec } from "./TextFieldStyles";
+import type { TextFieldColorSpec, TextFieldTextVariant } from "./TextFieldStyles";
 
 export interface TextFieldProps {
   label: string;
@@ -26,6 +27,7 @@ export interface TextFieldProps {
   state?: "error" | "verified" | "disabled";
   errorMessage?: string;
   isSecureTextEntry?: boolean;
+  textVariant?: TextFieldTextVariant;
   minLines?: number;
   maxLines?: number;
   prefixIcon?: React.ReactNode;
@@ -74,6 +76,24 @@ function useTextFieldFocus(props: TextFieldProps) {
   return { isFocused, handleFocus, handleBlur };
 }
 
+const IS_WEB = Platform.OS === "web";
+
+function useWebMultilineHeight(options: {
+  isMultiline: boolean;
+  ref: React.ForwardedRef<TextInput>;
+  inputRef: React.RefObject<TextInput | null>;
+  value: string;
+}) {
+  const { isMultiline, ref, inputRef, value } = options;
+  useLayoutEffect(() => {
+    if (!IS_WEB || !isMultiline) return;
+    const node = ((ref as React.RefObject<TextInput | null>)?.current ?? inputRef.current) as unknown as HTMLTextAreaElement | null;
+    if (!node) return;
+    node.style.height = "auto";
+    node.style.height = `${node.scrollHeight}px`;
+  }, [isMultiline, ref, inputRef, value]);
+}
+
 function useFocusInput(ref: React.ForwardedRef<TextInput>, inputRef: React.RefObject<TextInput | null>) {
   return useCallback(() => {
     const target = (ref as React.RefObject<TextInput | null>)?.current ?? inputRef.current;
@@ -81,15 +101,18 @@ function useFocusInput(ref: React.ForwardedRef<TextInput>, inputRef: React.RefOb
   }, [ref, inputRef]);
 }
 
-function useTextFieldStyles(options: {
+interface TextFieldStyleOptions {
   theme: Theme;
   explicitState: TextFieldProps["state"];
   isFocused: boolean;
   hasValue: boolean;
   minLines: number;
   maxLines: number;
-}) {
-  const { theme, explicitState, isFocused, hasValue, minLines, maxLines } = options;
+  textVariant?: TextFieldTextVariant;
+}
+
+function useTextFieldStyles(options: TextFieldStyleOptions) {
+  const { theme, explicitState, isFocused, hasValue, minLines, maxLines, textVariant = "default" } = options;
   const isMultiline = maxLines > 1 || minLines > 1;
 
   const derivedState = useMemo(
@@ -108,11 +131,16 @@ function useTextFieldStyles(options: {
   );
 
   const inputStyle = useMemo(
-    () => buildTextFieldInputStyle({ spec, isFloating: isFocused || hasValue, isMultiline, maxLines: Math.max(maxLines, minLines), typography: theme.typography, scale: theme.scale }),
-    [spec, isFocused, hasValue, isMultiline, maxLines, minLines, theme.typography, theme.scale],
+    () => buildTextFieldInputStyle({ spec, isMultiline, maxLines: Math.max(maxLines, minLines), typography: theme.typography, scale: theme.scale, textVariant }),
+    [spec, isMultiline, maxLines, minLines, theme.typography, theme.scale, textVariant],
   );
 
-  return { derivedState, spec, containerStyle, inputStyle, isMultiline };
+  const multilineWrapperStyle = useMemo(
+    () => isMultiline ? buildMultilineWrapperStyle({ scale: theme.scale }) : undefined,
+    [isMultiline, theme.scale],
+  );
+
+  return { derivedState, spec, containerStyle, inputStyle, isMultiline, multilineWrapperStyle };
 }
 
 interface RenderSlotsOptions {
@@ -196,6 +224,7 @@ function renderTextInput(options: TextFieldInputOptions) {
       editable={props.state !== "disabled"}
       secureTextEntry={props.isSecureTextEntry}
       multiline={isMultiline}
+      numberOfLines={IS_WEB && isMultiline ? 1 : undefined}
       style={inputStyle}
       placeholderTextColor="transparent"
       {...props.textInputProps}
@@ -211,9 +240,10 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     const { state: explicitState, maxLines = 1, minLines = 1, errorMessage, label } = props;
     const hasValue = currentValue.length > 0;
 
-    const { derivedState, spec, containerStyle, inputStyle, isMultiline } = useTextFieldStyles({
-      theme, explicitState, isFocused, hasValue, minLines, maxLines,
+    const { derivedState, spec, containerStyle, inputStyle, isMultiline, multilineWrapperStyle } = useTextFieldStyles({
+      theme, explicitState, isFocused, hasValue, minLines, maxLines, textVariant: props.textVariant ?? "default",
     });
+    useWebMultilineHeight({ isMultiline, ref, inputRef, value: currentValue });
 
     const displayLabel = derivedState === "error" && errorMessage ? errorMessage : label;
     const shouldShowClear = props.isClearable === true && isFocused && hasValue;
@@ -221,13 +251,16 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     const focusInput = useFocusInput(ref, inputRef);
     const slotOptions: RenderSlotsOptions = { props, theme, spec, shouldShowClear, onClear: handleClear };
     const innerStyle = isMultiline ? { flex: 1 } : { flex: 1, height: "100%" as const, justifyContent: "center" as const };
+    const inputOptions: TextFieldInputOptions = { ref, inputRef, props, internal, inputStyle, isMultiline };
 
     return (
       <Pressable onPress={focusInput} style={[containerStyle, props.style]}>
         {renderPrefixSlot(slotOptions)}
         <View style={innerStyle}>
           <TextFieldFloatingLabel label={displayLabel} isFloating={isFocused || hasValue} isMultiline={isMultiline} color={spec.labelColor} typography={theme.typography} scale={theme.scale} />
-          {renderTextInput({ ref, inputRef, props, internal, inputStyle, isMultiline })}
+          {multilineWrapperStyle
+            ? <View style={multilineWrapperStyle}>{renderTextInput(inputOptions)}</View>
+            : renderTextInput(inputOptions)}
         </View>
         {renderSuffixSlot(slotOptions)}
       </Pressable>

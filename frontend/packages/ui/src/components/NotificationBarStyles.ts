@@ -43,7 +43,6 @@ export function buildNotificationBarTextStyle(options: {
   return {
     fontFamily: variant.fontFamily,
     fontSize: variant.fontSize,
-    fontWeight: variant.fontWeight,
     lineHeight: variant.lineHeight,
     letterSpacing: variant.letterSpacing,
     color: theme.colors.onPrimaryAccent,

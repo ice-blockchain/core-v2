@@ -33,8 +33,7 @@ export function TextFieldFloatingLabel(props: TextFieldFloatingLabelProps) {
         right: 0,
         ...(isMultiline ? { top } : { alignSelf: "center", transform: [{ translateY }] }),
         fontSize,
-        fontFamily: typography.body.fontFamily,
-        fontWeight: "500",
+        fontFamily: typography.caption.fontFamily,
         color,
         // @ts-expect-error -- web-only CSS transition property
         transitionProperty: "font-size, transform, top",

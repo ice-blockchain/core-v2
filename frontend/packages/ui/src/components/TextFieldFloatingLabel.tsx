@@ -15,7 +15,9 @@ export interface TextFieldFloatingLabelProps {
 const ANIMATION_DURATION = 150;
 const RESTING_FONT_SIZE = 13;
 const FLOATING_FONT_SIZE = 12;
-const FLOATING_TOP = 8;
+const RESTING_LINE_HEIGHT = 18;
+const FLOATING_LINE_HEIGHT = 14;
+const FLOATING_TOP = 10;
 const RESTING_TOP = 18;
 
 function useFloatingAnimation(isFloating: boolean) {
@@ -41,6 +43,8 @@ function buildSingleLineStyle(options: {
   const { progress, color, typography, scale } = options;
   const restingFontSize = scale.scaleFont(RESTING_FONT_SIZE);
   const floatingFontSize = scale.scaleFont(FLOATING_FONT_SIZE);
+  const restingLineHeight = scale.scaleFont(RESTING_LINE_HEIGHT);
+  const floatingLineHeight = scale.scaleFont(FLOATING_LINE_HEIGHT);
 
   return {
     position: "absolute" as const,
@@ -49,8 +53,8 @@ function buildSingleLineStyle(options: {
     alignSelf: "center" as const,
     transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [0, -scale.scaleSize(FLOATING_TOP)] }) }],
     fontSize: progress.interpolate({ inputRange: [0, 1], outputRange: [restingFontSize, floatingFontSize] }),
-    fontFamily: typography.body.fontFamily,
-    fontWeight: "500" as const,
+    lineHeight: progress.interpolate({ inputRange: [0, 1], outputRange: [restingLineHeight, floatingLineHeight] }),
+    fontFamily: typography.caption.fontFamily,
     color,
   };
 }
@@ -64,6 +68,8 @@ function buildMultilineStyle(options: {
   const { progress, color, typography, scale } = options;
   const restingFontSize = scale.scaleFont(RESTING_FONT_SIZE);
   const floatingFontSize = scale.scaleFont(FLOATING_FONT_SIZE);
+  const restingLineHeight = scale.scaleFont(RESTING_LINE_HEIGHT);
+  const floatingLineHeight = scale.scaleFont(FLOATING_LINE_HEIGHT);
 
   return {
     position: "absolute" as const,
@@ -71,8 +77,8 @@ function buildMultilineStyle(options: {
     right: 0,
     top: progress.interpolate({ inputRange: [0, 1], outputRange: [scale.scaleSize(RESTING_TOP), scale.scaleSize(FLOATING_TOP)] }),
     fontSize: progress.interpolate({ inputRange: [0, 1], outputRange: [restingFontSize, floatingFontSize] }),
-    fontFamily: typography.body.fontFamily,
-    fontWeight: "500" as const,
+    lineHeight: progress.interpolate({ inputRange: [0, 1], outputRange: [restingLineHeight, floatingLineHeight] }),
+    fontFamily: typography.caption.fontFamily,
     color,
   };
 }

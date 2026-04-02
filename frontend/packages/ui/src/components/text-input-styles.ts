@@ -40,7 +40,6 @@ export function buildInputStyle(scale: (n: number) => number, primaryText: strin
     flex: 1,
     fontSize: scale(13),
     fontFamily: "NotoSans-SemiBold",
-    fontWeight: "600",
     lineHeight: scale(18),
     color: primaryText,
     paddingVertical: 0,
@@ -54,7 +53,6 @@ export function buildFloatingLabelStyle(scale: (n: number) => number, color: str
   return {
     fontSize: scale(12),
     fontFamily: "NotoSans-Medium",
-    fontWeight: "500",
     color,
   };
 }

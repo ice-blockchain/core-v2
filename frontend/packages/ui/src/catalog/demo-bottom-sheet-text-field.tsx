@@ -50,7 +50,7 @@ function useFieldStyles(props: DemoBottomSheetTextFieldProps, isFocused: boolean
   );
   const inputStyle = useMemo(
     () => buildTextFieldInputStyle({
-      spec, isFloating: isFocused || hasValue, isMultiline, maxLines: Math.max(maxLines, minLines),
+      spec, isMultiline, maxLines: Math.max(maxLines, minLines),
       typography: theme.typography, scale: theme.scale,
     }),
     [spec, isFocused, hasValue, isMultiline, maxLines, minLines, theme.typography, theme.scale],
