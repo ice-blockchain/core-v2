@@ -9,8 +9,8 @@ export async function startIonConnectProxy(options?: StartIonConnectProxyOptions
   const nativeModule = getNativeIonConnectProxy();
   const port = options?.port ?? DEFAULT_PROXY_PORT;
   try {
-    const result = options?.config
-      ? await nativeModule.startProxyWithConfig(port, JSON.stringify(options.config))
+    const result = options?.configJSON
+      ? await nativeModule.startProxyWithConfig(port, options.configJSON)
       : await nativeModule.startProxy(port);
     if (result.startsWith('ERR:')) throw new Error(result);
     Logger.info('Proxy started', { tag: TAG, data: { port } });

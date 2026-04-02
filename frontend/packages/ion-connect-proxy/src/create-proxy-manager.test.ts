@@ -50,7 +50,7 @@ describe('createProxyManager', () => {
     const states: string[] = [];
     manager.onStatusChange((s) => states.push(s));
     await manager.start();
-    expect(startIonConnectProxy).toHaveBeenCalledWith({ port: 9999, config: undefined });
+    expect(startIonConnectProxy).toHaveBeenCalledWith(expect.objectContaining({ port: 9999 }));
     expect(manager.getStatus()).toBe('connected');
     expect(states).toEqual(['connecting', 'connected']);
     manager.dispose();

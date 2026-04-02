@@ -2,17 +2,12 @@ import type { ConnectionState, NetworkStateProvider, Transport, HttpClient } fro
 
 // --- Proxy Config ---
 
-export interface IonConnectProxyConfig {
-  liteservers: Array<{ ip: number; port: number; id: { '@type': string; key: string } }>;
-  dht?: {
-    '@type': string;
-    nodes: Array<{ '@type': string; id: { '@type': string; key: string }; addr_list: unknown }>;
-  } | undefined;
-}
+/** Raw JSON string of the TON global config. Passed directly to the native module to avoid JS number precision loss on int64 fields. */
+export type TonGlobalConfigJSON = string;
 
 export interface StartIonConnectProxyOptions {
   port?: number | undefined;
-  config?: IonConnectProxyConfig | undefined;
+  configJSON?: TonGlobalConfigJSON | undefined;
 }
 
 // --- App State Provider (DI interface for @ion/platform) ---
@@ -30,7 +25,7 @@ export type ProxyStatus = ConnectionState;
 
 export interface ProxyManagerConfig {
   port?: number | undefined;
-  config?: IonConnectProxyConfig | undefined;
+  configJSON?: TonGlobalConfigJSON | undefined;
   networkStateProvider: NetworkStateProvider;
   appStateProvider: AppStateProvider;
   healthCheckIntervalMs?: number | undefined;
@@ -53,7 +48,7 @@ export interface ProxyManager {
 
 export interface ProxyManagerContext {
   port: number;
-  proxyConfig?: IonConnectProxyConfig | undefined;
+  configJSON?: TonGlobalConfigJSON | undefined;
   healthCheckIntervalMs: number;
   healthCheckTimeoutMs: number;
   maxRestartAttempts: number;

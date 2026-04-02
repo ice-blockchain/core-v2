@@ -23,7 +23,7 @@ export function createProxyManager(config: ProxyManagerConfig): ProxyManager {
   let cleanupSubscriptions: (() => void) | null = null;
 
   return {
-    start: () => startManager(context, config, () => { cleanupSubscriptions = setupSubscriptions(context, config); }),
+    start: () => startManager(context, () => { cleanupSubscriptions = setupSubscriptions(context, config); }),
     stop: () => stopManager(context, () => { cleanupSubscriptions?.(); cleanupSubscriptions = null; }),
     getStatus: () => stateMachine.getState(),
     onStatusChange: (handler) => stateMachine.onStateChange(handler),
@@ -36,7 +36,7 @@ export function createProxyManager(config: ProxyManagerConfig): ProxyManager {
 function buildContext(config: ProxyManagerConfig, stateMachine: ReturnType<typeof createConnectionStateMachine>): ProxyManagerContext {
   return {
     port: config.port ?? DEFAULT_PORT,
-    proxyConfig: config.config,
+    configJSON: config.configJSON,
     healthCheckIntervalMs: config.healthCheckIntervalMs ?? DEFAULT_HEALTH_INTERVAL_MS,
     healthCheckTimeoutMs: config.healthCheckTimeoutMs ?? DEFAULT_HEALTH_TIMEOUT_MS,
     maxRestartAttempts: config.maxRestartAttempts ?? DEFAULT_MAX_RESTART_ATTEMPTS,
@@ -53,12 +53,11 @@ function buildContext(config: ProxyManagerConfig, stateMachine: ReturnType<typeo
 
 async function startManager(
   context: ProxyManagerContext,
-  config: ProxyManagerConfig,
   onStarted: () => void,
 ): Promise<void> {
   context.transition('connecting');
   Logger.info('Proxy manager starting', { tag: TAG, data: { port: context.port } });
-  await startIonConnectProxy({ port: context.port, config: context.proxyConfig });
+  await startIonConnectProxy({ port: context.port, configJSON: context.configJSON });
   context.transition('connected');
   onStarted();
   scheduleHealthCheck(context);

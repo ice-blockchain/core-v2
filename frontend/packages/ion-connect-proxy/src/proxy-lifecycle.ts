@@ -57,7 +57,7 @@ async function retryProxyStart(context: ProxyManagerContext): Promise<void> {
 }
 
 async function attemptProxyStart(context: ProxyManagerContext): Promise<void> {
-  await startIonConnectProxy({ port: context.port, config: context.proxyConfig });
+  await startIonConnectProxy({ port: context.port, configJSON: context.configJSON });
   context.transition('connected');
   Logger.info('Proxy restarted', { tag: TAG, data: { port: context.port } });
 }
