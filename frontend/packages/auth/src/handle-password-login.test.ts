@@ -24,6 +24,15 @@ function createMockClient(): IdentityClient {
     deleteTwoFAMethod: vi.fn(),
     deleteAccount: vi.fn(),
     recoverAccount: vi.fn(),
+    getSocialProfile: vi.fn(),
+    updateSocialProfile: vi.fn(),
+    verifyNickname: vi.fn(),
+    getIonConnectRelays: vi.fn(),
+    getIonConnectIndexers: vi.fn(),
+    setIonConnectRelays: vi.fn(),
+    getAvailableRelays: vi.fn(),
+    getContentCreators: vi.fn(),
+    searchUsers: vi.fn(),
     authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} },
   };
 }
