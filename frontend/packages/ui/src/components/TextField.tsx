@@ -78,14 +78,20 @@ function useTextFieldFocus(props: TextFieldProps) {
 
 const IS_WEB = Platform.OS === "web";
 
-function useWebMultilineHeight(isMultiline: boolean, inputRef: React.RefObject<TextInput | null>, value: string) {
+function useWebMultilineHeight(options: {
+  isMultiline: boolean;
+  ref: React.ForwardedRef<TextInput>;
+  inputRef: React.RefObject<TextInput | null>;
+  value: string;
+}) {
+  const { isMultiline, ref, inputRef, value } = options;
   useLayoutEffect(() => {
     if (!IS_WEB || !isMultiline) return;
-    const node = inputRef.current as unknown as HTMLTextAreaElement | null;
+    const node = ((ref as React.RefObject<TextInput | null>)?.current ?? inputRef.current) as unknown as HTMLTextAreaElement | null;
     if (!node) return;
     node.style.height = "auto";
     node.style.height = `${node.scrollHeight}px`;
-  }, [isMultiline, inputRef, value]);
+  }, [isMultiline, ref, inputRef, value]);
 }
 
 function useFocusInput(ref: React.ForwardedRef<TextInput>, inputRef: React.RefObject<TextInput | null>) {
@@ -235,7 +241,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     const { derivedState, spec, containerStyle, inputStyle, isMultiline, multilineWrapperStyle } = useTextFieldStyles({
       theme, explicitState, isFocused, hasValue, minLines, maxLines, textVariant: props.textVariant ?? "default",
     });
-    useWebMultilineHeight(isMultiline, inputRef, currentValue);
+    useWebMultilineHeight({ isMultiline, ref, inputRef, value: currentValue });
 
     const displayLabel = derivedState === "error" && errorMessage ? errorMessage : label;
     const shouldShowClear = props.isClearable === true && isFocused && hasValue;
