@@ -19,6 +19,12 @@ export interface SemanticColors {
   attentionRed: string;
   success: string;
   shadow: string;
+  onColors: string;
+  attentionBlock: string;
+  tcBackground: string;
+  blurBackground: string;
+  dividerZero: string;
+  onTcBackground: string;
 }
 
 export type ColorMode = "light" | "dark";

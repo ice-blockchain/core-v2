@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 
 interface SecondaryButtonProps {
   label: string;
@@ -8,10 +10,19 @@ interface SecondaryButtonProps {
 }
 
 export function SecondaryButton({ label, onPress, leftIcon }: SecondaryButtonProps) {
+  const theme = useTheme();
+  const { colors } = theme;
+
+  const buttonStyle = useMemo(() => ({
+    ...styles.button,
+    backgroundColor: colors.secondaryBackground,
+    borderColor: colors.strokeElements,
+  }), [colors.secondaryBackground, colors.strokeElements]);
+
   return (
-    <Pressable style={styles.button} onPress={onPress}>
+    <Pressable style={buttonStyle} onPress={onPress}>
       {leftIcon && <View>{leftIcon}</View>}
-      <Text style={styles.label}>{label}</Text>
+      <Text variant="body" color={colors.secondaryText}>{label}</Text>
     </Pressable>
   );
 }
@@ -24,16 +35,8 @@ const styles = StyleSheet.create({
     gap: 9,
     width: 287,
     height: 56,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#CCCCCC",
     borderRadius: 16,
     paddingHorizontal: 24,
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#494949",
   },
 });

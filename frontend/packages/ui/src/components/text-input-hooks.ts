@@ -32,11 +32,14 @@ export function useTextInputStyles(visualState: TextInputState) {
   );
 
   const containerStyle = useMemo(
-    () => buildContainerStyle(borderColors.border, scale),
-    [borderColors.border, scale],
+    () => buildContainerStyle(borderColors.border, scale, theme.colors.secondaryBackground),
+    [borderColors.border, scale, theme.colors.secondaryBackground],
   );
 
-  const separatorStyle = useMemo(() => buildSeparatorStyle(scale), [scale]);
+  const separatorStyle = useMemo(
+    () => buildSeparatorStyle(scale, theme.colors.strokeElements),
+    [scale, theme.colors.strokeElements],
+  );
 
   const inputStyle = useMemo(
     () => buildInputStyle(scale, theme.colors.primaryText),

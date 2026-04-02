@@ -40,6 +40,7 @@ export function TextInputContent(props: TextInputContentProps) {
         maxLength={props.maxLength}
         autoCapitalize={props.autoCapitalize}
         keyboardType={props.keyboardType}
+        keyboardAppearance={theme.colorMode === "dark" ? "dark" : "light"}
         cursorColor={theme.colors.primaryAccent}
         selectionColor={theme.colors.primaryAccent}
         onFocus={props.onFocus}

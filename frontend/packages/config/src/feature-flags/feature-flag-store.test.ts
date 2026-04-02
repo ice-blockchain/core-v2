@@ -21,6 +21,7 @@ describe('feature-flag-store', () => {
 
     expect(flags).toEqual({
       debugMenuEnabled: false,
+      darkModeEnabled: false,
     });
   });
 

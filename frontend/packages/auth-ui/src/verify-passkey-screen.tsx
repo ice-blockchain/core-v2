@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { SecuredByFooter } from "./secured-by-footer";
 import { VerifyPasskeyIcon } from "./verify-passkey-icon";
@@ -15,6 +16,8 @@ interface VerifyPasskeyScreenProps {
 }
 
 export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskeyScreenProps) {
+  const { colors } = useTheme();
+
   useEffect(() => {
     const timer = setTimeout(onDismiss, AUTO_DISMISS_DELAY);
     return () => clearTimeout(timer);
@@ -25,8 +28,8 @@ export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskey
       <View style={styles.iconContainer}>
         <VerifyPasskeyIcon />
       </View>
-      <Text style={styles.title}>{translate("auth:verifyPasskeyTitle")}</Text>
-      <Text style={styles.subtitle}>
+      <Text variant="headline1" color={colors.primaryText}>{translate("auth:verifyPasskeyTitle")}</Text>
+      <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>
         {translate("auth:verifyPasskeySubtitle")}
       </Text>
       <View style={styles.loader}>
@@ -53,16 +56,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontWeight: "700",
-    fontSize: 28,
-    color: "#0E0E0E",
-    marginBottom: 8,
-  },
   subtitle: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#9A9A9A",
     textAlign: "center",
     maxWidth: 320,
     marginBottom: 40,

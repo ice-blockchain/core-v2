@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { TextField } from "@ion/ui";
+import { useCallback, useMemo, useState } from "react";
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from "react-native";
+import { Text, TextField, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { PasswordIcon } from "./password-icon";
 import { EyeIcon } from "./eye-icon";
@@ -14,13 +14,15 @@ interface VerifyPasswordBackgroundProps {
 }
 
 export function VerifyPasswordBackground({ loadingElement }: VerifyPasswordBackgroundProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.background}>
       <View style={styles.iconContainer}>
         <VerifyPasskeyIcon />
       </View>
-      <Text style={styles.title}>{translate("auth:verifyPasswordTitle")}</Text>
-      <Text style={styles.subtitle}>
+      <Text variant="headline1" color={colors.primaryText}>{translate("auth:verifyPasswordTitle")}</Text>
+      <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>
         {translate("auth:verifyPasswordSubtitle")}
       </Text>
       <View style={styles.loader}>{loadingElement}</View>
@@ -32,24 +34,35 @@ export function VerifyPasswordBackground({ loadingElement }: VerifyPasswordBackg
 }
 
 function InnerSheetHeader() {
+  const { colors } = useTheme();
+
   return (
     <>
       <View style={styles.innerIconContainer}>
         <VerifyPasswordIcon />
       </View>
-      <Text style={styles.innerTitle}>{translate("auth:verifyPasswordTitle")}</Text>
-      <Text style={styles.innerSubtitle}>
+      <Text variant="title" color={colors.primaryText}>{translate("auth:verifyPasswordTitle")}</Text>
+      <Text variant="body2" color={colors.secondaryText} style={styles.innerSubtitle}>
         {translate("auth:verifyPasswordConfirmSubtitle")}
       </Text>
     </>
   );
 }
 
+function useConfirmButtonStyle() {
+  const { colors } = useTheme();
+  return useMemo(() => ({
+    ...styles.confirmButton,
+    backgroundColor: colors.primaryAccent,
+  }), [colors.primaryAccent]);
+}
+
 function InnerSheetForm({ onConfirm }: { onConfirm: (password: string) => void }) {
+  const { colors } = useTheme();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const toggleShowPassword = useCallback(() => setShowPassword((v) => !v), []);
+  const confirmButtonStyle = useConfirmButtonStyle();
 
   return (
     <View style={styles.innerContent}>
@@ -67,8 +80,8 @@ function InnerSheetForm({ onConfirm }: { onConfirm: (password: string) => void }
           style={styles.fieldWidth}
         />
       </View>
-      <Pressable style={styles.confirmButton} onPress={() => { if (password.trim()) onConfirm(password); }}>
-        <Text style={styles.confirmLabel}>{translate("auth:confirmButton")}</Text>
+      <Pressable style={confirmButtonStyle} onPress={() => { if (password.trim()) onConfirm(password); }}>
+        <Text variant="body" color={colors.onPrimaryAccent}>{translate("auth:confirmButton")}</Text>
       </Pressable>
     </View>
   );
@@ -79,13 +92,32 @@ interface VerifyPasswordOverlayProps {
 }
 
 export function VerifyPasswordOverlay({ onConfirm }: VerifyPasswordOverlayProps) {
+  const { colors } = useTheme();
+
+  const overlayStyle = useMemo(() => ({
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.backgroundSheet,
+    justifyContent: "flex-end" as const,
+    zIndex: 20,
+  }), [colors.backgroundSheet]);
+
+  const innerSheetStyle = useMemo(() => ({
+    ...styles.innerSheet,
+    backgroundColor: colors.secondaryBackground,
+  }), [colors.secondaryBackground]);
+
+  const handleStyle = useMemo(() => ({
+    ...styles.innerHandle,
+    backgroundColor: colors.sheetLine,
+  }), [colors.sheetLine]);
+
   return (
     <KeyboardAvoidingView
-      style={styles.overlay}
+      style={overlayStyle}
       behavior={Platform.select({ ios: "padding", android: "height" })}
     >
-      <View style={styles.innerSheet}>
-        <View style={styles.innerHandle} />
+      <View style={innerSheetStyle}>
+        <View style={handleStyle} />
         <InnerSheetForm onConfirm={onConfirm} />
       </View>
     </KeyboardAvoidingView>
@@ -106,16 +138,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontWeight: "700",
-    fontSize: 28,
-    color: "#0E0E0E",
-    marginBottom: 8,
-  },
   subtitle: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#9A9A9A",
     textAlign: "center",
     maxWidth: 320,
     marginBottom: 40,
@@ -127,14 +150,7 @@ const styles = StyleSheet.create({
     marginTop: "auto",
     paddingBottom: 40,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(8, 21, 50, 0.7)",
-    justifyContent: "flex-end",
-    zIndex: 20,
-  },
   innerSheet: {
-    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     alignItems: "center",
@@ -145,7 +161,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 3,
     borderRadius: 5,
-    backgroundColor: "#B8BCCA",
     marginBottom: 20,
   },
   innerContent: {
@@ -160,16 +175,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  innerTitle: {
-    fontWeight: "600",
-    fontSize: 17,
-    color: "#0E0E0E",
-    marginBottom: 8,
-  },
   innerSubtitle: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#494949",
     textAlign: "center",
     marginBottom: 24,
   },
@@ -182,15 +188,8 @@ const styles = StyleSheet.create({
   confirmButton: {
     width: 343,
     height: 56,
-    backgroundColor: "#0166FF",
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-  },
-  confirmLabel: {
-    fontWeight: "600",
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#FFFFFF",
   },
 });

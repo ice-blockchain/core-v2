@@ -12,25 +12,25 @@ export function resolveBorderColors(colors: SemanticColors, state: TextInputStat
   return map[state];
 }
 
-export function buildContainerStyle(borderColor: string, scale: (n: number) => number): ViewStyle {
+export function buildContainerStyle(borderColor: string, scale: (n: number) => number, backgroundColor: string): ViewStyle {
   return {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
     borderColor,
     borderRadius: scale(16),
-    backgroundColor: "white",
+    backgroundColor,
     minHeight: scale(58),
     paddingVertical: scale(11),
     paddingHorizontal: scale(16),
   };
 }
 
-export function buildSeparatorStyle(scale: (n: number) => number): ViewStyle {
+export function buildSeparatorStyle(scale: (n: number) => number, separatorColor: string): ViewStyle {
   return {
     width: 1,
     height: scale(26),
-    backgroundColor: "#E0E0E0",
+    backgroundColor: separatorColor,
     marginHorizontal: scale(16),
   };
 }

@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { BackArrowIcon } from "./back-arrow-icon";
 
 interface SheetHeaderProps {
@@ -7,12 +8,14 @@ interface SheetHeaderProps {
 }
 
 export function SheetHeader({ title, onBack }: SheetHeaderProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <Pressable onPress={onBack} style={styles.backButton}>
-        <BackArrowIcon />
+        <BackArrowIcon color={colors.primaryText} />
       </Pressable>
-      <Text style={styles.title}>{title}</Text>
+      <Text variant="subtitle" color={colors.primaryText}>{title}</Text>
       <View style={styles.placeholder} />
     </View>
   );
@@ -31,12 +34,6 @@ const styles = StyleSheet.create({
   backButton: {
     alignItems: "center",
     justifyContent: "center",
-  },
-  title: {
-    fontWeight: "600",
-    fontSize: 15,
-    color: "#0E0E0E",
-    textAlign: "center",
   },
   placeholder: {
     width: 24,

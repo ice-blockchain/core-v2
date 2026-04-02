@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 
 interface RestoreOptionCardProps {
   icon: ReactNode;
@@ -9,13 +11,20 @@ interface RestoreOptionCardProps {
 }
 
 export function RestoreOptionCard({ icon, title, description, onPress }: RestoreOptionCardProps) {
+  const { colors } = useTheme();
+
+  const cardStyle = useMemo(() => ({
+    ...styles.card,
+    backgroundColor: colors.tertiaryBackground,
+  }), [colors.tertiaryBackground]);
+
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable style={cardStyle} onPress={onPress}>
       <View style={styles.content}>
         {icon}
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
+          <Text variant="body" color={colors.primaryText}>{title}</Text>
+          <Text variant="caption3" color={colors.secondaryText} style={styles.description}>{description}</Text>
         </View>
       </View>
     </Pressable>
@@ -25,7 +34,6 @@ export function RestoreOptionCard({ icon, title, description, onPress }: Restore
 const styles = StyleSheet.create({
   card: {
     width: 300,
-    backgroundColor: "#FAFBFF",
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: "center",
@@ -39,17 +47,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  title: {
-    fontWeight: "600",
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#0E0E0E",
-  },
   description: {
-    fontWeight: "400",
-    fontSize: 11,
-    lineHeight: 18,
-    color: "#494949",
     textAlign: "center",
     width: 258,
   },

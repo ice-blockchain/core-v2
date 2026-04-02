@@ -1,21 +1,24 @@
 import Svg, { Path } from "react-native-svg";
+import { useTheme } from "@ion/ui";
 
 interface SafeAccountIconProps {
   size?: number;
   color?: string;
 }
 
-export function SafeAccountIcon({ size = 24, color = "#0166FF" }: SafeAccountIconProps) {
+export function SafeAccountIcon({ size = 24, color }: SafeAccountIconProps) {
+  const theme = useTheme();
+  const strokeColor = color ?? theme.colors.primaryAccent;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M4.8 10.733c0-2.558 0-3.837.303-4.267.302-.43 1.504-.842 3.91-1.665l.458-.157c1.254-.43 1.88-.644 2.53-.644s1.276.215 2.53.644l.458.157c2.405.823 3.608 1.235 3.91 1.665s.302 1.71.302 4.267v1.26c0 4.51-3.391 6.7-5.52 7.629-.576.252-.865.378-1.68.378-.816 0-1.104-.126-1.681-.378-2.128-.93-5.52-3.119-5.52-7.629z"
-        stroke={color}
+        stroke={strokeColor}
         strokeWidth={1.5}
       />
       <Path
         d="m8.5 12 2.333 2.5 4.667-5"
-        stroke={color}
+        stroke={strokeColor}
         strokeWidth={1.4}
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -16,7 +16,7 @@ export function buildDashedPlaceholderStyle(scale: (n: number) => number, colors
   return {
     width: scale(76),
     height: scale(76),
-    borderRadius: scale(12),
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.onPrimaryAccent,
     borderStyle: "dashed",

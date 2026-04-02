@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 
 interface TextButtonProps {
   label: string;
@@ -8,10 +9,12 @@ interface TextButtonProps {
 }
 
 export function TextButton({ label, onPress, leftIcon }: TextButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable style={styles.button} onPress={onPress}>
       {leftIcon && <View>{leftIcon}</View>}
-      <Text style={styles.label}>{label}</Text>
+      <Text variant="body" color={colors.secondaryText}>{label}</Text>
     </Pressable>
   );
 }
@@ -25,11 +28,5 @@ const styles = StyleSheet.create({
     width: 287,
     height: 56,
     paddingHorizontal: 24,
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#494949",
   },
 });

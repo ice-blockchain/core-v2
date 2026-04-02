@@ -1,6 +1,8 @@
-import { type ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { View } from "react-native";
+import type { ReactNode } from "react";
 import { translate } from "@ion/localization";
+import { Text, useTheme } from "@ion/ui";
 import { FingerprintIcon } from "./fingerprint-icon";
 import { DeviceIcon } from "./device-icon";
 import { SafeAccountIcon } from "./safe-account-icon";
@@ -15,15 +17,29 @@ interface BenefitItem extends BenefitRowProps {
   id: string;
 }
 
+const ROW_STYLE = { flexDirection: "row" as const, alignItems: "center" as const, gap: 12 };
+const TEXT_CONTAINER_STYLE = { flex: 1 };
+
 function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
+  const theme = useTheme();
+  const iconStyle = useMemo(() => ({
+    width: 48,
+    height: 68,
+    backgroundColor: theme.colors.tertiaryBackground,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  }), [theme.colors.tertiaryBackground]);
+
   return (
-    <View style={styles.row}>
-      <View style={styles.iconContainer}>
+    <View style={ROW_STYLE}>
+      <View style={iconStyle}>
         {icon}
       </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>{subtitle}</Text>
+      <View style={TEXT_CONTAINER_STYLE}>
+        <Text variant="body">{title}</Text>
+        <Text variant="caption3">{subtitle}</Text>
       </View>
     </View>
   );
@@ -55,7 +71,7 @@ function buildBenefits(): BenefitItem[] {
 export function PasskeyBenefitList() {
   const benefits = buildBenefits();
   return (
-    <View style={styles.container}>
+    <View style={CONTAINER_STYLE}>
       {benefits.map((benefit) => (
         <BenefitRow
           key={benefit.id}
@@ -68,41 +84,9 @@ export function PasskeyBenefitList() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: 12,
-    marginTop: 37,
-    paddingHorizontal: 40,
-    alignSelf: "stretch",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  iconContainer: {
-    width: 48,
-    height: 68,
-    backgroundColor: "#FAFBFF",
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textContainer: {
-    flex: 1,
-    lineHeight: 18,
-  },
-  title: {
-    fontWeight: "600",
-    fontSize: 13,
-    color: "#0E0E0E",
-    lineHeight: 18,
-  },
-  subtitle: {
-    fontWeight: "400",
-    fontSize: 11,
-    color: "#9A9A9A",
-    lineHeight: 18,
-  },
-});
+const CONTAINER_STYLE = {
+  gap: 12,
+  marginTop: 37,
+  paddingHorizontal: 40,
+  alignSelf: "stretch" as const,
+};

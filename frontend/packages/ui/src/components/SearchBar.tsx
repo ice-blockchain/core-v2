@@ -64,6 +64,7 @@ export function SearchBar(props: SearchBarProps) {
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={theme.colors.tertiaryText}
+        keyboardAppearance={theme.colorMode === "dark" ? "dark" : "light"}
         cursorColor={theme.colors.primaryAccent}
         selectionColor={theme.colors.primaryAccent}
         style={inputStyle}

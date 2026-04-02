@@ -33,7 +33,7 @@ export function SheetScreenHeader({ canGoBack = true, title, titleOpacity = 0, o
     <View style={headerStyle}>
       {canGoBack ? (
         <Pressable onPress={onBack} hitSlop={8} testID="sheet-back-button" accessibilityRole="button" accessibilityLabel="Go back">
-          <Icon name="back-arrow" size={scale(24)} color={theme.colors.primaryText} />
+          <Icon name="back-arrow" size={scale(24)} color={theme.colors.secondaryText} />
         </Pressable>
       ) : (
         <View style={spacerStyle} />

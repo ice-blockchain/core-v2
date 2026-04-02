@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
-import { StatusBar, View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { NavigationContainer } from "@react-navigation/native";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { ThemeProvider, useTheme, CatalogScreen } from "@ion/ui";
-import { AppNavigator } from "@ion/navigation";
-import { createLocalization, registerTranslations } from "@ion/localization";
+import { useState, useEffect } from 'react';
+import { StatusBar, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { ThemeProvider, useTheme, CatalogScreen } from '@ion/ui';
+import type { ColorMode } from '@ion/ui';
+import { getFeatureFlag } from '@ion/config';
+import { AppNavigator, useNavigationTheme } from '@ion/navigation';
+import { createLocalization, registerTranslations } from '@ion/localization';
 import {
   ProfileSetupScreen,
   SelectLanguagesScreen,
@@ -53,18 +56,33 @@ function ThemedRoot({ children }: { children: ReactNode }) {
   );
 }
 
+function AppContent() {
+  const navigationTheme = useNavigationTheme();
+  return (
+    <ThemedRoot>
+      <NavigationContainer theme={navigationTheme}>
+        <BottomSheetModalProvider>
+          <AppNavigator screens={screens} authScreens={authScreens} />
+        </BottomSheetModalProvider>
+      </NavigationContainer>
+    </ThemedRoot>
+  );
+}
+
 function App() {
+  const [colorMode, setColorMode] = useState<ColorMode>('light');
+
+  useEffect(() => {
+    getFeatureFlag('darkModeEnabled').then((isDark) => {
+      setColorMode(isDark ? 'dark' : 'light');
+    });
+  }, []);
+
   return (
     <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <ThemedRoot>
-            <NavigationContainer>
-              <BottomSheetModalProvider>
-                <AppNavigator screens={screens} authScreens={authScreens} />
-              </BottomSheetModalProvider>
-            </NavigationContainer>
-          </ThemedRoot>
+        <ThemeProvider colorMode={colorMode}>
+          <AppContent />
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -1,10 +1,13 @@
+import { useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider, CatalogScreen } from '@ion/ui';
-import { AppNavigator } from '@ion/navigation';
+import type { ColorMode } from '@ion/ui';
+import { getFeatureFlag } from '@ion/config';
+import { AppNavigator, useNavigationTheme } from '@ion/navigation';
 import { createLocalization, registerTranslations } from '@ion/localization';
 import {
   ProfileSetupScreen,
@@ -40,16 +43,31 @@ const authScreens = {
   Notifications: NotificationsScreen,
 };
 
+function AppContent() {
+  const navigationTheme = useNavigationTheme();
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      <BottomSheetModalProvider>
+        <AppNavigator screens={screens} authScreens={authScreens} />
+      </BottomSheetModalProvider>
+    </NavigationContainer>
+  );
+}
+
 export function App() {
+  const [colorMode, setColorMode] = useState<ColorMode>('light');
+
+  useEffect(() => {
+    getFeatureFlag('darkModeEnabled').then((isDark) => {
+      setColorMode(isDark ? 'dark' : 'light');
+    });
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <NavigationContainer>
-            <BottomSheetModalProvider>
-              <AppNavigator screens={screens} authScreens={authScreens} />
-            </BottomSheetModalProvider>
-          </NavigationContainer>
+        <ThemeProvider colorMode={colorMode}>
+          <AppContent />
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

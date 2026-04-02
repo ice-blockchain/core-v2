@@ -29,7 +29,7 @@ export function DescriptionItem({ iconName, text, testID }: DescriptionItemProps
 
   return (
     <View style={rowStyle} testID={testID}>
-      <Icon name={iconName} size={scale(27)} color={colors.secondaryText} />
+      <Icon name={iconName} size={scale(27)} color={colors.primaryText} />
       <Text variant="body2" color={colors.secondaryText} style={textStyle}>{text}</Text>
     </View>
   );

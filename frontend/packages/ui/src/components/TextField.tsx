@@ -225,6 +225,7 @@ function renderTextInput(options: TextFieldInputOptions) {
       secureTextEntry={props.isSecureTextEntry}
       multiline={isMultiline}
       numberOfLines={IS_WEB && isMultiline ? 1 : undefined}
+      keyboardAppearance={internal.theme.colorMode === "dark" ? "dark" : "light"}
       style={inputStyle}
       placeholderTextColor="transparent"
       {...props.textInputProps}
