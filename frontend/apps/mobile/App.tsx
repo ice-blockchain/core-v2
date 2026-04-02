@@ -72,9 +72,9 @@ function App() {
   const [colorMode, setColorMode] = useState<ColorMode | null>(null);
 
   useEffect(() => {
-    getFeatureFlag('darkModeEnabled').then((isDark) => {
-      setColorMode(isDark ? 'dark' : 'light');
-    });
+    getFeatureFlag('darkModeEnabled')
+      .then((isDark) => { setColorMode(isDark ? 'dark' : 'light'); })
+      .catch(() => { setColorMode('light'); });
   }, []);
 
   if (colorMode === null) return null;
