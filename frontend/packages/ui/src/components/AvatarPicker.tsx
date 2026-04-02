@@ -16,7 +16,7 @@ function resolveImageUrl(props: AvatarPickerProps): string | undefined {
 
 function CameraButton(props: { style: ReturnType<typeof buildCameraButtonStyle>; isProcessing: boolean; onPress: () => void; iconSize: number; iconColor: string }) {
   return (
-    <Pressable style={props.style} onPress={props.onPress} disabled={props.isProcessing} accessibilityRole="button">
+    <Pressable style={props.style} onPress={props.onPress} disabled={props.isProcessing} accessibilityRole="button" accessibilityLabel="Change avatar" accessibilityState={{ busy: props.isProcessing }}>
       {props.isProcessing ? (
         <ActivityIndicator color={props.iconColor} size={props.iconSize} />
       ) : (
