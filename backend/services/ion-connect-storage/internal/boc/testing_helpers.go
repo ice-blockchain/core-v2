@@ -43,24 +43,28 @@ func MustBuildTorrentInfoCell(t *testing.T, pieceSize uint32, fileSize uint64, r
 	return c
 }
 
-// BuildIonStorageBoC constructs a complete .ionstorage blob from payload and torrent header.
-// Pieces are hashed over payload only. FileSize = len(payload).
+// BuildIonStorageBoC constructs a complete .ionstorage v2 blob from payload and torrent header.
+// Pieces are hashed over headerBytes + payload (matching tonutils-storage).
+// FileSize = len(headerBytes) + len(payload).
+// Greenfield stores only the raw payload; header is embedded in .ionstorage.
 func BuildIonStorageBoC(payload []byte, pieceSize uint32, header *TorrentHeader) ([32]byte, []byte, error) {
 	headerBytes, err := SerializeTorrentHeader(header)
 	if err != nil {
 		return [32]byte{}, nil, fmt.Errorf("serialize header: %w", err)
 	}
 
-	pieceHashes := computePieceHashes(payload, pieceSize)
+	fullData := append(headerBytes, payload...)
+	pieceHashes := ComputePieceHashes(fullData, pieceSize)
 	merkleRoot := BuildMerkleTree(pieceHashes)
 
 	var rootHash [32]byte
 	copy(rootHash[:], merkleRoot.Hash())
 
 	headerHash := sha256.Sum256(headerBytes)
+	fullSize := uint64(len(headerBytes)) + uint64(len(payload))
 
 	torrentInfoCell, err := BuildTorrentInfoCell(
-		pieceSize, uint64(len(payload)),
+		pieceSize, fullSize,
 		rootHash, headerHash, uint64(len(headerBytes)),
 	)
 	if err != nil {
@@ -70,8 +74,9 @@ func BuildIonStorageBoC(payload []byte, pieceSize uint32, header *TorrentHeader)
 	var bagID [32]byte
 	copy(bagID[:], torrentInfoCell.Hash())
 
-	bocBytes := torrentInfoCell.ToBOC()
-	ionStorage := BuildIonStorageBytes(bocBytes, headerBytes)
+	torrentInfoBoC := torrentInfoCell.ToBOC()
+	merkleTreeBoC := merkleRoot.ToBOC()
+	ionStorage := BuildIonStorageBytes(torrentInfoBoC, merkleTreeBoC, headerBytes)
 	return bagID, ionStorage, nil
 }
 
@@ -102,62 +107,4 @@ func BuildHeaderCell(header *TorrentHeader) (*cell.Cell, error) {
 		return nil, err
 	}
 	return cell.BeginCell().MustStoreSlice(headerBytes, uint(len(headerBytes)*8)).EndCell(), nil
-}
-
-// emptyHashCell is a leaf cell with 256 zero bits (matches tonutils-storage).
-var emptyHashCell = cell.FromRawUnsafe(cell.RawUnsafeCell{
-	BitsSz: 256,
-	Data:   make([]byte, 32),
-})
-
-// BuildMerkleTree constructs a binary merkle tree of TVM cells over piece hashes.
-// Pads to next power of 2 with zero-hash cells. Uses cell.FromRawUnsafe for
-// exact compatibility with tonutils-storage.
-func BuildMerkleTree(hashes [][32]byte) *cell.Cell {
-	if len(hashes) == 0 {
-		return cell.BeginCell().EndCell()
-	}
-
-	n := nextPowerOfTwo(len(hashes))
-	nodes := make([]*cell.Cell, n)
-	for i, h := range hashes {
-		nodes[i] = cell.FromRawUnsafe(cell.RawUnsafeCell{BitsSz: 256, Data: h[:]})
-	}
-	for i := len(hashes); i < n; i++ {
-		nodes[i] = emptyHashCell
-	}
-
-	return buildMerkleTreeRecursive(nodes)
-}
-
-func buildMerkleTreeRecursive(nodes []*cell.Cell) *cell.Cell {
-	if len(nodes) == 1 {
-		return nodes[0]
-	}
-	if len(nodes) == 2 {
-		return cell.FromRawUnsafe(cell.RawUnsafeCell{Refs: []*cell.Cell{nodes[0], nodes[1]}})
-	}
-	mid := len(nodes) / 2
-	left := buildMerkleTreeRecursive(nodes[:mid])
-	right := buildMerkleTreeRecursive(nodes[mid:])
-	return cell.FromRawUnsafe(cell.RawUnsafeCell{Refs: []*cell.Cell{left, right}})
-}
-
-func nextPowerOfTwo(n int) int {
-	p := 1
-	for p < n {
-		p <<= 1
-	}
-	return p
-}
-
-func computePieceHashes(payload []byte, pieceSize uint32) [][32]byte {
-	count := (len(payload) + int(pieceSize) - 1) / int(pieceSize)
-	hashes := make([][32]byte, count)
-	for i := range count {
-		start := i * int(pieceSize)
-		end := min(start+int(pieceSize), len(payload))
-		hashes[i] = sha256.Sum256(payload[start:end])
-	}
-	return hashes
 }

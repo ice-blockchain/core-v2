@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/adnl/address"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 	tonstorage "github.com/xssnick/tonutils-storage/storage"
 )
 
@@ -207,4 +208,30 @@ func computeRefPieceHashes(data []byte, pieceSize uint32) [][32]byte {
 
 func testLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+}
+
+func TestMerkleProofMatchesRootHash(t *testing.T) {
+	const fileName = "data"
+	payload := make([]byte, 2*1024*1024)
+	for i := range payload {
+		payload[i] = byte(i % 256)
+	}
+
+	header := boc.SingleFileHeader(fileName, uint64(len(payload)))
+	headerBytes, err := boc.SerializeTorrentHeader(header)
+	require.NoError(t, err)
+
+	fullData := append(headerBytes, payload...)
+	pieceHashes := computeRefPieceHashes(fullData, boc.PieceSize)
+	tree := boc.BuildMerkleTree(pieceHashes)
+	rootHash := tree.Hash()
+
+	for i := range len(pieceHashes) {
+		proof, err := boc.GenerateMerkleProof(tree, i, len(pieceHashes))
+		require.NoError(t, err, "piece %d", i)
+
+		proofCell, err := cell.FromBOC(proof)
+		require.NoError(t, err, "piece %d", i)
+		require.Equal(t, rootHash, proofCell.Hash(), "proof root must match tree root for piece %d", i)
+	}
 }

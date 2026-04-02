@@ -1,0 +1,94 @@
+package storage
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestSlicePieceDataHeaderOnly(t *testing.T) {
+	header := []byte("header-data-that-is-pretty-long-enough")
+	piece, err := slicePieceData(header, nil, 0, 10, uint64(len(header)), uint64(len(header)))
+	require.NoError(t, err)
+	require.Equal(t, header[:10], piece)
+}
+
+func TestSlicePieceDataPayloadOnly(t *testing.T) {
+	header := []byte("hdr")
+	segment := make([]byte, 100)
+	for i := range segment {
+		segment[i] = byte(i)
+	}
+	headerSize := uint64(len(header))
+	fileSize := headerSize + uint64(len(segment))
+
+	// Piece 1: starts at byte 10, entirely in payload
+	piece, err := slicePieceData(header, segment, 1, 10, fileSize, headerSize)
+	require.NoError(t, err)
+	// payload offset = 10 - 3 = 7, segment offset = 7
+	require.Equal(t, segment[7:17], piece)
+}
+
+func TestSlicePieceDataBoundary(t *testing.T) {
+	header := []byte("hdr") // 3 bytes
+	segment := make([]byte, 100)
+	for i := range segment {
+		segment[i] = byte(i + 10)
+	}
+	headerSize := uint64(3)
+	fileSize := headerSize + uint64(len(segment))
+
+	// Piece 0 with size 10: bytes [0,10) spans header [0,3) + payload [0,7)
+	piece, err := slicePieceData(header, segment, 0, 10, fileSize, headerSize)
+	require.NoError(t, err)
+	require.Equal(t, 10, len(piece))
+	require.Equal(t, header, piece[:3])
+	require.Equal(t, segment[:7], piece[3:])
+}
+
+func TestSlicePieceDataLastPieceTruncated(t *testing.T) {
+	header := []byte("h")
+	segment := []byte("payload")
+	fileSize := uint64(1 + 7) // header + payload = 8
+	// pieceSize=10, piece 0: [0, 8) truncated at fileSize
+	piece, err := slicePieceData(header, segment, 0, 10, fileSize, 1)
+	require.NoError(t, err)
+	require.Equal(t, 8, len(piece))
+}
+
+func TestSlicePieceDataExplicitCopy(t *testing.T) {
+	header := []byte("header")
+	segment := make([]byte, 100)
+	piece, err := slicePieceData(header, segment, 1, 10, 106, 6)
+	require.NoError(t, err)
+
+	// Modify segment; piece should be unaffected (explicit copy)
+	segment[4] = 0xff
+	require.NotEqual(t, byte(0xff), piece[0])
+}
+
+func TestSlicePieceDataOutOfRange(t *testing.T) {
+	_, err := slicePieceData(nil, nil, 100, 10, 50, 5)
+	require.Error(t, err)
+}
+
+func TestPayloadSegmentIndex(t *testing.T) {
+	require.Equal(t, -1, payloadSegmentIndex(0, 600000, 524288)) // piece fully in header
+	require.Equal(t, 0, payloadSegmentIndex(0, 100, 524288))     // piece spans header
+	require.Equal(t, 0, payloadSegmentIndex(1, 100, 524288))     // second piece, payload offset < 16MB
+}
+
+func TestBuildFullBitfield(t *testing.T) {
+	bf := buildFullBitfield(8)
+	require.Equal(t, 1, len(bf))
+	require.Equal(t, byte(0xff), bf[0])
+
+	bf = buildFullBitfield(3)
+	require.Equal(t, 1, len(bf))
+	require.Equal(t, byte(0x07), bf[0])
+
+	bf = buildFullBitfield(9)
+	require.Equal(t, 2, len(bf))
+	require.Equal(t, byte(0xff), bf[0])
+	require.Equal(t, byte(0x01), bf[1])
+}

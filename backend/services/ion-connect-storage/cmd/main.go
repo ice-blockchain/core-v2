@@ -18,6 +18,7 @@ import (
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/config"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/storage"
 )
 
 func main() {
@@ -65,8 +66,16 @@ func main() {
 		server.DHTRegistrar().Deregister(bagID)
 		_ = server.OverlayManager().Leave(bagID)
 	}, logger)
-	_ = metadataStore // consumed by Phase 4 storage handler
-	_ = segmentCache  // consumed by Phase 4 storage handler
+
+	storageHandler := storage.NewHandler(storage.HandlerConfig{
+		MetadataStore: metadataStore,
+		SegmentCache:  segmentCache,
+		Fetcher:       fetcher,
+		Index:         persister,
+		PrivateKey:    server.PrivateKey(),
+		Logger:        logger,
+	})
+	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
 	go startHealthServer(ctx, cfg.HttpPort, logger)

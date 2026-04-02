@@ -3,7 +3,6 @@ package adnl
 import (
 	"context"
 	"crypto/ed25519"
-	"crypto/sha256"
 	"log/slog"
 	"sync"
 	"time"
@@ -212,8 +211,8 @@ func (r *DHTRegistrar) buildRegionValues(bags [][32]byte) ([]*dht.Value, error) 
 }
 
 func computeOverlayID(bagID [32]byte) []byte {
-	h := sha256.Sum256(bagID[:])
-	return h[:]
+	id := ComputeOverlayID(bagID)
+	return id[:]
 }
 
 func overlayRegion(bagID [32]byte) uint8 {

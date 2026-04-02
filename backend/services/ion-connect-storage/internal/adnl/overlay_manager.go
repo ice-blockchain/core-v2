@@ -2,19 +2,27 @@ package adnl
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 )
 
+// QueryHandler processes a storage protocol query for a given bagID.
+// The raw query is the inner TL payload (after overlay unwrapping).
+type QueryHandler func(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
+
+// OverlayManager tracks active per-bag overlays with an LRU cache.
+// Maps overlayID (SHA256(bagID)) -> bagID for reverse lookup.
 type OverlayManager struct {
-	overlays *lru.Cache[[32]byte, struct{}]
-	logger   *slog.Logger
+	overlays     *lru.Cache[[32]byte, [32]byte]
+	queryHandler QueryHandler
+	logger       *slog.Logger
 }
 
 func newOverlayManager(limit int, logger *slog.Logger) *OverlayManager {
-	cache, _ := lru.NewWithEvict[[32]byte, struct{}](limit, func(bagID [32]byte, _ struct{}) {
-		logger.Info("overlay evicted from LRU", "bag_id_prefix", bagID[:4])
+	cache, _ := lru.NewWithEvict[[32]byte, [32]byte](limit, func(overlayID [32]byte, _ [32]byte) {
+		logger.Info("overlay evicted from LRU", "overlay_id_prefix", overlayID[:4])
 	})
 
 	return &OverlayManager{
@@ -23,21 +31,48 @@ func newOverlayManager(limit int, logger *slog.Logger) *OverlayManager {
 	}
 }
 
+// SetQueryHandler registers the storage handler for incoming overlay queries.
+func (m *OverlayManager) SetQueryHandler(handler QueryHandler) {
+	m.queryHandler = handler
+}
+
+// Join registers a bag's overlay in the LRU.
 func (m *OverlayManager) Join(_ context.Context, bagID [32]byte) error {
-	if m.overlays.Contains(bagID) {
+	overlayID := ComputeOverlayID(bagID)
+	if m.overlays.Contains(overlayID) {
 		return nil
 	}
-	m.overlays.Add(bagID, struct{}{})
+	m.overlays.Add(overlayID, bagID)
 	m.logger.Info("joined overlay", "bag_id_prefix", bagID[:4], "active_count", m.overlays.Len())
 	return nil
 }
 
+// Leave removes a bag's overlay from the LRU.
 func (m *OverlayManager) Leave(bagID [32]byte) error {
-	m.overlays.Remove(bagID)
+	overlayID := ComputeOverlayID(bagID)
+	m.overlays.Remove(overlayID)
 	m.logger.Info("left overlay", "bag_id_prefix", bagID[:4], "active_count", m.overlays.Len())
 	return nil
 }
 
+// LookupBagID resolves a bagID from an overlayID.
+func (m *OverlayManager) LookupBagID(overlayID [32]byte) ([32]byte, bool) {
+	return m.overlays.Get(overlayID)
+}
+
+// HandleIncomingQuery dispatches an incoming overlay query to the registered handler.
+func (m *OverlayManager) HandleIncomingQuery(ctx context.Context, overlayID [32]byte, rawQuery []byte) ([]byte, error) {
+	bagID, ok := m.LookupBagID(overlayID)
+	if !ok {
+		return nil, fmt.Errorf("overlay not active: %x", overlayID[:8])
+	}
+	if m.queryHandler == nil {
+		return nil, fmt.Errorf("no query handler registered")
+	}
+	return m.queryHandler(ctx, bagID, rawQuery)
+}
+
+// ActiveCount returns the number of active overlays.
 func (m *OverlayManager) ActiveCount() int {
 	return m.overlays.Len()
 }

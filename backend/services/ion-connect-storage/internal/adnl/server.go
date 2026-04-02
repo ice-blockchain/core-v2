@@ -98,6 +98,8 @@ func (s *Server) Start(ctx context.Context) error {
 		s.logger.Warn("initial DHT self-registration failed", "error", err)
 	}
 
+	s.gateway.SetConnectionHandler(s.handleNewConnection)
+
 	s.registrar.Start(ctx)
 	s.logger.Info("DHT registrar started", "registered_bags", s.registrar.Count())
 	s.logger.Info("overlay manager ready", "active_overlays", s.overlays.ActiveCount())
@@ -133,6 +135,7 @@ func (s *Server) DHTRegistrar() *DHTRegistrar     { return s.registrar }
 func (s *Server) OverlayManager() *OverlayManager { return s.overlays }
 func (s *Server) Gateway() *adnl.Gateway          { return s.gateway }
 func (s *Server) DHTClient() *dht.Client          { return s.dhtClient }
+func (s *Server) PrivateKey() ed25519.PrivateKey  { return s.privateKey }
 
 func decodePrivateKey(hexKey string) (ed25519.PrivateKey, error) {
 	if len(hexKey) != 64 {
