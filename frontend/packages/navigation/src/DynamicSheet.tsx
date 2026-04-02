@@ -61,7 +61,7 @@ export function DynamicSheet({ title, children }: DynamicSheetProps) {
 
   return (
     <View style={styles.overlay}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} accessible={false} />
       <BottomSheet
         enableDynamicSizing
         enablePanDownToClose
