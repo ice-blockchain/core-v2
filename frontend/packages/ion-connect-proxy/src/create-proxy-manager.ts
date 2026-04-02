@@ -41,7 +41,11 @@ function buildContext(config: ProxyManagerConfig, stateMachine: ReturnType<typeo
     healthCheckTimeoutMs: config.healthCheckTimeoutMs ?? DEFAULT_HEALTH_TIMEOUT_MS,
     maxRestartAttempts: config.maxRestartAttempts ?? DEFAULT_MAX_RESTART_ATTEMPTS,
     restartBaseDelayMs: config.restartBaseDelayMs ?? DEFAULT_RESTART_BASE_DELAY_MS,
-    transition: (to: ProxyStatus) => stateMachine.transition(to),
+    transition: (to: ProxyStatus) => {
+      const from = stateMachine.getState();
+      Logger.debug(`Proxy state transition: ${from} -> ${to}`, { tag: TAG });
+      stateMachine.transition(to);
+    },
     getStatus: () => stateMachine.getState(),
     onStatusChange: (handler) => stateMachine.onStateChange(handler),
     isRestarting: false,
@@ -56,7 +60,6 @@ async function startManager(
   onStarted: () => void,
 ): Promise<void> {
   context.transition('connecting');
-  Logger.info('Proxy manager starting', { tag: TAG, data: { port: context.port } });
   await startIonConnectProxy({ port: context.port, configJSON: context.configJSON });
   context.transition('connected');
   onStarted();
