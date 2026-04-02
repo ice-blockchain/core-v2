@@ -92,7 +92,7 @@ describe('handleRegister', () => {
     vi.mocked(client.registerWithPasskey).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
     );
-    await handleRegister(deps(), { identityKeyName: 'frank', password: '' });
+    await handleRegister(deps(), { identityKeyName: 'frank' });
     expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_REGISTER' });
     expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({
       type: 'SET_ERROR',
@@ -104,7 +104,7 @@ describe('handleRegister', () => {
     vi.mocked(client.registerWithPasskey).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'unavailable'),
     );
-    await handleRegister(deps(), { identityKeyName: 'grace', password: '' });
+    await handleRegister(deps(), { identityKeyName: 'grace' });
     expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_REGISTER' });
   });
 

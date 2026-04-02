@@ -9,7 +9,7 @@ const mockChallenge: UserRegistrationChallenge = {
   temporaryAuthenticationToken: 'temp-token-abc',
   rp: { id: 'example.com', name: 'Example' },
   user: { id: 'user-1', name: 'alice@example.com', displayName: 'Alice' },
-  challenge: 'Y2hhbGxlbmdlLXJlZw==',
+  challenge: 'Y2hhbGxlbmdlLXJlZ2lzdHJhdGlvbg',
   attestation: 'direct',
   pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
   excludeCredentials: [],
