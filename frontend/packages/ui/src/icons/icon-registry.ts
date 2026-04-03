@@ -33,6 +33,9 @@ import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
 import { PersonFollowingIcon } from "./generated/PersonFollowingIcon";
+import { PlusCreatechannelIcon } from "./generated/PlusCreatechannelIcon";
+import { ProfileCameraIcon } from "./generated/ProfileCameraIcon";
+import { ProfileNoimageIcon } from "./generated/ProfileNoimageIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
 import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
 import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
@@ -79,6 +82,9 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "news": NewsIcon,
   "person-add": PersonAddIcon,
   "person-following": PersonFollowingIcon,
+  "plus-createchannel": PlusCreatechannelIcon,
+  "profile-camera": ProfileCameraIcon,
+  "profile-noimage": ProfileNoimageIcon,
   "profile-save": ProfileSaveIcon,
   "recovery-code": RecoveryCodeIcon,
   "restore-cloud": RestoreCloudIcon,
