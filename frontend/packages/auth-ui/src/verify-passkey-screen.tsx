@@ -1,22 +1,39 @@
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
-import { Text, useTheme } from "@ion/ui";
+import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { SecuredByFooter } from "./secured-by-footer";
-import { VerifyPasskeyIcon } from "./verify-passkey-icon";
 
 const AUTO_DISMISS_DELAY = 3000;
 
 interface VerifyPasskeyScreenProps {
-  identityKeyName: string;
-  onBack: () => void;
   onDismiss: () => void;
   loadingElement: ReactNode;
 }
 
+function useScreenStyles() {
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
+
+  return useMemo(() => ({
+    page: { ...styles.page, paddingTop: scale(40) },
+    iconContainer: {
+      width: scale(80),
+      height: scale(80),
+      marginBottom: scale(20),
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+    },
+    textGroup: { ...styles.textGroup, marginTop: scale(8), maxWidth: scale(320) },
+    loader: { marginTop: scale(66) },
+    footer: { marginTop: "auto" as const, paddingBottom: scale(40) },
+  }), [scale]);
+}
+
 export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskeyScreenProps) {
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
+  const screenStyles = useScreenStyles();
 
   useEffect(() => {
     const timer = setTimeout(onDismiss, AUTO_DISMISS_DELAY);
@@ -24,18 +41,20 @@ export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskey
   }, [onDismiss]);
 
   return (
-    <View style={styles.page}>
-      <View style={styles.iconContainer}>
-        <VerifyPasskeyIcon />
+    <View style={screenStyles.page}>
+      <View style={screenStyles.iconContainer}>
+        <Icon name="action-wallet-passkey" size={scale.scaleSize(80)} color={colors.tertiaryText} />
       </View>
       <Text variant="headline1" color={colors.primaryText}>{translate("auth:verifyPasskeyTitle")}</Text>
-      <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>
-        {translate("auth:verifyPasskeySubtitle")}
-      </Text>
-      <View style={styles.loader}>
+      <View style={screenStyles.textGroup}>
+        <Text variant="body2" color={colors.tertiaryText} style={styles.centerText}>
+          {translate("auth:verifyPasskeySubtitle")}
+        </Text>
+      </View>
+      <View style={screenStyles.loader}>
         {loadingElement}
       </View>
-      <View style={styles.footer}>
+      <View style={screenStyles.footer}>
         <SecuredByFooter />
       </View>
     </View>
@@ -47,25 +66,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     width: "100%",
-    paddingTop: 50,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
+  textGroup: {
     alignItems: "center",
-    justifyContent: "center",
   },
-  subtitle: {
+  centerText: {
     textAlign: "center",
-    maxWidth: 320,
-    marginBottom: 40,
-  },
-  loader: {
-    marginBottom: 40,
-  },
-  footer: {
-    marginTop: "auto",
-    paddingBottom: 40,
   },
 });

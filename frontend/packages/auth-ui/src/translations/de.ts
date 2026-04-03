@@ -12,6 +12,7 @@ export const authDE: Record<keyof typeof authEN, string> = {
   passwordLabel: 'Passwort',
   confirmPasswordLabel: 'Passwort bestätigen',
   registerTitle: 'Registrieren',
+  passkeyRegisterTitle: 'Mit Passkey registrieren',
   registerSubtitle:
     'Wähle ein starkes Passwort, um ein Konto zu erstellen',
   passwordsMatchLabel: 'Passwörter stimmen überein',
@@ -33,15 +34,15 @@ export const authDE: Record<keyof typeof authEN, string> = {
   passwordRuleNumber: 'Muss 1 Zahl enthalten',
   passwordRuleCase: 'Groß- und Kleinbuchstaben',
   passwordRuleSpecial: 'Muss 1 Sonderzeichen enthalten',
-  noPasswordBenefitTitle: 'Kein Passwort zum Merken',
+  noPasswordBenefitTitle: 'Keine Passwörter zum Merken',
   noPasswordBenefitSubtitle:
-    'Mit dem Passkey kannst du deinen Fingerabdruck oder dein Gesicht zum Anmelden verwenden',
-  worksOnDevicesTitle: 'Funktioniert auf allen deinen Geräten',
+    'Verwende deinen Fingerabdruck oder dein Gesicht, um dich einfach und sicher anzumelden',
+  worksOnDevicesTitle: 'Funktioniert auf all deinen Geräten',
   worksOnDevicesSubtitle:
-    'Der Passkey wird automatisch auf deinen synchronisierten Geräten verfügbar sein',
-  keepAccountSaferTitle: 'Halte dein Konto sicherer',
+    'Dein Passkey ist automatisch auf allen synchronisierten Geräten verfügbar',
+  keepAccountSaferTitle: 'Stärkerer Kontoschutz',
   keepAccountSaferSubtitle:
-    'Passkeys bieten modernsten Phishing-Schutz',
+    'Passkeys bieten erweiterten Schutz gegen Phishing',
   securedByLabel: 'Gesichert durch',
   termsAgreementPrefix: 'Durch Fortfahren stimmst du unseren ',
   termsOfServiceLink: 'Nutzungsbedingungen',
@@ -85,4 +86,10 @@ export const authDE: Record<keyof typeof authEN, string> = {
   errorTokenExpired: 'Sitzung abgelaufen. Bitte melde dich erneut an.',
   errorUnauthenticated: 'Authentifizierung erforderlich. Bitte melde dich an.',
   errorUnknown: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+  identityKeyNameNoteModalTitle: 'Information',
+  identityKeyNameNoteTitle: 'Name des Identitätsschlüssels',
+  identityKeyNameNoteDescription:
+    'Betrachte den Namen deines Identitätsschlüssels als eine eindeutige Kennung deines Kontos. Du brauchst ihn, um dich anzumelden und dein Konto wiederherzustellen. Bewahre ihn sicher auf und vergiss ihn nicht.',
+  identityKeyNameNoteSecuredBy:
+    'Verwende ihn, um dich bei jeder App anzumelden, die gesichert ist durch',
 };

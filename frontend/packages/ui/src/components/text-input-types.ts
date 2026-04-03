@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 import type { IconName } from "../icons/icon-types";
 
@@ -8,6 +9,7 @@ export interface TextInputProps {
   onChangeText: (text: string) => void;
   placeholder: string;
   prefixIcon?: IconName;
+  suffixIcon?: ReactNode;
   state?: TextInputState;
   errorMessage?: string;
   maxLength?: number;

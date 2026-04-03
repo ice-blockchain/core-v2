@@ -11,6 +11,7 @@ export const authEN = {
   confirmPasswordLabel: 'Confirm password',
   registerTitle: 'Register',
   registerSubtitle: 'Choose a strong password to create an account',
+  passkeyRegisterTitle: 'Register with a passkey',
   passwordsMatchLabel: 'Passwords match',
   verifyPasskeyTitle: 'Verify with a passkey',
   verifyPasskeySubtitle:
@@ -29,15 +30,15 @@ export const authEN = {
   passwordRuleNumber: 'Must contain 1 number',
   passwordRuleCase: 'Uppercase and lowercase letters',
   passwordRuleSpecial: 'Must contain 1 special character',
-  noPasswordBenefitTitle: 'No password to remember',
+  noPasswordBenefitTitle: 'No passwords to remember',
   noPasswordBenefitSubtitle:
-    'With passkey, you can use things like your fingerprint or face to login',
-  worksOnDevicesTitle: 'Works on all of your devices',
+    'Use your fingerprint or face to sign in easily and securely',
+  worksOnDevicesTitle: 'Works across your devices',
   worksOnDevicesSubtitle:
-    'Passkey will automatically be available across your synced devices',
-  keepAccountSaferTitle: 'Keep your account safer',
+    'Your passkey is available automatically on all synced devices',
+  keepAccountSaferTitle: 'Stronger account protection',
   keepAccountSaferSubtitle:
-    'Passkeys offer state-of-the-art phishing resistance',
+    'Passkeys offer advanced protection against phishing',
   securedByLabel: 'Secured by',
   termsAgreementPrefix:
     'By continuing, you are agreeing to our ',
@@ -79,4 +80,10 @@ export const authEN = {
   errorTokenExpired: 'Session expired. Please sign in again.',
   errorUnauthenticated: 'Authentication required. Please sign in.',
   errorUnknown: 'Something went wrong. Please try again.',
+  identityKeyNameNoteModalTitle: 'Information',
+  identityKeyNameNoteTitle: 'Identity key name',
+  identityKeyNameNoteDescription:
+    'Think of your identity key name as a unique identifier of your account. You\'ll need it to log in and recover your account, so keep it safe and don\'t forget it.',
+  identityKeyNameNoteSecuredBy:
+    'Use it to log in on any app secured by',
 } as const;

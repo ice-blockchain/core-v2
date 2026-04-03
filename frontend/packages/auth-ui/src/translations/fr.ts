@@ -12,6 +12,7 @@ export const authFR: Record<keyof typeof authEN, string> = {
   passwordLabel: 'Mot de passe',
   confirmPasswordLabel: 'Confirmer le mot de passe',
   registerTitle: 'S\'inscrire',
+  passkeyRegisterTitle: 'S\'inscrire avec une clé d\'accès',
   registerSubtitle:
     'Choisissez un mot de passe fort pour créer un compte',
   passwordsMatchLabel: 'Les mots de passe correspondent',
@@ -34,13 +35,13 @@ export const authFR: Record<keyof typeof authEN, string> = {
   passwordRuleSpecial: 'Doit contenir 1 caractère spécial',
   noPasswordBenefitTitle: 'Aucun mot de passe à retenir',
   noPasswordBenefitSubtitle:
-    'Avec la clé d\'accès, vous pouvez utiliser votre empreinte digitale ou votre visage pour vous connecter',
+    'Utilisez votre empreinte digitale ou votre visage pour vous connecter facilement et en toute sécurité',
   worksOnDevicesTitle: 'Fonctionne sur tous vos appareils',
   worksOnDevicesSubtitle:
-    'La clé d\'accès sera automatiquement disponible sur vos appareils synchronisés',
-  keepAccountSaferTitle: 'Gardez votre compte plus sûr',
+    'Votre clé d\'accès est automatiquement disponible sur tous les appareils synchronisés',
+  keepAccountSaferTitle: 'Protection renforcée du compte',
   keepAccountSaferSubtitle:
-    'La clé d\'accès offre une résistance avancée contre le phishing',
+    'Les clés d\'accès offrent une protection avancée contre le phishing',
   securedByLabel: 'Sécurisé par',
   termsAgreementPrefix: 'En continuant, vous acceptez nos ',
   termsOfServiceLink: 'Conditions d\'utilisation',
@@ -84,4 +85,10 @@ export const authFR: Record<keyof typeof authEN, string> = {
   errorTokenExpired: 'Session expirée. Veuillez vous reconnecter.',
   errorUnauthenticated: 'Authentification requise. Veuillez vous connecter.',
   errorUnknown: 'Une erreur est survenue. Veuillez réessayer.',
+  identityKeyNameNoteModalTitle: 'Information',
+  identityKeyNameNoteTitle: 'Nom de la clé d\'identité',
+  identityKeyNameNoteDescription:
+    'Considérez le nom de votre clé d\'identité comme un identifiant unique de votre compte. Vous en aurez besoin pour vous connecter et récupérer votre compte, alors conservez-le en sécurité et ne l\'oubliez pas.',
+  identityKeyNameNoteSecuredBy:
+    'Utilisez-le pour vous connecter à toute application sécurisée par',
 };

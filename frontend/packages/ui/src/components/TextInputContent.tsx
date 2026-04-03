@@ -28,7 +28,7 @@ export function TextInputContent(props: TextInputContentProps) {
   return (
     <View style={{ flex: 1, justifyContent: "center", gap: showFloatingLabel ? scale(2) : 0 }}>
       {showFloatingLabel ? (
-        <Text variant="caption" style={buildFloatingLabelStyle(scale, labelColor)}>
+        <Text variant="caption" style={buildFloatingLabelStyle(scale, labelColor)} numberOfLines={1} ellipsizeMode="tail">
           {floatingLabelText}
         </Text>
       ) : null}

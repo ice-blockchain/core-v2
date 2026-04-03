@@ -8,11 +8,14 @@ export const Routes = {
   Sheet: {
     Auth: 'Sheet/Auth',
     NicknameReserved: 'Sheet/NicknameReserved',
+    IdentityKeyNameNote: 'Sheet/IdentityKeyNameNote',
+    VerifyPasskey: 'Sheet/VerifyPasskey',
   },
 
   Auth: {
     GetStarted: 'GetStarted',
-    Register: 'Register',
+    PasswordRegister: 'PasswordRegister',
+    PasskeyRegister: 'PasskeyRegister',
     ProfileSetup: 'ProfileSetup',
     SelectLanguages: 'SelectLanguages',
     DiscoverCreators: 'DiscoverCreators',

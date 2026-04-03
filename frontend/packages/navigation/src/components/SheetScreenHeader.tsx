@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Icon, Text, useTheme } from '@ion/ui';
 interface SheetScreenHeaderProps {
-  canGoBack?: boolean;
   title?: string | undefined;
   titleOpacity?: number | undefined;
   onBack?: (() => void) | undefined;
@@ -23,7 +22,7 @@ function buildHeaderStyle(scale: (n: number) => number, backgroundColor: string)
   };
 }
 
-export function SheetScreenHeader({ canGoBack = true, title, titleOpacity = 0, onBack }: SheetScreenHeaderProps) {
+export function SheetScreenHeader({title, titleOpacity = 0, onBack }: SheetScreenHeaderProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const headerStyle = useMemo(() => buildHeaderStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors.secondaryBackground]);
@@ -31,7 +30,7 @@ export function SheetScreenHeader({ canGoBack = true, title, titleOpacity = 0, o
 
   return (
     <View style={headerStyle}>
-      {canGoBack ? (
+      {onBack ? (
         <Pressable onPress={onBack} hitSlop={8} testID="sheet-back-button" accessibilityRole="button" accessibilityLabel="Go back">
           <Icon name="back-arrow" size={scale(24)} color={theme.colors.secondaryText} />
         </Pressable>

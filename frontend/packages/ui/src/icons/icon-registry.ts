@@ -2,6 +2,7 @@
 
 import type { ComponentType } from "react";
 
+import { ActionWalletPasskeyIcon } from "./generated/ActionWalletPasskeyIcon";
 import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
@@ -25,9 +26,12 @@ import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
+import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
+import { IdentityKeyNoteIcon } from "./generated/IdentityKeyNoteIcon";
 import { KeysErrorIcon } from "./generated/KeysErrorIcon";
 import { KeysSuccessIcon } from "./generated/KeysSuccessIcon";
 import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
+import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
@@ -52,6 +56,7 @@ interface IconComponentProps {
 }
 
 export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
+  "action-wallet-passkey": ActionWalletPasskeyIcon,
   "articles": ArticlesIcon,
   "at-sign": AtSignIcon,
   "back-arrow": BackArrowIcon,
@@ -75,9 +80,12 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
   "field-search": FieldSearchIcon,
+  "icon-identitykey": IconIdentitykeyIcon,
+  "identity-key-note": IdentityKeyNoteIcon,
   "keys-error": KeysErrorIcon,
   "keys-success": KeysSuccessIcon,
   "login-ice-logo": LoginIceLogoIcon,
+  "login-identity": LoginIdentityIcon,
   "manage": ManageIcon,
   "name-reserved": NameReservedIcon,
   "news": NewsIcon,
