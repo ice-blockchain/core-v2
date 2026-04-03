@@ -11,12 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"ion-greenfield-proxy/internal/apperror"
+	gf "ion-greenfield-proxy/internal/greenfield"
 )
 
 // ProxySP handles requests at /sp/{base64Target}[/subpath...].
 // It decodes the base64-encoded original SP URL and forwards the request.
-// Only HTTPS SP origins are accepted to prevent SSRF to arbitrary hosts.
-func ProxySP(logger *slog.Logger, adnlAddress string) gin.HandlerFunc {
+// Only HTTPS SP origins that belong to known storage providers are accepted.
+func ProxySP(logger *slog.Logger, adnlAddress string, provisioner *gf.BucketProvisioner) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := strings.TrimPrefix(c.Param("path"), "/")
 		if raw == "" {
@@ -43,6 +44,19 @@ func ProxySP(logger *slog.Logger, adnlAddress string) gin.HandlerFunc {
 		// Only allow proxying to HTTPS SP endpoints.
 		if spURL.Scheme != "https" {
 			apperror.WriteError(c, apperror.New(http.StatusForbidden, "INVALID_SP_SCHEME", "only HTTPS storage providers are allowed"))
+			return
+		}
+
+		// Validate that the target host belongs to a known storage provider.
+		known, err := provisioner.IsKnownSPHost(c.Request.Context(), spURL.Host)
+		if err != nil {
+			logger.Error("failed to check SP allowlist", "host", spURL.Host, "error", err)
+			apperror.WriteError(c, apperror.New(http.StatusServiceUnavailable, "SP_LIST_UNAVAILABLE", "storage provider list unavailable"))
+			return
+		}
+		if !known {
+			logger.Warn("rejected proxy to unknown SP", "host", spURL.Host)
+			apperror.WriteError(c, apperror.New(http.StatusForbidden, "UNKNOWN_SP", "target is not a known storage provider"))
 			return
 		}
 

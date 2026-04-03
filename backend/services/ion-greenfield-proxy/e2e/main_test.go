@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic("e2e: failed to create greenfield client: " + err.Error())
 		}
-		provisioner = gf.NewBucketProvisioner(client, nil)
+		provisioner = gf.NewBucketProvisioner(client, nil, proxyConfig)
 
 		funderChainID := fmt.Sprintf("greenfield_%d-1", testUpstreamTestnetChainID)
 		funderAccount, err := gnfdtypes.NewAccountFromPrivateKey("funder", proxyConfig.GreenfieldPrivateKey)

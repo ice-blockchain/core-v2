@@ -5,11 +5,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	"github.com/bnb-chain/greenfield-go-sdk/pkg/utils"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
@@ -18,6 +20,8 @@ import (
 	storageTypes "github.com/bnb-chain/greenfield/x/storage/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/puzpuzpuz/xsync/v4"
+
+	"ion-greenfield-proxy/internal/config"
 )
 
 const (
@@ -50,21 +54,38 @@ const spCacheTTL = 1 * time.Hour
 // BucketProvisioner creates user buckets and grants object-level
 // permissions on demand.
 type BucketProvisioner struct {
-	client gnfdclient.IClient
-	logger *slog.Logger
-	known  *xsync.Map[string, struct{}]
+	client         gnfdclient.IClient
+	logger         *slog.Logger
+	known          *xsync.Map[string, struct{}]
+	feeGrantAmount sdkmath.Int
 
 	spMu      sync.Mutex
 	spCache   []spTypes.StorageProvider
 	spExpires time.Time
 }
 
-func NewBucketProvisioner(client gnfdclient.IClient, logger *slog.Logger) *BucketProvisioner {
-	return &BucketProvisioner{
-		client: client,
-		logger: cmp.Or(logger, slog.Default()).With("component", "bucket_provisioner"),
-		known:  xsync.NewMap[string, struct{}](),
+func NewBucketProvisioner(client gnfdclient.IClient, logger *slog.Logger, cfg *config.Config) *BucketProvisioner {
+	amount, err := parseBNBToWei(cfg.GreenfieldFeeGrantAmount)
+	if err != nil {
+		panic(fmt.Sprintf("invalid GREENFIELD_FEE_GRANT_AMOUNT_BNB %q: %v", cfg.GreenfieldFeeGrantAmount, err))
 	}
+
+	return &BucketProvisioner{
+		client:         client,
+		logger:         cmp.Or(logger, slog.Default()).With("component", "bucket_provisioner"),
+		known:          xsync.NewMap[string, struct{}](),
+		feeGrantAmount: amount,
+	}
+}
+
+// parseBNBToWei converts a BNB decimal string (e.g. "0.001") to wei.
+func parseBNBToWei(bnb string) (sdkmath.Int, error) {
+	dec, err := sdkmath.LegacyNewDecFromStr(bnb)
+	if err != nil {
+		return sdkmath.Int{}, fmt.Errorf("parse BNB amount: %w", err)
+	}
+	weiPerBNB := sdkmath.LegacyNewDec(1e18)
+	return dec.Mul(weiPerBNB).TruncateInt(), nil
 }
 
 // ProxyAddress returns the proxy account's bech32 address.
@@ -74,6 +95,28 @@ func (bp *BucketProvisioner) ProxyAddress() string {
 		return ""
 	}
 	return account.GetAddress().String()
+}
+
+// IsKnownSPHost checks whether the given host matches any cached storage
+// provider endpoint (exact match or bucket-prefixed subdomain).
+// Returns false if the SP list is empty or stale and cannot be refreshed.
+func (bp *BucketProvisioner) IsKnownSPHost(ctx context.Context, host string) (bool, error) {
+	sps, err := bp.storageProviders(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for _, sp := range sps {
+		spURL, err := url.Parse(sp.Endpoint)
+		if err != nil || spURL.Host == "" {
+			continue
+		}
+		spHost := spURL.Host
+		if strings.EqualFold(host, spHost) || strings.HasSuffix(strings.ToLower(host), "."+strings.ToLower(spHost)) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (bp *BucketProvisioner) storageProviders(ctx context.Context) ([]spTypes.StorageProvider, error) {
@@ -134,14 +177,14 @@ func (bp *BucketProvisioner) EnsureBucket(ctx context.Context, bucketName string
 				return "", fmt.Errorf("create bucket: %w", err)
 			}
 			bp.logger.Info("bucket already exists (concurrent creation)", "bucket", bucketName)
-		} else {
-			if err := bp.grantObjectPermissions(ctx, bucketName, creatorAddr); err != nil {
-				return "", fmt.Errorf("grant permissions: %w", err)
-			}
-			if err := bp.enableDelegatedAgent(ctx, bucketName); err != nil {
-				return "", fmt.Errorf("enable delegated agent: %w", err)
-			}
 		}
+	}
+
+	if err := bp.grantObjectPermissions(ctx, bucketName, creatorAddr); err != nil {
+		return "", fmt.Errorf("grant permissions: %w", err)
+	}
+	if err := bp.enableDelegatedAgent(ctx, bucketName); err != nil {
+		return "", fmt.Errorf("enable delegated agent: %w", err)
 	}
 
 	bp.known.Store(bucketName, struct{}{})

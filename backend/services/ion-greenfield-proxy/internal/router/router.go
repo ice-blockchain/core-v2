@@ -73,7 +73,7 @@ func New(p Params) *gin.Engine {
 		"upstream_rpc", rpcURL.String(),
 		"adnl_address", adnlAddress,
 	)
-	r.Any("/sp/*path", handler.ProxySP(logger.With("proxy", "sp"), adnlAddress))
+	r.Any("/sp/*path", handler.ProxySP(logger.With("proxy", "sp"), adnlAddress, p.Provisioner))
 	r.NoRoute(handler.ProxyRPC(rpcURL, logger.With("proxy", "rpc"), adnlAddress))
 
 	return r

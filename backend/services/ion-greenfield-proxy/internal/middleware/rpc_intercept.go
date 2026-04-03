@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	spTypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storageTypes "github.com/bnb-chain/greenfield/x/storage/types"
@@ -49,7 +51,17 @@ func RPCIntercept(logger *slog.Logger, rpcEndpoint string, adnlAddress string, p
 }
 
 func interceptStorageProviders(logger *slog.Logger, rpcEndpoint, adnlAddress string, c *gin.Context, parsed *rpcbody.Body) {
-	resp, err := http.Post(rpcEndpoint, "application/json", bytes.NewReader(parsed.Raw))
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rpcEndpoint, bytes.NewReader(parsed.Raw))
+	if err != nil {
+		logger.Error("failed to create upstream request", "error", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		logger.Error("upstream request failed", "error", err)
 		return
@@ -152,7 +164,7 @@ func interceptCreateBucket(logger *slog.Logger, provisioner *gf.BucketProvisione
 			"bucket", bucket.BucketName,
 			"error", err,
 		)
-		abortJSONRPCError(c, parsed.Raw, "create bucket: "+err.Error())
+		abortJSONRPCError(c, parsed.Raw, "internal error: bucket creation failed")
 		return
 	}
 

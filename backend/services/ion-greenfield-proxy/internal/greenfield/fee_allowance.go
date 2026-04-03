@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
 	gnfdsdktypes "github.com/bnb-chain/greenfield/sdk/types"
 )
 
@@ -16,7 +15,7 @@ func (bp *BucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr 
 	addr := strings.TrimPrefix(granteeAddr, "0x")
 
 	expiration := time.Now().Add(FeeGrantExpiration)
-	amount := sdkmath.NewIntWithDecimal(1, 15) // 0.001 BNB
+	amount := bp.feeGrantAmount
 
 	bp.logger.Info("granting fee allowance",
 		"grantee", granteeAddr,

@@ -34,7 +34,7 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner *gf.BucketProvisione
 		return
 	}
 
-	if !strings.EqualFold(tx.FeeGranter, proxyAddr) {
+	if proxyAddr == "" || !strings.EqualFold(tx.FeeGranter, proxyAddr) {
 		return
 	}
 
