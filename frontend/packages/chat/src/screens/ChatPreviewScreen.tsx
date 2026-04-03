@@ -61,18 +61,21 @@ function ScreenMenu({ onSelect, onBack }: {
   );
 }
 
-export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
-  const [activeScreen, setActiveScreen] = useState<PreviewScreen>("menu");
-  const [isNewChatVisible, setIsNewChatVisible] = useState(false);
+type ActiveScreenProps = {
+  readonly activeScreen: PreviewScreen;
+  readonly isNewChatVisible: boolean;
+  readonly onCompose: () => void;
+  readonly onCloseSheet: () => void;
+  readonly onSetScreen: (screen: PreviewScreen) => void;
+  readonly onBack: () => void;
+};
 
-  const handleCompose = useCallback(() => setIsNewChatVisible(true), []);
-  const handleCloseSheet = useCallback(() => setIsNewChatVisible(false), []);
-
+function ActiveScreenContent({ activeScreen, isNewChatVisible, onCompose, onCloseSheet, onSetScreen, onBack }: ActiveScreenProps) {
   if (activeScreen === "empty-conversations") {
     return (
       <>
-        <EmptyConversationsListScreen onCompose={handleCompose} />
-        <NewChatSheet isVisible={isNewChatVisible} onClose={handleCloseSheet} />
+        <EmptyConversationsListScreen onCompose={onCompose} />
+        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} />
       </>
     );
   }
@@ -84,15 +87,34 @@ export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
   if (activeScreen === "conversations-list") {
     return (
       <>
-        <ConversationsListScreen onEdit={() => setActiveScreen("conversations-edit")} onCompose={handleCompose} />
-        <NewChatSheet isVisible={isNewChatVisible} onClose={handleCloseSheet} />
+        <ConversationsListScreen onEdit={() => onSetScreen("conversations-edit")} onCompose={onCompose} />
+        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} />
       </>
     );
   }
 
   if (activeScreen === "conversations-edit") {
-    return <ConversationsEditScreen onDone={() => setActiveScreen("conversations-list")} />;
+    return <ConversationsEditScreen onDone={() => onSetScreen("conversations-list")} />;
   }
 
-  return <ScreenMenu onSelect={setActiveScreen} onBack={onBack} />;
+  return <ScreenMenu onSelect={onSetScreen} onBack={onBack} />;
+}
+
+export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
+  const [activeScreen, setActiveScreen] = useState<PreviewScreen>("menu");
+  const [isNewChatVisible, setIsNewChatVisible] = useState(false);
+
+  const handleCompose = useCallback(() => setIsNewChatVisible(true), []);
+  const handleCloseSheet = useCallback(() => setIsNewChatVisible(false), []);
+
+  return (
+    <ActiveScreenContent
+      activeScreen={activeScreen}
+      isNewChatVisible={isNewChatVisible}
+      onCompose={handleCompose}
+      onCloseSheet={handleCloseSheet}
+      onSetScreen={setActiveScreen}
+      onBack={onBack}
+    />
+  );
 }

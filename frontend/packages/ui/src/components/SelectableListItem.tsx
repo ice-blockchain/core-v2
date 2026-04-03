@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 import { useMemo } from "react";
@@ -7,7 +8,7 @@ import { Icon } from "../icons/Icon";
 export interface SelectableListItemProps {
   readonly isSelected: boolean;
   readonly onToggle: () => void;
-  readonly children: React.ReactNode;
+  readonly children: ReactNode;
   readonly style?: StyleProp<ViewStyle>;
 }
 

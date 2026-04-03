@@ -5,7 +5,8 @@ import { HorizontalSeparator, ListEditActionsBar, SearchBar, SelectableListItem,
 import type { ListEditAction } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { buildHeaderStyle, buildScreenStyle, buildSearchContainerStyle } from "./empty-conversations-styles";
-import { ConversationRow, MOCK_CONVERSATIONS } from "../components/conversation-row";
+import { ConversationRow } from "../components/conversation-row";
+import { MOCK_CONVERSATIONS } from "../components/mock-conversations";
 import { ChatReadAllIcon } from "../icons/ChatReadAllIcon";
 import { ChatArchiveIcon } from "../icons/ChatArchiveIcon";
 import { TrashIcon } from "../icons/TrashIcon";
@@ -94,12 +95,13 @@ export function ConversationsEditScreen({ onDone }: { readonly onDone?: () => vo
     () => [buildScreenStyle(theme.colors.secondaryBackground), { paddingTop: insets.top }],
     [theme.colors.secondaryBackground, insets.top],
   );
+  const searchContainerStyle = useMemo(() => buildSearchContainerStyle(scale), [scale]);
 
   return (
     <>
       <View style={screenStyle}>
         <ScreenHeader onDone={onDone ?? (() => {})} />
-        <View style={buildSearchContainerStyle(scale)}>
+        <View style={searchContainerStyle}>
           <SearchBar value={searchQuery} onChangeText={setSearchQuery} testID="edit-search" />
         </View>
         <SelectableConversationsList selectedIds={selectedIds} onToggle={toggleItem} />

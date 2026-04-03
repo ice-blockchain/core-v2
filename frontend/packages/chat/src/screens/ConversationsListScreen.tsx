@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HorizontalSeparator, Icon, SearchBar, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { buildHeaderStyle, buildScreenStyle, buildSearchContainerStyle } from "./empty-conversations-styles";
-import { ConversationRow, MOCK_CONVERSATIONS } from "../components/conversation-row";
+import { ConversationRow } from "../components/conversation-row";
+import { MOCK_CONVERSATIONS } from "../components/mock-conversations";
 
 interface ScreenHeaderProps {
   readonly onEdit: () => void;
@@ -44,11 +45,12 @@ export function ConversationsListScreen({ onEdit, onCompose }: ConversationsList
     [theme.colors.secondaryBackground, insets.top, insets.bottom],
   );
   const listContentStyle = useMemo(() => ({ paddingHorizontal: scale(16) }), [scale]);
+  const searchContainerStyle = useMemo(() => buildSearchContainerStyle(scale), [scale]);
 
   return (
     <View style={screenStyle}>
       <ScreenHeader onEdit={onEdit ?? (() => {})} onCompose={onCompose ?? (() => {})} />
-      <View style={buildSearchContainerStyle(scale)}>
+      <View style={searchContainerStyle}>
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} testID="chat-search" />
       </View>
       <FlatList

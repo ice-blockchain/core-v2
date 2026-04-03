@@ -4,30 +4,19 @@ import type { ViewStyle } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import type { Conversation } from "../types";
 
-export { type Conversation };
+type ScaleFunction = (n: number) => number;
 
-export const MOCK_CONVERSATIONS: readonly Conversation[] = [
-  { id: "1", name: "Archive", preview: "OXK Community, Binance Labs...", time: "11:23", unreadCount: 9 },
-  { id: "2", name: "Alicia Wernet", preview: "Hey, did you receive the news?", time: "09:31", unreadCount: 1 },
-  { id: "3", name: "Ton Community", preview: "Photo", time: "08:11" },
-  { id: "4", name: "Ice Open Network", preview: "Hi, Join us for an exclusive AMA...", time: "31.09" },
-  { id: "5", name: "Diedo Shonli", preview: "Are you sure? I haven't heard of.", time: "30.09" },
-  { id: "6", name: "Bitcoin Adept", preview: "In the coming days, we will find out...", time: "30.09", unreadCount: 1 },
-];
-
-type ScaleFn = (n: number) => number;
-
-function buildRowStyle(scale: ScaleFn): ViewStyle {
+function buildRowStyle(scale: ScaleFunction): ViewStyle {
   return { flex: 1, flexDirection: "row", alignItems: "center", gap: scale(12), paddingVertical: scale(8) };
 }
 
-function buildAvatarStyle(scale: ScaleFn, backgroundColor: string): ViewStyle {
+function buildAvatarStyle(scale: ScaleFunction, backgroundColor: string): ViewStyle {
   const size = scale(48);
   return { width: size, height: size, borderRadius: scale(12), backgroundColor, alignItems: "center", justifyContent: "center", flexShrink: 0 };
 }
 
 function buildUnreadBadgeStyle(backgroundColor: string): ViewStyle {
-  return { width: 16, height: 16, borderRadius: 8, backgroundColor, alignItems: "center", justifyContent: "center" };
+  return { minWidth: 16, height: 16, borderRadius: 8, paddingHorizontal: 4, backgroundColor, alignItems: "center", justifyContent: "center" };
 }
 
 const INFO_STYLE: ViewStyle = { flex: 1, gap: 2 };
@@ -54,7 +43,7 @@ function UnreadBadge({ count }: { readonly count: number }) {
   const badgeStyle = useMemo(() => buildUnreadBadgeStyle(theme.colors.primaryAccent), [theme.colors.primaryAccent]);
   return (
     <View style={badgeStyle}>
-      <Text variant="caption5" color={theme.colors.onPrimaryAccent} style={BADGE_TEXT_STYLE}>{String(count)}</Text>
+      <Text variant="caption5" color={theme.colors.onPrimaryAccent} style={BADGE_TEXT_STYLE}>{count > 99 ? "99+" : String(count)}</Text>
     </View>
   );
 }
@@ -72,7 +61,7 @@ export function ConversationRow({ conversation }: { readonly conversation: Conve
       </View>
       <View style={TIME_COLUMN_STYLE}>
         <Text variant="caption" color={theme.colors.tertiaryText}>{conversation.time}</Text>
-        {conversation.unreadCount !== undefined && <UnreadBadge count={conversation.unreadCount} />}
+        {conversation.unreadCount !== undefined && conversation.unreadCount > 0 && <UnreadBadge count={conversation.unreadCount} />}
       </View>
     </View>
   );
