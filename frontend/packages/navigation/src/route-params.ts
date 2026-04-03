@@ -3,6 +3,7 @@ export type RootStackParamList = {
   GetStarted: undefined;
   Onboarding: undefined;
   Catalog: undefined;
+  ChatPreview: undefined;
   'Sheet/Auth': undefined;
   'Sheet/NicknameReserved': undefined;
 };

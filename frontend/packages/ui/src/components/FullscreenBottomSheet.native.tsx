@@ -6,9 +6,14 @@ import type { FullscreenBottomSheetProps, FullscreenBottomSheetRef } from "./ful
 
 function useSheetAppearance() {
   const theme = useTheme();
+  const topRadius = theme.scale.scaleRadius(30);
   const backgroundStyle = useMemo(
-    () => ({ backgroundColor: theme.colors.secondaryBackground }),
-    [theme.colors.secondaryBackground],
+    () => ({
+      backgroundColor: theme.colors.secondaryBackground,
+      borderTopLeftRadius: topRadius,
+      borderTopRightRadius: topRadius,
+    }),
+    [theme.colors.secondaryBackground, topRadius],
   );
   const handleIndicatorStyle = useMemo(
     () => ({ backgroundColor: theme.colors.sheetLine }),

@@ -2,6 +2,7 @@ export const Routes = {
   Splash: 'Splash',
   GetStarted: 'GetStarted',
   Catalog: 'Catalog',
+  ChatPreview: 'ChatPreview',
 
   Sheet: {
     Auth: 'Sheet/Auth',

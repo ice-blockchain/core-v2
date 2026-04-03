@@ -6,7 +6,7 @@ import { useTheme } from "../theme/ThemeProvider";
 import { Icon } from "../icons/Icon";
 import { CatalogSection } from "./CatalogSection";
 
-const COLORS: ButtonColor[] = ["primary", "secondary", "secondaryB", "tertiary", "text"];
+const COLORS: ButtonColor[] = ["primary", "secondary", "secondaryB", "tertiary", "text", "danger"];
 
 function ButtonRow({ label, children }: { label: string; children: React.ReactNode }) {
   const theme = useTheme();
@@ -84,7 +84,7 @@ function SmallButtonVariants() {
 }
 
 function getIconColor(color: ButtonColor, theme: { colors: { onPrimaryAccent: string; secondaryText: string; primaryText: string } }): string {
-  if (color === "primary") return theme.colors.onPrimaryAccent;
+  if (color === "primary" || color === "danger") return theme.colors.onPrimaryAccent;
   if (color === "tertiary" || color === "text") return theme.colors.secondaryText;
   return theme.colors.primaryText;
 }

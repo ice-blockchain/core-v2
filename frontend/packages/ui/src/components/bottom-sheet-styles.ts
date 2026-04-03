@@ -50,9 +50,9 @@ export function buildWebSheetStyle(scale: (n: number) => number, bgColor: string
     backgroundColor: bgColor,
     borderTopLeftRadius: scale(30),
     borderTopRightRadius: scale(30),
+    overflow: "hidden",
     width: "100%",
     maxWidth: 500,
     maxHeight: "92%",
-    flex: 1,
   };
 }

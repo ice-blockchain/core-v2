@@ -7,7 +7,7 @@ import { Text } from "./Text";
 import { IONLoader } from "./IONLoader";
 import type { IONLoaderVariant } from "./IONLoaderTypes";
 
-export type ButtonColor = "primary" | "secondary" | "secondaryB" | "tertiary" | "text";
+export type ButtonColor = "primary" | "secondary" | "secondaryB" | "tertiary" | "text" | "danger";
 export type ButtonIconPosition = "left" | "right" | "center";
 
 export interface ButtonProps {
@@ -39,6 +39,7 @@ function resolveColorSpec(colors: SemanticColors, color: ButtonColor, isDisabled
     secondaryB: { background: colors.tertiaryBackground, textColor: colors.primaryText, borderColor: undefined, loaderVariant: "light" },
     tertiary: { background: "transparent", textColor: colors.secondaryText, borderColor: colors.strokeElements, loaderVariant: "light" },
     text: { background: "transparent", textColor: colors.secondaryText, borderColor: undefined, loaderVariant: "light" },
+    danger: { background: colors.attentionRed, textColor: colors.onPrimaryAccent, borderColor: undefined, loaderVariant: "dark" },
   };
   return specs[color];
 }

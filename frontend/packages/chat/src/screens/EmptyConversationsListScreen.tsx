@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Image, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, SearchBar, Text, useTheme } from "@ion/ui";
@@ -74,22 +74,25 @@ function EmptyState({ onNewMessage }: { readonly onNewMessage?: () => void }) {
   );
 }
 
-export function EmptyConversationsListScreen() {
+interface EmptyConversationsListProps {
+  readonly onCompose?: () => void;
+}
+
+const noop = () => {};
+
+export function EmptyConversationsListScreen({ onCompose }: EmptyConversationsListProps) {
   const styles = useScreenStyles();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
-
-  const handleCompose = useCallback(() => {}, []);
-  const handleEdit = useCallback(() => {}, []);
-  const handleNewMessage = useCallback(() => {}, []);
+  const handleCompose = onCompose ?? noop;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]} testID="empty-conversations-screen">
-      <ScreenHeader onEdit={handleEdit} onCompose={handleCompose} />
+      <ScreenHeader onCompose={handleCompose} />
       <View style={styles.searchContainer}>
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} testID="chat-search" />
       </View>
-      <EmptyState onNewMessage={handleNewMessage} />
+      <EmptyState onNewMessage={handleCompose} />
     </View>
   );
 }

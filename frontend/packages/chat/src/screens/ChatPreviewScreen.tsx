@@ -1,14 +1,18 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import { EmptyConversationsListScreen } from "./EmptyConversationsListScreen";
 import { LoadingConversationsListScreen } from "./LoadingConversationsListScreen";
+import { ConversationsListScreen } from "./ConversationsListScreen";
+import { ConversationsEditScreen } from "./ConversationsEditScreen";
+import { NewChatSheet } from "./NewChatSheet";
 
-type PreviewScreen = "menu" | "empty-conversations" | "loading-conversations";
+type PreviewScreen = "menu" | "empty-conversations" | "loading-conversations" | "conversations-list" | "conversations-edit";
 
 const SCREEN_OPTIONS: Array<{ key: PreviewScreen; label: string }> = [
   { key: "empty-conversations", label: "Empty Conversations List" },
   { key: "loading-conversations", label: "Loading Conversations List" },
+  { key: "conversations-list", label: "Conversations List" },
 ];
 
 function useMenuStyles() {
@@ -57,16 +61,60 @@ function ScreenMenu({ onSelect, onBack }: {
   );
 }
 
-export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
-  const [activeScreen, setActiveScreen] = useState<PreviewScreen>("menu");
+type ActiveScreenProps = {
+  readonly activeScreen: PreviewScreen;
+  readonly isNewChatVisible: boolean;
+  readonly onCompose: () => void;
+  readonly onCloseSheet: () => void;
+  readonly onSetScreen: (screen: PreviewScreen) => void;
+  readonly onBack: () => void;
+};
 
+function ActiveScreenContent({ activeScreen, isNewChatVisible, onCompose, onCloseSheet, onSetScreen, onBack }: ActiveScreenProps) {
   if (activeScreen === "empty-conversations") {
-    return <EmptyConversationsListScreen />;
+    return (
+      <>
+        <EmptyConversationsListScreen onCompose={onCompose} />
+        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} />
+      </>
+    );
   }
 
   if (activeScreen === "loading-conversations") {
     return <LoadingConversationsListScreen />;
   }
 
-  return <ScreenMenu onSelect={setActiveScreen} onBack={onBack} />;
+  if (activeScreen === "conversations-list") {
+    return (
+      <>
+        <ConversationsListScreen onEdit={() => onSetScreen("conversations-edit")} onCompose={onCompose} />
+        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} />
+      </>
+    );
+  }
+
+  if (activeScreen === "conversations-edit") {
+    return <ConversationsEditScreen onDone={() => onSetScreen("conversations-list")} />;
+  }
+
+  return <ScreenMenu onSelect={onSetScreen} onBack={onBack} />;
+}
+
+export function ChatPreviewScreen({ onBack }: { readonly onBack: () => void }) {
+  const [activeScreen, setActiveScreen] = useState<PreviewScreen>("menu");
+  const [isNewChatVisible, setIsNewChatVisible] = useState(false);
+
+  const handleCompose = useCallback(() => setIsNewChatVisible(true), []);
+  const handleCloseSheet = useCallback(() => setIsNewChatVisible(false), []);
+
+  return (
+    <ActiveScreenContent
+      activeScreen={activeScreen}
+      isNewChatVisible={isNewChatVisible}
+      onCompose={handleCompose}
+      onCloseSheet={handleCloseSheet}
+      onSetScreen={setActiveScreen}
+      onBack={onBack}
+    />
+  );
 }
