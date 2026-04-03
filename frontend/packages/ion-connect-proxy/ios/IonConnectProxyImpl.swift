@@ -89,7 +89,8 @@ class IonConnectProxyImpl: NSObject {
     guard let raw = buildRawHttpRequest(method: method, url: url, headersJSON: headersJSON, body: body) else {
       reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
     }
-    sendRawProxyRequest(rawHttp: raw, resolve: resolve, reject: reject)
+    let (safeResolve, safeReject) = Self.makeSettledGuards(resolve: resolve, reject: reject)
+    sendRawProxyRequest(rawHttp: raw, resolve: safeResolve, reject: safeReject)
   }
 
   @objc func proxyUpload(_ url: String, filePath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
@@ -103,7 +104,8 @@ class IonConnectProxyImpl: NSObject {
     guard let raw = buildRawHttpRequest(method: "POST", url: url, headersJSON: headersJSON, body: fileBody) else {
       reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
     }
-    sendRawProxyRequest(rawHttp: raw, resolve: resolve, reject: reject)
+    let (safeResolve, safeReject) = Self.makeSettledGuards(resolve: resolve, reject: reject)
+    sendRawProxyRequest(rawHttp: raw, resolve: safeResolve, reject: safeReject)
   }
 
   @objc func proxyDownload(_ url: String, destPath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
@@ -113,28 +115,45 @@ class IonConnectProxyImpl: NSObject {
     guard let raw = buildRawHttpRequest(method: "GET", url: url, headersJSON: headersJSON, body: "") else {
       reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
     }
+    let (safeResolve, safeReject) = Self.makeSettledGuards(resolve: resolve, reject: reject)
     let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
     conn.stateUpdateHandler = { state in
-      if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil) }
+      if case .failed(let error) = state { safeReject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel() }
     }
     conn.start(queue: Self.queue)
     conn.send(content: raw.data(using: .utf8), completion: .contentProcessed { error in
-      if let error = error { reject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
+      if let error = error { safeReject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
       self.receiveFullResponse(conn: conn) { result in
         conn.cancel()
         switch result {
-        case .failure(let error): reject("PROXY_ERROR", error.localizedDescription, nil)
+        case .failure(let error): safeReject("PROXY_ERROR", error.localizedDescription, nil)
         case .success(let responseData):
           let dest = URL(fileURLWithPath: destPath)
           let (status, headers, _) = self.parseHttpResponse(responseData)
           do {
             try self.extractBody(from: responseData).write(to: dest)
             let json = self.encodeResponseJSON(status: status, headers: headers, body: "")
-            resolve(json)
-          } catch { reject("PROXY_ERROR", error.localizedDescription, nil) }
+            safeResolve(json)
+          } catch { safeReject("PROXY_ERROR", error.localizedDescription, nil) }
         }
       }
     })
+  }
+
+  // MARK: - Promise Safety
+
+  private static func makeSettledGuards(
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) -> (RCTPromiseResolveBlock, RCTPromiseRejectBlock) {
+    var settled = false
+    let safeResolve: RCTPromiseResolveBlock = { value in
+      guard !settled else { return }; settled = true; resolve(value)
+    }
+    let safeReject: RCTPromiseRejectBlock = { code, msg, err in
+      guard !settled else { return }; settled = true; reject(code, msg, err)
+    }
+    return (safeResolve, safeReject)
   }
 
   // MARK: - Input Validation
@@ -146,7 +165,8 @@ class IonConnectProxyImpl: NSObject {
   private func assertSandboxPath(_ path: String) throws {
     let resolved = (path as NSString).resolvingSymlinksInPath
     let tmpDir = NSTemporaryDirectory()
-    let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.path ?? ""
+    let cachePath = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.path ?? ""
+    let cacheDir = cachePath.hasSuffix("/") ? cachePath : cachePath + "/"
     guard resolved.hasPrefix(tmpDir) || resolved.hasPrefix(cacheDir) else {
       throw NSError(domain: "IonConnectProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Path outside app sandbox"])
     }
@@ -176,7 +196,7 @@ class IonConnectProxyImpl: NSObject {
   private func sendRawProxyRequest(rawHttp: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
     conn.stateUpdateHandler = { state in
-      if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil) }
+      if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel() }
     }
     conn.start(queue: Self.queue)
     conn.send(content: rawHttp.data(using: .utf8), completion: .contentProcessed { error in
@@ -193,10 +213,16 @@ class IonConnectProxyImpl: NSObject {
     })
   }
 
+  private static let maxResponseSize = 10 * 1024 * 1024
+
   private func receiveFullResponse(conn: NWConnection, accumulated: Data = Data(), completion: @escaping (Result<Data, Error>) -> Void) {
     conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, _, isComplete, error in
       var buffer = accumulated
       if let content = content { buffer.append(content) }
+      if buffer.count > Self.maxResponseSize {
+        completion(.failure(NSError(domain: "IonConnectProxy", code: -1, userInfo: [NSLocalizedDescriptionKey: "Response exceeded \(Self.maxResponseSize) bytes"])))
+        return
+      }
       if isComplete || error != nil {
         if buffer.isEmpty, let error = error { completion(.failure(error)) } else { completion(.success(buffer)) }
         return

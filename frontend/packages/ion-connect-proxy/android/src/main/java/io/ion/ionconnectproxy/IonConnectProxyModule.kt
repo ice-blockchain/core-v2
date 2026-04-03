@@ -16,6 +16,7 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
 
     companion object {
         const val NAME = "IonConnectProxy"
+        private const val MAX_RESPONSE_SIZE = 10 * 1024 * 1024
         init {
             System.loadLibrary("tonutils-proxy")
             System.loadLibrary("ion-connect-proxy-jni")
@@ -165,8 +166,8 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
 
     private fun assertSandboxPath(path: String) {
         val resolved = File(path).canonicalPath
-        val cacheDir = reactApplicationContext.cacheDir.canonicalPath
-        val filesDir = reactApplicationContext.filesDir.canonicalPath
+        val cacheDir = reactApplicationContext.cacheDir.canonicalPath + File.separator
+        val filesDir = reactApplicationContext.filesDir.canonicalPath + File.separator
         require(resolved.startsWith(cacheDir) || resolved.startsWith(filesDir)) {
             "Path outside app sandbox"
         }
@@ -208,8 +209,22 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
             socket.soTimeout = 30_000
             socket.getOutputStream().write(rawHttp.toByteArray())
             socket.getOutputStream().flush()
-            return socket.getInputStream().readBytes()
+            return readBytesWithLimit(socket.getInputStream(), MAX_RESPONSE_SIZE)
         }
+    }
+
+    private fun readBytesWithLimit(input: java.io.InputStream, maxSize: Int): ByteArray {
+        val buffer = java.io.ByteArrayOutputStream()
+        val chunk = ByteArray(65536)
+        var totalRead = 0
+        while (true) {
+            val bytesRead = input.read(chunk)
+            if (bytesRead == -1) break
+            totalRead += bytesRead
+            if (totalRead > maxSize) throw Exception("Response exceeded $maxSize bytes")
+            buffer.write(chunk, 0, bytesRead)
+        }
+        return buffer.toByteArray()
     }
 
     private fun parseHttpResponse(raw: String): Triple<Int, Map<String, String>, String> {
