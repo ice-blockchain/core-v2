@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.head_ref }}
+  group: ci-frontend-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -43,3 +43,16 @@ jobs:
 
       - name: Test
         run: pnpm turbo test
+
+      - name: Build web
+        run: pnpm turbo build --filter=@ion/web...
+
+      - name: Bundle mobile (Metro)
+        run: >
+          pnpm --filter @ion/mobile exec
+          react-native bundle
+          --platform ios
+          --dev false
+          --entry-file index.js
+          --bundle-output /tmp/ios.jsbundle
+          --reset-cache
