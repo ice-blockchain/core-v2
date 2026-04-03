@@ -17,6 +17,7 @@ export type Pbkdf2Fn = (password: string, salt: Uint8Array, iterations: number, 
 let nativePbkdf2: Pbkdf2Fn | null = null;
 
 export function setNativePbkdf2(fn: Pbkdf2Fn): void {
+  if (nativePbkdf2 !== null) throw new Error('nativePbkdf2 already set');
   nativePbkdf2 = fn;
 }
 

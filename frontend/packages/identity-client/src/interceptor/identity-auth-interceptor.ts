@@ -8,6 +8,7 @@ interface IdentityAuthInterceptorDeps {
   tokenManager: TokenManager;
   refreshFn: (username: string) => Promise<void>;
   refreshLocks: Map<string, Promise<void>>;
+  trustedBaseUrl: string;
 }
 
 export function createIdentityAuthInterceptor(
@@ -27,6 +28,11 @@ function requestKey(method: string, url: string): string {
   return `${method}:${url}`;
 }
 
+function isRelativeOrTrustedUrl(url: string, trustedBaseUrl: string): boolean {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return true;
+  return new URL(url).origin === new URL(trustedBaseUrl).origin;
+}
+
 async function injectAuthHeader(
   deps: IdentityAuthInterceptorDeps,
   request: InterceptedRequest,
@@ -35,6 +41,7 @@ async function injectAuthHeader(
   if (request.headers.Authorization) return request;
   const username = request.headers['X-Username'];
   if (!username) return request;
+  if (!isRelativeOrTrustedUrl(request.url, deps.trustedBaseUrl)) return request;
   const tokens = await deps.tokenManager.getTokens(username);
   if (!tokens) return request;
   usernameByRequest.set(requestKey(request.method, request.url), username);

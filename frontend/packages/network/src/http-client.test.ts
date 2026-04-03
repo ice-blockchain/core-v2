@@ -15,10 +15,9 @@ vi.mock('axios-retry', () => ({
 }));
 
 const mockRequest = vi.fn();
-let lastCreateConfig: Record<string, unknown> = {};
 vi.mock('axios', () => ({
   default: {
-    create: (config: Record<string, unknown>) => { lastCreateConfig = config; return { request: mockRequest }; },
+    create: () => ({ request: mockRequest }),
     isCancel: (e: unknown) => e instanceof Object && (e as Record<string, unknown>).__CANCEL__ === true,
     isAxiosError: (e: unknown) => e instanceof Object && (e as Record<string, unknown>).isAxiosError === true,
   },
@@ -202,16 +201,20 @@ describe('createHttpClient HTTPS enforcement', () => {
 });
 
 describe('createHttpClient default headers', () => {
-  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); lastCreateConfig = {}; });
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
 
-  it('passes config headers to axios instance', () => {
-    createHttpClient({ baseUrl: 'https://api.example.com', headers: { 'X-Client-ID': 'my-app' } });
-    expect(lastCreateConfig.headers).toEqual({ 'X-Client-ID': 'my-app' });
+  it('merges config headers into every request', async () => {
+    mockRequest.mockResolvedValue(mockAxiosResponse({ ok: true }));
+    const client = createHttpClient({ baseUrl: 'https://api.example.com', headers: { 'X-Client-ID': 'my-app' } });
+    await client.get('/test');
+    expect(mockRequest.mock.calls[0]![0].headers['X-Client-ID']).toBe('my-app');
   });
 
-  it('does not set headers on axios instance when omitted', () => {
-    createHttpClient({ baseUrl: 'https://api.example.com' });
-    expect(lastCreateConfig.headers).toBeUndefined();
+  it('per-request headers override config defaults', async () => {
+    mockRequest.mockResolvedValue(mockAxiosResponse({ ok: true }));
+    const client = createHttpClient({ baseUrl: 'https://api.example.com', headers: { 'X-Client-ID': 'default' } });
+    await client.get('/test', { headers: { 'X-Client-ID': 'override' } });
+    expect(mockRequest.mock.calls[0]![0].headers['X-Client-ID']).toBe('override');
   });
 });
 

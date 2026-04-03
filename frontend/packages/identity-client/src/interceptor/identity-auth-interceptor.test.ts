@@ -17,11 +17,13 @@ function createDeps(overrides: Partial<{
   tokenManager: TokenManager;
   refreshFn: (username: string) => Promise<void>;
   refreshLocks: Map<string, Promise<void>>;
+  trustedBaseUrl: string;
 }> = {}) {
   return {
     tokenManager: overrides.tokenManager ?? createMockTokenManager(),
     refreshFn: overrides.refreshFn ?? vi.fn(() => Promise.resolve()),
     refreshLocks: overrides.refreshLocks ?? new Map(),
+    trustedBaseUrl: overrides.trustedBaseUrl ?? 'https://api.example.com',
   };
 }
 
@@ -69,6 +71,23 @@ describe('createIdentityAuthInterceptor', () => {
       const interceptor = createIdentityAuthInterceptor(createDeps({ tokenManager }));
       const result = await interceptor.onRequest!(makeRequest({ 'X-Username': 'unknown' }));
       expect(result.headers.Authorization).toBeUndefined();
+    });
+
+    it('skips injection for absolute URL targeting a foreign origin', async () => {
+      const tokenManager = createMockTokenManager({ alice: { token: 'tok-alice', refreshToken: 'ref-alice' } });
+      const interceptor = createIdentityAuthInterceptor(createDeps({ tokenManager }));
+      const request = { url: 'https://evil.com/collect', method: 'GET', headers: { 'X-Username': 'alice' } };
+      const result = await interceptor.onRequest!(request);
+      expect(result.headers.Authorization).toBeUndefined();
+      expect(tokenManager.getTokens).not.toHaveBeenCalled();
+    });
+
+    it('injects token for absolute URL matching trusted origin', async () => {
+      const tokenManager = createMockTokenManager({ alice: { token: 'tok-alice', refreshToken: 'ref-alice' } });
+      const interceptor = createIdentityAuthInterceptor(createDeps({ tokenManager }));
+      const request = { url: 'https://api.example.com/v1/users', method: 'GET', headers: { 'X-Username': 'alice' } };
+      const result = await interceptor.onRequest!(request);
+      expect(result.headers.Authorization).toBe('Bearer tok-alice');
     });
   });
 
