@@ -10,9 +10,8 @@ interface DeleteAccountDeps {
   httpClient: HttpClient;
 }
 
-// NOT YET FUNCTIONAL: The server expects `userAction` to be a base64-encoded Nostr Kind 5
-// (deletion) event, which must be created by the caller (app/actions layer). The identity-client
-// does not create this event.
+// The server expects `userAction` to be a base64-encoded Nostr Kind 5  (deletion) event,
+// which must be created by the caller. The identity-client does not create this event.
 export async function deleteAccount(
   username: string,
   userAction: string,
