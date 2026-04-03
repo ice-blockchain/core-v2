@@ -247,12 +247,17 @@ export interface PasskeyRecoveryInput {
 
 export type RecoverAccountInput = PasswordRecoveryInput | PasskeyRecoveryInput;
 
+export interface UserAssignedRelay {
+  type: string;
+  url: string;
+}
+
 export interface User {
   '2faOptions': TwoFAOption[] | null;
   duplicateOf: string | null;
   email: string[] | null;
   ionConnectIndexerRelays: string[] | null;
-  ionConnectRelays: { type: string; url: string }[] | null;
+  ionConnectRelays: UserAssignedRelay[] | null;
   masterPubKey: string;
   phoneNumber: string[] | null;
 }

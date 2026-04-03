@@ -10,6 +10,7 @@ export type {
   RegistrationResult,
   AuthTokens,
   User,
+  UserAssignedRelay,
   TwoFAOption,
   SigningContext,
   PasswordSigningContext,

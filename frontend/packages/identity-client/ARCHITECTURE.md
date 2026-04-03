@@ -103,7 +103,7 @@ User {
   email: string[] | null
   phoneNumber: string[] | null
   '2faOptions': TwoFAOption[] | null
-  ionConnectRelays: { type: string; url: string }[] | null
+  ionConnectRelays: UserAssignedRelay[] | null
   ionConnectIndexerRelays: string[] | null
   duplicateOf: string | null
 }
