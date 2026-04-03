@@ -14,8 +14,7 @@ export function StoryAvatarGradientRing({ size, borderRadius, ringWidth, stops, 
   const gradientId = useId();
   const scaledSize = scale(size);
   const scaledRadius = scale(borderRadius);
-  const scaledRing = scale(ringWidth);
-  const halfRing = scaledRing / 2;
+  const scaledRing = scale(ringWidth), halfRing = scaledRing / 2;
 
   const stopElements = useMemo(
     () => stops.map((stop, index) => <Stop key={index} offset={stop.position} stopColor={stop.color} />),
