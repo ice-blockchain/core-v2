@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Icon, TextField, useTheme } from "@ion/ui";
+import { Icon, Text, TextField, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
@@ -16,13 +16,20 @@ import { CreateAccountIcon } from "./create-account-icon";
 import { useIdentityKeyValidation } from "./identity-key-rules";
 
 function GetStartedHeader() {
+  const { colors } = useTheme();
+
+  const iconCircleStyle = useMemo(() => ({
+    ...styles.iconCircle,
+    backgroundColor: colors.primaryAccent,
+  }), [colors.primaryAccent]);
+
   return (
     <>
-      <View style={styles.iconCircle}>
+      <View style={iconCircleStyle}>
         <IceLogoIcon />
       </View>
-      <Text style={styles.title}>{translate("auth:getStartedTitle")}</Text>
-      <Text style={styles.subtitle}>
+      <Text variant="headline1" color={colors.primaryText}>{translate("auth:getStartedTitle")}</Text>
+      <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>
         {translate("auth:getStartedSubtitle")}
       </Text>
     </>
@@ -51,6 +58,7 @@ function GetStartedActions({ identity, nav }: {
   identity: ReturnType<typeof useIdentityKeyValidation>;
   nav: ReturnType<typeof useGetStartedNavigation>;
 }) {
+  const { colors } = useTheme();
   const handleContinue = useCallback(() => {
     if (identity.validate()) { nav.handleVerifyPassword(); }
   }, [identity, nav]);
@@ -60,7 +68,7 @@ function GetStartedActions({ identity, nav }: {
       <View style={styles.continueWrapper}>
         <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} />
       </View>
-      <Text style={styles.orText}>{translate("auth:orDivider")}</Text>
+      <Text variant="caption" color={colors.tertiaryText} style={styles.orText}>{translate("auth:orDivider")}</Text>
       <SecondaryButton label={translate("auth:registerButton")} onPress={nav.handleRegister} leftIcon={<CreateAccountIcon />} />
       <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} />} onPress={nav.handleRestore} />
     </>
@@ -128,21 +136,11 @@ const styles = StyleSheet.create({
     width: 65,
     height: 65,
     borderRadius: 32.5,
-    backgroundColor: "#0166FF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
   },
-  title: {
-    fontWeight: "700",
-    fontSize: 28,
-    color: "#0E0E0E",
-    marginBottom: 8,
-  },
   subtitle: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#9A9A9A",
     textAlign: "center",
     maxWidth: 320,
     marginBottom: 40,
@@ -154,9 +152,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   orText: {
-    fontWeight: "500",
-    fontSize: 12,
-    color: "#9A9A9A",
     marginVertical: 16,
   },
   footer: {

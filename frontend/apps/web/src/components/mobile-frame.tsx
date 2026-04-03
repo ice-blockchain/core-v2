@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { useTheme } from "@ion/ui";
 import { useWindowSize } from "./use-window-size";
 
 interface MobileFrameProps {
@@ -17,14 +18,13 @@ const NOTCH_WIDTH = 126;
 const NOTCH_HEIGHT = 34;
 const VIEWPORT_PADDING = 32;
 
-const wrapperStyle: CSSProperties = {
+const BASE_WRAPPER_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   width: "100vw",
   height: "100vh",
   overflow: "hidden",
-  backgroundColor: "#f0f0f0",
 };
 
 function computeScale(vw: number, vh: number) {
@@ -82,14 +82,21 @@ const contentStyle: CSSProperties = {
 
 export function MobileFrame({ children }: MobileFrameProps) {
   const { width: vw, height: vh } = useWindowSize();
+  const theme = useTheme();
 
-  const { bezel, screen, notch } = useMemo(() => {
+  const { bezel, screen, notch, wrapper } = useMemo(() => {
     const s = computeScale(vw, vh);
-    return { bezel: buildBezelStyle(s), screen: buildScreenStyle(s), notch: buildNotchStyle(s) };
-  }, [vw, vh]);
+    const wrapperBg = theme.colorMode === "dark" ? "#111111" : "#f0f0f0";
+    return {
+      bezel: buildBezelStyle(s),
+      screen: buildScreenStyle(s),
+      notch: buildNotchStyle(s),
+      wrapper: { ...BASE_WRAPPER_STYLE, backgroundColor: wrapperBg },
+    };
+  }, [vw, vh, theme.colorMode]);
 
   return (
-    <div style={wrapperStyle}>
+    <div style={wrapper}>
       <div style={bezel}>
         <div style={screen}>
           <div style={notch} />

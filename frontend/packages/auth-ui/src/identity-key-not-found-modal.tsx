@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { translate } from "@ion/localization";
-import { BottomSheet, Icon } from "@ion/ui";
+import { BottomSheet, Icon, Text, useTheme } from "@ion/ui";
 import { PrimaryButton } from "./primary-button";
 
 interface IdentityKeyNotFoundModalProps {
@@ -9,13 +9,15 @@ interface IdentityKeyNotFoundModalProps {
 }
 
 export function IdentityKeyNotFoundModal({ isVisible, onClose }: IdentityKeyNotFoundModalProps) {
+  const { colors } = useTheme();
+
   return (
     <BottomSheet isVisible={isVisible} onClose={onClose}>
       <View style={styles.container}>
         <Icon name="keys-error" size={80} />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{translate("auth:identityKeyNotFoundTitle")}</Text>
-          <Text style={styles.description}>
+          <Text variant="title" color={colors.primaryText}>{translate("auth:identityKeyNotFoundTitle")}</Text>
+          <Text variant="body2" color={colors.secondaryText} style={styles.description}>
             {translate("auth:identityKeyNotFoundDescription")}
           </Text>
         </View>
@@ -39,15 +41,7 @@ const styles = StyleSheet.create({
     gap: 8,
     width: 320,
   },
-  title: {
-    fontWeight: "600",
-    fontSize: 17,
-    color: "#0E0E0E",
-  },
   description: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#494949",
     textAlign: "center",
   },
   buttonWrapper: {

@@ -1,4 +1,5 @@
 import Svg, { Path } from "react-native-svg";
+import { useTheme } from "@ion/ui";
 
 const PATHS = [
   "M14 6.635a.635.635 0 0 1 .635-.635h2.775a.635.635 0 0 1 0 1.27h-2.775A.635.635 0 0 1 14 6.635Z",
@@ -11,10 +12,11 @@ const PATHS = [
 ];
 
 export function IdentityKeyIcon() {
+  const theme = useTheme();
   return (
     <Svg width={21} height={18} viewBox="0 0 21 18" fill="none">
       {PATHS.map((d) => (
-        <Path key={d.slice(0, 20)} d={d} fill="#494949" />
+        <Path key={d.slice(0, 20)} d={d} fill={theme.colors.secondaryText} />
       ))}
     </Svg>
   );

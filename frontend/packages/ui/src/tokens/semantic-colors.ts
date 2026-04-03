@@ -19,4 +19,10 @@ export const lightSemanticColors: SemanticColors = {
   attentionRed: "#FD4E4E",
   success: "#35D487",
   shadow: "rgba(45, 98, 217, 0.03)",
+  onColors: "rgba(255, 255, 255, 0.65)",
+  attentionBlock: "#EEF1FF",
+  tcBackground: "rgba(245, 247, 255, 0.15)",
+  blurBackground: "rgba(36, 36, 36, 0.5)",
+  dividerZero: "rgba(225, 234, 248, 0)",
+  onTcBackground: "rgba(35, 50, 66, 0.4)",
 };

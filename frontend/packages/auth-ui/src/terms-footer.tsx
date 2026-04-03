@@ -1,27 +1,25 @@
-import { StyleSheet, Text } from "react-native";
+import { useMemo } from "react";
+import { View } from "react-native";
+import type { TextStyle } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 
 export function TermsFooter() {
+  const { colors } = useTheme();
+
+  const containerStyle = useMemo((): TextStyle => ({
+    textAlign: "center",
+    maxWidth: 219,
+  }), []);
+
   return (
-    <Text style={styles.container}>
-      {translate("auth:termsAgreementPrefix")}
-      <Text style={styles.link}>{translate("auth:termsOfServiceLink")}</Text>
-      {translate("auth:termsSeparator")}
-      <Text style={styles.link}>{translate("auth:privacyPolicyLink")}</Text>
-    </Text>
+    <View>
+      <Text variant="caption3" color={colors.tertiaryText} style={containerStyle}>
+        {translate("auth:termsAgreementPrefix")}
+        <Text variant="caption3" color={colors.primaryAccent}>{translate("auth:termsOfServiceLink")}</Text>
+        {translate("auth:termsSeparator")}
+        <Text variant="caption3" color={colors.primaryAccent}>{translate("auth:privacyPolicyLink")}</Text>
+      </Text>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    textAlign: "center",
-    fontSize: 11,
-    fontWeight: "400",
-    color: "#9A9A9A",
-    lineHeight: 18,
-    maxWidth: 219,
-  },
-  link: {
-    color: "#0166FF",
-  },
-});

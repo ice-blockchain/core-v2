@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { CheckIcon } from "./check-icon";
 import { CrossIcon } from "./cross-icon";
 
@@ -12,12 +13,14 @@ interface PasswordStrengthChecklistProps {
 }
 
 export function PasswordStrengthChecklist({ rules }: PasswordStrengthChecklistProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       {rules.map((rule) => (
         <View key={rule.label} style={styles.row}>
           {rule.isMet ? <CheckIcon /> : <CrossIcon />}
-          <Text style={styles.label}>{rule.label}</Text>
+          <Text variant="caption2" color={colors.primaryText}>{rule.label}</Text>
         </View>
       ))}
     </View>
@@ -32,10 +35,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  label: {
-    fontWeight: "400",
-    fontSize: 12,
-    color: "#0E0E0E",
   },
 });

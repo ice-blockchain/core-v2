@@ -1,5 +1,6 @@
-import { type ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { type ReactNode, useMemo } from "react";
+import { StyleSheet, View } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 
 interface RegisterHeaderProps {
   icon: ReactNode;
@@ -8,14 +9,21 @@ interface RegisterHeaderProps {
 }
 
 export function RegisterHeader({ icon, title, subtitle }: RegisterHeaderProps) {
+  const { colors } = useTheme();
+
+  const iconCircleStyle = useMemo(() => ({
+    ...styles.iconCircle,
+    backgroundColor: colors.primaryAccent,
+  }), [colors.primaryAccent]);
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconCircle}>
+      <View style={iconCircleStyle}>
         {icon}
       </View>
-      <Text style={styles.title}>{title}</Text>
+      <Text variant="headline1" color={colors.primaryText}>{title}</Text>
       {subtitle ? (
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>{subtitle}</Text>
       ) : null}
     </View>
   );
@@ -30,21 +38,11 @@ const styles = StyleSheet.create({
     width: 65,
     height: 65,
     borderRadius: 32.5,
-    backgroundColor: "#0166FF",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
   },
-  title: {
-    fontWeight: "700",
-    fontSize: 28,
-    color: "#0E0E0E",
-    marginBottom: 8,
-  },
   subtitle: {
-    fontWeight: "400",
-    fontSize: 13,
-    color: "#9A9A9A",
     textAlign: "center",
     maxWidth: 320,
   },

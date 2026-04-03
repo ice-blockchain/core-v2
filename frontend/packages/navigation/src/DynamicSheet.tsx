@@ -5,7 +5,7 @@ import type { ViewStyle } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Icon, Text, useTheme } from '@ion/ui';
 import { useAppNavigation } from './use-app-navigation';
-import { renderBackdrop, SheetBackground, SheetHandle } from './sheet-parts';
+import { SheetBackdrop, SheetBackground, SheetHandle } from './sheet-parts';
 
 interface DynamicSheetHeaderProps {
   title: string;
@@ -65,7 +65,7 @@ export function DynamicSheet({ title, children }: DynamicSheetProps) {
       <BottomSheet
         enableDynamicSizing
         enablePanDownToClose
-        backdropComponent={renderBackdrop}
+        backdropComponent={SheetBackdrop}
         backgroundComponent={SheetBackground}
         handleComponent={SheetHandle}
         onChange={handleChange}

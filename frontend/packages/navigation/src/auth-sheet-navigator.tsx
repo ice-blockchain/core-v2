@@ -15,6 +15,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 const SCREEN_OPTIONS = {
   headerShown: false as const,
   animation: 'slide_from_right' as const,
+  contentStyle: { backgroundColor: 'transparent' as const },
 };
 
 export interface AuthScreens {

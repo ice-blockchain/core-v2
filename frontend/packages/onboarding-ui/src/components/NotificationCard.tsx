@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { View } from "react-native";
 import type { ImageStyle, TextStyle, ViewStyle } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
+import { colorPalette } from "@ion/ui";
 import { MediaImage } from "@ion/media-viewer";
 import type { MediaViewerSource } from "@ion/media-viewer";
 
@@ -33,7 +34,7 @@ function buildAvatarStyle(scale: (n: number) => number): ImageStyle {
   return { width: scale(36), height: scale(36), borderRadius: scale(10) };
 }
 
-function buildBadgeStyle(scale: (n: number) => number): ViewStyle {
+function buildBadgeStyle(scale: (n: number) => number, borderColor: string): ViewStyle {
   return {
     position: "absolute",
     bottom: 0,
@@ -41,16 +42,12 @@ function buildBadgeStyle(scale: (n: number) => number): ViewStyle {
     width: scale(13),
     height: scale(13),
     borderRadius: scale(4),
-    backgroundColor: "#1D46EB",
+    backgroundColor: colorPalette.darkBlue,
     borderWidth: scale(0.85),
-    borderColor: "#FFFFFF",
+    borderColor,
     alignItems: "center",
     justifyContent: "center",
   };
-}
-
-function buildTitleRowStyle(): ViewStyle {
-  return { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" };
 }
 
 function buildTitleStyle(color: string): TextStyle {
@@ -62,7 +59,6 @@ function buildMutedTextStyle(color: string): TextStyle {
 }
 
 const textContainerStyle: ViewStyle = { flex: 1 };
-const MUTED_COLOR = "rgba(255,255,255,0.65)";
 
 function useCardStyles() {
   const theme = useTheme();
@@ -71,13 +67,14 @@ function useCardStyles() {
 
   return {
     scale,
+    colors,
     card: useMemo(() => buildCardStyle(scale, colors.primaryAccent), [scale, colors.primaryAccent]),
     avatarContainer: useMemo(() => buildAvatarContainerStyle(scale), [scale]),
     avatar: useMemo(() => buildAvatarStyle(scale), [scale]),
-    badge: useMemo(() => buildBadgeStyle(scale), [scale]),
-    titleRow: useMemo(() => buildTitleRowStyle(), []),
-    title: useMemo(() => buildTitleStyle(colors.secondaryBackground), [colors.secondaryBackground]),
-    muted: useMemo(() => buildMutedTextStyle(MUTED_COLOR), []),
+    badge: useMemo(() => buildBadgeStyle(scale, colors.onPrimaryAccent), [scale, colors.onPrimaryAccent]),
+    titleRow: useMemo(() => ({ flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "flex-start" as const }), []),
+    title: useMemo(() => buildTitleStyle(colors.onPrimaryAccent), [colors.onPrimaryAccent]),
+    muted: useMemo(() => buildMutedTextStyle(colors.onColors), [colors.onColors]),
   };
 }
 
@@ -90,7 +87,7 @@ export function NotificationCard({ avatar, title, description, time, showBadge, 
         <MediaImage source={avatar} style={s.avatar} />
         {showBadge ? (
           <View style={s.badge}>
-            <Icon name="login-ice-logo" size={s.scale(8)} color="#FFFFFF" />
+            <Icon name="login-ice-logo" size={s.scale(8)} color={s.colors.onPrimaryAccent} />
           </View>
         ) : null}
       </View>
