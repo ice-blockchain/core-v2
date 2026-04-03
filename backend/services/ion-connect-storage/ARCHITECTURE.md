@@ -4,9 +4,14 @@
 
 Virtual TON Storage protocol node that serves files cached from BNB Greenfield. Listens on ADNL/RLDP, implements TON storage RPC methods, and uses an LRU+TTL disk cache. Designed to scale to millions of bags using lazy DHT registration, CRDT-based cluster coordination, and hot/cold classification.
 
-## Current State: Phase 4 (RPC Storage Methods)
+## Current State: Phase 5 (HTTP Server + Metrics + Provider Index)
 
-Phases 1-3 complete (ADNL server, Greenfield indexing, caching layer). Phase 4 adds TON Storage protocol handlers (`getTorrentInfo`, `addUpdate`, `getPiece`, `overlay.getRandomPeers`), RLDP overlay query dispatch, bidirectional session initialization, and merkle proof generation. End-to-end verified: tonutils-storage client downloads bags from ion-connect-storage over real ADNL/RLDP.
+Phases 1-4 complete (ADNL server, Greenfield indexing, caching layer, TON Storage RPC). Phase 5 adds:
+- **Health HTTP server** on `127.0.0.1:HTTP_PORT` with deep dependency checks (subscriber, PebbleDB, ADNL)
+- **Prometheus metrics** registry with cache/fetch/index/provider counters and gauges
+- **Provider index** serving `GET /bags/:bagId` via HTTP-over-RLDP on the ADNL port (breaks DHT discoverability ceiling)
+- **RLDP-HTTP bridge** forwarding HTTP-over-RLDP requests through a Gin engine
+- Two separate Gin engines: public (provider index over RLDP) and private (health + metrics over TCP)
 
 ## .ionstorage Format (v2)
 
@@ -60,8 +65,13 @@ The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases wi
 ### Connection Handler (`internal/adnl/connection_handler.go`)
 - Registered via `gateway.SetConnectionHandler` in `Start`
 - For each incoming ADNL peer: wraps with `overlay.CreateExtendedADNL` + `overlay.CreateExtendedRLDP`
+- Three handler layers on the same RLDP client:
+  - `extADNL.SetQueryHandler`: non-overlay ADNL queries (GetCapabilities response)
+  - `rl.SetOnUnknownOverlayQuery`: overlay-wrapped RLDP queries (storage protocol)
+  - `rl.SetOnQuery` (rootQueryHandler): non-overlay RLDP queries (HTTP-over-RLDP for provider index)
 - Routes overlay-wrapped ADNL queries to `OverlayManager.HandleIncomingQuery`
 - Routes overlay-wrapped RLDP queries (large payloads like pieces) to the same handler via `SendAnswer`
+- Routes non-overlay RLDP queries to `RLDPHTTPBridge` for HTTP-over-RLDP processing
 - Detects Ping messages (constructor `0x44f3f211`) and triggers bidirectional session initialization via `OverlayManager.NotifyNewSession`
 
 ### Overlay ID (`internal/adnl/overlay_id.go`)
@@ -174,6 +184,42 @@ The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases wi
 - Downloads `.ionstorage` metadata and 16MB segments from Greenfield
 - singleflight coalescing, TeeReader streaming to cache
 
+### TL HTTP Types (`internal/adnl/tl_http.go`)
+- TON HTTP-over-RLDP protocol types: `Request`, `Response`, `Header`, `GetNextPayloadPart`, `PayloadPart`, `GetCapabilities`, `Capabilities`
+- Registered via `tl.Register()` in `init()` with standard TON TL schemas
+- Not built into tonutils-go -- defined locally
+
+### RLDP-HTTP Bridge (`internal/adnl/rldp_http.go`)
+- `RLDPHTTPBridge`: converts HTTP-over-RLDP requests to `http.Request`, routes through a `gin.Engine` via `ServeHTTP`, serializes response back to TL Response + PayloadPart
+- Two-phase payload delivery: Response sent first (headers), then client fetches body via GetNextPayloadPart
+- Pending payloads stored in `xsync.Map` keyed by hex(requestID), with background reaper goroutine (10s interval, 30s TTL)
+- `MakeRLDPQueryHandler`: returns a closure for `RLDPWrapper.SetOnQuery` (rootQueryHandler slot)
+
+### Provider Index (`internal/provider/index.go`)
+- Maps bagID to serving node ADNL addresses via PebbleDB (`prov/<32-byte-bagID>` -> JSON `[]ProviderRecord`)
+- Breaks DHT discoverability ceiling: DHT capped at `ActiveDHTLimit`, provider index serves all indexed bags
+- `Register/Deregister/Lookup` methods for PebbleDB persistence
+- Populated via `Persister.SetOnBagIndexed` callback when new bags are indexed
+
+### Provider Handler (`internal/provider/handler.go`)
+- Gin route: `GET /bags/:bagId` -> parse hex, lookup provider index, return JSON or 404
+- Response: `{"bagId": "hex", "providers": [{"adnlAddress": "hex"}]}`
+
+### Health Handler (`internal/health/handler.go`)
+- Deep dependency checks: `greenfieldclient.Client.IsSubscribed()`, PebbleDB probe, `Server.IsRunning()`
+- Returns 200 + `{"status":"ok","components":{...}}` or 503 + `{"status":"degraded",...}`
+
+### Health Server (`internal/health/server.go`)
+- TCP HTTP server bound to `127.0.0.1:HTTP_PORT` (localhost only)
+- Timeouts: Read 5s, Write 10s, Idle 30s. Graceful shutdown on context cancel.
+
+### Metrics (`internal/metrics/metrics.go`)
+- Custom `prometheus.Registry` with gauges: `bags_registered_total`, `bags_downloading`, `ion_storage_active_transfers`, `cache_entries_total`, `index_entries_total`, `provider_registrations_total`
+- Counters: `cache_hit_total`, `cache_miss_total`, `cache_evictions_total`, `provider_lookups_total`
+- CounterVec: `greenfield_fetch_total` (labels: type, status)
+- HistogramVec: `greenfield_fetch_duration_seconds` (labels: type)
+- Served at `GET /metrics` on private engine (or separate `METRICS_PORT` if configured)
+
 ## API Surface
 
 ### Server (public)
@@ -186,6 +232,24 @@ NewServer(ctx, ServerConfig, *slog.Logger) (*Server, error)
 (*Server) Gateway() *adnl.Gateway
 (*Server) DHTClient() *dht.Client
 (*Server) PrivateKey() ed25519.PrivateKey
+(*Server) IsRunning() bool
+(*Server) SetHTTPBridge(b *RLDPHTTPBridge)
+```
+
+### RLDPHTTPBridge (public)
+```go
+NewRLDPHTTPBridge(ctx, *gin.Engine, *slog.Logger) *RLDPHTTPBridge
+(*RLDPHTTPBridge) MakeRLDPQueryHandler(rl *overlay.RLDPWrapper) func([]byte, *rldp.Query) error
+(*RLDPHTTPBridge) Stop()
+```
+
+### ProviderIndex (public)
+```go
+NewProviderIndex(db *pebble.DB, adnlAddr [32]byte, logger *slog.Logger) *ProviderIndex
+(*ProviderIndex) Register(bagID [32]byte) error
+(*ProviderIndex) Deregister(bagID [32]byte) error
+(*ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error)
+provider.RegisterRoutes(router gin.IRouter, providerIndex *ProviderIndex)
 ```
 
 ### DHTRegistrar (public type, private constructor)
@@ -227,6 +291,7 @@ NewPersister(db *pebble.DB) *Persister
 (*Persister) LoadLastHeight() (int64, error)
 (*Persister) LookupBag(bagID [32]byte) (BagLocation, bool, error)
 (*Persister) PersistBagsAndHeight(entries []BagEntry, height int64) error
+(*Persister) SetOnBagIndexed(cb BagIndexedCallback)
 ```
 
 ### Subscriber (public)
@@ -285,6 +350,8 @@ NewSegmentCache(directory, ttl, onEvict, logger) *SegmentCache
 | `github.com/ice-blockchain/ion/packages/greenfield-client` | Greenfield RPC subscription, object download, event parsing |
 | `github.com/puzpuzpuz/xsync/v4` | Sharded concurrent map for in-memory bag index and segment tracking |
 | `golang.org/x/sync` | singleflight for request coalescing |
+| `github.com/gin-gonic/gin` | HTTP framework for health, metrics, and provider index routes (shared by TCP and RLDP transports) |
+| `github.com/prometheus/client_golang` | Prometheus metrics registry and HTTP handler |
 | `github.com/stretchr/testify` | Test assertions |
 
 ## Design Decisions
@@ -306,3 +373,10 @@ NewSegmentCache(directory, ttl, onEvict, logger) *SegmentCache
 - **singleflight with TeeReader**: `FetchSegment` coalesces concurrent requests. Cache populated on first fetch via TeeReader.
 - **Per-file disk cache**: mirrors torrent file structure. No `_header` file -- header in PebbleDB.
 - **CGO_ENABLED=0**: tonutils-go and PebbleDB are pure Go.
+- **Two Gin engines**: public engine (provider index) served via RLDP on ADNL port, private engine (health + metrics) on `127.0.0.1:HTTP_PORT`. Provider index is reachable via `.adnl` domains through tonutils-proxy. Health/metrics are internal only.
+- **HTTP-over-RLDP via RLDPWrapper.rootQueryHandler**: the overlay `RLDPWrapper.queryHandler` first tries `UnwrapQuery`. If overlay-wrapped, dispatches to overlay handler. If not, falls through to `rootQueryHandler` where the RLDP-HTTP bridge handles HTTP requests. No separate RLDP client needed -- same connection handles both storage protocol and HTTP.
+- **GetCapabilities on extADNL.SetQueryHandler**: must be set on the `ADNLWrapper` (not raw peer) because `overlay.CreateExtendedADNL` replaces the peer's query handler. Non-overlay ADNL queries fall through to `rootQueryHandler`.
+- **Pending payload reaper**: background goroutine (10s interval) cleans `xsync.Map` entries older than 30s. Required for high traffic -- lazy cleanup would accumulate stale entries between bursts.
+- **Provider index populated via callback**: `Persister.SetOnBagIndexed` fires after each successful `PersistBagsAndHeight`, calling `ProviderIndex.Register` for each new bag. No startup scan -- bags registered as they are indexed.
+- **PebbleDB key prefix `prov/`**: disjoint from `idx/` (bag index) and `meta/` (metadata cache). Provider records stored as JSON `[]ProviderRecord` for easy multi-node extension in Phase 8 CRDT mode.
+- **Separate METRICS_PORT**: if `METRICS_PORT` env var set and differs from `HTTP_PORT`, metrics served on a separate localhost-only HTTP server. Allows production to isolate scraping from health probes.

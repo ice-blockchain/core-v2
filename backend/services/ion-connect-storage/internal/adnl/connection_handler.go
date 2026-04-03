@@ -27,13 +27,12 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
-	client.SetQueryHandler(func(query *adnl.MessageQuery) error {
+	extADNL.SetQueryHandler(func(query *adnl.MessageQuery) error {
 		if _, ok := query.Data.(GetCapabilities); ok {
 			return client.Answer(context.Background(), query.ID, &Capabilities{Value: capabilityRLDP2})
 		}
 		return nil
 	})
-
 	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, logger))
 	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, logger))
 
