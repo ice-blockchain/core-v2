@@ -103,7 +103,8 @@ async function executeSingleRequest<T>(context: RequestContext): Promise<HttpRes
 function mapProgress(onProgress?: (p: UploadProgress) => void) {
   if (!onProgress) return undefined;
   return (p: { loaded: number; total: number }) => {
-    onProgress({ bytesSent: p.loaded, bytesTotal: p.total, percentage: Math.round((p.loaded / p.total) * 100) });
+    const percentage = p.total > 0 ? Math.round((p.loaded / p.total) * 100) : 0;
+    onProgress({ bytesSent: p.loaded, bytesTotal: p.total, percentage });
   };
 }
 
@@ -121,6 +122,7 @@ function throwOnErrorStatus(status: number, response: InterceptedResponse): void
   if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body, requestUrl: response.url });
   if (status === 403) throw new NetworkError({ code: 'FORBIDDEN', message: 'Forbidden', status, responseBody: response.body });
   if (status >= 400 && status < 500) throw new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: response.body });
+  if (status >= 500) throw new NetworkError({ code: 'SERVER_ERROR', message: `Server error: ${status}`, status, responseBody: response.body });
 }
 
 async function handleError(internals: ClientInternals, error: unknown): Promise<NetworkError> {

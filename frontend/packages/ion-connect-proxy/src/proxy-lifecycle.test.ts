@@ -11,7 +11,7 @@ vi.mock('./stop-ion-connect-proxy', () => ({
 }));
 
 vi.mock('@ion/diagnostics', () => ({
-  Logger: { info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+  Logger: { info: vi.fn(), warning: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 const { startIonConnectProxy } = await import('./start-ion-connect-proxy');

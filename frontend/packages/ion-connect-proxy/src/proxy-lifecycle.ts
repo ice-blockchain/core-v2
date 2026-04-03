@@ -31,8 +31,8 @@ async function executeRestart(context: ProxyManagerContext): Promise<void> {
 export async function stopProxySilently(): Promise<void> {
   try {
     await stopIonConnectProxy();
-  } catch {
-    // Proxy may already be stopped — safe to ignore
+  } catch (error) {
+    Logger.debug('Proxy stop ignored during restart', { tag: TAG, data: { error: (error as Error).message } });
   }
 }
 

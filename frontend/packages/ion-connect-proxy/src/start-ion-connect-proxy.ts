@@ -11,6 +11,7 @@ export async function startIonConnectProxy(options: StartIonConnectProxyOptions)
     const result = options.configJSON
       ? await nativeModule.startProxyWithConfig(port, options.configJSON)
       : await nativeModule.startProxy(port);
+    if (typeof result !== 'string') throw new Error(`Unexpected native result type: ${typeof result}`);
     if (result.startsWith('ERR:')) throw new Error(result);
     Logger.info('Proxy started', { tag: TAG, data: { port } });
     return result;

@@ -74,9 +74,12 @@ async function startManager(
 async function stopManager(context: ProxyManagerContext, cleanup: () => void): Promise<void> {
   stopHealthCheck(context);
   cleanup();
-  if (context.getStatus() !== 'idle') {
+  const status = context.getStatus();
+  if (status !== 'idle' && status !== 'disconnected') {
     await stopProxySilently();
     context.transition('disconnected');
+  } else if (status === 'disconnected') {
+    await stopProxySilently();
   }
   Logger.info('Proxy manager stopped', { tag: TAG });
 }
