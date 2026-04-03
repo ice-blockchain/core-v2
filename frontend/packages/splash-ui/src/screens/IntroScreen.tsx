@@ -5,6 +5,10 @@ import { Button, Icon, useTheme } from "@ion/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View } from "react-native";
 
+function DevButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return <Button label={label} color="secondary" height={56} onPress={onPress} />;
+}
+
 export function IntroScreen() {
   const navigation = useAppNavigation();
   const theme = useTheme();
@@ -13,10 +17,6 @@ export function IntroScreen() {
 
   const handleLogin = useCallback(() => {
     navigation.navigate(Routes.Sheet.Auth);
-  }, [navigation]);
-
-  const handleCatalog = useCallback(() => {
-    navigation.navigate(Routes.Catalog);
   }, [navigation]);
 
   return (
@@ -29,12 +29,9 @@ export function IntroScreen() {
         onPress={handleLogin}
       />
       <View style={{ height: scale(12) }} />
-      <Button
-        label="UI Catalog (TEST PURPOSE ONLY)"
-        color="secondary"
-        height={56}
-        onPress={handleCatalog}
-      />
+      <DevButton label="UI Catalog (TEST)" onPress={() => navigation.navigate(Routes.Catalog)} />
+      <View style={{ height: scale(12) }} />
+      <DevButton label="Proxy Test (TEST)" onPress={() => navigation.navigate(Routes.ProxyTest)} />
     </View>
   );
 }
