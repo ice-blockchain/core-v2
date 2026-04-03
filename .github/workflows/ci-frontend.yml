@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-frontend-${{ github.event.pull_request.number || github.sha }}
+  group: ci-frontend-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
