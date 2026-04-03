@@ -47,40 +47,44 @@ async function writeTrackedUsers(secureStorage: ISecureStorage, usernames: strin
   await secureStorage.setItem(TRACKED_USERS_KEY, JSON.stringify(usernames));
 }
 
-export function createTokenManager(secureStorage: ISecureStorage): TokenManager {
-  let mutationLock: Promise<void> = Promise.resolve();
-
-  function withLock<T>(fn: () => Promise<T>): Promise<T> {
-    const next = mutationLock.then(fn, fn);
-    mutationLock = next.then(() => {}, () => {});
+function createMutationLock(): <T>(fn: () => Promise<T>) => Promise<T> {
+  let lock: Promise<void> = Promise.resolve();
+  return function withLock<T>(fn: () => Promise<T>): Promise<T> {
+    const next = lock.then(fn, fn);
+    lock = next.then(() => {}, () => {});
     return next;
-  }
+  };
+}
 
+async function checkTokenExpired(secureStorage: ISecureStorage, username: string): Promise<boolean> {
+  const tokens = await readTokens(secureStorage, username);
+  if (!tokens) return true;
+  const exp = parseJwtExpiry(tokens.token);
+  if (!exp) return true;
+  return Date.now() >= (exp - EXPIRY_BUFFER_SECONDS) * 1000;
+}
+
+async function setAndTrack(secureStorage: ISecureStorage, username: string, tokens: AuthTokens): Promise<void> {
+  await secureStorage.setItem(storageKey(username), JSON.stringify(tokens));
+  const tracked = await readTrackedUsers(secureStorage);
+  if (!tracked.includes(username)) {
+    await writeTrackedUsers(secureStorage, [...tracked, username]);
+  }
+}
+
+async function clearAndUntrack(secureStorage: ISecureStorage, username: string): Promise<void> {
+  await secureStorage.removeItem(storageKey(username));
+  const tracked = await readTrackedUsers(secureStorage);
+  await writeTrackedUsers(secureStorage, tracked.filter((u) => u !== username));
+}
+
+export function createTokenManager(secureStorage: ISecureStorage): TokenManager {
+  const withLock = createMutationLock();
   return {
     getTokens: (username) => readTokens(secureStorage, username),
-
-    setTokens: (username, tokens) => withLock(async () => {
-      await secureStorage.setItem(storageKey(username), JSON.stringify(tokens));
-      const tracked = await readTrackedUsers(secureStorage);
-      if (!tracked.includes(username)) {
-        await writeTrackedUsers(secureStorage, [...tracked, username]);
-      }
-    }),
-
-    clearTokens: (username) => withLock(async () => {
-      await secureStorage.removeItem(storageKey(username));
-      const tracked = await readTrackedUsers(secureStorage);
-      await writeTrackedUsers(secureStorage, tracked.filter((u) => u !== username));
-    }),
-
-    async isTokenExpired(username) {
-      const tokens = await readTokens(secureStorage, username);
-      if (!tokens) return true;
-      const exp = parseJwtExpiry(tokens.token);
-      if (!exp) return true;
-      return Date.now() >= (exp - EXPIRY_BUFFER_SECONDS) * 1000;
-    },
-
+    setTokens: (username, tokens) => withLock(() => setAndTrack(secureStorage, username, tokens)),
+    clearTokens: (username) => withLock(() => clearAndUntrack(secureStorage, username)),
+    isTokenExpired: (username) => checkTokenExpired(secureStorage, username),
     getTrackedUsers: () => readTrackedUsers(secureStorage),
   };
 }
