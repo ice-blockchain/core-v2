@@ -1,6 +1,7 @@
 package index
 
 import (
+	"context"
 	"encoding/hex"
 	"log/slog"
 	"os"
@@ -11,6 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// alwaysOwnChecker always claims ownership.
+type alwaysOwnChecker struct{}
+
+func (a *alwaysOwnChecker) OwnsOrClaim(_ context.Context, _ [32]byte) (bool, error) {
+	return true, nil
+}
+
 func newTestSubscriber(t *testing.T) (*Subscriber, *Persister) {
 	t.Helper()
 	db, err := pebble.Open(t.TempDir(), &pebble.Options{})
@@ -20,9 +28,10 @@ func newTestSubscriber(t *testing.T) (*Subscriber, *Persister) {
 	p := NewPersister(db)
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	s := &Subscriber{
-		persister: p,
-		env:       "dev",
-		logger:    logger,
+		persister:        p,
+		ownershipChecker: &alwaysOwnChecker{},
+		env:              "dev",
+		logger:           logger,
 	}
 	return s, p
 }

@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -14,6 +16,7 @@ import (
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/config"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/health"
@@ -43,27 +46,25 @@ func main() {
 	defer db.Close()
 	defer gfClient.Close()
 
-	persister := index.NewPersister(db)
-	fetcher := greenfield.NewFetcher(gfClient, logger)
-
-	sub := index.NewSubscriber(gfClient, persister, cfg.OnlineIOEnv, logger)
-	var subscriberWg sync.WaitGroup
-	subscriberWg.Add(1)
-	go func() {
-		defer subscriberWg.Done()
-		if err := sub.Run(ctx); err != nil && ctx.Err() == nil {
-			logger.Error("subscriber failed", "error", err)
-		}
-	}()
-
 	server, err := createServer(ctx, cfg, logger)
 	if err != nil {
 		logger.Error("create server failed", "error", err)
 		os.Exit(1)
 	}
 
+	if err := server.Start(ctx); err != nil {
+		logger.Error("start server failed", "error", err)
+		os.Exit(1)
+	}
+
+	coord := createCoordinator(cfg, db, server, logger)
+
 	m := metrics.NewMetrics()
-	providerIndex := provider.NewProviderIndex(db, adnlAddrFromGateway(server), logger)
+	persister := index.NewPersister(db)
+	fetcher := greenfield.NewFetcher(gfClient, logger)
+	adnlAddr := adnlAddrFromGateway(server)
+	providerIndex := provider.NewProviderIndex(db, adnlAddr, coord, logger)
+
 	persister.SetOnBagIndexed(func(bagID [32]byte) {
 		if err := providerIndex.Register(bagID); err != nil {
 			logger.Error("provider register failed", "error", err)
@@ -74,7 +75,7 @@ func main() {
 	bridge := ionadnl.NewRLDPHTTPBridge(ctx, publicEngine, logger)
 	server.SetHTTPBridge(bridge)
 
-	privateEngine := createPrivateEngine(gfClient, db, server, m, cfg)
+	privateEngine := createPrivateEngine(gfClient, db, server, coord, m, cfg)
 
 	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
 	segmentCache := cache.NewSegmentCache(cfg.CacheDir, cfg.CacheTTL, func(bagID [32]byte) {
@@ -83,25 +84,33 @@ func main() {
 	}, logger)
 
 	storageHandler := storage.NewHandler(storage.HandlerConfig{
-		MetadataStore: metadataStore,
-		SegmentCache:  segmentCache,
-		Fetcher:       fetcher,
-		Index:         persister,
-		PrivateKey:    server.PrivateKey(),
-		Logger:        logger,
+		MetadataStore:    metadataStore,
+		SegmentCache:     segmentCache,
+		Fetcher:          fetcher,
+		Index:            persister,
+		OwnershipChecker: coord,
+		PieceForwarder:   coord,
+		PrivateKey:       server.PrivateKey(),
+		Logger:           logger,
 	})
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
 	sessionInit := storage.NewSessionInitiator(storageHandler, logger)
 	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
+	// Subscriber starts AFTER coordinator to avoid indexing without CRDT claims.
+	sub := index.NewSubscriber(gfClient, persister, coord, cfg.OnlineIOEnv, logger)
+	var subscriberWg sync.WaitGroup
+	subscriberWg.Add(1)
+	go func() {
+		defer subscriberWg.Done()
+		if err := sub.Run(ctx); err != nil && ctx.Err() == nil {
+			logger.Error("subscriber failed", "error", err)
+		}
+	}()
+
 	go health.StartServer(ctx, privateEngine, "127.0.0.1:"+cfg.HttpPort, logger)
 	startSeparateMetricsServer(ctx, cfg, m, logger)
-
-	if err := server.Start(ctx); err != nil {
-		logger.Error("start server failed", "error", err)
-		os.Exit(1)
-	}
 
 	logger.Info("ion-connect-storage started")
 	<-ctx.Done()
@@ -111,6 +120,49 @@ func main() {
 	subscriberWg.Wait()
 	shutdownServer(server, logger)
 	logger.Info("ion-connect-storage stopped")
+}
+
+func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server, logger *slog.Logger) coordinatorInterface {
+	adnlAddr := adnlAddrFromGateway(server)
+	ip, port := parseExternalAddr(cfg.AdnlExternalAddr)
+
+	if !cfg.ClusterEnabled() {
+		nodeID := cfg.NodeID
+		if nodeID == "" {
+			nodeID = hexEncodeAddr(adnlAddr)
+		}
+		return cluster.NewSingleNodeCoordinator(nodeID, adnlAddr, ip, port)
+	}
+
+	coord, err := cluster.NewCoordinator(cluster.CoordinatorConfig{
+		NodeID:                cfg.NodeID,
+		ClusterOverlayID:      cfg.ClusterOverlayID,
+		DB:                    db,
+		Logger:                logger,
+		HeartbeatInterval:     cfg.HeartbeatInterval,
+		ReclamationInterval:   cfg.ReclamationInterval,
+		StaleHeartbeatTimeout: cfg.StaleHeartbeatTimeout,
+	})
+	if err != nil {
+		logger.Error("create coordinator failed", "error", err)
+		os.Exit(1)
+	}
+
+	if err := coord.Start(context.Background()); err != nil {
+		logger.Error("start coordinator failed", "error", err)
+		os.Exit(1)
+	}
+
+	return coord
+}
+
+// coordinatorInterface combines all cluster interfaces.
+type coordinatorInterface interface {
+	index.OwnershipChecker
+	storage.LocalOwnershipChecker
+	storage.PieceForwarder
+	provider.OwnerResolver
+	health.ClusterChecker
 }
 
 func openBagIndex(cfg config.Config, logger *slog.Logger) (*pebble.DB, greenfieldclient.Client, error) {
@@ -186,6 +238,7 @@ func createPrivateEngine(
 	gfClient greenfieldclient.Client,
 	db *pebble.DB,
 	server *ionadnl.Server,
+	clusterChecker health.ClusterChecker,
 	m *metrics.Metrics,
 	cfg config.Config,
 ) *gin.Engine {
@@ -194,9 +247,10 @@ func createPrivateEngine(
 	engine.Use(gin.Recovery())
 
 	health.RegisterRoutes(engine, health.Deps{
-		GFClient: gfClient,
-		DB:       db,
-		Server:   server,
+		GFClient:       gfClient,
+		DB:             db,
+		Server:         server,
+		ClusterChecker: clusterChecker,
 	})
 
 	if cfg.MetricsPort == "" || cfg.MetricsPort == cfg.HttpPort {
@@ -213,4 +267,23 @@ func startSeparateMetricsServer(ctx context.Context, cfg config.Config, m *metri
 	metricsEngine := gin.New()
 	metrics.RegisterRoutes(metricsEngine, m.Registry())
 	go health.StartServer(ctx, metricsEngine, "127.0.0.1:"+cfg.MetricsPort, logger)
+}
+
+func parseExternalAddr(addr string) (string, int) {
+	host, portStr, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr, 0
+	}
+	port, _ := strconv.Atoi(portStr)
+	return host, port
+}
+
+func hexEncodeAddr(addr [32]byte) string {
+	const hex = "0123456789abcdef"
+	out := make([]byte, 64)
+	for i, v := range addr {
+		out[i*2] = hex[v>>4]
+		out[i*2+1] = hex[v&0x0f]
+	}
+	return string(out)
 }

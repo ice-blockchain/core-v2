@@ -14,6 +14,7 @@ import (
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/storage"
@@ -140,13 +141,16 @@ func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Ha
 
 	_, priv, _ := ed25519.GenerateKey(rand.Reader)
 
+	singleNode := cluster.NewSingleNodeCoordinator("test-node", [32]byte{}, "127.0.0.1", 0)
 	h := storage.NewHandler(storage.HandlerConfig{
-		MetadataStore: metadataStore,
-		SegmentCache:  segmentCache,
-		Fetcher:       fetcher,
-		Index:         persister,
-		PrivateKey:    priv,
-		Logger:        logger,
+		MetadataStore:    metadataStore,
+		SegmentCache:     segmentCache,
+		Fetcher:          fetcher,
+		Index:            persister,
+		OwnershipChecker: singleNode,
+		PieceForwarder:   singleNode,
+		PrivateKey:       priv,
+		Logger:           logger,
 	})
 	return h, bagID, meta
 }

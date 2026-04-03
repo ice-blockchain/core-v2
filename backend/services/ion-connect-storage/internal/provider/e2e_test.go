@@ -18,6 +18,7 @@ import (
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/gin-gonic/gin"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/provider"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/adnl"
@@ -45,7 +46,8 @@ func TestE2E_ProviderIndexOverRLDP(t *testing.T) {
 
 	var adnlAddr [32]byte
 	copy(adnlAddr[:], serverADNLAddr)
-	providerIndex := provider.NewProviderIndex(db, adnlAddr, logger)
+	singleNode := cluster.NewSingleNodeCoordinator("test-node", adnlAddr, "127.0.0.1", 0)
+	providerIndex := provider.NewProviderIndex(db, adnlAddr, singleNode, logger)
 
 	testBagID := [32]byte{0xDE, 0xAD, 0xBE, 0xEF}
 	require.NoError(t, providerIndex.Register(testBagID))
@@ -128,7 +130,8 @@ func startTestServerWithBridge(
 
 	var adnlAddr [32]byte
 	copy(adnlAddr[:], server.Gateway().GetID())
-	providerIndex := provider.NewProviderIndex(db, adnlAddr, logger)
+	singleNode := cluster.NewSingleNodeCoordinator("test-node", adnlAddr, "127.0.0.1", 0)
+	providerIndex := provider.NewProviderIndex(db, adnlAddr, singleNode, logger)
 	provider.RegisterRoutes(engine, providerIndex)
 
 	bridge := ionadnl.NewRLDPHTTPBridge(ctx, engine, logger)

@@ -20,6 +20,7 @@ import (
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/storage"
@@ -220,13 +221,16 @@ func setupSeederServer(
 	}, 1))
 	require.NoError(t, metadataStore.PutBagMetadata(bagID, ionStorageData))
 
+	singleNode := cluster.NewSingleNodeCoordinator("test-node", [32]byte{}, "127.0.0.1", 0)
 	storageHandler := storage.NewHandler(storage.HandlerConfig{
-		MetadataStore: metadataStore,
-		SegmentCache:  segmentCache,
-		Fetcher:       fetcher,
-		Index:         persister,
-		PrivateKey:    server.PrivateKey(),
-		Logger:        logger,
+		MetadataStore:    metadataStore,
+		SegmentCache:     segmentCache,
+		Fetcher:          fetcher,
+		Index:            persister,
+		OwnershipChecker: singleNode,
+		PieceForwarder:   singleNode,
+		PrivateKey:       server.PrivateKey(),
+		Logger:           logger,
 	})
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
 	sessionInit := storage.NewSessionInitiator(storageHandler, logger)

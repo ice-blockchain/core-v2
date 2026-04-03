@@ -9,11 +9,18 @@ import (
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
 )
 
+// ClusterChecker reports cluster health.
+type ClusterChecker interface {
+	IsConnected() bool
+	ActiveNodeCount() int
+}
+
 // Deps holds dependencies for health check verification.
 type Deps struct {
-	GFClient greenfieldclient.Client
-	DB       *pebble.DB
-	Server   *ionadnl.Server
+	GFClient       greenfieldclient.Client
+	DB             *pebble.DB
+	Server         *ionadnl.Server
+	ClusterChecker ClusterChecker
 }
 
 // Status is the JSON response for GET /health-check.
@@ -50,6 +57,13 @@ func makeHealthHandler(deps Deps) gin.HandlerFunc {
 			status.Components["adnl"] = "ok"
 		} else {
 			status.Components["adnl"] = "not running"
+			isHealthy = false
+		}
+
+		if deps.ClusterChecker.IsConnected() {
+			status.Components["cluster_overlay"] = "ok"
+		} else {
+			status.Components["cluster_overlay"] = "not connected"
 			isHealthy = false
 		}
 

@@ -14,26 +14,34 @@ const (
 	eventTypeUpdateObject = "greenfield.storage.EventUpdateObjectContent"
 )
 
+// OwnershipChecker decides whether this node should own a bag.
+type OwnershipChecker interface {
+	OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error)
+}
+
 // Subscriber consumes Greenfield events and populates the bag index.
 type Subscriber struct {
-	client    greenfieldclient.Client
-	persister *Persister
-	env       string
-	logger    *slog.Logger
+	client           greenfieldclient.Client
+	persister        *Persister
+	ownershipChecker OwnershipChecker
+	env              string
+	logger           *slog.Logger
 }
 
 // NewSubscriber creates a Subscriber.
 func NewSubscriber(
 	client greenfieldclient.Client,
 	persister *Persister,
+	ownershipChecker OwnershipChecker,
 	env string,
 	logger *slog.Logger,
 ) *Subscriber {
 	return &Subscriber{
-		client:    client,
-		persister: persister,
-		env:       env,
-		logger:    logger,
+		client:           client,
+		persister:        persister,
+		ownershipChecker: ownershipChecker,
+		env:              env,
+		logger:           logger,
 	}
 }
 
@@ -115,6 +123,16 @@ func (s *Subscriber) collectEntries(txEvent *greenfieldclient.TxEvent) []BagEntr
 		bagID, err := decodeBagID(bagIDHex)
 		if err != nil {
 			s.logger.Warn("invalid ion-bag-id hex", "value", bagIDHex, "error", err)
+			continue
+		}
+
+		owned, err := s.ownershipChecker.OwnsOrClaim(context.Background(), bagID)
+		if err != nil {
+			s.logger.Warn("ownership check failed", "bag_id", bagIDHex, "error", err)
+			continue
+		}
+		if !owned {
+			s.logger.Debug("bag not owned, skipping", "bag_id", bagIDHex)
 			continue
 		}
 

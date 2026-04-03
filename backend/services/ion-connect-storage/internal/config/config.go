@@ -10,25 +10,33 @@ import (
 )
 
 type Config struct {
-	AdnlPrivateKey    string
-	AdnlPort          int
-	AdnlExternalAddr  string
-	GlobalConfigURL   string
-	GreenfieldRpcURLs []string
-	GreenfieldChainID string
-	GreenfieldPrivKey string
-	OnlineIOEnv       string
-	CacheTTL          time.Duration
-	CacheDir          string
-	DataDir           string
-	ShardIndex        int
-	ShardCount        int
-	ClusterOverlayID  string
-	NodeID            string
-	ActiveDHTLimit    int
-	HttpPort          string
-	MetricsPort       string
-	LogLevel          string
+	AdnlPrivateKey        string
+	AdnlPort              int
+	AdnlExternalAddr      string
+	GlobalConfigURL       string
+	GreenfieldRpcURLs     []string
+	GreenfieldChainID     string
+	GreenfieldPrivKey     string
+	OnlineIOEnv           string
+	CacheTTL              time.Duration
+	CacheDir              string
+	DataDir               string
+	ShardIndex            int
+	ShardCount            int
+	ClusterOverlayID      string
+	NodeID                string
+	HeartbeatInterval     time.Duration
+	ReclamationInterval   time.Duration
+	StaleHeartbeatTimeout time.Duration
+	ActiveDHTLimit        int
+	HttpPort              string
+	MetricsPort           string
+	LogLevel              string
+}
+
+// ClusterEnabled returns true if a cluster overlay ID is configured.
+func (c Config) ClusterEnabled() bool {
+	return c.ClusterOverlayID != ""
 }
 
 func Load() (Config, error) {
@@ -73,25 +81,28 @@ func Load() (Config, error) {
 	activeDHTLimit := parseInt("ACTIVE_DHT_LIMIT", 100000)
 
 	return Config{
-		AdnlPrivateKey:    adnlKey,
-		AdnlPort:          adnlPort,
-		AdnlExternalAddr:  adnlExternalAddr,
-		GlobalConfigURL:   globalConfigURL,
-		GreenfieldRpcURLs: rpcURLs,
-		GreenfieldChainID: envOrDefault("GREENFIELD_CHAIN_ID", "greenfield_1017-1"),
-		GreenfieldPrivKey: greenfieldPrivKey,
-		OnlineIOEnv:       onlineIOEnv,
-		CacheTTL:          cacheTTL,
-		CacheDir:          envOrDefault("CACHE_DIR", "/data/cache"),
-		DataDir:           envOrDefault("DATA_DIR", "/data/db"),
-		ShardIndex:        shardIndex,
-		ShardCount:        shardCount,
-		ClusterOverlayID:  os.Getenv("CLUSTER_OVERLAY_ID"),
-		NodeID:            os.Getenv("NODE_ID"),
-		ActiveDHTLimit:    activeDHTLimit,
-		HttpPort:          envOrDefault("HTTP_PORT", "8080"),
-		MetricsPort:       os.Getenv("METRICS_PORT"),
-		LogLevel:          envOrDefault("LOG_LEVEL", "info"),
+		AdnlPrivateKey:        adnlKey,
+		AdnlPort:              adnlPort,
+		AdnlExternalAddr:      adnlExternalAddr,
+		GlobalConfigURL:       globalConfigURL,
+		GreenfieldRpcURLs:     rpcURLs,
+		GreenfieldChainID:     envOrDefault("GREENFIELD_CHAIN_ID", "greenfield_1017-1"),
+		GreenfieldPrivKey:     greenfieldPrivKey,
+		OnlineIOEnv:           onlineIOEnv,
+		CacheTTL:              cacheTTL,
+		CacheDir:              envOrDefault("CACHE_DIR", "/data/cache"),
+		DataDir:               envOrDefault("DATA_DIR", "/data/db"),
+		ShardIndex:            shardIndex,
+		ShardCount:            shardCount,
+		ClusterOverlayID:      os.Getenv("CLUSTER_OVERLAY_ID"),
+		NodeID:                os.Getenv("NODE_ID"),
+		HeartbeatInterval:     parseDuration("HEARTBEAT_INTERVAL", 60*time.Second),
+		ReclamationInterval:   parseDuration("RECLAMATION_INTERVAL", 5*time.Minute),
+		StaleHeartbeatTimeout: parseDuration("STALE_HEARTBEAT_TIMEOUT", 10*time.Minute),
+		ActiveDHTLimit:        activeDHTLimit,
+		HttpPort:              envOrDefault("HTTP_PORT", "8080"),
+		MetricsPort:           os.Getenv("METRICS_PORT"),
+		LogLevel:              envOrDefault("LOG_LEVEL", "info"),
 	}, nil
 }
 

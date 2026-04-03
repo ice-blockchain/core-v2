@@ -22,16 +22,23 @@ type LookupResponse struct {
 	Providers []ProviderRecord `json:"providers"`
 }
 
+// OwnerResolver resolves bag ownership from the cluster CRDT.
+type OwnerResolver interface {
+	Owner(bagID [32]byte) string
+	NodeADNLAddress(nodeID string) (adnlAddr [32]byte, ip string, port int, found bool)
+}
+
 // ProviderIndex maps bagId to the set of ADNL addresses serving that bag.
 type ProviderIndex struct {
-	db       *pebble.DB
-	adnlAddr [32]byte
-	logger   *slog.Logger
+	db            *pebble.DB
+	adnlAddr      [32]byte
+	ownerResolver OwnerResolver
+	logger        *slog.Logger
 }
 
 // NewProviderIndex creates a provider index backed by PebbleDB.
-func NewProviderIndex(db *pebble.DB, adnlAddr [32]byte, logger *slog.Logger) *ProviderIndex {
-	return &ProviderIndex{db: db, adnlAddr: adnlAddr, logger: logger}
+func NewProviderIndex(db *pebble.DB, adnlAddr [32]byte, ownerResolver OwnerResolver, logger *slog.Logger) *ProviderIndex {
+	return &ProviderIndex{db: db, adnlAddr: adnlAddr, ownerResolver: ownerResolver, logger: logger}
 }
 
 // Register persists this node as a provider for the given bag.
@@ -56,7 +63,16 @@ func (p *ProviderIndex) Deregister(bagID [32]byte) error {
 }
 
 // Lookup returns all known providers for a bag.
+// In cluster mode, queries the CRDT owner first. Falls back to PebbleDB.
 func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
+	ownerNodeID := p.ownerResolver.Owner(bagID)
+	if ownerNodeID != "" {
+		adnlAddr, _, _, found := p.ownerResolver.NodeADNLAddress(ownerNodeID)
+		if found {
+			return []ProviderRecord{{ADNLAddress: hex.EncodeToString(adnlAddr[:])}}, nil
+		}
+	}
+
 	val, closer, err := p.db.Get(makeProviderKey(bagID))
 	if err == pebble.ErrNotFound {
 		return nil, nil

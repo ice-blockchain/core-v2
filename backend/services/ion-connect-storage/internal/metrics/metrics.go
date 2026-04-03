@@ -1,6 +1,9 @@
 package metrics
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 // Metrics holds all Prometheus metrics for ion-connect-storage.
 type Metrics struct {
@@ -16,6 +19,7 @@ type Metrics struct {
 	IndexEntries            prometheus.Gauge
 	ProviderLookups         prometheus.Counter
 	ProviderRegistrations   prometheus.Gauge
+	Cluster                 *cluster.ClusterMetrics
 
 	registry *prometheus.Registry
 }
@@ -48,6 +52,8 @@ func NewMetrics() *Metrics {
 		Buckets: prometheus.DefBuckets,
 	}, []string{"type"})
 	reg.MustRegister(m.GreenfieldFetchDuration)
+
+	m.Cluster = cluster.RegisterClusterMetrics(reg)
 
 	return m
 }
