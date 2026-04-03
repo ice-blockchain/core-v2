@@ -9,6 +9,7 @@ import { createTwoFADataSource } from './two-fa-data-source';
 function createMockHttpClient(): HttpClient {
   return {
     get: vi.fn(),
+    head: vi.fn(),
     post: vi.fn(),
     put: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: { TOTPAuthenticatorURL: 'otpauth://...' } })),
     patch: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: {} })),

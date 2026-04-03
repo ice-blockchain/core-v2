@@ -22,6 +22,7 @@ function createMockDeps(jwt?: string) {
     authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {}, addUser: vi.fn(), removeUser: vi.fn() },
     httpClient: {
       get: vi.fn(),
+    head: vi.fn(),
       post: vi.fn(),
       put: vi.fn(),
       patch: vi.fn(),

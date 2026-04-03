@@ -7,6 +7,7 @@ import { createUserActionDataSource } from './user-action-data-source';
 function createMockHttpClient(response: unknown): HttpClient {
   return {
     get: vi.fn(),
+    head: vi.fn(),
     post: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: response })),
     put: vi.fn(),
     patch: vi.fn(),

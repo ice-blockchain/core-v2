@@ -10,6 +10,7 @@ vi.mock('./sign-user-action', () => ({
 function createMockDeps() {
   const httpClient = {
     get: vi.fn(),
+    head: vi.fn(),
     post: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: { result: 'ok' } })),
     put: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: { result: 'ok' } })),
     patch: vi.fn(() => Promise.resolve({ status: 200, headers: {}, body: { result: 'ok' } })),
