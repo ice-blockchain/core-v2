@@ -23,6 +23,8 @@ interface AppNavigatorProps {
     ChatPreview: ComponentType;
     ProxyTest?: ComponentType;
     NicknameReserved: ComponentType;
+    IdentityKeyNameNote: ComponentType;
+    VerifyPasskey: ComponentType;
   };
   authScreens: AuthScreens;
 }
@@ -48,6 +50,8 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
       )}
       <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} options={TRANSPARENT_MODAL_OPTIONS} />
+      <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={screens.IdentityKeyNameNote} options={TRANSPARENT_MODAL_OPTIONS} />
+      <Stack.Screen name={Routes.Sheet.VerifyPasskey} component={screens.VerifyPasskey} options={TRANSPARENT_MODAL_OPTIONS} />
     </Stack.Navigator>
   );
 }

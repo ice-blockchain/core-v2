@@ -9,21 +9,31 @@ interface RegisterHeaderProps {
 }
 
 export function RegisterHeader({ icon, title, subtitle }: RegisterHeaderProps) {
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
 
   const iconCircleStyle = useMemo(() => ({
-    ...styles.iconCircle,
+    width: scale.scaleSize(65),
+    height: scale.scaleSize(65),
+    borderRadius: scale.scaleRadius(32.5),
     backgroundColor: colors.primaryAccent,
-  }), [colors.primaryAccent]);
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    marginBottom: scale.scaleSize(20),
+  }), [colors.primaryAccent, scale]);
+
+  const subtitleStyle = useMemo(() => ({
+    textAlign: "center" as const,
+    maxWidth: scale.scaleSize(320),
+  }), [scale]);
 
   return (
     <View style={styles.container}>
       <View style={iconCircleStyle}>
         {icon}
       </View>
-      <Text variant="headline1" color={colors.primaryText}>{title}</Text>
+      <Text variant="headline1" color={colors.primaryText} style={styles.titleText}>{title}</Text>
       {subtitle ? (
-        <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>{subtitle}</Text>
+        <Text variant="body2" color={colors.tertiaryText} style={subtitleStyle}>{subtitle}</Text>
       ) : null}
     </View>
   );
@@ -32,18 +42,8 @@ export function RegisterHeader({ icon, title, subtitle }: RegisterHeaderProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
-    marginTop: 20,
   },
-  iconCircle: {
-    width: 65,
-    height: 65,
-    borderRadius: 32.5,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  subtitle: {
+  titleText: {
     textAlign: "center",
-    maxWidth: 320,
   },
 });

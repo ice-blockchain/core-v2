@@ -17,29 +17,33 @@ interface BenefitItem extends BenefitRowProps {
   id: string;
 }
 
-const ROW_STYLE = { flexDirection: "row" as const, alignItems: "center" as const, gap: 12 };
-const TEXT_CONTAINER_STYLE = { flex: 1 };
-
 function BenefitRow({ icon, title, subtitle }: BenefitRowProps) {
-  const theme = useTheme();
+  const { colors, scale } = useTheme();
+
+  const rowStyle = useMemo(() => ({
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: scale.scaleSize(10),
+  }), [scale]);
+
   const iconStyle = useMemo(() => ({
-    width: 48,
-    height: 68,
-    backgroundColor: theme.colors.tertiaryBackground,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+    width: scale.scaleSize(48),
+    height: scale.scaleSize(68),
+    backgroundColor: colors.tertiaryBackground,
+    borderTopLeftRadius: scale.scaleRadius(12),
+    borderBottomLeftRadius: scale.scaleRadius(12),
     alignItems: "center" as const,
     justifyContent: "center" as const,
-  }), [theme.colors.tertiaryBackground]);
+  }), [colors.tertiaryBackground, scale]);
 
   return (
-    <View style={ROW_STYLE}>
+    <View style={rowStyle}>
       <View style={iconStyle}>
         {icon}
       </View>
       <View style={TEXT_CONTAINER_STYLE}>
-        <Text variant="body">{title}</Text>
-        <Text variant="caption3">{subtitle}</Text>
+        <Text variant="body" color={colors.primaryText}>{title}</Text>
+        <Text variant="caption3" color={colors.tertiaryText}>{subtitle}</Text>
       </View>
     </View>
   );
@@ -69,24 +73,22 @@ function buildBenefits(): BenefitItem[] {
 }
 
 export function PasskeyBenefitList() {
+  const { scale } = useTheme();
+
+  const containerStyle = useMemo(() => ({
+    gap: scale.scaleSize(12),
+    marginTop: scale.scaleSize(37),
+    alignSelf: "stretch" as const,
+  }), [scale]);
+
   const benefits = buildBenefits();
   return (
-    <View style={CONTAINER_STYLE}>
+    <View style={containerStyle}>
       {benefits.map((benefit) => (
-        <BenefitRow
-          key={benefit.id}
-          icon={benefit.icon}
-          title={benefit.title}
-          subtitle={benefit.subtitle}
-        />
+        <BenefitRow key={benefit.id} icon={benefit.icon} title={benefit.title} subtitle={benefit.subtitle} />
       ))}
     </View>
   );
 }
 
-const CONTAINER_STYLE = {
-  gap: 12,
-  marginTop: 37,
-  paddingHorizontal: 40,
-  alignSelf: "stretch" as const,
-};
+const TEXT_CONTAINER_STYLE = { flex: 1 };

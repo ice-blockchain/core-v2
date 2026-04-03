@@ -18,7 +18,7 @@ function ValidCheckmark({ size, color }: { size: number; color: string }) {
 }
 
 export function TextInput(props: TextInputProps) {
-  const { value, onChangeText, placeholder, prefixIcon, state, errorMessage, style } = props;
+  const { value, onChangeText, placeholder, prefixIcon, suffixIcon, state, errorMessage, style } = props;
   const [isFocused, setIsFocused] = useState(false);
   const visualState = resolveVisualState(value, isFocused, state);
   const { borderColors, containerStyle, separatorStyle, inputStyle, theme, scale } = useTextInputStyles(visualState);
@@ -42,7 +42,8 @@ export function TextInput(props: TextInputProps) {
           onFocus={() => { setIsFocused(true); props.onFocus?.(); }} onBlur={() => { setIsFocused(false); props.onBlur?.(); }}
           testID={props.testID}
         />
-        {visualState === "valid" ? <ValidCheckmark size={scale(24)} color={theme.colors.success} /> : null}
+        {!suffixIcon && visualState === "valid" ? <ValidCheckmark size={scale(24)} color={theme.colors.success} /> : null}
+        {suffixIcon ?? null}
       </View>
     </View>
   );

@@ -1,18 +1,17 @@
 import { useCallback, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { Icon, Text, TextField, useTheme } from "@ion/ui";
+import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
+import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
 import { SecuredByFooter } from "./secured-by-footer";
 import { TermsFooter } from "./terms-footer";
 import { IceLogoIcon } from "./ice-logo-icon";
-import { IdentityKeyIcon } from "./identity-key-icon";
-import { InfoIcon } from "./info-icon";
 import { CreateAccountIcon } from "./create-account-icon";
+import { IdentityKeyNameInput } from "./identity-key-name-input";
 import { useIdentityKeyValidation } from "./identity-key-rules";
 
 function GetStartedHeader() {
@@ -40,8 +39,12 @@ function useGetStartedNavigation() {
   const navigation = useAuthNavigation();
 
   return {
+    // Intentional: randomly route to password or passkey flow for development testing
     handleRegister: useCallback(() => {
-      navigation.navigate(Routes.Auth.Register);
+      const route = Math.random() < 0.5
+        ? Routes.Auth.PasswordRegister
+        : Routes.Auth.PasskeyRegister;
+      navigation.navigate(route);
     }, [navigation]),
     // TODO: wire to actual password verification before navigating
     handleVerifyPassword: useCallback(() => {
@@ -80,21 +83,16 @@ function GetStartedContent({ identity, nav }: {
   nav: ReturnType<typeof useGetStartedNavigation>;
 }) {
   const sheetScroll = useSheetScroll();
+  const appNavigation = useAppNavigation();
+  const handleInfoPress = useCallback(() => {
+    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
+  }, [appNavigation]);
 
   return (
     <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
       <View style={styles.page}>
         <GetStartedHeader />
-        <TextField
-          label={translate("auth:identityKeyNameLabel")}
-          value={identity.value}
-          onChangeText={identity.setValue}
-          prefixIcon={<IdentityKeyIcon />}
-          hasPrefixDivider
-          suffixIcon={<InfoIcon />}
-          {...(identity.errorMessage ? { state: "error" as const, errorMessage: identity.errorMessage } : {})}
-          style={styles.field}
-        />
+        <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={styles.field} />
         <GetStartedActions identity={identity} nav={nav} />
         <View style={styles.footer}>
           <SecuredByFooter />

@@ -147,7 +147,7 @@ function useContainerStyle() {
   );
 }
 
-export function RegisterScreen() {
+export function PasswordRegisterScreen() {
   const navigation = useAuthNavigation();
   const form = useRegisterPasswordForm();
   const containerStyle = useContainerStyle();

@@ -1,12 +1,15 @@
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
+export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
-export { RegisterScreen } from "./register-screen";
+export { PasskeyRegisterScreen } from "./passkey-register-screen";
+export { PasswordRegisterScreen } from "./password-register-screen";
 export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";
 export { RestoreSuccessModal } from "./restore-success-modal";
 export { SetNewPasswordScreen } from "./set-new-password-screen";
 export { VerifyPasskeyScreen } from "./verify-passkey-screen";
+export { VerifyPasskeySheetScreen } from "./verify-passkey-sheet-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
 
 // Buttons
@@ -24,6 +27,9 @@ export { TermsFooter } from "./terms-footer";
 
 // Cards
 export { RestoreOptionCard } from "./restore-option-card";
+
+// Inputs
+export { IdentityKeyNameInput } from "./identity-key-name-input";
 
 // Forms
 export { RegisterForm } from "./register-form";

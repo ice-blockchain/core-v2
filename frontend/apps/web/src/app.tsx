@@ -16,7 +16,7 @@ import {
   NicknameReservedScreen,
   onboardingTranslations,
 } from '@ion/onboarding-ui';
-import { authTranslations, GetStartedScreen, RegisterScreen } from '@ion/auth-ui';
+import { authTranslations, GetStartedScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyPasskeySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
 import { splashTranslations } from '@ion/splash-ui';
 import { chatTranslations } from '@ion/chat';
 import { SplashScreen } from './components/splash-screen';
@@ -36,11 +36,14 @@ const screens = {
   Catalog: CatalogScreen,
   ChatPreview: ChatPreviewScreen,
   NicknameReserved: NicknameReservedScreen,
+  VerifyPasskey: VerifyPasskeySheetScreen,
+  IdentityKeyNameNote: IdentityKeyNameNoteScreen,
 };
 
 const authScreens = {
   GetStarted: GetStartedScreen,
-  Register: RegisterScreen,
+  PasswordRegister: PasswordRegisterScreen,
+  PasskeyRegister: PasskeyRegisterScreen,
   ProfileSetup: ProfileSetupScreen,
   SelectLanguages: SelectLanguagesScreen,
   DiscoverCreators: DiscoverCreatorsScreen,

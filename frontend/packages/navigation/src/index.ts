@@ -1,5 +1,5 @@
 export { Routes } from './routes';
-export type { RootStackParamList, AuthStackParamList } from './route-params';
+export type { RootStackParamList, AuthStackParamList, VerifyPasskeyNextRoute } from './route-params';
 export { AppNavigator } from './app-navigator';
 export { useAppNavigation } from './use-app-navigation';
 export { Sheet } from './sheet-navigator';
@@ -8,4 +8,5 @@ export { useSheetNavigation } from './use-sheet-navigation';
 export { useAuthNavigation } from './use-auth-navigation';
 export { useSheetScroll } from './use-sheet-scroll';
 export { useNavigationTheme } from './use-navigation-theme';
+export { InformationSheetContent } from './information-sheet-content';
 export { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
