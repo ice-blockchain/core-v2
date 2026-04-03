@@ -28,8 +28,15 @@ function requestKey(method: string, url: string): string {
   return `${method}:${url}`;
 }
 
+function stripAuthorizationHeader(request: InterceptedRequest): InterceptedRequest {
+  const headers = { ...request.headers };
+  delete headers.Authorization;
+  return { ...request, headers };
+}
+
 function isRelativeOrTrustedUrl(url: string, trustedBaseUrl: string): boolean {
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return true;
+  if ((url.startsWith('/') && !url.startsWith('//')) || (!url.includes(':') && !url.startsWith('//'))) return true;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
   return new URL(url).origin === new URL(trustedBaseUrl).origin;
 }
 
@@ -38,10 +45,12 @@ async function injectAuthHeader(
   request: InterceptedRequest,
   usernameByRequest: Map<string, string>,
 ): Promise<InterceptedRequest> {
+  if (!isRelativeOrTrustedUrl(request.url, deps.trustedBaseUrl)) {
+    return stripAuthorizationHeader(request);
+  }
   if (request.headers.Authorization) return request;
   const username = request.headers['X-Username'];
   if (!username) return request;
-  if (!isRelativeOrTrustedUrl(request.url, deps.trustedBaseUrl)) return request;
   const tokens = await deps.tokenManager.getTokens(username);
   if (!tokens) return request;
   usernameByRequest.set(requestKey(request.method, request.url), username);
