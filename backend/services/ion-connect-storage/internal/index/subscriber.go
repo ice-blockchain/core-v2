@@ -67,7 +67,7 @@ func (s *Subscriber) Run(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if err := s.processEvent(txEvent); err != nil {
+		if err := s.ProcessEvent(txEvent); err != nil {
 			s.logger.Error("process event", "height", txEvent.Height, "error", err)
 		}
 	}
@@ -75,9 +75,9 @@ func (s *Subscriber) Run(ctx context.Context) error {
 	return nil
 }
 
-// processEvent correlates EventCreateObject/EventUpdateObjectContent with
+// ProcessEvent correlates EventCreateObject/EventUpdateObjectContent with
 // EventSetTag to build (bagID -> BagLocation) entries.
-func (s *Subscriber) processEvent(txEvent *greenfieldclient.TxEvent) error {
+func (s *Subscriber) ProcessEvent(txEvent *greenfieldclient.TxEvent) error {
 	entries := s.collectEntries(txEvent)
 	if len(entries) == 0 {
 		return nil

@@ -21,6 +21,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
 	"github.com/stretchr/testify/require"
@@ -211,7 +212,8 @@ func TestE2E_SubscriberIndexesBagWithMetadata(t *testing.T) {
 	persister := index.NewPersister(db)
 	fetcher := greenfield.NewFetcher(gfClient, logger)
 
-	sub := index.NewSubscriber(gfClient, persister, e2eEnv, logger)
+	singleNode := cluster.NewSingleNodeCoordinator("test-node", [32]byte{}, "127.0.0.1", 0)
+	sub := index.NewSubscriber(gfClient, persister, singleNode, e2eEnv, logger)
 
 	subCtx, subCancel := context.WithCancel(ctx)
 	defer subCancel()
@@ -262,10 +264,12 @@ func TestE2E_SubscriberIndexesBagWithMetadata(t *testing.T) {
 			meta, err := fetcher.FetchMetadata(ctx, bucketName, objectName)
 			require.NoError(t, err)
 			require.Equal(t, bagID, meta.BagID)
-			require.Equal(t, uint64(payloadSize), meta.FileSize)
+			expectedFileSize := uint64(payloadSize) + meta.HeaderSize
+			require.Equal(t, expectedFileSize, meta.FileSize, "FileSize = payload + header")
 			require.Equal(t, uint32(boc.PieceSize), meta.PieceSize)
-			require.Equal(t, 34, meta.PieceCount) // ceil(17MB / 512KB)
-			t.Logf("metadata verified: file_size=%d piece_count=%d", meta.FileSize, meta.PieceCount)
+			expectedPieceCount := (int(expectedFileSize) + int(meta.PieceSize) - 1) / int(meta.PieceSize)
+			require.Equal(t, expectedPieceCount, meta.PieceCount)
+			t.Logf("metadata verified: file_size=%d header_size=%d piece_count=%d", meta.FileSize, meta.HeaderSize, meta.PieceCount)
 
 			// Verify segment 0 (16MB)
 			seg0, err := fetcher.FetchSegment(ctx, bucketName, objectName, 0, nil)
