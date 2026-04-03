@@ -66,7 +66,7 @@ function reactNativeWebPlugin(): Plugin {
             },
             {
               find: /^react-native-linear-gradient$/,
-              replacement: path.resolve(stubsDir, 'react-native-linear-gradient.tsx'),
+              replacement: path.join(stubsDir, 'react-native-linear-gradient.tsx'),
             },
           ],
         },
