@@ -23,7 +23,7 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
         }
     }
 
-    private var proxyPort: Int = 0
+    @Volatile private var proxyPort: Int = 0
 
     override fun getName(): String = NAME
 
@@ -128,10 +128,10 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
         thread {
             try {
                 assertSandboxPath(filePath)
-                val fileBody = File(filePath).readText()
-                val raw = buildRawHttpRequest("POST", url, headersJSON, fileBody)
-                val responseData = sendRawProxyRequest(raw)
-                val (status, headers, responseBody) = parseHttpResponse(responseData)
+                val fileBytes = File(filePath).readBytes()
+                val raw = buildRawUploadRequest(url, headersJSON, fileBytes)
+                val responseBytes = sendRawUploadRequestBytes(raw)
+                val (status, headers, responseBody) = parseHttpResponseBytes(responseBytes)
                 promise.resolve(encodeResponseJSON(status, headers, responseBody))
             } catch (e: Exception) {
                 promise.reject("PROXY_ERROR", e.message, e)
@@ -147,10 +147,12 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
                 val raw = buildRawHttpRequest("GET", url, headersJSON, "")
                 val responseBytes = sendRawProxyRequestBytes(raw)
                 val separatorIndex = findHeaderEnd(responseBytes)
-                val headerPart = String(responseBytes, 0, separatorIndex)
+                val headerPart = String(responseBytes, 0, separatorIndex) + "\r\n\r\n"
                 val bodyPart = responseBytes.copyOfRange(separatorIndex + 4, responseBytes.size)
-                File(destPath).writeBytes(bodyPart)
                 val (status, headers, _) = parseHttpResponse(headerPart)
+                if (status in 200..299) {
+                    File(destPath).writeBytes(bodyPart)
+                }
                 promise.resolve(encodeResponseJSON(status, headers, ""))
             } catch (e: Exception) {
                 promise.reject("PROXY_ERROR", e.message, e)
@@ -199,6 +201,25 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
         return raw
     }
 
+    private fun buildRawUploadRequest(url: String, headersJSON: String, body: ByteArray): ByteArray {
+        require(!containsCRLF(url)) { "Invalid characters in request parameters" }
+        val host = URL(url).host ?: ""
+        val lines = mutableListOf("POST $url HTTP/1.1", "Host: $host")
+        try {
+            val headers = JSONObject(headersJSON)
+            headers.keys().forEach { key ->
+                val value = headers.getString(key)
+                require(!containsCRLF(key) && !containsCRLF(value)) { "Invalid characters in header" }
+                lines.add("$key: $value")
+            }
+        } catch (e: IllegalArgumentException) { throw e } catch (_: Exception) {}
+        lines.add("Content-Length: ${body.size}")
+        lines.add("Connection: close")
+        lines.add("")
+        val headerBytes = (lines.joinToString("\r\n") + "\r\n").toByteArray()
+        return headerBytes + body
+    }
+
     private fun sendRawProxyRequest(rawHttp: String): String {
         return String(sendRawProxyRequestBytes(rawHttp))
     }
@@ -211,6 +232,25 @@ class IonConnectProxyModule(reactContext: ReactApplicationContext) :
             socket.getOutputStream().flush()
             return readBytesWithLimit(socket.getInputStream(), MAX_RESPONSE_SIZE)
         }
+    }
+
+    private fun sendRawUploadRequestBytes(rawBytes: ByteArray): ByteArray {
+        Socket().use { socket ->
+            socket.connect(InetSocketAddress("127.0.0.1", proxyPort), 10_000)
+            socket.soTimeout = 30_000
+            socket.getOutputStream().write(rawBytes)
+            socket.getOutputStream().flush()
+            return readBytesWithLimit(socket.getInputStream(), MAX_RESPONSE_SIZE)
+        }
+    }
+
+    private fun parseHttpResponseBytes(data: ByteArray): Triple<Int, Map<String, String>, String> {
+        val separatorIndex = findHeaderEnd(data)
+        val headerPart = String(data, 0, separatorIndex) + "\r\n\r\n"
+        val bodyPart = if (separatorIndex + 4 <= data.size) data.copyOfRange(separatorIndex + 4, data.size) else ByteArray(0)
+        val (status, headers, _) = parseHttpResponse(headerPart)
+        val body = String(bodyPart, Charsets.UTF_8)
+        return Triple(status, headers, body)
     }
 
     private fun readBytesWithLimit(input: java.io.InputStream, maxSize: Int): ByteArray {

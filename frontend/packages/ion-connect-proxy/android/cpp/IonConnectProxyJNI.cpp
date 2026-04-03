@@ -20,8 +20,10 @@ extern "C" JNIEXPORT jstring JNICALL
 Java_io_ion_ionconnectproxy_IonConnectProxyModule_nativeStartProxyWithConfig(
     JNIEnv *env, jobject /* this */, jint port, jstring configJSON) {
     const char *config = env->GetStringUTFChars(configJSON, nullptr);
+    if (!config) return env->NewStringUTF("ERR: Out of memory");
     char *configCopy = strdup(config);
     env->ReleaseStringUTFChars(configJSON, config);
+    if (!configCopy) return env->NewStringUTF("ERR: Out of memory");
     jstring result = toJStringAndFree(env, StartProxyWithConfig(static_cast<unsigned short>(port), configCopy));
     free(configCopy);
     return result;

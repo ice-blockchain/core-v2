@@ -10,6 +10,9 @@ class IonConnectProxyImpl: NSObject {
   // MARK: - Lifecycle
 
   @objc func startProxy(_ port: Double, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard port.isFinite, port >= 1, port <= 65535 else {
+      reject("PROXY_START_FAILED", "ERR: Invalid port \(port)", nil); return
+    }
     Self.queue.async {
       let result = callGoFunction(StartProxy(UInt16(port)))
       if result.hasPrefix("ERR:") {
@@ -21,6 +24,9 @@ class IonConnectProxyImpl: NSObject {
   }
 
   @objc func startProxyWithConfig(_ port: Double, configJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard port.isFinite, port >= 1, port <= 65535 else {
+      reject("PROXY_START_FAILED", "ERR: Invalid port \(port)", nil); return
+    }
     Self.queue.async {
       let cConfig = strdup(configJSON)
       let result = callGoFunction(StartProxyWithConfig(UInt16(port), cConfig))
@@ -57,15 +63,24 @@ class IonConnectProxyImpl: NSObject {
   @objc func stopProxy(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     Self.queue.async {
       let result = callGoFunction(StopProxy())
-      resolve(result)
+      if result.hasPrefix("ERR:") {
+        reject("PROXY_STOP_FAILED", result, nil)
+      } else {
+        resolve(result)
+      }
     }
   }
 
   // MARK: - Health Check
 
   @objc func checkProxy(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    guard proxyPort > 0 else { resolve(false); return }
-    let port = proxyPort
+    Self.queue.async {
+      guard self.proxyPort > 0 else { resolve(false); return }
+      self.performHealthCheck(port: self.proxyPort, resolve: resolve)
+    }
+  }
+
+  private func performHealthCheck(port: UInt16, resolve: @escaping RCTPromiseResolveBlock) {
     let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
     var resolved = false
     conn.stateUpdateHandler = { state in
@@ -100,12 +115,11 @@ class IonConnectProxyImpl: NSObject {
     guard let fileData = FileManager.default.contents(atPath: filePath) else {
       reject("PROXY_ERROR", "File not found", nil); return
     }
-    let fileBody = String(data: fileData, encoding: .utf8) ?? ""
-    guard let raw = buildRawHttpRequest(method: "POST", url: url, headersJSON: headersJSON, body: fileBody) else {
+    guard let rawData = buildRawUploadData(url: url, headersJSON: headersJSON, body: fileData) else {
       reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
     }
     let (safeResolve, safeReject) = Self.makeSettledGuards(resolve: resolve, reject: reject)
-    sendRawProxyRequest(rawHttp: raw, resolve: safeResolve, reject: safeReject)
+    sendRawProxyData(rawData: rawData, resolve: safeResolve, reject: safeReject)
   }
 
   @objc func proxyDownload(_ url: String, destPath: String, headersJSON: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
@@ -116,28 +130,33 @@ class IonConnectProxyImpl: NSObject {
       reject("PROXY_ERROR", "Invalid characters in request parameters", nil); return
     }
     let (safeResolve, safeReject) = Self.makeSettledGuards(resolve: resolve, reject: reject)
-    let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
-    conn.stateUpdateHandler = { state in
-      if case .failed(let error) = state { safeReject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel() }
-    }
-    conn.start(queue: Self.queue)
-    conn.send(content: raw.data(using: .utf8), completion: .contentProcessed { error in
-      if let error = error { safeReject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
-      self.receiveFullResponse(conn: conn) { result in
-        conn.cancel()
-        switch result {
-        case .failure(let error): safeReject("PROXY_ERROR", error.localizedDescription, nil)
-        case .success(let responseData):
-          let dest = URL(fileURLWithPath: destPath)
-          let (status, headers, _) = self.parseHttpResponse(responseData)
-          do {
-            try self.extractBody(from: responseData).write(to: dest)
-            let json = self.encodeResponseJSON(status: status, headers: headers, body: "")
-            safeResolve(json)
-          } catch { safeReject("PROXY_ERROR", error.localizedDescription, nil) }
-        }
+    Self.queue.async {
+      guard self.proxyPort > 0 else { safeReject("PROXY_ERROR", "Proxy not started", nil); return }
+      let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: self.proxyPort)!, using: .tcp)
+      conn.stateUpdateHandler = { state in
+        if case .failed(let error) = state { safeReject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel() }
       }
-    })
+      conn.start(queue: Self.queue)
+      Self.queue.asyncAfter(deadline: .now() + 30) { safeReject("PROXY_ERROR", "Download timed out", nil); conn.cancel() }
+      conn.send(content: raw.data(using: .utf8), completion: .contentProcessed { error in
+        if let error = error { safeReject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
+        self.receiveFullResponse(conn: conn) { result in
+          conn.cancel()
+          switch result {
+          case .failure(let error): safeReject("PROXY_ERROR", error.localizedDescription, nil)
+          case .success(let responseData):
+            let (status, headers, _) = self.parseHttpResponse(responseData)
+            if status >= 200 && status < 300 {
+              let dest = URL(fileURLWithPath: destPath)
+              do {
+                try self.extractBody(from: responseData).write(to: dest)
+              } catch { safeReject("PROXY_ERROR", error.localizedDescription, nil); return }
+            }
+            safeResolve(self.encodeResponseJSON(status: status, headers: headers, body: ""))
+          }
+        }
+      })
+    }
   }
 
   // MARK: - Promise Safety
@@ -174,6 +193,24 @@ class IonConnectProxyImpl: NSObject {
 
   // MARK: - Raw TCP Proxy
 
+  private func buildRawUploadData(url: String, headersJSON: String, body: Data) -> Data? {
+    if Self.containsCRLF(url) { return nil }
+    let host = URL(string: url)?.host ?? ""
+    var lines = ["POST \(url) HTTP/1.1", "Host: \(host)"]
+    if let data = headersJSON.data(using: .utf8),
+       let headers = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
+      for (key, value) in headers {
+        if Self.containsCRLF(key) || Self.containsCRLF(value) { return nil }
+        lines.append("\(key): \(value)")
+      }
+    }
+    lines.append("Content-Length: \(body.count)")
+    lines.append("Connection: close")
+    lines.append("")
+    guard let headerData = (lines.joined(separator: "\r\n") + "\r\n").data(using: .utf8) else { return nil }
+    return headerData + body
+  }
+
   private func buildRawHttpRequest(method: String, url: String, headersJSON: String, body: String) -> String? {
     if Self.containsCRLF(method) || Self.containsCRLF(url) { return nil }
     let host = URL(string: url)?.host ?? ""
@@ -194,19 +231,34 @@ class IonConnectProxyImpl: NSObject {
   }
 
   private func sendRawProxyRequest(rawHttp: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    Self.queue.async {
+      guard self.proxyPort > 0 else { reject("PROXY_ERROR", "Proxy not started", nil); return }
+      self.sendDataToProxy(data: rawHttp.data(using: .utf8)!, resolve: resolve, reject: reject)
+    }
+  }
+
+  private func sendRawProxyData(rawData: Data, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    Self.queue.async {
+      guard self.proxyPort > 0 else { reject("PROXY_ERROR", "Proxy not started", nil); return }
+      self.sendDataToProxy(data: rawData, resolve: resolve, reject: reject)
+    }
+  }
+
+  private func sendDataToProxy(data: Data, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     let conn = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: proxyPort)!, using: .tcp)
     conn.stateUpdateHandler = { state in
       if case .failed(let error) = state { reject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel() }
     }
     conn.start(queue: Self.queue)
-    conn.send(content: rawHttp.data(using: .utf8), completion: .contentProcessed { error in
+    Self.queue.asyncAfter(deadline: .now() + 30) { reject("PROXY_ERROR", "Request timed out", nil); conn.cancel() }
+    conn.send(content: data, completion: .contentProcessed { error in
       if let error = error { reject("PROXY_ERROR", error.localizedDescription, nil); conn.cancel(); return }
       self.receiveFullResponse(conn: conn) { result in
         conn.cancel()
         switch result {
         case .failure(let error): reject("PROXY_ERROR", error.localizedDescription, nil)
-        case .success(let data):
-          let (status, headers, body) = self.parseHttpResponse(data)
+        case .success(let responseData):
+          let (status, headers, body) = self.parseHttpResponse(responseData)
           resolve(self.encodeResponseJSON(status: status, headers: headers, body: body))
         }
       }
