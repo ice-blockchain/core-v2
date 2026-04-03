@@ -12,8 +12,6 @@ function buildIdentityStub(): Record<string, ReturnType<typeof vi.fn>> {
     'listCredentials', 'createRecoveryCredentials', 'requestTwoFACode',
     'verifyTwoFACode', 'deleteTwoFAMethod', 'deleteAccount', 'recoverAccount',
     'getSocialProfile', 'updateSocialProfile', 'verifyNickname',
-    'getIonConnectRelays', 'getIonConnectIndexers', 'setIonConnectRelays',
-    'getAvailableRelays', 'getContentCreators', 'searchUsers',
   ] as const;
   return Object.fromEntries(methods.map((m) => [m, vi.fn()]));
 }
