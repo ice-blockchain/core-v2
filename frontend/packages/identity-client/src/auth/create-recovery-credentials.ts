@@ -76,20 +76,30 @@ async function buildRecoveryCredential(challenge: string, recoveryCode: string, 
   return signForRegistration({ challenge, origin, keyPair, password: recoveryCode });
 }
 
-const RECOVERY_CHARSET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@%!$#';
-const CHARSET_LEN = RECOVERY_CHARSET.length;
-const REJECT_THRESHOLD = Math.floor(256 / CHARSET_LEN) * CHARSET_LEN;
+const CATEGORIES = ['0123456789', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '@%!$#'];
+const ALL_CHARS = CATEGORIES.join('');
+const ALL_LEN = ALL_CHARS.length;
+const REJECT_THRESHOLD = Math.floor(256 / ALL_LEN) * ALL_LEN;
 const CODE_LENGTH = 32;
 
+function unbiasedIndex(max: number): number {
+  const threshold = Math.floor(256 / max) * max;
+  let byte: number;
+  do {
+    byte = randomBytes(1)[0]!;
+  } while (byte >= threshold);
+  return byte % max;
+}
+
 function generateRecoveryCode(): string {
-  const result: string[] = [];
+  const result = CATEGORIES.map((cat) => cat[unbiasedIndex(cat.length)]!);
   while (result.length < CODE_LENGTH) {
-    const bytes = randomBytes(CODE_LENGTH - result.length + 16);
-    for (const b of bytes) {
-      if (b >= REJECT_THRESHOLD) continue;
-      result.push(RECOVERY_CHARSET[b % CHARSET_LEN] as string);
-      if (result.length === CODE_LENGTH) break;
-    }
+    const byte = randomBytes(1)[0]!;
+    if (byte < REJECT_THRESHOLD) result.push(ALL_CHARS[byte % ALL_LEN]!);
+  }
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = unbiasedIndex(i + 1);
+    [result[i], result[j]] = [result[j]!, result[i]!];
   }
   return result.join('');
 }
