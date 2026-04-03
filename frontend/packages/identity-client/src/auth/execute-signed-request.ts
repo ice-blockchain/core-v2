@@ -20,12 +20,13 @@ export async function executeSignedRequest<T>(
   input: SignedRequestInput,
   deps: ExecuteSignedRequestDeps,
 ): Promise<T> {
+  const bodyToSend = input.body ?? {};
   const userAction = await signUserAction(
     {
       username: input.username,
       httpMethod: input.httpMethod,
       httpPath: input.httpPath,
-      body: input.body ?? {},
+      body: bodyToSend,
       signingContext: input.signingContext,
     },
     { userActionDataSource: deps.userActionDataSource, origin: deps.origin },
@@ -34,19 +35,25 @@ export async function executeSignedRequest<T>(
     'X-Username': input.username,
     'X-Useraction': userAction,
   };
-  return sendRequest<T>(deps.httpClient, input, headers);
+  return sendRequest<T>({
+    httpClient: deps.httpClient, httpMethod: input.httpMethod, httpPath: input.httpPath, body: bodyToSend, headers,
+  });
 }
 
-async function sendRequest<T>(
-  httpClient: HttpClient,
-  input: SignedRequestInput,
-  headers: Record<string, string>,
-): Promise<T> {
+interface SendRequestInput {
+  httpClient: HttpClient;
+  httpMethod: SignedRequestInput['httpMethod'];
+  httpPath: string;
+  body: unknown;
+  headers: Record<string, string>;
+}
+
+async function sendRequest<T>(input: SendRequestInput): Promise<T> {
   const method = input.httpMethod.toLowerCase() as 'post' | 'put' | 'patch' | 'delete';
   if (method === 'delete') {
-    const { body } = await httpClient.delete<T>(input.httpPath, { headers });
-    return body;
+    const resp = await input.httpClient.delete<T>(input.httpPath, { headers: input.headers });
+    return resp.body;
   }
-  const { body } = await httpClient[method]<T>(input.httpPath, { headers, body: input.body });
-  return body;
+  const resp = await input.httpClient[method]<T>(input.httpPath, { headers: input.headers, body: input.body });
+  return resp.body;
 }

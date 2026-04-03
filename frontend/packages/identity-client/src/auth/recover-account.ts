@@ -1,4 +1,5 @@
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import type { Pbkdf2Fn } from '../crypto/encrypt-private-key';
 import { isValidEncryptedPrivateKey } from '../crypto/validate-encrypted-private-key';
 import { signForLogin } from '../crypto/sign-for-login';
 import { signForRegistration } from '../crypto/sign-for-registration';
@@ -14,6 +15,7 @@ import { utf8ToBytes } from '@noble/hashes/utils';
 interface RecoverAccountDeps {
   recoveryDataSource: RecoveryDataSource;
   origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
 }
 
 interface PasswordRecoveryInput {
@@ -41,13 +43,14 @@ export async function recoverAccount(
 ): Promise<void> {
   const challenge = await initRecoveryChallenge(input, deps);
   const recoveryCredential = findRecoveryCredential(challenge, input.credentialId);
-  const newCredential = await buildNewCredential(input, challenge, deps.origin);
+  const newCredential = await buildNewCredential({ input, challenge, origin: deps.origin, ...(deps.pbkdf2Fn && { pbkdf2Fn: deps.pbkdf2Fn }) });
   const newCredentialsPayload = { firstFactorCredential: newCredential };
   const recoverySign = await signWithRecoveryKey({
     credential: recoveryCredential,
     recoveryCode: input.recoveryCode,
     newCredentialsPayload,
     origin: deps.origin,
+    ...(deps.pbkdf2Fn && { pbkdf2Fn: deps.pbkdf2Fn }),
   });
   const temporaryToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   await completeRecovery({ deps, newCredential, recoverySign, temporaryToken });
@@ -85,6 +88,7 @@ interface RecoverySignInput {
   recoveryCode: string;
   newCredentialsPayload: Record<string, unknown>;
   origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
 }
 
 function parseEncryptedRecoveryKey(raw: string) {
@@ -102,7 +106,7 @@ function parseEncryptedRecoveryKey(raw: string) {
 
 async function signWithRecoveryKey(input: RecoverySignInput) {
   const parsed = parseEncryptedRecoveryKey(input.credential.encryptedRecoveryKey);
-  const privateKeyPem = await decryptPrivateKey(parsed, input.recoveryCode);
+  const privateKeyPem = await decryptPrivateKey(parsed, input.recoveryCode, input.pbkdf2Fn);
   const challenge = base64urlnopad.encode(utf8ToBytes(JSON.stringify(input.newCredentialsPayload)));
   return signForLogin({
     challenge,
@@ -123,19 +127,23 @@ function buildRecoveryPayload(signed: { credId: string; clientData: string; sign
   };
 }
 
-async function buildNewCredential(
-  input: RecoverAccountInput,
-  challenge: UserRegistrationChallenge,
-  origin: string,
-) {
-  if (input.newCredentialKind === 'Fido2') {
-    return buildPasskeyCredential(challenge);
+interface BuildNewCredentialInput {
+  input: RecoverAccountInput;
+  challenge: UserRegistrationChallenge;
+  origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
+}
+
+async function buildNewCredential(params: BuildNewCredentialInput) {
+  if (params.input.newCredentialKind === 'Fido2') {
+    return buildPasskeyCredential(params.challenge);
   }
-  return buildPasswordCredential(
-    input as PasswordRecoveryInput,
-    challenge,
-    origin,
-  );
+  return buildPasswordCredential({
+    input: params.input as PasswordRecoveryInput,
+    challenge: params.challenge,
+    origin: params.origin,
+    ...(params.pbkdf2Fn && { pbkdf2Fn: params.pbkdf2Fn }),
+  });
 }
 
 async function buildPasskeyCredential(challenge: UserRegistrationChallenge) {
@@ -151,27 +159,35 @@ async function buildPasskeyCredential(challenge: UserRegistrationChallenge) {
   };
 }
 
-async function buildPasswordCredential(
-  input: PasswordRecoveryInput,
-  challenge: UserRegistrationChallenge,
-  origin: string,
-) {
+interface BuildPasswordCredentialInput {
+  input: PasswordRecoveryInput;
+  challenge: UserRegistrationChallenge;
+  origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
+}
+
+async function buildPasswordCredential(params: BuildPasswordCredentialInput) {
   const keyPair = generateKeyPair();
-  const regResult = await signForRegistration({
-    challenge: challenge.challenge,
-    origin,
-    keyPair,
-    password: input.newPassword,
-  });
-  return {
-    credentialKind: 'PasswordProtectedKey' as const,
-    credentialInfo: {
-      credId: regResult.credId,
-      clientData: regResult.clientData,
-      attestationData: regResult.attestationData,
-    },
-    encryptedPrivateKey: regResult.encryptedPrivateKey,
-  };
+  try {
+    const regResult = await signForRegistration({
+      challenge: params.challenge.challenge,
+      origin: params.origin,
+      keyPair,
+      password: params.input.newPassword,
+      ...(params.pbkdf2Fn && { pbkdf2Fn: params.pbkdf2Fn }),
+    });
+    return {
+      credentialKind: 'PasswordProtectedKey' as const,
+      credentialInfo: {
+        credId: regResult.credId,
+        clientData: regResult.clientData,
+        attestationData: regResult.attestationData,
+      },
+      encryptedPrivateKey: regResult.encryptedPrivateKey,
+    };
+  } finally {
+    keyPair.seed.fill(0);
+  }
 }
 
 interface CompleteRecoveryInput {

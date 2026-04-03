@@ -15,7 +15,6 @@ import { createTokenManager } from './token/token-manager';
 import { deduplicatedRefresh } from './token/deduplicated-refresh';
 import { createIdentityAuthInterceptor } from './interceptor/identity-auth-interceptor';
 import { createAuthStore } from './auth-store';
-import { setNativePbkdf2 } from './crypto/encrypt-private-key';
 import { registerWithPasskey } from './auth/register-with-passkey';
 import { registerWithPassword } from './auth/register-with-password';
 import { loginWithPasskey } from './auth/login-with-passkey';
@@ -44,7 +43,7 @@ export function createIdentityClient(config: IdentityClientConfig): IdentityClie
 }
 
 function buildContext(config: IdentityClientConfig) {
-  if (config.nativePbkdf2) setNativePbkdf2(config.nativePbkdf2);
+  const pbkdf2Fn = config.nativePbkdf2;
   const tokenManager = createTokenManager(config.secureStorage);
   const authStore = createAuthStore();
   const refreshLocks = new Map<string, Promise<void>>();
@@ -58,7 +57,7 @@ function buildContext(config: IdentityClientConfig) {
 
   return {
     httpClient, tokenManager, authStore, origin: config.appId,
-    refreshLocks, refreshFn,
+    refreshLocks, refreshFn, pbkdf2Fn,
     loginDataSource: createLoginDataSource(httpClient),
     sessionDataSource,
     userActionDataSource: createUserActionDataSource(httpClient),
@@ -74,8 +73,8 @@ function buildContext(config: IdentityClientConfig) {
 type Ctx = ReturnType<typeof buildContext>;
 
 function buildAuthMethods(c: Ctx) {
-  const regDeps = { registrationDataSource: c.registrationDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore };
-  const loginDeps = { loginDataSource: c.loginDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore };
+  const regDeps = { registrationDataSource: c.registrationDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore, ...(c.pbkdf2Fn && { pbkdf2Fn: c.pbkdf2Fn }) };
+  const loginDeps = { loginDataSource: c.loginDataSource, tokenManager: c.tokenManager, origin: c.origin, authStore: c.authStore, ...(c.pbkdf2Fn && { pbkdf2Fn: c.pbkdf2Fn }) };
   const logoutDeps = { sessionDataSource: c.sessionDataSource, tokenManager: c.tokenManager, authStore: c.authStore };
   const userDeps = { userDataSource: c.userDataSource };
   return {
@@ -93,10 +92,10 @@ function buildAuthMethods(c: Ctx) {
 }
 
 function buildFeatureMethods(c: Ctx) {
-  const credDeps = { credentialsDataSource: c.credentialsDataSource, userActionDataSource: c.userActionDataSource, origin: c.origin };
+  const credDeps = { credentialsDataSource: c.credentialsDataSource, userActionDataSource: c.userActionDataSource, origin: c.origin, ...(c.pbkdf2Fn && { pbkdf2Fn: c.pbkdf2Fn }) };
   const twoFADeps = { twoFADataSource: c.twoFADataSource, userActionDataSource: c.userActionDataSource, origin: c.origin };
   const deleteDeps = { tokenManager: c.tokenManager, authStore: c.authStore, httpClient: c.httpClient };
-  const recoveryDeps = { recoveryDataSource: c.recoveryDataSource, origin: c.origin };
+  const recoveryDeps = { recoveryDataSource: c.recoveryDataSource, origin: c.origin, ...(c.pbkdf2Fn && { pbkdf2Fn: c.pbkdf2Fn }) };
   return {
     verifyEarlyAccessEmail: (email: string) => verifyEarlyAccessEmail(email, { httpClient: c.httpClient }),
     listCredentials: (username: string) => listCredentials(username, credDeps),

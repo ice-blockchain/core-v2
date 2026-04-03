@@ -1,5 +1,6 @@
 import type { HttpClient } from '@ion/network';
 import type { UserRegistrationChallenge, RegistrationResult } from '../types';
+import { validateRegistrationChallengeResponse, validateRegistrationResultResponse } from './validate-response';
 
 interface InitRecoveryInput {
   username: string;
@@ -41,6 +42,7 @@ export function createRecoveryDataSource(httpClient: HttpClient): RecoveryDataSo
         '/auth/recover/user/delegated',
         { body: input },
       );
+      validateRegistrationChallengeResponse(body);
       return body;
     },
 
@@ -52,6 +54,7 @@ export function createRecoveryDataSource(httpClient: HttpClient): RecoveryDataSo
           headers: { Authorization: `Bearer ${temporaryToken}` },
         },
       );
+      validateRegistrationResultResponse(body);
       return body;
     },
   };

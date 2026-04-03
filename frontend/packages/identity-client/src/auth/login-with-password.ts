@@ -3,6 +3,7 @@ import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
 import type { InternalAuthStore } from '../auth-store';
 import { decryptPrivateKey } from '../crypto/encrypt-private-key';
+import type { Pbkdf2Fn } from '../crypto/encrypt-private-key';
 import { isValidEncryptedPrivateKey } from '../crypto/validate-encrypted-private-key';
 import { parseSeedFromPem } from '../crypto/generate-key-pair';
 import { generateCredentialId } from '../crypto/generate-credential-id';
@@ -15,6 +16,7 @@ interface LoginWithPasswordDeps {
   tokenManager: TokenManager;
   authStore: InternalAuthStore;
   origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
 }
 
 interface PasswordCredentialSource {
@@ -45,7 +47,7 @@ function buildPasswordAssertion(signed: ReturnType<typeof signForLogin>, challen
   };
 }
 
-async function decryptCredentialKey(rawJson: string, password: string): Promise<string> {
+async function decryptCredentialKey(rawJson: string, password: string, pbkdf2Fn?: Pbkdf2Fn): Promise<string> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawJson);
@@ -56,7 +58,7 @@ async function decryptCredentialKey(rawJson: string, password: string): Promise<
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Malformed encrypted private key');
   }
   try {
-    return await decryptPrivateKey(parsed, password);
+    return await decryptPrivateKey(parsed, password, pbkdf2Fn);
   } catch (error) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Failed to decrypt private key', error);
   }
@@ -90,7 +92,7 @@ export async function loginWithPassword(
   if (!cred.encryptedPrivateKey) {
     throw new IdentityError(IdentityErrorCode.INVALID_CREDENTIALS, 'Credential missing encrypted private key');
   }
-  const privateKeyPem = await decryptCredentialKey(cred.encryptedPrivateKey, input.password);
+  const privateKeyPem = await decryptCredentialKey(cred.encryptedPrivateKey, input.password, deps.pbkdf2Fn);
   verifyDecryptedKeyMatchesCredential(privateKeyPem, cred.id);
   const signed = signForLogin({
     challenge: challenge.challenge,

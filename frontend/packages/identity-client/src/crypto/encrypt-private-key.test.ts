@@ -1,16 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { generateKeyPair } from './generate-key-pair';
 import { encryptPrivateKey, decryptPrivateKey } from './encrypt-private-key';
-
-describe('setNativePbkdf2', () => {
-  it('throws on second call', async () => {
-    vi.resetModules();
-    const mod = await import('./encrypt-private-key');
-    const fakeFn = () => new Uint8Array(32);
-    mod.setNativePbkdf2(fakeFn);
-    expect(() => mod.setNativePbkdf2(fakeFn)).toThrow('nativePbkdf2 already set');
-  });
-});
 
 describe('encryptPrivateKey / decryptPrivateKey', () => {
   it('round-trips with correct password', async () => {

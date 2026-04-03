@@ -3,6 +3,7 @@ import type { TokenManager } from '../token/token-manager';
 import type { InternalAuthStore } from '../auth-store';
 import { generateKeyPair } from '../crypto/generate-key-pair';
 import { signForRegistration } from '../crypto/sign-for-registration';
+import type { Pbkdf2Fn } from '../crypto/encrypt-private-key';
 import { requireTemporaryToken } from './require-temporary-token';
 
 interface RegisterWithPasswordDeps {
@@ -10,6 +11,7 @@ interface RegisterWithPasswordDeps {
   tokenManager: TokenManager;
   authStore: InternalAuthStore;
   origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
 }
 
 interface PasswordRegistrationInput {
@@ -25,7 +27,7 @@ export async function registerWithPassword(
   const challenge = await deps.registrationDataSource.initRegistration(input.username, input.earlyAccessEmail);
   const tempToken = requireTemporaryToken(challenge.temporaryAuthenticationToken);
   const signed = await signForRegistration({
-    challenge: challenge.challenge, origin: deps.origin, keyPair: generateKeyPair(), password: input.password,
+    challenge: challenge.challenge, origin: deps.origin, keyPair: generateKeyPair(), password: input.password, ...(deps.pbkdf2Fn && { pbkdf2Fn: deps.pbkdf2Fn }),
   });
   const credential = buildPasswordCredential(signed);
   const result = await deps.registrationDataSource.completeRegistration(credential, tempToken, input.earlyAccessEmail);

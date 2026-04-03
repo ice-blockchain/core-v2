@@ -3,12 +3,14 @@ import type { CredentialsDataSource } from '../data-sources/credentials-data-sou
 import type { UserActionDataSource } from '../data-sources/user-action-data-source';
 import { generateKeyPair } from '../crypto/generate-key-pair';
 import { signForRegistration } from '../crypto/sign-for-registration';
+import type { Pbkdf2Fn } from '../crypto/encrypt-private-key';
 import { signUserAction } from './sign-user-action';
 
 interface CreateRecoveryCredentialsDeps {
   credentialsDataSource: CredentialsDataSource;
   userActionDataSource: UserActionDataSource;
   origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
 }
 
 interface RecoveryCredentialsResult {
@@ -34,7 +36,7 @@ async function executeCreateRecovery(
 ): Promise<RecoveryCredentialsResult> {
   const challenge = await deps.credentialsDataSource.initCreateCredential('RecoveryKey', username);
   const recoveryCode = generateRecoveryCode();
-  const regResult = await buildRecoveryCredential(challenge.challenge, recoveryCode, deps.origin);
+  const regResult = await buildRecoveryCredential({ challenge: challenge.challenge, recoveryCode, origin: deps.origin, ...(deps.pbkdf2Fn && { pbkdf2Fn: deps.pbkdf2Fn }) });
   const payload = buildPayload(challenge.challengeIdentifier, regResult);
   const userAction = await getSignedAction({ username, signingContext, body: payload }, deps);
   const result = await deps.credentialsDataSource.createCredential(payload, { username, userAction });
@@ -71,9 +73,18 @@ async function getSignedAction(input: SignActionInput, deps: CreateRecoveryCrede
   );
 }
 
-async function buildRecoveryCredential(challenge: string, recoveryCode: string, origin: string) {
+interface BuildRecoveryCredentialInput {
+  challenge: string;
+  recoveryCode: string;
+  origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
+}
+
+async function buildRecoveryCredential(input: BuildRecoveryCredentialInput) {
   const keyPair = generateKeyPair();
-  return signForRegistration({ challenge, origin, keyPair, password: recoveryCode });
+  return signForRegistration({
+    challenge: input.challenge, origin: input.origin, keyPair, password: input.recoveryCode, ...(input.pbkdf2Fn && { pbkdf2Fn: input.pbkdf2Fn }),
+  });
 }
 
 const CATEGORIES = ['0123456789', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '@%!$#'];

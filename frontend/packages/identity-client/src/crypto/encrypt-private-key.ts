@@ -14,27 +14,28 @@ export interface EncryptedPrivateKey {
 
 export type Pbkdf2Fn = (password: string, salt: Uint8Array, iterations: number, keyLength: number, hash: string) => Uint8Array;
 
-let nativePbkdf2: Pbkdf2Fn | null = null;
-
-export function setNativePbkdf2(fn: Pbkdf2Fn): void {
-  if (nativePbkdf2 !== null) throw new Error('nativePbkdf2 already set');
-  nativePbkdf2 = fn;
+interface DeriveKeyInput {
+  password: string;
+  salt: Uint8Array;
+  iterations: number;
+  pbkdf2Fn?: Pbkdf2Fn;
 }
 
-async function deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
-  if (nativePbkdf2) {
-    const buf: ArrayBufferView = nativePbkdf2(password, new Uint8Array(salt), iterations, 32, 'sha256');
+async function deriveKey(input: DeriveKeyInput): Promise<Uint8Array> {
+  if (input.pbkdf2Fn) {
+    const buf: ArrayBufferView = input.pbkdf2Fn(input.password, new Uint8Array(input.salt), input.iterations, 32, 'sha256');
     return new Uint8Array(buf instanceof Uint8Array ? buf : new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
   }
-  return pbkdf2Async(sha256, password, salt, { c: iterations, dkLen: 32 });
+  return pbkdf2Async(sha256, input.password, input.salt, { c: input.iterations, dkLen: 32 });
 }
 
 export async function encryptPrivateKey(
   privateKeyPem: string,
   password: string,
+  pbkdf2Fn?: Pbkdf2Fn,
 ): Promise<EncryptedPrivateKey> {
   const salt = randomBytes(16);
-  const key = await deriveKey(password, salt, PBKDF2_ITERATIONS);
+  const key = await deriveKey({ password, salt, iterations: PBKDF2_ITERATIONS, ...(pbkdf2Fn && { pbkdf2Fn }) });
   const nonce = randomBytes(12);
   const encrypted = gcm(key, nonce).encrypt(utf8ToBytes(privateKeyPem));
   return {
@@ -48,9 +49,10 @@ export async function encryptPrivateKey(
 export async function decryptPrivateKey(
   encrypted: EncryptedPrivateKey,
   password: string,
+  pbkdf2Fn?: Pbkdf2Fn,
 ): Promise<string> {
   const salt = base64.decode(encrypted.salt);
-  const key = await deriveKey(password, salt, PBKDF2_ITERATIONS);
+  const key = await deriveKey({ password, salt, iterations: PBKDF2_ITERATIONS, ...(pbkdf2Fn && { pbkdf2Fn }) });
   const nonce = base64.decode(encrypted.nonce);
   const combined = concatBytes(base64.decode(encrypted.ciphertext), base64.decode(encrypted.mac));
   const decrypted = gcm(key, nonce).decrypt(combined);
