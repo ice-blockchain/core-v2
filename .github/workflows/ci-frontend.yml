@@ -44,6 +44,28 @@ jobs:
       - name: Test
         run: pnpm turbo test
 
+      - name: Checkout secrets
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: ice-blockchain/core-v2-secrets
+          ref: master
+          token: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
+          path: frontend/.secrets
+
+      - name: Mask secrets
+        working-directory: .
+        run: |
+          SECRETS_FILE="frontend/.secrets/frontend/staging/web/.env.secrets"
+          if [[ -f "$SECRETS_FILE" ]]; then
+            while IFS='=' read -r key value; do
+              [[ -z "$value" || "$key" =~ ^# ]] && continue
+              echo "::add-mask::${value}"
+            done < "$SECRETS_FILE"
+          fi
+
+      - name: Setup web environment
+        run: ./scripts/setup-env.sh staging
+
       - name: Build web
         run: pnpm turbo build --filter=@ion/web...
 
