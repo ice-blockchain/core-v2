@@ -14,3 +14,4 @@ export { createMemoryStorage } from "./memory-storage";
 export { createKeyValueStorage } from "./key-value-storage";
 export { createSecureStorage } from "./secure-storage";
 export { createDatabaseStorage } from "./database-storage";
+export { PBKDF2_ITERATIONS } from "./crypto-constants";

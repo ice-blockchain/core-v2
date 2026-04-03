@@ -1,8 +1,12 @@
+import { jwtDecode } from 'jwt-decode';
+
+interface IdentityTokenPayload {
+  'https://custom/app_metadata'?: { userId?: string };
+}
+
 export function parseUserIdFromToken(token: string): string | null {
-  const parts = token.split('.');
-  if (parts.length !== 3) return null;
   try {
-    const payload = JSON.parse(atob(parts[1]!.replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = jwtDecode<IdentityTokenPayload>(token);
     const userId = payload['https://custom/app_metadata']?.userId;
     return typeof userId === 'string' && userId.length > 0 ? userId : null;
   } catch {

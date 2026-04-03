@@ -2,6 +2,7 @@ import type { Interceptor, InterceptedRequest, InterceptedResponse } from '@ion/
 import { NetworkError } from '@ion/network';
 import { Logger } from '@ion/diagnostics';
 import type { TokenManager } from '../token/token-manager';
+import { deduplicatedRefresh } from '../token/deduplicated-refresh';
 
 interface IdentityAuthInterceptorDeps {
   tokenManager: TokenManager;
@@ -85,7 +86,7 @@ async function handleAuthError(
     return error;
   }
   try {
-    await deduplicatedRefresh(username, deps);
+    await deduplicatedRefresh(username, deps.refreshLocks, deps.refreshFn);
     return new NetworkError({
       code: 'AUTH_EXPIRED',
       message: error.message,
@@ -98,13 +99,3 @@ async function handleAuthError(
   }
 }
 
-async function deduplicatedRefresh(
-  username: string,
-  deps: IdentityAuthInterceptorDeps,
-): Promise<void> {
-  const existing = deps.refreshLocks.get(username);
-  if (existing) { await existing; return; }
-  const promise = deps.refreshFn(username);
-  deps.refreshLocks.set(username, promise);
-  try { await promise; } finally { deps.refreshLocks.delete(username); }
-}

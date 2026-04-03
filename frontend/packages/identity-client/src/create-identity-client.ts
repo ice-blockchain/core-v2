@@ -12,6 +12,7 @@ import { createTwoFADataSource } from './data-sources/two-fa-data-source';
 import { createRecoveryDataSource } from './data-sources/recovery-data-source';
 import { createUserProfileDataSource } from './data-sources/user-profile-data-source';
 import { createTokenManager } from './token/token-manager';
+import { deduplicatedRefresh } from './token/deduplicated-refresh';
 import { createIdentityAuthInterceptor } from './interceptor/identity-auth-interceptor';
 import { createAuthStore } from './auth-store';
 import { setNativePbkdf2 } from './crypto/encrypt-private-key';
@@ -89,18 +90,6 @@ function buildAuthMethods(c: Ctx) {
     getUser: (username: string, id: string) => getUser(username, id, userDeps),
     restoreAuth: () => restoreAuth({ tokenManager: c.tokenManager, authStore: c.authStore }),
   };
-}
-
-async function deduplicatedRefresh(
-  username: string,
-  locks: Map<string, Promise<void>>,
-  refreshFn: (username: string) => Promise<void>,
-): Promise<void> {
-  const existing = locks.get(username);
-  if (existing) { await existing; return; }
-  const promise = refreshFn(username);
-  locks.set(username, promise);
-  try { await promise; } finally { locks.delete(username); }
 }
 
 function buildFeatureMethods(c: Ctx) {

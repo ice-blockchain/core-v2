@@ -3,6 +3,7 @@ import { pbkdf2Async } from '@noble/hashes/pbkdf2';
 import { randomBytes, concatBytes, utf8ToBytes, bytesToUtf8 } from '@noble/hashes/utils';
 import { gcm } from '@noble/ciphers/aes';
 import { base64 } from '@scure/base';
+import { PBKDF2_ITERATIONS } from '@ion/storage';
 
 export interface EncryptedPrivateKey {
   salt: string;
@@ -12,8 +13,6 @@ export interface EncryptedPrivateKey {
 }
 
 export type Pbkdf2Fn = (password: string, salt: Uint8Array, iterations: number, keyLength: number, hash: string) => Uint8Array;
-
-const PBKDF2_ITERATIONS = 100_000;
 
 let nativePbkdf2: Pbkdf2Fn | null = null;
 
