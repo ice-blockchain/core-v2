@@ -36,12 +36,9 @@ func TestBroadcasterSendsHeadCID(t *testing.T) {
 
 	mock.mu.Lock()
 	require.Len(t, mock.messages, 1)
+	// The raw broadcast data is passed directly to BroadcastToCluster.
+	require.Equal(t, []byte("head-cid-123"), mock.messages[0])
 	mock.mu.Unlock()
-
-	// Verify the message is a valid TL-encoded CRDT head.
-	parsed, err := ParseCRDTHead(mock.messages[0])
-	require.NoError(t, err)
-	require.Equal(t, []byte("head-cid-123"), parsed)
 }
 
 func TestBroadcasterReceivesIncoming(t *testing.T) {

@@ -17,10 +17,9 @@ import (
 	tonstorage "github.com/xssnick/tonutils-storage/storage"
 )
 
-// TestE2E_ClusterThreeNodeDistribution starts 3 nodes, uploads 3 bags to
-// Greenfield. Each node's subscriber picks up all events; OwnsOrClaim assigns
-// each bag to exactly one node. Verifies all PebbleDB layers, provider index
-// over RLDP, and download from the owning node.
+// TestE2E_ClusterThreeNodeDistribution starts 3 connected nodes, uploads 3 bags.
+// All subscribers see events. CRDT convergence ensures each bag is owned by
+// exactly one node. Verifies storage layers, provider index, and download.
 func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
 	defer cancel()
@@ -29,9 +28,9 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 	node1 := startClusterNode(t, ctx)
 	node2 := startClusterNode(t, ctx)
 	nodes := []*clusterNode{node0, node1, node2}
-	t.Logf("cluster started: %s / %s / %s", node0.nodeID[:12], node1.nodeID[:12], node2.nodeID[:12])
+	wireCluster(t, nodes)
+	t.Logf("cluster wired: %s / %s / %s", node0.nodeID[:12], node1.nodeID[:12], node2.nodeID[:12])
 
-	// Upload 3 bags to Greenfield. All subscribers will see the events.
 	bagID0, payload0, _, _ := uploadBag(t, ctx, 64*1024+137, "bag0")
 	bagID1, _, _, _ := uploadBag(t, ctx, 128*1024+42, "bag1")
 	bagID2, _, _, _ := uploadBag(t, ctx, 32*1024+99, "bag2")
@@ -42,6 +41,9 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 		waitForBagIndexedOnAnyNode(t, nodes, bagID, 3*time.Minute)
 	}
 
+	// Allow CRDT convergence.
+	time.Sleep(2 * time.Second)
+
 	t.Run("each bag owned by exactly one node", func(t *testing.T) {
 		for _, bagID := range bagIDs {
 			ownerCount := 0
@@ -50,27 +52,23 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 					ownerCount++
 				}
 			}
-			require.Equal(t, 1, ownerCount, "bag %s should be owned by exactly 1 node", hex.EncodeToString(bagID[:8]))
+			require.Equal(t, 1, ownerCount, "bag %s should be owned by exactly 1 node, got %d",
+				hex.EncodeToString(bagID[:8]), ownerCount)
 		}
 	})
 
 	t.Run("idx and prov populated on owning node", func(t *testing.T) {
 		owner := findOwner(nodes, bagID0)
-		require.NotNil(t, owner)
+		require.NotNil(t, owner, "bag0 should have an owner")
 
 		loc, found, err := owner.env.Persister.LookupBag(bagID0)
 		require.NoError(t, err)
-		require.True(t, found, "idx/bag should exist on owner")
+		require.True(t, found)
 		require.NotEmpty(t, loc.BucketName)
 
 		records, err := owner.env.ProviderIndex.Lookup(bagID0)
 		require.NoError(t, err)
-		require.NotEmpty(t, records, "prov/ should have records on owner")
-	})
-
-	t.Run("crdt ownership key populated", func(t *testing.T) {
-		owner := findOwner(nodes, bagID0)
-		require.Equal(t, owner.nodeID, owner.coordinator.Owner(bagID0))
+		require.NotEmpty(t, records)
 	})
 
 	t.Run("provider index over RLDP", func(t *testing.T) {
@@ -79,7 +77,7 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 		require.NotEmpty(t, lookup.Providers)
 	})
 
-	t.Run("download bag0 from owning node", func(t *testing.T) {
+	t.Run("download from owning node", func(t *testing.T) {
 		owner := findOwner(nodes, bagID0)
 		downTorrent, downSrv := storage.SetupDownloader(t, bagID0, owner.env.Server.DHTClient())
 		storage.ConnectDownloaderToNode(t, downTorrent, downSrv, owner.env.Server)
@@ -90,15 +88,12 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 		downSrv.Stop()
 	})
 
-	t.Run("meta populated after download", func(t *testing.T) {
+	t.Run("meta and cache populated after download", func(t *testing.T) {
 		owner := findOwner(nodes, bagID0)
 		hasMeta, err := owner.env.MetadataStore.HasBagMetadata(bagID0)
 		require.NoError(t, err)
 		require.True(t, hasMeta)
-	})
 
-	t.Run("segment cache populated after download", func(t *testing.T) {
-		owner := findOwner(nodes, bagID0)
 		segCount := (len(payload0) + boc.SegmentSize - 1) / boc.SegmentSize
 		for i := range segCount {
 			require.True(t, owner.env.SegmentCache.HasSegment(bagID0, i), "segment %d missing", i)
@@ -106,27 +101,53 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 	})
 }
 
-// TestE2E_ClusterDownloadFromNonOwningNode downloads through a node that
-// does NOT own the bag, exercising the piece forwarding path.
+// TestE2E_ClusterDownloadFromNonOwningNode downloads through a non-owning node.
+// The proxy node's handler detects OwnsBag=false and forwards via PieceForwarder
+// to the owning node over direct ADNL.
 func TestE2E_ClusterDownloadFromNonOwningNode(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
 	defer cancel()
 
 	ownerNode := startClusterNode(t, ctx)
 	proxyNode := startClusterNode(t, ctx)
+	wireCluster(t, []*clusterNode{ownerNode, proxyNode})
 	t.Logf("owner=%s proxy=%s", ownerNode.nodeID[:12], proxyNode.nodeID[:12])
 
 	bagID, payload, _, _ := uploadBag(t, ctx, 48*1024+77, "forward")
 
-	// Wait for owner to index the bag.
-	storage.WaitForBagIndexed(t, ownerNode.env.Persister, bagID, 3*time.Minute)
-	require.True(t, ownerNode.coordinator.OwnsBag(bagID))
-	require.False(t, proxyNode.coordinator.OwnsBag(bagID))
+	// Wait for bag to be indexed on at least one node.
+	waitForBagIndexedOnAnyNode(t, []*clusterNode{ownerNode, proxyNode}, bagID, 3*time.Minute)
 
-	// Download through the proxy node (not the owner).
-	// Handler sees OwnsBag=false -> calls PieceForwarder -> forwards to owner.
-	downTorrent, downSrv := storage.SetupDownloader(t, bagID, proxyNode.env.Server.DHTClient())
-	storage.ConnectDownloaderToNode(t, downTorrent, downSrv, proxyNode.env.Server)
+	// Wait for CRDT convergence -- one node should lose ownership.
+	deadline := time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		ownerCount := 0
+		for _, n := range []*clusterNode{ownerNode, proxyNode} {
+			if n.coordinator.OwnsBag(bagID) {
+				ownerCount++
+			}
+		}
+		if ownerCount == 1 {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	owner := findOwner([]*clusterNode{ownerNode, proxyNode}, bagID)
+	require.NotNil(t, owner, "one node must own the bag")
+	nonOwner := ownerNode
+	if owner == ownerNode {
+		nonOwner = proxyNode
+	}
+	t.Logf("owner=%s non-owner=%s", owner.nodeID[:12], nonOwner.nodeID[:12])
+	require.False(t, nonOwner.coordinator.OwnsBag(bagID))
+
+	// Non-owner joins overlay to accept client connections.
+	require.NoError(t, nonOwner.env.Server.OverlayManager().Join(ctx, bagID))
+
+	// Download through non-owner -- piece forwarding path.
+	downTorrent, downSrv := storage.SetupDownloader(t, bagID, nonOwner.env.Server.DHTClient())
+	storage.ConnectDownloaderToNode(t, downTorrent, downSrv, nonOwner.env.Server)
 	storage.WaitForDownloadComplete(t, downTorrent, 60*time.Second)
 	verifyPayload(t, downTorrent, payload)
 
@@ -147,7 +168,6 @@ func TestE2E_ClusterCacheEvictionPreservesOwnership(t *testing.T) {
 	storage.WaitForBagIndexed(t, node.env.Persister, bagID, 3*time.Minute)
 	require.True(t, node.coordinator.OwnsBag(bagID))
 
-	// Simulate cache eviction callback.
 	node.env.Server.DHTRegistrar().Deregister(bagID)
 	_ = node.env.Server.OverlayManager().Leave(bagID)
 

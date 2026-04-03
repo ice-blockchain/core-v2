@@ -40,11 +40,14 @@ func (s *ADNLDAGService) Get(ctx context.Context, c cid.Cid) (ipld.Node, error) 
 	}
 
 	if s.fetcher == nil {
+		s.logger.Debug("dag get: no fetcher, returning not found", "cid", c.String())
 		return nil, ipld.ErrNotFound{Cid: c}
 	}
 
+	s.logger.Debug("dag get: fetching from peers", "cid", c.String())
 	remote, err := s.fetcher.FetchBlockFromPeers(ctx, c.Bytes())
 	if err != nil {
+		s.logger.Debug("dag get: peer fetch failed", "cid", c.String(), "error", err)
 		return nil, fmt.Errorf("fetch block %s from peers: %w", c, err)
 	}
 
@@ -91,6 +94,7 @@ func (s *ADNLDAGService) getManyAsync(ctx context.Context, cids []cid.Cid, out c
 
 // Add stores an IPLD node locally.
 func (s *ADNLDAGService) Add(ctx context.Context, node ipld.Node) error {
+	s.logger.Debug("dag add", "cid", node.Cid().String(), "data_len", len(node.RawData()))
 	return s.storeLocal(node.Cid(), node.RawData())
 }
 
@@ -129,12 +133,15 @@ func (s *ADNLDAGService) RemoveMany(ctx context.Context, cids []cid.Cid) error {
 func (s *ADNLDAGService) HandleGetBlock(cidBytes []byte) []byte {
 	c, err := cid.Cast(cidBytes)
 	if err != nil {
+		s.logger.Debug("handle get block: invalid cid", "len", len(cidBytes), "error", err)
 		return SerializeBlockNotFound()
 	}
 	data, err := s.getLocal(c)
 	if err != nil {
+		s.logger.Debug("handle get block: not found locally", "cid", c.String(), "key", BlockKey(c.Bytes()))
 		return SerializeBlockNotFound()
 	}
+	s.logger.Debug("handle get block: found", "cid", c.String(), "data_len", len(data))
 	return SerializeBlock(data)
 }
 

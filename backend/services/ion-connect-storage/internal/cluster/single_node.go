@@ -49,6 +49,11 @@ func (c *SingleNodeCoordinator) ForwardGetPiece(_ context.Context, _ [32]byte, _
 	return nil, nil, fmt.Errorf("single node coordinator does not forward pieces")
 }
 
+// ForwardRawQuery should never be called -- OwnsBag is always true.
+func (c *SingleNodeCoordinator) ForwardRawQuery(_ context.Context, _ [32]byte, _ []byte) ([]byte, error) {
+	return nil, fmt.Errorf("single node coordinator does not forward queries")
+}
+
 // IsConnected always returns true.
 func (c *SingleNodeCoordinator) IsConnected() bool {
 	return true

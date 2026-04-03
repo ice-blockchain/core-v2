@@ -16,14 +16,11 @@ const tlPingConstructor uint32 = 0x44f3f211
 
 // handleNewConnection is called when a new ADNL peer connects.
 func (s *Server) handleNewConnection(client adnl.Peer) error {
-	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.logger)
+	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.logger)
 	return nil
 }
 
-// setupOverlayRLDP wires ADNL + RLDP overlay query dispatch for a peer.
-// If an HTTP bridge is provided, non-overlay RLDP queries are forwarded
-// to the bridge (HTTP-over-RLDP for provider index).
-func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, logger *slog.Logger) {
+func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, logger *slog.Logger) {
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
@@ -31,10 +28,28 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 		if _, ok := query.Data.(GetCapabilities); ok {
 			return client.Answer(context.Background(), query.ID, &Capabilities{Value: capabilityRLDP2})
 		}
+		// Handle cluster queries sent without overlay wrapping (block exchange).
+		if clusterHandler != nil {
+			rawQuery := extractRawTL(query.Data)
+			if rawQuery == nil {
+				logger.Debug("root handler: extractRawTL returned nil", "type", query.Data)
+			}
+			if rawQuery != nil && len(rawQuery) >= 4 {
+				resp, err := clusterHandler(context.Background(), rawQuery)
+				if err != nil {
+					return err
+				}
+				if resp != nil {
+					// Answer with raw bytes. The sender will receive these
+					// in the MessageAnswer.answer field.
+					return client.Answer(context.Background(), query.ID, tl.Raw(resp))
+				}
+			}
+		}
 		return nil
 	})
-	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, logger))
-	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, logger))
+	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, client, logger))
+	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, logger))
 
 	if bridge != nil {
 		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl))
@@ -43,7 +58,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 	logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
 }
 
-func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, logger *slog.Logger) func(query *adnl.MessageQuery) error {
+// makeADNLHandler routes overlay queries. Cluster overlay goes to clusterHandler;
+// storage overlays go to OverlayManager.
+func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, rawPeer adnl.Peer, logger *slog.Logger) func(query *adnl.MessageQuery) error {
 	return func(query *adnl.MessageQuery) error {
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
@@ -58,9 +75,24 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 			return nil
 		}
 
+		ctx := context.Background()
+
+		if clusterHandler != nil && overlayID == clusterOverlayID {
+			resp, err := clusterHandler(ctx, rawQuery)
+			if err != nil {
+				logger.Debug("cluster handler error", "error", err)
+				return err
+			}
+			if resp != nil {
+				ansErr := rawPeer.Answer(ctx, query.ID, tl.Raw(resp))
+				logger.Debug("cluster answer sent", "resp_len", len(resp), "error", ansErr)
+				return ansErr
+			}
+			return nil
+		}
+
 		checkPingAndNotify(rawQuery, overlays, rl, overlayIDBytes, overlayID)
 
-		ctx := context.Background()
 		resp, err := overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
 		if err != nil {
 			return err
@@ -70,7 +102,7 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 	}
 }
 
-func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
+func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
 	return func(transferID []byte, query *rldp.Query) error {
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
@@ -86,6 +118,15 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, logger
 		}
 
 		ctx := context.Background()
+
+		if clusterHandler != nil && overlayID == clusterOverlayID {
+			resp, err := clusterHandler(ctx, rawQuery)
+			if err != nil {
+				return err
+			}
+			return peer.SendAnswer(ctx, query.MaxAnswerSize, query.Timeout, query.ID, transferID, tl.Raw(resp))
+		}
+
 		resp, err := overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
 		if err != nil {
 			logger.Debug("RLDP overlay query failed", "error", err)
@@ -96,7 +137,6 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, logger
 	}
 }
 
-// checkPingAndNotify detects Ping messages and triggers session initialization.
 func checkPingAndNotify(rawQuery []byte, overlays *OverlayManager, rl *overlay.RLDPWrapper, overlayIDBytes []byte, overlayID [32]byte) {
 	if len(rawQuery) < 12 {
 		return

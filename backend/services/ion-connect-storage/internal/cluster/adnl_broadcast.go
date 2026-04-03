@@ -45,8 +45,8 @@ func (b *ADNLBroadcaster) Broadcast(ctx context.Context, data []byte) error {
 	if b.peer == nil {
 		return nil // no-op if no peer broadcaster configured (single-node/test)
 	}
-	msg := SerializeCRDTHead(data)
-	if err := b.peer.BroadcastToCluster(ctx, msg); err != nil {
+	// Pass raw data -- the transport handles TL wrapping via CRDTHeadMsg.
+	if err := b.peer.BroadcastToCluster(ctx, data); err != nil {
 		b.logger.Warn("broadcast crdt head failed", "error", err)
 		return err
 	}
@@ -66,15 +66,22 @@ func (b *ADNLBroadcaster) Next(ctx context.Context) ([]byte, error) {
 	}
 }
 
-// HandleIncoming processes an incoming CRDT head message from a peer.
-// Called by the cluster overlay query handler.
+// HandleIncoming processes an incoming TL-encoded CRDT head message from a peer.
 func (b *ADNLBroadcaster) HandleIncoming(rawMessage []byte) {
 	headCID, err := ParseCRDTHead(rawMessage)
 	if err != nil {
 		b.logger.Warn("parse incoming crdt head", "error", err)
 		return
 	}
+	b.enqueueHead(headCID)
+}
 
+// HandleIncomingRaw processes raw CID bytes from a typed TL message.
+func (b *ADNLBroadcaster) HandleIncomingRaw(headCID []byte) {
+	b.enqueueHead(headCID)
+}
+
+func (b *ADNLBroadcaster) enqueueHead(headCID []byte) {
 	select {
 	case b.incoming <- headCID:
 	default:

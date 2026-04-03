@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -76,6 +77,11 @@ func FormatHeartbeat(unixSeconds int64) []byte {
 // ParseHeartbeat decodes a heartbeat value to a unix timestamp.
 func ParseHeartbeat(data []byte) (int64, error) {
 	return strconv.ParseInt(string(data), 10, 64)
+}
+
+// ComputeClusterOverlayID derives a 32-byte overlay ID from the cluster config string.
+func ComputeClusterOverlayID(clusterID string) [32]byte {
+	return sha256.Sum256([]byte("ion-cluster-overlay:" + clusterID))
 }
 
 // hexEncode is a minimal hex encoder to avoid importing encoding/hex.

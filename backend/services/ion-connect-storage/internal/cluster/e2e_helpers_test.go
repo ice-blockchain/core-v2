@@ -25,6 +25,8 @@ import (
 	"github.com/xssnick/tonutils-go/adnl/rldp"
 )
 
+const clusterOverlayName = "e2e-cluster"
+
 func greenfieldPrivKey(t *testing.T) string {
 	t.Helper()
 	key := os.Getenv("GREENFIELD_E2E_PRIVATE_KEY")
@@ -34,15 +36,16 @@ func greenfieldPrivKey(t *testing.T) string {
 	return key
 }
 
-// clusterNode is a full storage node with CRDT coordinator.
+// clusterNode is a full storage node with CRDT coordinator and transport.
 type clusterNode struct {
 	env         *storage.SeederEnv
 	coordinator *cluster.Coordinator
+	transport   *cluster.ClusterTransport
 	nodeID      string
 }
 
-// startClusterNode creates a full storage node with CRDT coordinator and
-// running subscriber connected to Greenfield websocket.
+// startClusterNode creates a node with coordinator, transport, and running subscriber.
+// Call wireCluster after all nodes are created to connect them.
 func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 	t.Helper()
 	privKey := greenfieldPrivKey(t)
@@ -50,10 +53,11 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 
 	coordDB := openTestPebble(t)
 	nodeID := randomNodeID()
+	overlayID := cluster.ComputeClusterOverlayID(clusterOverlayName)
 
 	coord, err := cluster.NewCoordinator(cluster.CoordinatorConfig{
 		NodeID:                nodeID,
-		ClusterOverlayID:      "e2e-cluster",
+		ClusterOverlayID:      clusterOverlayName,
 		DB:                    coordDB,
 		Logger:                logger,
 		HeartbeatInterval:     200 * time.Millisecond,
@@ -61,20 +65,50 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 		StaleHeartbeatTimeout: 1 * time.Second,
 	})
 	require.NoError(t, err)
-	require.NoError(t, coord.Start(ctx))
-	t.Cleanup(func() { coord.Stop() })
 
 	env := storage.SetupSeederServer(t, privKey, coord, logger)
+
+	// Wire transport: broadcast + block exchange + piece forwarding over cluster overlay.
+	transport := cluster.NewClusterTransport(env.Server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)
+	transport.RegisterWithServer()
+	transport.SetPieceHandler(env.StorageHandler.ServePiece)
+	transport.SetRawQueryHandler(env.StorageHandler.HandleOverlayQuery)
+	coord.SetTransport(transport)
+
+	coord.SetPieceForwarder(cluster.NewPieceForwarder(transport, coord, nil, logger))
+
+	// Fill ADNL address in config for node info.
+	coord.UpdateNodeInfo(hex.EncodeToString(env.ADNLAddr[:]), fmt.Sprintf("127.0.0.1"), env.Port)
+
+	require.NoError(t, coord.Start(ctx))
+	t.Cleanup(func() { coord.Stop() })
 
 	return &clusterNode{
 		env:         env,
 		coordinator: coord,
+		transport:   transport,
 		nodeID:      nodeID,
 	}
 }
 
-// uploadBag creates a bag with deterministic payload, uploads to Greenfield.
-// Returns bagID, payload, bucketName, objectName.
+// wireCluster connects all nodes to each other via direct ADNL (bidirectional).
+// Each node connects to every other node so both sides have peers for block exchange.
+func wireCluster(t *testing.T, nodes []*clusterNode) {
+	t.Helper()
+	for i, nodeA := range nodes {
+		for j, nodeB := range nodes {
+			if i == j {
+				continue
+			}
+			pubKey := nodeB.env.Server.PrivateKey().Public().(ed25519.PublicKey)
+			addr := fmt.Sprintf("127.0.0.1:%d", nodeB.env.Port)
+			_, err := nodeA.transport.ConnectToPeer(addr, pubKey)
+			require.NoError(t, err)
+		}
+	}
+	time.Sleep(1 * time.Second)
+}
+
 func uploadBag(t *testing.T, ctx context.Context, payloadSize int, suffix string) ([32]byte, []byte, string, string) {
 	t.Helper()
 	privKey := greenfieldPrivKey(t)
@@ -92,7 +126,6 @@ func uploadBag(t *testing.T, ctx context.Context, payloadSize int, suffix string
 	return bagID, payload, bucketName, objectName
 }
 
-// queryProviderOverRLDP sends an HTTP-over-RLDP lookup to a node's provider index.
 func queryProviderOverRLDP(t *testing.T, node *clusterNode, bagID [32]byte) provider.LookupResponse {
 	t.Helper()
 

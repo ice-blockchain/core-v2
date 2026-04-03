@@ -20,6 +20,8 @@ type LocalOwnershipChecker interface {
 // PieceForwarder forwards piece requests to owning nodes.
 type PieceForwarder interface {
 	ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
+	// ForwardRawQuery forwards any raw TL query to the bag owner and returns the raw response.
+	ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
 }
 
 // Handler implements TON Storage protocol RPC methods.
@@ -67,6 +69,19 @@ func (h *Handler) HandleOverlayQuery(ctx context.Context, bagID [32]byte, rawQue
 	constructorID, payload, err := parseTLConstructorID(rawQuery)
 	if err != nil {
 		return nil, fmt.Errorf("parse TL constructor: %w", err)
+	}
+
+	// For non-owned bags, forward all data queries to the owning node.
+	if !h.ownershipChecker.OwnsBag(bagID) && constructorID != tlPing && constructorID != tlGetRandomPeers {
+		if constructorID == tlGetPiece {
+			pieceID, pErr := parseGetPieceRequest(payload)
+			if pErr != nil {
+				return nil, pErr
+			}
+			return h.handleForwardedPiece(ctx, bagID, int(pieceID))
+		}
+		// Forward getTorrentInfo/addUpdate as raw queries to the owner.
+		return h.pieceForwarder.ForwardRawQuery(ctx, bagID, rawQuery)
 	}
 
 	switch constructorID {

@@ -7,11 +7,10 @@ import (
 	"time"
 )
 
-// GatewayDialer opens ADNL connections to remote nodes.
-type GatewayDialer interface {
-	// QueryRemoteNode sends a TL query to a remote node and returns the response.
-	// The implementation handles connection setup, RLDP framing, and timeouts.
-	QueryRemoteNode(ctx context.Context, adnlAddr [32]byte, ip string, port int, query []byte) ([]byte, error)
+// PeerForwarder forwards requests to owning peers via the cluster transport.
+type PeerForwarder interface {
+	ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
+	ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error)
 }
 
 // OwnerLookup resolves bag ownership and node addresses.
@@ -20,26 +19,25 @@ type OwnerLookup interface {
 	NodeADNLAddress(nodeID string) (adnlAddr [32]byte, ip string, port int, found bool)
 }
 
-// PieceForwarder forwards piece requests to the owning node via direct ADNL.
+// PieceForwarder forwards piece requests to the owning node.
 type PieceForwarder struct {
-	gateway GatewayDialer
-	lookup  OwnerLookup
-	metrics *ClusterMetrics
-	logger  *slog.Logger
+	transport PeerForwarder
+	lookup    OwnerLookup
+	metrics   *ClusterMetrics
+	logger    *slog.Logger
 }
 
 // NewPieceForwarder creates a piece forwarder.
-func NewPieceForwarder(gateway GatewayDialer, lookup OwnerLookup, metrics *ClusterMetrics, logger *slog.Logger) *PieceForwarder {
+func NewPieceForwarder(transport PeerForwarder, lookup OwnerLookup, metrics *ClusterMetrics, logger *slog.Logger) *PieceForwarder {
 	return &PieceForwarder{
-		gateway: gateway,
-		lookup:  lookup,
-		metrics: metrics,
-		logger:  logger,
+		transport: transport,
+		lookup:    lookup,
+		metrics:   metrics,
+		logger:    logger,
 	}
 }
 
 // ForwardGetPiece forwards a piece request to the owning node.
-// Returns (pieceData, proof, error).
 func (f *PieceForwarder) ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
 	start := time.Now()
 
@@ -48,31 +46,33 @@ func (f *PieceForwarder) ForwardGetPiece(ctx context.Context, bagID [32]byte, pi
 		return nil, nil, fmt.Errorf("no owner for bag %x", bagID[:8])
 	}
 
-	adnlAddr, ip, port, found := f.lookup.NodeADNLAddress(ownerNodeID)
+	adnlAddr, _, _, found := f.lookup.NodeADNLAddress(ownerNodeID)
 	if !found {
 		return nil, nil, fmt.Errorf("no address for owner node %s", ownerNodeID)
 	}
 
-	query := SerializeForwardPieceRequest(ForwardPieceRequest{
-		BagID:   bagID,
-		PieceID: int32(pieceID),
-	})
-
-	resp, err := f.gateway.QueryRemoteNode(ctx, adnlAddr, ip, port, query)
+	data, proof, err := f.transport.ForwardPieceViaPeer(ctx, adnlAddr, bagID, pieceID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("query owner %s: %w", ownerNodeID, err)
-	}
-
-	pieceData, proof, found, err := ParsePieceResponse(resp)
-	if err != nil {
-		return nil, nil, fmt.Errorf("parse piece response: %w", err)
-	}
-	if !found {
-		return nil, nil, fmt.Errorf("piece %d not found on owner %s", pieceID, ownerNodeID)
+		return nil, nil, fmt.Errorf("forward to owner %s: %w", ownerNodeID, err)
 	}
 
 	f.recordMetrics(start)
-	return pieceData, proof, nil
+	return data, proof, nil
+}
+
+// ForwardRawQuery forwards a raw storage query to the bag owner.
+func (f *PieceForwarder) ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+	ownerNodeID := f.lookup.Owner(bagID)
+	if ownerNodeID == "" {
+		return nil, fmt.Errorf("no owner for bag %x", bagID[:8])
+	}
+
+	adnlAddr, _, _, found := f.lookup.NodeADNLAddress(ownerNodeID)
+	if !found {
+		return nil, fmt.Errorf("no address for owner node %s", ownerNodeID)
+	}
+
+	return f.transport.ForwardRawQuery(ctx, adnlAddr, bagID, rawQuery)
 }
 
 func (f *PieceForwarder) recordMetrics(start time.Time) {

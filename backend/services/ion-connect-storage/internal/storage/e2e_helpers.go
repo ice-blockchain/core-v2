@@ -44,15 +44,16 @@ type NodeCoordinator interface {
 
 // SeederEnv holds the components of a storage node for e2e tests.
 type SeederEnv struct {
-	Server        *ionadnl.Server
-	SegmentCache  *cache.SegmentCache
-	MetadataStore *cache.MetadataStore
-	Persister     *index.Persister
-	ProviderIndex *provider.ProviderIndex
-	DB            *pebble.DB
-	CacheDir      string
-	ADNLAddr      [32]byte
-	Port          int
+	Server         *ionadnl.Server
+	SegmentCache   *cache.SegmentCache
+	MetadataStore  *cache.MetadataStore
+	Persister      *index.Persister
+	ProviderIndex  *provider.ProviderIndex
+	StorageHandler *Handler
+	DB             *pebble.DB
+	CacheDir       string
+	ADNLAddr       [32]byte
+	Port           int
 }
 
 // SetupSeederServer creates a full storage node: ADNL server, storage handler,
@@ -152,15 +153,16 @@ func SetupSeederServer(
 	})
 
 	return &SeederEnv{
-		Server:        server,
-		SegmentCache:  segmentCache,
-		MetadataStore: metadataStore,
-		Persister:     persister,
-		ProviderIndex: providerIndex,
-		DB:            db,
-		CacheDir:      cacheDir,
-		ADNLAddr:      adnlAddr,
-		Port:          port,
+		Server:         server,
+		SegmentCache:   segmentCache,
+		MetadataStore:  metadataStore,
+		Persister:      persister,
+		ProviderIndex:  providerIndex,
+		StorageHandler: storageHandler,
+		DB:             db,
+		CacheDir:       cacheDir,
+		ADNLAddr:       adnlAddr,
+		Port:           port,
 	}
 }
 

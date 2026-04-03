@@ -26,18 +26,23 @@ type ServerConfig struct {
 	ActiveDHTLimit  int
 }
 
+// ClusterQueryHandler processes raw TL queries for the cluster overlay.
+type ClusterQueryHandler func(ctx context.Context, rawQuery []byte) ([]byte, error)
+
 type Server struct {
-	gateway      *adnl.Gateway
-	dhtClient    *dht.Client
-	registrar    *DHTRegistrar
-	overlays     *OverlayManager
-	httpBridge   *RLDPHTTPBridge
-	privateKey   ed25519.PrivateKey
-	port         int
-	externalIP   net.IP
-	externalPort int
-	running      atomic.Bool
-	logger       *slog.Logger
+	gateway             *adnl.Gateway
+	dhtClient           *dht.Client
+	registrar           *DHTRegistrar
+	overlays            *OverlayManager
+	httpBridge          *RLDPHTTPBridge
+	clusterOverlayID    [32]byte
+	clusterQueryHandler ClusterQueryHandler
+	privateKey          ed25519.PrivateKey
+	port                int
+	externalIP          net.IP
+	externalPort        int
+	running             atomic.Bool
+	logger              *slog.Logger
 }
 
 func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*Server, error) {
@@ -145,6 +150,19 @@ func (s *Server) IsRunning() bool                 { return s.running.Load() }
 
 // SetHTTPBridge registers the RLDP-HTTP bridge for incoming connections.
 func (s *Server) SetHTTPBridge(b *RLDPHTTPBridge) { s.httpBridge = b }
+
+// SetClusterOverlay registers a handler for the cluster overlay.
+// Queries arriving on this overlay ID are routed to the handler instead of OverlayManager.
+func (s *Server) SetClusterOverlay(overlayID [32]byte, handler ClusterQueryHandler) {
+	s.clusterOverlayID = overlayID
+	s.clusterQueryHandler = handler
+}
+
+// ExternalIP returns the advertised IP address.
+func (s *Server) ExternalIP() net.IP { return s.externalIP }
+
+// ExternalPort returns the advertised port.
+func (s *Server) ExternalPort() int { return s.externalPort }
 
 func decodePrivateKey(hexKey string) (ed25519.PrivateKey, error) {
 	if len(hexKey) != 64 {

@@ -16,6 +16,40 @@ var segmentPool = sync.Pool{
 	},
 }
 
+// ServePiece serves a piece locally, returning data and proof separately.
+// Used by the cluster piece forwarding handler on the owning node.
+func (h *Handler) ServePiece(ctx context.Context, bagID [32]byte, pieceIndex int) ([]byte, []byte, error) {
+	meta, err := h.ensureBagLoaded(ctx, bagID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ensure bag loaded: %w", err)
+	}
+	if pieceIndex < 0 || pieceIndex >= meta.PieceCount {
+		return nil, nil, fmt.Errorf("piece %d out of range [0, %d)", pieceIndex, meta.PieceCount)
+	}
+
+	headerBytes, err := boc.SerializeTorrentHeader(meta.Header)
+	if err != nil {
+		return nil, nil, fmt.Errorf("serialize header: %w", err)
+	}
+
+	segmentData, err := h.fetchSegmentForPiece(ctx, bagID, meta, pieceIndex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pieceData, err := slicePieceData(headerBytes, segmentData, pieceIndex, meta.PieceSize, meta.FileSize, meta.HeaderSize)
+	if err != nil {
+		return nil, nil, fmt.Errorf("slice piece %d: %w", pieceIndex, err)
+	}
+
+	proof, err := boc.GenerateMerkleProof(meta.MerkleTree, pieceIndex, meta.PieceCount)
+	if err != nil {
+		return nil, nil, fmt.Errorf("generate proof for piece %d: %w", pieceIndex, err)
+	}
+
+	return pieceData, proof, nil
+}
+
 // handleGetPiece handles storage.getPiece RPC (hot path).
 // Pieces cover headerBytes + payload (standard TON Storage format).
 func (h *Handler) handleGetPiece(ctx context.Context, bagID [32]byte, pieceIndex int) ([]byte, error) {

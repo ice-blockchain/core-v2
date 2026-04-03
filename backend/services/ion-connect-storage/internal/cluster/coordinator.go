@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -19,6 +20,9 @@ import (
 type CoordinatorConfig struct {
 	NodeID                string
 	ClusterOverlayID      string
+	ADNLAddress           string // hex-encoded ADNL address
+	ExternalIP            string
+	ExternalPort          int
 	DB                    *pebble.DB
 	Metrics               *ClusterMetrics
 	Logger                *slog.Logger
@@ -48,13 +52,14 @@ type Coordinator struct {
 	dagService     *ADNLDAGService
 	pebbleDS       *PebbleDatastore
 	pieceForwarder *PieceForwarder
+	transport      *ClusterTransport
 	nodeID         string
 	ownedCount     atomic.Int64
 	metrics        *ClusterMetrics
 	logger         *slog.Logger
 	cfg            CoordinatorConfig
 	cancel         context.CancelFunc
-	stopped        chan struct{}
+	wg             sync.WaitGroup
 }
 
 // ForwardGetPiece delegates to the piece forwarder.
@@ -65,9 +70,30 @@ func (c *Coordinator) ForwardGetPiece(ctx context.Context, bagID [32]byte, piece
 	return c.pieceForwarder.ForwardGetPiece(ctx, bagID, pieceID)
 }
 
+// ForwardRawQuery delegates to the piece forwarder.
+func (c *Coordinator) ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+	if c.pieceForwarder == nil {
+		return nil, fmt.Errorf("piece forwarder not configured")
+	}
+	return c.pieceForwarder.ForwardRawQuery(ctx, bagID, rawQuery)
+}
+
 // SetPieceForwarder configures the piece forwarder for this coordinator.
 func (c *Coordinator) SetPieceForwarder(forwarder *PieceForwarder) {
 	c.pieceForwarder = forwarder
+}
+
+// SetTransport wires the cluster transport for CRDT broadcast and block exchange.
+// Must be called before Start().
+func (c *Coordinator) SetTransport(transport *ClusterTransport) {
+	c.transport = transport
+	c.broadcaster.peer = transport
+	c.dagService.fetcher = transport
+}
+
+// Transport returns the cluster transport (for adding peers, etc).
+func (c *Coordinator) Transport() *ClusterTransport {
+	return c.transport
 }
 
 // NewCoordinator creates a cluster coordinator. Call Start() to begin operation.
@@ -102,11 +128,10 @@ func NewCoordinator(cfg CoordinatorConfig) (*Coordinator, error) {
 		metrics:     cfg.Metrics,
 		logger:      cfg.Logger,
 		cfg:         cfg,
-		stopped:     make(chan struct{}),
 	}, nil
 }
 
-// Start begins CRDT synchronization, heartbeat writing, and node info publishing.
+// Start begins CRDT synchronization, heartbeat writing, reclamation, and node info publishing.
 func (c *Coordinator) Start(ctx context.Context) error {
 	ctx, c.cancel = context.WithCancel(ctx)
 	c.logger.Info("cluster coordinator starting", "node_id", c.nodeID)
@@ -115,7 +140,9 @@ func (c *Coordinator) Start(ctx context.Context) error {
 		return fmt.Errorf("publish node info: %w", err)
 	}
 
-	go c.heartbeatLoop(ctx)
+	c.wg.Add(2)
+	go func() { defer c.wg.Done(); c.heartbeatLoop(ctx) }()
+	go func() { defer c.wg.Done(); c.StartReclamation(ctx) }()
 	return nil
 }
 
@@ -124,7 +151,7 @@ func (c *Coordinator) Stop() {
 	if c.cancel != nil {
 		c.cancel()
 	}
-	<-c.stopped
+	c.wg.Wait()
 	if err := c.crdt.Close(); err != nil {
 		c.logger.Error("close crdt", "error", err)
 	}
@@ -147,9 +174,29 @@ func (c *Coordinator) NodeID() string {
 	return c.nodeID
 }
 
+// UpdateNodeInfo updates the ADNL address info used in publishNodeInfo.
+func (c *Coordinator) UpdateNodeInfo(adnlAddress, ip string, port int) {
+	c.cfg.ADNLAddress = adnlAddress
+	c.cfg.ExternalIP = ip
+	c.cfg.ExternalPort = port
+}
+
+// Broadcaster returns the CRDT broadcaster (for wiring transport).
+func (c *Coordinator) Broadcaster() *ADNLBroadcaster {
+	return c.broadcaster
+}
+
+// DAGService returns the IPLD DAG service (for wiring transport).
+func (c *Coordinator) DAGService() *ADNLDAGService {
+	return c.dagService
+}
+
 func (c *Coordinator) publishNodeInfo(ctx context.Context) error {
-	// NodeInfo will be populated with actual ADNL address during integration.
-	info := NodeInfo{ADNLAddress: c.nodeID, IP: "", Port: 0}
+	info := NodeInfo{
+		ADNLAddress: c.cfg.ADNLAddress,
+		IP:          c.cfg.ExternalIP,
+		Port:        c.cfg.ExternalPort,
+	}
 	data, err := MarshalNodeInfo(info)
 	if err != nil {
 		return err
@@ -158,7 +205,6 @@ func (c *Coordinator) publishNodeInfo(ctx context.Context) error {
 }
 
 func (c *Coordinator) heartbeatLoop(ctx context.Context) {
-	defer close(c.stopped)
 	ticker := time.NewTicker(c.cfg.HeartbeatInterval)
 	defer ticker.Stop()
 
@@ -174,9 +220,14 @@ func (c *Coordinator) heartbeatLoop(ctx context.Context) {
 }
 
 func (c *Coordinator) writeHeartbeat(ctx context.Context) {
+	if ctx.Err() != nil {
+		return
+	}
 	val := FormatHeartbeat(time.Now().Unix())
 	if err := c.crdt.Put(ctx, ds.NewKey(HeartbeatKey(c.nodeID)), val); err != nil {
-		c.logger.Warn("write heartbeat", "error", err)
+		if ctx.Err() == nil {
+			c.logger.Warn("write heartbeat", "error", err)
+		}
 	}
 }
 

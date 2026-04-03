@@ -96,6 +96,12 @@ func main() {
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
 	sessionInit := storage.NewSessionInitiator(storageHandler, logger)
 	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
+
+	// Wire piece handler for cluster forwarding (needs storage handler to be created first).
+	if realCoord, ok := coord.(*cluster.Coordinator); ok && realCoord.Transport() != nil {
+		realCoord.Transport().SetPieceHandler(storageHandler.ServePiece)
+		realCoord.Transport().SetRawQueryHandler(storageHandler.HandleOverlayQuery)
+	}
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
 	// Subscriber starts AFTER coordinator to avoid indexing without CRDT claims.
@@ -134,9 +140,17 @@ func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server,
 		return cluster.NewSingleNodeCoordinator(nodeID, adnlAddr, ip, port)
 	}
 
+	nodeID := cfg.NodeID
+	if nodeID == "" {
+		nodeID = hexEncodeAddr(adnlAddr)
+	}
+
 	coord, err := cluster.NewCoordinator(cluster.CoordinatorConfig{
-		NodeID:                cfg.NodeID,
+		NodeID:                nodeID,
 		ClusterOverlayID:      cfg.ClusterOverlayID,
+		ADNLAddress:           hexEncodeAddr(adnlAddr),
+		ExternalIP:            ip,
+		ExternalPort:          port,
 		DB:                    db,
 		Logger:                logger,
 		HeartbeatInterval:     cfg.HeartbeatInterval,
@@ -147,6 +161,13 @@ func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server,
 		logger.Error("create coordinator failed", "error", err)
 		os.Exit(1)
 	}
+
+	// Wire CRDT transport over ADNL cluster overlay.
+	overlayID := cluster.ComputeClusterOverlayID(cfg.ClusterOverlayID)
+	transport := cluster.NewClusterTransport(server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)
+	transport.RegisterWithServer()
+	coord.SetTransport(transport)
+	coord.SetPieceForwarder(cluster.NewPieceForwarder(transport, coord, nil, logger))
 
 	if err := coord.Start(context.Background()); err != nil {
 		logger.Error("start coordinator failed", "error", err)
