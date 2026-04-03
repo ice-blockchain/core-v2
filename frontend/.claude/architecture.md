@@ -27,6 +27,7 @@
 | `@ion/permissions` | Camera, photos, microphone, notifications, cloud permissions (iOS, Android, Web) | Implemented |
 | `@ion/config` | Remote config, env, feature flags | Implemented |
 | `@ion/localization` | i18n, plurals, fallback, device locale, language persistence | Implemented |
+| `@ion/ion-connect-proxy` | ION Connect proxy lifecycle, proxy transport for .ton domains | Implemented |
 | `@ion/auth-ui` | Shared auth screens, forms, buttons, icons, validation | Implemented |
 
 ### Media Layer

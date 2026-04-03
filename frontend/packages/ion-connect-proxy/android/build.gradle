@@ -1,0 +1,39 @@
+buildscript {
+  ext.safeExtGet = {prop, fallback -> rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback}
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.facebook.react'
+
+android {
+  namespace "io.ion.ionconnectproxy"
+  compileSdk safeExtGet('compileSdkVersion', 36)
+
+  defaultConfig {
+    minSdk safeExtGet('minSdkVersion', 24)
+    targetSdk safeExtGet('targetSdkVersion', 36)
+    externalNativeBuild {
+      cmake { cppFlags "" }
+    }
+    ndk {
+      abiFilters "arm64-v8a"
+    }
+  }
+
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+    }
+  }
+
+  sourceSets {
+    main {
+      jniLibs.srcDirs = ['src/main/jniLibs']
+    }
+  }
+}
+
+dependencies {
+  implementation "com.facebook.react:react-android"
+}

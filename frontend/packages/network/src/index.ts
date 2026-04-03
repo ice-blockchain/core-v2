@@ -14,6 +14,15 @@ export type {
   UploadOptions,
 } from './http-types';
 
+// Types — transport
+export type {
+  Transport,
+  TransportRequest,
+  TransportResponse,
+  TransportUploadRequest,
+  TransportDownloadRequest,
+} from './transport-types';
+
 // Types — interceptors
 export type { Interceptor, InterceptedRequest, InterceptedResponse } from './interceptor-types';
 
@@ -41,6 +50,9 @@ export type {
   QueueStorage,
   ReplayResult,
 } from './queue-types';
+
+// Platform
+export { createNetworkStateProvider } from './platform/network-state';
 
 // Implementations
 export { NetworkError } from './network-error';

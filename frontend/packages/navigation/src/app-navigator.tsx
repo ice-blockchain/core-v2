@@ -21,6 +21,7 @@ interface AppNavigatorProps {
     GetStarted: ComponentType;
     Catalog: ComponentType;
     ChatPreview: ComponentType;
+    ProxyTest?: ComponentType;
     NicknameReserved: ComponentType;
   };
   authScreens: AuthScreens;
@@ -42,6 +43,9 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
       <Stack.Screen name={Routes.GetStarted} component={screens.GetStarted} />
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
       <Stack.Screen name={Routes.ChatPreview} component={screens.ChatPreview} />
+      {screens.ProxyTest && (
+        <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />
+      )}
       <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} options={TRANSPARENT_MODAL_OPTIONS} />
     </Stack.Navigator>

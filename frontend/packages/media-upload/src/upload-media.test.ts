@@ -64,6 +64,7 @@ function createMockDependencies(): UploadDependencies {
       patch: vi.fn(),
       delete: vi.fn(),
       upload: vi.fn(),
+      head: vi.fn(),
     },
     database: createMockDatabase(),
     greenfieldClient: {

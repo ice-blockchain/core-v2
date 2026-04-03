@@ -4,6 +4,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Catalog: undefined;
   ChatPreview: undefined;
+  ProxyTest: undefined;
   'Sheet/Auth': undefined;
   'Sheet/NicknameReserved': undefined;
 };

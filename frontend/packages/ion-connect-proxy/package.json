@@ -1,0 +1,35 @@
+{
+  "name": "@ion/ion-connect-proxy",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "codegenConfig": {
+    "name": "IonConnectProxySpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "io.ion.ionconnectproxy"
+    }
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "dependencies": {
+    "@ion/diagnostics": "workspace:*",
+    "@ion/network": "workspace:*",
+    "@ion/platform": "workspace:*"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
+  }
+}

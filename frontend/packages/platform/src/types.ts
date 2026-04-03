@@ -28,6 +28,11 @@ export type AppLifecycleState = "active" | "inactive" | "background";
 
 export type AppLifecycleListener = (state: AppLifecycleState) => void;
 
+export interface AppStateProvider {
+  getCurrentState(): AppLifecycleState;
+  onStateChange(handler: (state: AppLifecycleState) => void): () => void;
+}
+
 // --- Screen Dimensions ---
 
 export interface ScreenDimensions {
