@@ -16,17 +16,30 @@ const tlPingConstructor uint32 = 0x44f3f211
 
 // handleNewConnection is called when a new ADNL peer connects.
 func (s *Server) handleNewConnection(client adnl.Peer) error {
-	setupOverlayRLDP(client, s.overlays, s.logger)
+	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.logger)
 	return nil
 }
 
 // setupOverlayRLDP wires ADNL + RLDP overlay query dispatch for a peer.
-func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, logger *slog.Logger) {
+// If an HTTP bridge is provided, non-overlay RLDP queries are forwarded
+// to the bridge (HTTP-over-RLDP for provider index).
+func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, logger *slog.Logger) {
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
+	client.SetQueryHandler(func(query *adnl.MessageQuery) error {
+		if _, ok := query.Data.(GetCapabilities); ok {
+			return client.Answer(context.Background(), query.ID, &Capabilities{Value: capabilityRLDP2})
+		}
+		return nil
+	})
+
 	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, logger))
 	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, logger))
+
+	if bridge != nil {
+		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl))
+	}
 
 	logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
 }

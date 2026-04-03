@@ -26,12 +26,16 @@ type BagEntry struct {
 	Location BagLocation
 }
 
+// BagIndexedCallback is called after a new bag is successfully persisted.
+type BagIndexedCallback func(bagID [32]byte)
+
 // Persister provides a two-tier bag index: in-memory xsync.Map for fast reads
 // backed by PebbleDB for durability. LookupBag checks memory first, falls back
 // to PebbleDB (populating memory on hit). PersistBagsAndHeight writes to both.
 type Persister struct {
-	db    *pebble.DB
-	index *xsync.Map[[32]byte, BagLocation]
+	db           *pebble.DB
+	index        *xsync.Map[[32]byte, BagLocation]
+	onBagIndexed BagIndexedCallback
 }
 
 // NewPersister creates a Persister backed by the given PebbleDB instance.
@@ -40,6 +44,11 @@ func NewPersister(db *pebble.DB) *Persister {
 		db:    db,
 		index: xsync.NewMap[[32]byte, BagLocation](),
 	}
+}
+
+// SetOnBagIndexed registers a callback invoked for each newly persisted bag.
+func (p *Persister) SetOnBagIndexed(cb BagIndexedCallback) {
+	p.onBagIndexed = cb
 }
 
 // LoadLastHeight returns the last persisted block height, or 0 if none.
@@ -115,6 +124,12 @@ func (p *Persister) PersistBagsAndHeight(entries []BagEntry, height int64) error
 
 	for _, entry := range entries {
 		p.index.Store(entry.BagID, entry.Location)
+	}
+
+	if p.onBagIndexed != nil {
+		for _, entry := range entries {
+			p.onBagIndexed(entry.BagID)
+		}
 	}
 
 	return nil

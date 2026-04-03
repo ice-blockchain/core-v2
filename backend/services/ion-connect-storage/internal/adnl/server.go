@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"github.com/xssnick/tonutils-go/adnl"
@@ -30,10 +31,12 @@ type Server struct {
 	dhtClient    *dht.Client
 	registrar    *DHTRegistrar
 	overlays     *OverlayManager
+	httpBridge   *RLDPHTTPBridge
 	privateKey   ed25519.PrivateKey
 	port         int
 	externalIP   net.IP
 	externalPort int
+	running      atomic.Bool
 	logger       *slog.Logger
 }
 
@@ -101,6 +104,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.gateway.SetConnectionHandler(s.handleNewConnection)
 
 	s.registrar.Start(ctx)
+	s.running.Store(true)
 	s.logger.Info("DHT registrar started", "registered_bags", s.registrar.Count())
 	s.logger.Info("overlay manager ready", "active_overlays", s.overlays.ActiveCount())
 
@@ -121,6 +125,7 @@ func (s *Server) registerSelfInDHT(ctx context.Context) error {
 }
 
 func (s *Server) Stop(_ context.Context) error {
+	s.running.Store(false)
 	s.logger.Info("stopping DHT registrar")
 	s.registrar.Stop()
 
@@ -136,6 +141,10 @@ func (s *Server) OverlayManager() *OverlayManager { return s.overlays }
 func (s *Server) Gateway() *adnl.Gateway          { return s.gateway }
 func (s *Server) DHTClient() *dht.Client          { return s.dhtClient }
 func (s *Server) PrivateKey() ed25519.PrivateKey  { return s.privateKey }
+func (s *Server) IsRunning() bool                 { return s.running.Load() }
+
+// SetHTTPBridge registers the RLDP-HTTP bridge for incoming connections.
+func (s *Server) SetHTTPBridge(b *RLDPHTTPBridge) { s.httpBridge = b }
 
 func decodePrivateKey(hexKey string) (ed25519.PrivateKey, error) {
 	if len(hexKey) != 64 {

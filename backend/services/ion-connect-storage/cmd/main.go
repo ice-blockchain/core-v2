@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,12 +10,16 @@ import (
 	"time"
 
 	"github.com/cockroachdb/pebble/v2"
+	"github.com/gin-gonic/gin"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/config"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/health"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/metrics"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/provider"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/storage"
 )
 
@@ -45,7 +47,6 @@ func main() {
 	fetcher := greenfield.NewFetcher(gfClient, logger)
 
 	sub := index.NewSubscriber(gfClient, persister, cfg.OnlineIOEnv, logger)
-
 	var subscriberWg sync.WaitGroup
 	subscriberWg.Add(1)
 	go func() {
@@ -60,6 +61,20 @@ func main() {
 		logger.Error("create server failed", "error", err)
 		os.Exit(1)
 	}
+
+	m := metrics.NewMetrics()
+	providerIndex := provider.NewProviderIndex(db, adnlAddrFromGateway(server), logger)
+	persister.SetOnBagIndexed(func(bagID [32]byte) {
+		if err := providerIndex.Register(bagID); err != nil {
+			logger.Error("provider register failed", "error", err)
+		}
+	})
+
+	publicEngine := createPublicEngine(providerIndex)
+	bridge := ionadnl.NewRLDPHTTPBridge(ctx, publicEngine, logger)
+	server.SetHTTPBridge(bridge)
+
+	privateEngine := createPrivateEngine(gfClient, db, server, m, cfg)
 
 	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
 	segmentCache := cache.NewSegmentCache(cfg.CacheDir, cfg.CacheTTL, func(bagID [32]byte) {
@@ -80,7 +95,8 @@ func main() {
 	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
-	go startHealthServer(ctx, cfg.HttpPort, logger)
+	go health.StartServer(ctx, privateEngine, "127.0.0.1:"+cfg.HttpPort, logger)
+	startSeparateMetricsServer(ctx, cfg, m, logger)
 
 	if err := server.Start(ctx); err != nil {
 		logger.Error("start server failed", "error", err)
@@ -91,6 +107,7 @@ func main() {
 	<-ctx.Done()
 
 	logger.Info("shutdown signal received")
+	bridge.Stop()
 	subscriberWg.Wait()
 	shutdownServer(server, logger)
 	logger.Info("ion-connect-storage stopped")
@@ -101,7 +118,6 @@ func openBagIndex(cfg config.Config, logger *slog.Logger) (*pebble.DB, greenfiel
 	if err != nil {
 		return nil, nil, err
 	}
-
 	gfClient, err := greenfieldclient.New(greenfieldclient.Config{
 		RpcURLs:    cfg.GreenfieldRpcURLs,
 		ChainID:    cfg.GreenfieldChainID,
@@ -112,7 +128,6 @@ func openBagIndex(cfg config.Config, logger *slog.Logger) (*pebble.DB, greenfiel
 		db.Close()
 		return nil, nil, err
 	}
-
 	return db, gfClient, nil
 }
 
@@ -147,36 +162,55 @@ func createServer(ctx context.Context, cfg config.Config, logger *slog.Logger) (
 func shutdownServer(server *ionadnl.Server, logger *slog.Logger) {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
 	if err := server.Stop(shutdownCtx); err != nil {
 		logger.Error("server stop error", "error", err)
 	}
 }
 
-func startHealthServer(ctx context.Context, port string, logger *slog.Logger) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health-check", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
+func adnlAddrFromGateway(server *ionadnl.Server) [32]byte {
+	id := server.Gateway().GetID()
+	var addr [32]byte
+	copy(addr[:], id)
+	return addr
+}
+
+func createPublicEngine(providerIndex *provider.ProviderIndex) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+	provider.RegisterRoutes(engine, providerIndex)
+	return engine
+}
+
+func createPrivateEngine(
+	gfClient greenfieldclient.Client,
+	db *pebble.DB,
+	server *ionadnl.Server,
+	m *metrics.Metrics,
+	cfg config.Config,
+) *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
+	engine := gin.New()
+	engine.Use(gin.Recovery())
+
+	health.RegisterRoutes(engine, health.Deps{
+		GFClient: gfClient,
+		DB:       db,
+		Server:   server,
 	})
 
-	server := &http.Server{
-		Addr:         ":" + port,
-		Handler:      mux,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  30 * time.Second,
+	if cfg.MetricsPort == "" || cfg.MetricsPort == cfg.HttpPort {
+		metrics.RegisterRoutes(engine, m.Registry())
 	}
 
-	go func() {
-		<-ctx.Done()
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_ = server.Shutdown(shutdownCtx)
-	}()
+	return engine
+}
 
-	logger.Info("health server started", "addr", ":"+port)
-	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Error("health server failed", "error", err)
+func startSeparateMetricsServer(ctx context.Context, cfg config.Config, m *metrics.Metrics, logger *slog.Logger) {
+	if cfg.MetricsPort == "" || cfg.MetricsPort == cfg.HttpPort {
+		return
 	}
+	metricsEngine := gin.New()
+	metrics.RegisterRoutes(metricsEngine, m.Registry())
+	go health.StartServer(ctx, metricsEngine, "127.0.0.1:"+cfg.MetricsPort, logger)
 }
