@@ -3,10 +3,6 @@ import type {
   SocialProfile,
   UpdateSocialProfileInput,
   UpdateSocialProfileResult,
-  IonConnectRelay,
-  UserRelayInfo,
-  SearchUsersParams,
-  GetContentCreatorsParams,
 } from './users/types';
 
 export interface IdentityClientConfig {
@@ -42,12 +38,6 @@ export interface IdentityClient {
   getSocialProfile(username: string, userIdOrMasterKey: string): Promise<SocialProfile>;
   updateSocialProfile(username: string, userId: string, input: UpdateSocialProfileInput): Promise<UpdateSocialProfileResult>;
   verifyNickname(username: string, nickname: string): Promise<void>;
-  getIonConnectRelays(username: string, masterPubkeys: string[]): Promise<UserRelayInfo[]>;
-  getIonConnectIndexers(username: string, userId: string): Promise<string[]>;
-  setIonConnectRelays(username: string, userId: string, followeeList: string[]): Promise<IonConnectRelay[]>;
-  getAvailableRelays(username: string, userId: string, currentRelayUrl: string): Promise<IonConnectRelay[]>;
-  getContentCreators(username: string, params: GetContentCreatorsParams): Promise<UserRelayInfo[]>;
-  searchUsers(username: string, params: SearchUsersParams): Promise<UserRelayInfo[]>;
   verifyEarlyAccessEmail(email: string): Promise<void>;
   listCredentials(username: string): Promise<CredentialListItem[]>;
   createRecoveryCredentials(username: string, signingContext: SigningContext): Promise<RecoveryCredentialsResult>;
@@ -257,17 +247,12 @@ export interface PasskeyRecoveryInput {
 
 export type RecoverAccountInput = PasswordRecoveryInput | PasskeyRecoveryInput;
 
-export interface UserAssignedRelay {
-  type: string;
-  url: string;
-}
-
 export interface User {
   '2faOptions': TwoFAOption[] | null;
   duplicateOf: string | null;
   email: string[] | null;
   ionConnectIndexerRelays: string[] | null;
-  ionConnectRelays: UserAssignedRelay[] | null;
+  ionConnectRelays: { type: string; url: string }[] | null;
   masterPubKey: string;
   phoneNumber: string[] | null;
 }

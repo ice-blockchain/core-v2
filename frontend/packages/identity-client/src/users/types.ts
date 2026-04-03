@@ -26,29 +26,3 @@ export interface UpdateSocialProfileResult {
   referralMasterKey: string | null;
 }
 
-export interface IonConnectRelay {
-  url: string;
-  type: 'read' | 'write' | null;
-}
-
-export interface UserRelayInfo {
-  masterPubKey: string;
-  ionConnectRelays: IonConnectRelay[];
-  username: string;
-  displayName: string;
-  avatar: string | null;
-}
-
-export interface SearchUsersParams {
-  keyword: string;
-  limit: number;
-  offset: number;
-  type: 'startsWith' | 'contains';
-  followedBy?: string;
-  followerOf?: string;
-}
-
-export interface GetContentCreatorsParams {
-  limit: number;
-  excludeMasterPubKeys: string[];
-}

@@ -36,12 +36,6 @@ The client creates its own `HttpClient` internally with the auth interceptor bak
 | `getSocialProfile(username, userIdOrMasterKey)` | Fetch social profile (displayName, avatar, bio, referral) |
 | `updateSocialProfile(username, userId, input)` | Update social profile fields |
 | `verifyNickname(username, nickname)` | Check if nickname is available |
-| `getIonConnectRelays(username, masterPubkeys)` | Get relay info for multiple users by master public keys |
-| `getIonConnectIndexers(username, userId)` | Get ION Connect indexer URLs for a user |
-| `setIonConnectRelays(username, userId, followeeList)` | Update user's relay configuration |
-| `getAvailableRelays(username, userId, currentRelayUrl)` | List all available relays |
-| `getContentCreators(username, params)` | Discover content creators with exclusion filtering |
-| `searchUsers(username, params)` | Search users by keyword (startsWith/contains) with optional social filters |
 | `verifyEarlyAccessEmail(email)` | Verify early access email |
 | `listCredentials(username)` | List user's registered credentials |
 | `createRecoveryCredentials(username, signingContext)` | Create recovery key pair + recovery code |
@@ -109,7 +103,7 @@ User {
   email: string[] | null
   phoneNumber: string[] | null
   '2faOptions': TwoFAOption[] | null
-  ionConnectRelays: UserAssignedRelay[] | null
+  ionConnectRelays: { type: string; url: string }[] | null
   ionConnectIndexerRelays: string[] | null
   duplicateOf: string | null
 }
@@ -130,16 +124,6 @@ SocialProfile {
   referralMasterKey: string | null
   referralCount: number
 }
-
-UserRelayInfo {
-  masterPubKey: string
-  ionConnectRelays: IonConnectRelay[]
-  username: string
-  displayName: string
-  avatar: string | null
-}
-
-IonConnectRelay { url: string; type: 'read' | 'write' | null }
 
 IdentityErrorCode:
   PASSKEY_NOT_AVAILABLE | PASSKEY_CANCELLED | PASSKEY_VALIDATION_FAILED
@@ -238,8 +222,6 @@ Until that is implemented, `deleteAccount` cannot be called successfully.
 | `user-action-data-source` | `/auth/action/init`, `/auth/action` |
 | `recovery-data-source` | `/auth/recover/init`, `/auth/recover/user` |
 | `user-profile-data-source` | `/v1/users/{id}/profiles/social`, `/v1/users/verify-username-availability` |
-| `relay-data-source` | `/v1/users/ion-connect-relays`, `/v1/users/{id}/ion-connect-indexers`, `/v1/users/{id}/ion-connect-relays`, `/v1/users/{id}/all-available-ion-connect-relays`, `/v1/users/get-content-creators`, `/v1/user-social-profiles` |
-
 Data sources are thin HTTP wrappers. They set `X-Username` header; the interceptor injects `Authorization`.
 
 ## Dependencies

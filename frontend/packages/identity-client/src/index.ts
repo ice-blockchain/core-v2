@@ -10,7 +10,6 @@ export type {
   RegistrationResult,
   AuthTokens,
   User,
-  UserAssignedRelay,
   TwoFAOption,
   SigningContext,
   PasswordSigningContext,
@@ -30,10 +29,6 @@ export type {
   SocialProfile,
   UpdateSocialProfileInput,
   UpdateSocialProfileResult,
-  IonConnectRelay,
-  UserRelayInfo,
-  SearchUsersParams,
-  GetContentCreatorsParams,
 } from './users/types';
 
 export { IdentityError, IdentityErrorCode } from './errors';

@@ -1,7 +1,7 @@
 import { createHttpClient } from '@ion/network';
 import type { IdentityClient, IdentityClientConfig, SigningContext } from './types';
 import type { RequestTwoFACodeParams, VerifyTwoFACodeParams, DeleteTwoFAMethodInput, RecoverAccountInput } from './types';
-import type { UpdateSocialProfileInput, GetContentCreatorsParams, SearchUsersParams } from './users/types';
+import type { UpdateSocialProfileInput } from './users/types';
 import { createRegistrationDataSource } from './data-sources/registration-data-source';
 import { createLoginDataSource } from './data-sources/login-data-source';
 import { createSessionDataSource } from './data-sources/session-data-source';
@@ -11,7 +11,6 @@ import { createCredentialsDataSource } from './data-sources/credentials-data-sou
 import { createTwoFADataSource } from './data-sources/two-fa-data-source';
 import { createRecoveryDataSource } from './data-sources/recovery-data-source';
 import { createUserProfileDataSource } from './data-sources/user-profile-data-source';
-import { createRelayDataSource } from './data-sources/relay-data-source';
 import { createTokenManager } from './token/token-manager';
 import { createIdentityAuthInterceptor } from './interceptor/identity-auth-interceptor';
 import { createAuthStore } from './auth-store';
@@ -29,12 +28,6 @@ import { getUser } from './users/get-user';
 import { getSocialProfile } from './users/get-social-profile';
 import { updateSocialProfile } from './users/update-social-profile';
 import { verifyNickname } from './users/verify-nickname';
-import { getIonConnectRelays } from './users/get-ion-connect-relays';
-import { getIonConnectIndexers } from './users/get-ion-connect-indexers';
-import { setIonConnectRelays } from './users/set-ion-connect-relays';
-import { getAvailableRelays } from './users/get-available-relays';
-import { getContentCreators } from './users/get-content-creators';
-import { searchUsers } from './users/search-users';
 import { verifyEarlyAccessEmail } from './auth/verify-early-access-email';
 import { listCredentials } from './auth/list-credentials';
 import { createRecoveryCredentials } from './auth/create-recovery-credentials';
@@ -76,7 +69,6 @@ function buildContext(config: IdentityClientConfig) {
     twoFADataSource: createTwoFADataSource(httpClient),
     recoveryDataSource: createRecoveryDataSource(httpClient),
     userProfileDataSource: createUserProfileDataSource(httpClient),
-    relayDataSource: createRelayDataSource(httpClient),
   };
 }
 
@@ -132,20 +124,10 @@ function buildFeatureMethods(c: Ctx) {
 
 function buildUserMethods(c: Ctx) {
   const profileDeps = { userProfileDataSource: c.userProfileDataSource };
-  const relayDeps = { relayDataSource: c.relayDataSource };
   return {
     getSocialProfile: (username: string, id: string) => getSocialProfile(username, id, profileDeps),
     updateSocialProfile: (username: string, userId: string, input: UpdateSocialProfileInput) =>
       updateSocialProfile(username, { userId, input }, profileDeps),
     verifyNickname: (username: string, nickname: string) => verifyNickname(username, nickname, profileDeps),
-    getIonConnectRelays: (username: string, keys: string[]) => getIonConnectRelays(username, keys, relayDeps),
-    getIonConnectIndexers: (username: string, userId: string) => getIonConnectIndexers(username, userId, relayDeps),
-    setIonConnectRelays: (username: string, userId: string, followeeList: string[]) =>
-      setIonConnectRelays(username, { userId, followeeList }, relayDeps),
-    getAvailableRelays: (username: string, userId: string, currentRelayUrl: string) =>
-      getAvailableRelays(username, { userId, currentRelayUrl }, relayDeps),
-    getContentCreators: (username: string, params: GetContentCreatorsParams) =>
-      getContentCreators(username, params, relayDeps),
-    searchUsers: (username: string, params: SearchUsersParams) => searchUsers(username, params, relayDeps),
   };
 }
