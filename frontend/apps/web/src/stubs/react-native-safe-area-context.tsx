@@ -1,4 +1,6 @@
 import React, { createContext, useContext } from 'react';
+import { View } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 
 const defaultInsets = { top: 0, bottom: 0, left: 0, right: 0 };
 const defaultFrame = { x: 0, y: 0, width: 0, height: 0 };
@@ -22,8 +24,8 @@ export function SafeAreaListener({ children }: { children?: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function SafeAreaView({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={style}>{children}</div>;
+export function SafeAreaView({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  return <View style={style}>{children}</View>;
 }
 
 export function useSafeAreaInsets() {

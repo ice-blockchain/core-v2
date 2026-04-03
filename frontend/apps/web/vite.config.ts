@@ -64,6 +64,10 @@ function reactNativeWebPlugin(): Plugin {
               find: /^react-native-safe-area-context$/,
               replacement: path.join(stubsDir, 'react-native-safe-area-context.tsx'),
             },
+            {
+              find: /^react-native-linear-gradient$/,
+              replacement: path.resolve(stubsDir, 'react-native-linear-gradient.tsx'),
+            },
           ],
         },
         optimizeDeps: {
@@ -79,6 +83,7 @@ function reactNativeWebPlugin(): Plugin {
             'react-native',
             'react-native-svg',
             'react-native-safe-area-context',
+            'react-native-linear-gradient',
           ],
           resolve: {
             extensions: webExtensions,
