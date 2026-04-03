@@ -200,6 +200,24 @@ describe('createHttpClient HTTPS enforcement', () => {
   });
 });
 
+describe('createHttpClient default headers', () => {
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
+
+  it('merges config headers into every request', async () => {
+    mockRequest.mockResolvedValue(mockAxiosResponse({ ok: true }));
+    const client = createHttpClient({ baseUrl: 'https://api.example.com', headers: { 'X-Client-ID': 'my-app' } });
+    await client.get('/test');
+    expect(mockRequest.mock.calls[0]![0].headers['X-Client-ID']).toBe('my-app');
+  });
+
+  it('per-request headers override config defaults', async () => {
+    mockRequest.mockResolvedValue(mockAxiosResponse({ ok: true }));
+    const client = createHttpClient({ baseUrl: 'https://api.example.com', headers: { 'X-Client-ID': 'default' } });
+    await client.get('/test', { headers: { 'X-Client-ID': 'override' } });
+    expect(mockRequest.mock.calls[0]![0].headers['X-Client-ID']).toBe('override');
+  });
+});
+
 describe('createHttpClient HttpResponse wrapper', () => {
   beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); });
 

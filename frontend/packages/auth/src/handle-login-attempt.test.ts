@@ -18,7 +18,20 @@ function createMockClient(): IdentityClient {
     logout: vi.fn(),
     refreshToken: vi.fn(),
     isAuthenticated: vi.fn(),
+    restoreAuth: vi.fn(),
     getUser: vi.fn(),
+    verifyEarlyAccessEmail: vi.fn(),
+    listCredentials: vi.fn(),
+    createRecoveryCredentials: vi.fn(),
+    requestTwoFACode: vi.fn(),
+    verifyTwoFACode: vi.fn(),
+    deleteTwoFAMethod: vi.fn(),
+    deleteAccount: vi.fn(),
+    recoverAccount: vi.fn(),
+    getSocialProfile: vi.fn(),
+    updateSocialProfile: vi.fn(),
+    verifyNickname: vi.fn(),
+    authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} },
   };
 }
 
@@ -39,7 +52,7 @@ describe('handleLoginAttempt', () => {
 
   it('sets error when identity is not found', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: false, supportsPasskey: false, supportsPassword: false,
+      identityFound: false, supportsPasskey: false, supportsPassword: false, twoFAOptionsCount: null,
     });
     await handleLoginAttempt(deps(), 'alice');
     expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LOADING', isLoading: true });
@@ -53,7 +66,7 @@ describe('handleLoginAttempt', () => {
 
   it('navigates to verify-passkey and calls onAuthSuccess on passkey login', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: false,
+      identityFound: true, supportsPasskey: true, supportsPassword: false, twoFAOptionsCount: null,
     });
     vi.mocked(client.loginWithPasskey).mockResolvedValue('token');
     await handleLoginAttempt(deps(), 'bob');
@@ -63,7 +76,7 @@ describe('handleLoginAttempt', () => {
 
   it('falls back to verify-password when passkey is cancelled and password is supported', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: true,
+      identityFound: true, supportsPasskey: true, supportsPassword: true, twoFAOptionsCount: null,
     });
     vi.mocked(client.loginWithPasskey).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
@@ -76,7 +89,7 @@ describe('handleLoginAttempt', () => {
 
   it('falls back to verify-password when passkey is not available and password is supported', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: true,
+      identityFound: true, supportsPasskey: true, supportsPassword: true, twoFAOptionsCount: null,
     });
     vi.mocked(client.loginWithPasskey).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'unavailable'),
@@ -87,7 +100,7 @@ describe('handleLoginAttempt', () => {
 
   it('shows error when passkey is cancelled and password is not supported', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: false,
+      identityFound: true, supportsPasskey: true, supportsPassword: false, twoFAOptionsCount: null,
     });
     vi.mocked(client.loginWithPasskey).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
@@ -101,7 +114,7 @@ describe('handleLoginAttempt', () => {
 
   it('navigates directly to verify-password when only password is supported', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: false, supportsPassword: true,
+      identityFound: true, supportsPasskey: false, supportsPassword: true, twoFAOptionsCount: null,
     });
     await handleLoginAttempt(deps(), 'frank');
     expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_VERIFY_PASSWORD', identityKeyName: 'frank' });
@@ -121,7 +134,7 @@ describe('handleLoginAttempt', () => {
 
   it('toggles loading state in all paths', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: false, supportsPassword: true,
+      identityFound: true, supportsPasskey: false, supportsPassword: true, twoFAOptionsCount: null,
     });
     await handleLoginAttempt(deps(), 'heidi');
     const loadingCalls = dispatch.mock.calls.filter(

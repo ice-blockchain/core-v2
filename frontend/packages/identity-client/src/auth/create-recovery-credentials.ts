@@ -1,0 +1,116 @@
+import { randomBytes } from '@noble/hashes/utils';
+import type { CredentialsDataSource } from '../data-sources/credentials-data-source';
+import type { UserActionDataSource } from '../data-sources/user-action-data-source';
+import { generateKeyPair } from '../crypto/generate-key-pair';
+import { signForRegistration } from '../crypto/sign-for-registration';
+import type { Pbkdf2Fn } from '../crypto/encrypt-private-key';
+import { signUserAction } from './sign-user-action';
+
+interface CreateRecoveryCredentialsDeps {
+  credentialsDataSource: CredentialsDataSource;
+  userActionDataSource: UserActionDataSource;
+  origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
+}
+
+interface RecoveryCredentialsResult {
+  identityKeyName: string;
+  recoveryKeyId: string;
+  recoveryCode: string;
+}
+
+type SigningContext = { kind: 'password'; password: string } | { kind: 'passkey' };
+
+export async function createRecoveryCredentials(
+  username: string,
+  signingContext: SigningContext,
+  deps: CreateRecoveryCredentialsDeps,
+): Promise<RecoveryCredentialsResult> {
+  return executeCreateRecovery(username, signingContext, deps);
+}
+
+async function executeCreateRecovery(
+  username: string,
+  signingContext: SigningContext,
+  deps: CreateRecoveryCredentialsDeps,
+): Promise<RecoveryCredentialsResult> {
+  const challenge = await deps.credentialsDataSource.initCreateCredential('RecoveryKey', username);
+  const recoveryCode = generateRecoveryCode();
+  const regResult = await buildRecoveryCredential({ challenge: challenge.challenge, recoveryCode, origin: deps.origin, ...(deps.pbkdf2Fn && { pbkdf2Fn: deps.pbkdf2Fn }) });
+  const payload = buildPayload(challenge.challengeIdentifier, regResult);
+  const userAction = await getSignedAction({ username, signingContext, body: payload }, deps);
+  const result = await deps.credentialsDataSource.createCredential(payload, { username, userAction });
+  return { identityKeyName: result.name, recoveryKeyId: result.credentialId, recoveryCode };
+}
+
+function buildPayload(
+  challengeIdentifier: string,
+  reg: Awaited<ReturnType<typeof buildRecoveryCredential>>,
+) {
+  return {
+    challengeIdentifier,
+    credentialName: reg.credId,
+    credentialKind: 'RecoveryKey',
+    credentialInfo: {
+      credId: reg.credId,
+      clientData: reg.clientData,
+      attestationData: reg.attestationData,
+    },
+    encryptedPrivateKey: reg.encryptedPrivateKey,
+  };
+}
+
+interface SignActionInput {
+  username: string;
+  signingContext: SigningContext;
+  body: unknown;
+}
+
+async function getSignedAction(input: SignActionInput, deps: CreateRecoveryCredentialsDeps) {
+  return signUserAction(
+    { username: input.username, httpMethod: 'POST', httpPath: '/auth/credentials', body: input.body, signingContext: input.signingContext },
+    { userActionDataSource: deps.userActionDataSource, origin: deps.origin },
+  );
+}
+
+interface BuildRecoveryCredentialInput {
+  challenge: string;
+  recoveryCode: string;
+  origin: string;
+  pbkdf2Fn?: Pbkdf2Fn;
+}
+
+async function buildRecoveryCredential(input: BuildRecoveryCredentialInput) {
+  const keyPair = generateKeyPair();
+  return signForRegistration({
+    challenge: input.challenge, origin: input.origin, keyPair, password: input.recoveryCode, ...(input.pbkdf2Fn && { pbkdf2Fn: input.pbkdf2Fn }),
+  });
+}
+
+const CATEGORIES = ['0123456789', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '@%!$#'];
+const ALL_CHARS = CATEGORIES.join('');
+const ALL_LEN = ALL_CHARS.length;
+const REJECT_THRESHOLD = Math.floor(256 / ALL_LEN) * ALL_LEN;
+const CODE_LENGTH = 32;
+
+function unbiasedIndex(max: number): number {
+  const threshold = Math.floor(256 / max) * max;
+  let byte: number;
+  do {
+    byte = randomBytes(1)[0]!;
+  } while (byte >= threshold);
+  return byte % max;
+}
+
+function generateRecoveryCode(): string {
+  const result = CATEGORIES.map((cat) => cat[unbiasedIndex(cat.length)]!);
+  while (result.length < CODE_LENGTH) {
+    const byte = randomBytes(1)[0]!;
+    if (byte < REJECT_THRESHOLD) result.push(ALL_CHARS[byte % ALL_LEN]!);
+  }
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = unbiasedIndex(i + 1);
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result.join('');
+}

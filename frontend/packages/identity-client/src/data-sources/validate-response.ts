@@ -1,7 +1,7 @@
 import { IdentityError, IdentityErrorCode } from '../errors';
 
 function isNonNullObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function assertString(obj: Record<string, unknown>, field: string): void {
@@ -70,4 +70,11 @@ export function validateRefreshTokenResponse(value: unknown): void {
     throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid refresh token response');
   }
   assertString(value, 'token');
+}
+
+export function validateUserActionResponse(value: unknown): void {
+  if (!isNonNullObject(value)) {
+    throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid user action response');
+  }
+  assertString(value, 'userAction');
 }

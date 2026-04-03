@@ -19,6 +19,7 @@ const DEFAULT_MAX_REQUEST_BODY_SIZE = 50 * 1024 * 1024;
 interface ClientInternals {
   config: { timeoutMs: number; maxRequestBodySizeBytes: number };
   baseUrl?: string | undefined;
+  defaultHeaders?: Record<string, string> | undefined;
   transport: Transport;
   interceptors: HttpClientConfig['interceptors'];
   requestQueue?: RequestQueue | undefined;
@@ -62,7 +63,7 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
     retryConfig: config.retryConfig ?? DEFAULT_RETRY_CONFIG,
   });
   const baseUrl = config.transport ? config.baseUrl : undefined;
-  return { config: { timeoutMs, maxRequestBodySizeBytes }, baseUrl, transport, interceptors: config.interceptors, requestQueue: config.requestQueue };
+  return { config: { timeoutMs, maxRequestBodySizeBytes }, baseUrl, defaultHeaders: config.headers, transport, interceptors: config.interceptors, requestQueue: config.requestQueue };
 }
 
 async function executeRequest<T>(context: RequestContext): Promise<HttpResponse<T>> {
@@ -111,7 +112,7 @@ function mapProgress(onProgress?: (p: UploadProgress) => void) {
 async function buildInterceptedRequest(context: RequestContext): Promise<InterceptedRequest> {
   const { internals, method, url, options } = context;
   const fullUrl = internals.baseUrl ? `${internals.baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}` : url;
-  const request: InterceptedRequest = { url: fullUrl, method, headers: options?.headers ?? {}, body: options?.body };
+  const request: InterceptedRequest = { url: fullUrl, method, headers: { ...internals.defaultHeaders, ...options?.headers }, body: options?.body };
   if (!internals.interceptors?.length) return request;
   return runRequestInterceptors({ request, interceptors: internals.interceptors });
 }

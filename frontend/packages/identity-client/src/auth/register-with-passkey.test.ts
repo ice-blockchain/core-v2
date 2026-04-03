@@ -21,6 +21,7 @@ const mockChallenge: UserRegistrationChallenge = {
   rp: { id: 'example.com', name: 'Example' },
   user: { id: 'user-1', name: 'alice@example.com', displayName: 'Alice' },
   challenge: 'Y2hhbGxlbmdlLXBhc3NrZXk',
+  challengeIdentifier: 'ci-reg-1',
   attestation: 'direct',
   pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
   excludeCredentials: [],
@@ -44,8 +45,10 @@ function createMockDeps() {
     setTokens: vi.fn(() => Promise.resolve()),
     clearTokens: vi.fn(() => Promise.resolve()),
     isTokenExpired: vi.fn(() => Promise.resolve(true)),
+    getTrackedUsers: vi.fn(() => Promise.resolve([])),
   };
-  return { registrationDataSource, tokenManager };
+  const authStore = { getSnapshot: () => [] as readonly string[], subscribe: () => () => {}, addUser: vi.fn(), removeUser: vi.fn() };
+  return { registrationDataSource, tokenManager, authStore };
 }
 
 describe('registerWithPasskey', () => {

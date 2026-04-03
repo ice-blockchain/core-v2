@@ -44,8 +44,10 @@ function createMockDeps(challenge: UserActionChallenge) {
     setTokens: vi.fn(() => Promise.resolve()),
     clearTokens: vi.fn(() => Promise.resolve()),
     isTokenExpired: vi.fn(() => Promise.resolve(true)),
+    getTrackedUsers: vi.fn(() => Promise.resolve([])),
   };
-  return { loginDataSource, tokenManager };
+  const authStore = { getSnapshot: () => [] as readonly string[], subscribe: () => () => {}, addUser: vi.fn(), removeUser: vi.fn() };
+  return { loginDataSource, tokenManager, authStore };
 }
 
 describe('loginWithPasskey', () => {

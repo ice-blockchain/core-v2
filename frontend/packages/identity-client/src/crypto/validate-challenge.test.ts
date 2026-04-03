@@ -11,6 +11,11 @@ describe('validateChallengeFormat', () => {
     expect(() => validateChallengeFormat('abcdefghijklmnop')).not.toThrow();
   });
 
+  it('accepts a JWT-style challenge with dots', () => {
+    const jwt = 'eyJ0eXAiOiJKV1Qi.eyJpc3MiOiJhdXRo.2a3k_XYD2ScIeUhu';
+    expect(() => validateChallengeFormat(jwt)).not.toThrow();
+  });
+
   it('rejects an empty string', () => {
     expect(() => validateChallengeFormat('')).toThrow(
       expect.objectContaining({ code: IdentityErrorCode.UNKNOWN }),

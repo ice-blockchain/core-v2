@@ -9,10 +9,13 @@ export function authFlowReducer(state: AuthFlowState, action: AuthFlowAction): A
     case 'GO_TO_GET_STARTED':
       return { ...state, phase: 'get-started', identityKeyName: '', error: null };
     case 'GO_TO_REGISTER':
+      if (state.phase !== 'get-started') return state;
       return { ...state, phase: 'register', error: null };
     case 'GO_TO_VERIFY_PASSKEY':
+      if (state.phase !== 'get-started') return state;
       return { ...state, phase: 'verify-passkey', identityKeyName: action.identityKeyName, error: null };
     case 'GO_TO_VERIFY_PASSWORD':
+      if (state.phase !== 'get-started' && state.phase !== 'verify-passkey') return state;
       return { ...state, phase: 'verify-password', identityKeyName: action.identityKeyName, error: null };
     case 'SET_LOADING':
       return { ...state, isLoading: action.isLoading };

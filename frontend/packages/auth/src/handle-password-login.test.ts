@@ -4,18 +4,23 @@ import { IdentityError, IdentityErrorCode } from '@ion/identity-client';
 import { handlePasswordLogin } from './handle-password-login';
 import type { AuthFlowAction } from './types';
 
+function buildIdentityStub(): Record<string, ReturnType<typeof vi.fn>> {
+  const methods = [
+    'getLoginCapabilities', 'loginWithPasskey', 'loginWithPassword',
+    'registerWithPassword', 'registerWithPasskey', 'logout', 'refreshToken',
+    'isAuthenticated', 'restoreAuth', 'getUser', 'verifyEarlyAccessEmail',
+    'listCredentials', 'createRecoveryCredentials', 'requestTwoFACode',
+    'verifyTwoFACode', 'deleteTwoFAMethod', 'deleteAccount', 'recoverAccount',
+    'getSocialProfile', 'updateSocialProfile', 'verifyNickname',
+  ] as const;
+  return Object.fromEntries(methods.map((m) => [m, vi.fn()]));
+}
+
 function createMockClient(): IdentityClient {
   return {
-    getLoginCapabilities: vi.fn(),
-    loginWithPasskey: vi.fn(),
-    loginWithPassword: vi.fn(),
-    registerWithPassword: vi.fn(),
-    registerWithPasskey: vi.fn(),
-    logout: vi.fn(),
-    refreshToken: vi.fn(),
-    isAuthenticated: vi.fn(),
-    getUser: vi.fn(),
-  };
+    ...buildIdentityStub(),
+    authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} },
+  } as unknown as IdentityClient;
 }
 
 describe('handlePasswordLogin', () => {
@@ -60,5 +65,34 @@ describe('handlePasswordLogin', () => {
     );
     expect(loadingCalls[0]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: true });
     expect(loadingCalls[loadingCalls.length - 1]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: false });
+  });
+
+  it('maps network errors to SET_ERROR', async () => {
+    vi.mocked(client.loginWithPassword).mockRejectedValue(
+      new IdentityError(IdentityErrorCode.NETWORK_ERROR, 'offline'),
+    );
+    await handlePasswordLogin(deps(), 'dave', 'pass');
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'SET_ERROR',
+      error: expect.objectContaining({ code: IdentityErrorCode.NETWORK_ERROR }),
+    }));
+  });
+
+  it('maps unknown errors to UNKNOWN code', async () => {
+    vi.mocked(client.loginWithPassword).mockRejectedValue(new Error('unexpected'));
+    await handlePasswordLogin(deps(), 'eve', 'pass');
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'SET_ERROR',
+      error: expect.objectContaining({ code: 'UNKNOWN' }),
+    }));
+  });
+
+  it('resets loading to false on error', async () => {
+    vi.mocked(client.loginWithPassword).mockRejectedValue(new Error('fail'));
+    await handlePasswordLogin(deps(), 'frank', 'pass');
+    const lastLoadingCall = dispatch.mock.calls
+      .filter((call: unknown[]) => (call[0] as AuthFlowAction).type === 'SET_LOADING')
+      .pop();
+    expect(lastLoadingCall?.[0]).toEqual({ type: 'SET_LOADING', isLoading: false });
   });
 });

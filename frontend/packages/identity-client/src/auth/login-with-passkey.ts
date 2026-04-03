@@ -1,11 +1,14 @@
 import type { LoginDataSource } from '../data-sources/login-data-source';
 import type { TokenManager } from '../token/token-manager';
+import type { InternalAuthStore } from '../auth-store';
 import { isPasskeyAvailable, getPasskeyAssertion } from '../platform/passkey';
 import { IdentityError, IdentityErrorCode } from '../errors';
+import { parseUserIdFromToken } from '../token/parse-user-id-from-token';
 
 interface LoginWithPasskeyDeps {
   loginDataSource: LoginDataSource;
   tokenManager: TokenManager;
+  authStore: InternalAuthStore;
 }
 
 export async function loginWithPasskey(
@@ -32,5 +35,6 @@ export async function loginWithPasskey(
     },
   });
   await deps.tokenManager.setTokens(username, tokens);
-  return username;
+  deps.authStore.addUser(username);
+  return parseUserIdFromToken(tokens.token) ?? username;
 }

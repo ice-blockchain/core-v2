@@ -71,4 +71,28 @@ describe('authFlowReducer', () => {
     const next = authFlowReducer(state, { type: 'GO_TO_REGISTER' });
     expect(next.isLoading).toBe(true);
   });
+
+  it('GO_TO_REGISTER is ignored from non-get-started phase', () => {
+    const state: AuthFlowState = { phase: 'verify-password', identityKeyName: 'alice', isLoading: false, error: null };
+    const next = authFlowReducer(state, { type: 'GO_TO_REGISTER' });
+    expect(next.phase).toBe('verify-password');
+  });
+
+  it('GO_TO_VERIFY_PASSKEY is ignored from register phase', () => {
+    const state: AuthFlowState = { phase: 'register', identityKeyName: '', isLoading: false, error: null };
+    const next = authFlowReducer(state, { type: 'GO_TO_VERIFY_PASSKEY', identityKeyName: 'bob' });
+    expect(next.phase).toBe('register');
+  });
+
+  it('GO_TO_VERIFY_PASSWORD is allowed from verify-passkey (fallback)', () => {
+    const state: AuthFlowState = { phase: 'verify-passkey', identityKeyName: 'alice', isLoading: false, error: null };
+    const next = authFlowReducer(state, { type: 'GO_TO_VERIFY_PASSWORD', identityKeyName: 'alice' });
+    expect(next.phase).toBe('verify-password');
+  });
+
+  it('GO_TO_VERIFY_PASSWORD is ignored from register phase', () => {
+    const state: AuthFlowState = { phase: 'register', identityKeyName: '', isLoading: false, error: null };
+    const next = authFlowReducer(state, { type: 'GO_TO_VERIFY_PASSWORD', identityKeyName: 'alice' });
+    expect(next.phase).toBe('register');
+  });
 });

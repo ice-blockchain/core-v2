@@ -8,6 +8,7 @@ function createMockDeps() {
     setTokens: vi.fn(() => Promise.resolve()),
     clearTokens: vi.fn(() => Promise.resolve()),
     isTokenExpired: vi.fn(() => Promise.resolve(false)),
+    getTrackedUsers: vi.fn(() => Promise.resolve([])),
   };
   return { tokenManager };
 }

@@ -8,15 +8,16 @@ import { IdentityErrorCode } from '../errors';
 function createMockDeps() {
   const sessionDataSource: SessionDataSource = {
     refreshToken: vi.fn(() => Promise.resolve({ token: 'new-token' })),
-    logout: vi.fn((_token: string, _username: string) => Promise.resolve()),
+    logout: vi.fn((_username: string) => Promise.resolve()),
   };
   const tokenManager: TokenManager = {
     getTokens: vi.fn(() => Promise.resolve({ token: 'old-tok', refreshToken: 'ref-tok' })),
     setTokens: vi.fn(() => Promise.resolve()),
     clearTokens: vi.fn(() => Promise.resolve()),
     isTokenExpired: vi.fn(() => Promise.resolve(false)),
+    getTrackedUsers: vi.fn(() => Promise.resolve([])),
   };
-  return { sessionDataSource, tokenManager, refreshLocks: new Map<string, Promise<void>>() };
+  return { sessionDataSource, tokenManager };
 }
 
 describe('refreshToken', () => {
@@ -56,19 +57,6 @@ describe('refreshToken', () => {
     await expect(refreshToken('alice', deps)).rejects.toMatchObject({
       code: IdentityErrorCode.UNAUTHENTICATED,
     });
-  });
-
-  it('deduplicates concurrent refresh calls into a single request', async () => {
-    let resolveRefresh!: (v: { token: string }) => void;
-    vi.mocked(deps.sessionDataSource.refreshToken).mockReturnValue(
-      new Promise((resolve) => { resolveRefresh = resolve; }),
-    );
-    const p1 = refreshToken('alice', deps);
-    const p2 = refreshToken('alice', deps);
-    const p3 = refreshToken('alice', deps);
-    resolveRefresh({ token: 'new-token' });
-    await Promise.all([p1, p2, p3]);
-    expect(deps.sessionDataSource.refreshToken).toHaveBeenCalledTimes(1);
   });
 
   it('clears tokens on 401 auth failure', async () => {

@@ -39,12 +39,8 @@ function useGetStartedNavigation() {
   const navigation = useAuthNavigation();
 
   return {
-    // Intentional: randomly route to password or passkey flow for development testing
     handleRegister: useCallback(() => {
-      const route = Math.random() < 0.5
-        ? Routes.Auth.PasswordRegister
-        : Routes.Auth.PasskeyRegister;
-      navigation.navigate(route);
+      navigation.navigate(Routes.Auth.PasswordRegister);
     }, [navigation]),
     // TODO: wire to actual password verification before navigating
     handleVerifyPassword: useCallback(() => {

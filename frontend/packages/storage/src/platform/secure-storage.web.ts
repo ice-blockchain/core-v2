@@ -5,7 +5,7 @@ const KEY_REGISTRY = "@ion/secure/__keys__";
 const SALT_KEY = "@ion/secure/__salt__";
 const ALGORITHM = "AES-GCM";
 const IV_LENGTH = 12;
-const PBKDF2_ITERATIONS = 100_000;
+import { PBKDF2_ITERATIONS } from '../crypto-constants';
 
 function encode(text: string): Uint8Array<ArrayBuffer> {
   return new TextEncoder().encode(text);
