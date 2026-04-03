@@ -12,6 +12,7 @@ export interface HttpClientConfig {
   maxRequestBodySizeBytes?: number;
   interceptors?: Interceptor[];
   retryConfig?: RetryConfig;
+  headers?: Record<string, string>;
   httpsAllowlist?: string[];
   isProduction?: boolean | undefined;
   requestQueue?: RequestQueue | undefined;

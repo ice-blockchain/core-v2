@@ -15,9 +15,10 @@ vi.mock('axios-retry', () => ({
 }));
 
 const mockRequest = vi.fn();
+let lastCreateConfig: Record<string, unknown> = {};
 vi.mock('axios', () => ({
   default: {
-    create: () => ({ request: mockRequest }),
+    create: (config: Record<string, unknown>) => { lastCreateConfig = config; return { request: mockRequest }; },
     isCancel: (e: unknown) => e instanceof Object && (e as Record<string, unknown>).__CANCEL__ === true,
     isAxiosError: (e: unknown) => e instanceof Object && (e as Record<string, unknown>).isAxiosError === true,
   },
@@ -197,6 +198,20 @@ describe('createHttpClient HTTPS enforcement', () => {
       isProduction: true,
       httpsAllowlist: ['localhost'],
     })).toThrow('HTTPS allowlist must be empty in production');
+  });
+});
+
+describe('createHttpClient default headers', () => {
+  beforeEach(() => { vi.restoreAllMocks(); mockRequest.mockReset(); lastCreateConfig = {}; });
+
+  it('passes config headers to axios instance', () => {
+    createHttpClient({ baseUrl: 'https://api.example.com', headers: { 'X-Client-ID': 'my-app' } });
+    expect(lastCreateConfig.headers).toEqual({ 'X-Client-ID': 'my-app' });
+  });
+
+  it('does not set headers on axios instance when omitted', () => {
+    createHttpClient({ baseUrl: 'https://api.example.com' });
+    expect(lastCreateConfig.headers).toBeUndefined();
   });
 });
 
