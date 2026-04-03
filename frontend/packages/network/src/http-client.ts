@@ -8,6 +8,7 @@ import { createHttpsValidator } from './https-validator';
 import { runRequestInterceptors, runErrorInterceptors } from './interceptor-pipeline';
 import { executeTransportRequest } from './transport-executor';
 import { createAxiosTransport } from './axios-transport';
+import { Logger } from '@ion/diagnostics';
 import { NetworkError } from './network-error';
 import { DEFAULT_RETRY_CONFIG } from './retry-types';
 
