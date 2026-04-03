@@ -102,8 +102,8 @@ User {
   masterPubKey: string
   email: string[] | null
   phoneNumber: string[] | null
-  '2faOptions': TwoFAOption[] | null
-  ionConnectRelays: UserAssignedRelay[] | null
+  '2faOptions': TwoFAOption[] | null          -- 'sms' | 'email' | 'totp_authenticator'
+  ionConnectRelays: UserAssignedRelay[] | null -- { type, url }
   ionConnectIndexerRelays: string[] | null
   duplicateOf: string | null
 }
