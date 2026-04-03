@@ -59,6 +59,12 @@ export type { PlusIconButtonProps } from "./components/PlusIconButton";
 export { StoryAvatar } from "./components/StoryAvatar";
 export type { StoryAvatarProps } from "./components/story-avatar-types";
 
+export { SelectableListItem } from "./components/SelectableListItem";
+export type { SelectableListItemProps } from "./components/SelectableListItem";
+
+export { ListEditActionsBar } from "./components/ListEditActionsBar";
+export type { ListEditActionsBarProps, ListEditAction } from "./components/ListEditActionsBar";
+
 export { IONLoader } from "./components/IONLoader";
 export type { IONLoaderProps, IONLoaderVariant } from "./components/IONLoaderTypes";
 

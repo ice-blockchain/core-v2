@@ -49,8 +49,8 @@ function SheetContent(props: BottomSheetProps) {
   }, []);
 
   return (
-    <View style={sheetStyle}>
-      <BottomSheetHeader title={title} titleOpacity={titleOpacity} onBack={onBack} />
+    <View style={[sheetStyle, { flex: 1 }]}>
+      {(title || onBack) ? <BottomSheetHeader title={title} titleOpacity={titleOpacity} onBack={onBack} /> : null}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={keyboardStyle} onScroll={handleScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>

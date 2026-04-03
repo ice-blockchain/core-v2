@@ -25,6 +25,8 @@ import { BottomSheetCatalogSection } from "./BottomSheetCatalogSection";
 import { SeparatorCatalogSection } from "./SeparatorCatalogSection";
 import { ListItemSkeletonCatalogSection } from "./ListItemSkeletonCatalogSection";
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
+import { SelectableListItemCatalogSection } from "./SelectableListItemCatalogSection";
+import { ListEditActionsBarCatalogSection } from "./ListEditActionsBarCatalogSection";
 
 function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
@@ -60,6 +62,8 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
             <IONLoaderCatalogSection />
             <SeparatorCatalogSection />
             <ListItemSkeletonCatalogSection />
+            <SelectableListItemCatalogSection />
+            <ListEditActionsBarCatalogSection />
             <BottomSheetCatalogSection />
             <AvatarCatalogSection />
             <StoryAvatarCatalogSection />

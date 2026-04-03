@@ -4,7 +4,7 @@ import { StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { ThemeProvider, useTheme, CatalogScreen } from '@ion/ui';
+import { ThemeProvider, useTheme } from '@ion/ui';
 import type { ColorMode } from '@ion/ui';
 import { getFeatureFlag } from '@ion/config';
 import { AppNavigator, useNavigationTheme, BottomSheetModalProvider } from '@ion/navigation';
@@ -22,6 +22,8 @@ import { chatTranslations } from "@ion/chat";
 import { splashTranslations } from "@ion/splash-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
+import { CatalogScreen } from "./src/components/catalog-screen";
+import { ChatPreviewScreen } from "./src/components/chat-preview-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -33,6 +35,7 @@ const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
   Catalog: CatalogScreen,
+  ChatPreview: ChatPreviewScreen,
   NicknameReserved: NicknameReservedScreen,
 };
 
