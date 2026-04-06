@@ -64,6 +64,7 @@ type Coordinator struct {
 	cfg            CoordinatorConfig
 	cancel         context.CancelFunc
 	wg             sync.WaitGroup
+	stopOnce       sync.Once
 }
 
 // ForwardGetPiece delegates to the piece forwarder.
@@ -151,11 +152,13 @@ func (c *Coordinator) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop shuts down the coordinator and closes CRDT.
+// Stop shuts down the coordinator and closes CRDT. Safe to call multiple times.
 func (c *Coordinator) Stop() {
-	if c.cancel != nil {
-		c.cancel()
-	}
+	c.stopOnce.Do(func() {
+		if c.cancel != nil {
+			c.cancel()
+		}
+	})
 	c.wg.Wait()
 	if err := c.crdt.Close(); err != nil {
 		c.logger.Error("close crdt", "error", err)

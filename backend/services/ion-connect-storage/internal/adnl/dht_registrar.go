@@ -63,13 +63,19 @@ func newDHTRegistrar(
 
 func (r *DHTRegistrar) Start(ctx context.Context) {
 	sweepCtx, cancel := context.WithCancel(ctx)
+	r.mu.Lock()
 	r.cancel = cancel
+	r.mu.Unlock()
 	go r.runSweep(sweepCtx)
 }
 
 func (r *DHTRegistrar) Stop() {
-	if r.cancel != nil {
-		r.cancel()
+	r.mu.Lock()
+	cancel := r.cancel
+	r.cancel = nil
+	r.mu.Unlock()
+	if cancel != nil {
+		cancel()
 	}
 	<-r.done
 }

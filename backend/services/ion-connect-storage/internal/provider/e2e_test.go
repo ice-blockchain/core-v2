@@ -139,6 +139,7 @@ func startTestServerWithBridge(
 	t.Cleanup(func() { bridge.Stop() })
 
 	require.NoError(t, server.Start(ctx))
+	server.MarkReady()
 	t.Cleanup(func() { _ = server.Stop(context.Background()) })
 
 	return server

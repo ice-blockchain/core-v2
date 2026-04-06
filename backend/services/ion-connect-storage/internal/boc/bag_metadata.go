@@ -13,16 +13,17 @@ const ionStorageVersion = 0x02
 
 // BagMetadata holds parsed .ionstorage BoC fields.
 type BagMetadata struct {
-	BagID      [32]byte
-	PieceSize  uint32
-	FileSize   uint64
-	HeaderSize uint64
-	HeaderHash [32]byte
-	RootHash   [32]byte
-	PieceCount int
-	MerkleTree *cell.Cell
-	Header     *TorrentHeader
-	RawBoC     []byte
+	BagID       [32]byte
+	PieceSize   uint32
+	FileSize    uint64
+	HeaderSize  uint64
+	HeaderHash  [32]byte
+	RootHash    [32]byte
+	PieceCount  int
+	MerkleTree  *cell.Cell
+	Header      *TorrentHeader
+	HeaderBytes []byte // pre-serialized TL-boxed header for piece serving
+	RawBoC      []byte
 }
 
 // ParseIonStorageBoC parses the .ionstorage v2 format into BagMetadata.
@@ -58,6 +59,11 @@ func ParseIonStorageBoC(data []byte, logger *slog.Logger) (*BagMetadata, error) 
 			return nil, fmt.Errorf("parse embedded header: %w", err)
 		}
 		meta.Header = header
+		hdrBytes, err := SerializeTorrentHeader(header)
+		if err != nil {
+			return nil, fmt.Errorf("pre-serialize header: %w", err)
+		}
+		meta.HeaderBytes = hdrBytes
 	}
 
 	return meta, nil

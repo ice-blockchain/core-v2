@@ -2,11 +2,14 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 )
+
+const reclaimBatchSize = 1000
 
 // StartReclamation begins the dead node detection and bag reclamation loop.
 // Runs until ctx is cancelled. Should be called as a goroutine.
@@ -76,10 +79,11 @@ func (c *Coordinator) isResponsibleForReclamation(deadNodeID string, activeNodes
 }
 
 // reclaimBagsFromNode scans bynode/<deadNodeID>/ prefix and claims orphaned bags.
-// O(k) where k = dead node's bag count.
+// Processes at most reclaimBatchSize bags per cycle; remaining bags are picked up
+// in subsequent reclamation cycles.
 func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string) {
 	prefix := ByNodePrefix(deadNodeID)
-	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefix, KeysOnly: true})
+	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefix, KeysOnly: true, Limit: reclaimBatchSize})
 	if err != nil {
 		c.logger.Error("query dead node bags", "dead_node", deadNodeID, "error", err)
 		return
@@ -107,7 +111,11 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 		c.logger.Info("reclaimed bags from dead node",
 			"dead_node", deadNodeID, "count", reclaimed)
 	}
-	c.cleanupDeadNodeKeys(ctx, deadNodeID)
+
+	// Only clean up node metadata when all bags have been reclaimed.
+	if c.countNodeBags(ctx, deadNodeID) == 0 {
+		c.cleanupDeadNodeKeys(ctx, deadNodeID)
+	}
 }
 
 // reclaimSingleBag reclaims a bag from a dead node. The TOCTOU window between
@@ -128,9 +136,29 @@ func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, dead
 		return err
 	}
 	if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
+		c.logger.Error("orphaned bynode key after claim",
+			"dead_node", deadNodeID,
+			"bag_id_prefix", fmt.Sprintf("%x", bagID[:4]),
+			"error", err)
 		return err
 	}
 	return nil
+}
+
+// countNodeBags returns the number of bynode/ keys remaining for a node.
+func (c *Coordinator) countNodeBags(ctx context.Context, nodeID string) int {
+	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: ByNodePrefix(nodeID), KeysOnly: true})
+	if err != nil {
+		return 1 // assume non-zero on error to be safe
+	}
+	defer results.Close()
+	count := 0
+	for r := range results.Next() {
+		if r.Error == nil {
+			count++
+		}
+	}
+	return count
 }
 
 func (c *Coordinator) cleanupDeadNodeKeys(ctx context.Context, deadNodeID string) {

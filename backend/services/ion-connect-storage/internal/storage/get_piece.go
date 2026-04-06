@@ -4,18 +4,10 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"sync"
 
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
 )
-
-var segmentPool = sync.Pool{
-	New: func() any {
-		b := make([]byte, boc.SegmentSize)
-		return &b
-	},
-}
 
 // ServePiece serves a piece locally, returning data and proof separately.
 // Used by the cluster piece forwarding handler on the owning node.
@@ -28,9 +20,12 @@ func (h *Handler) ServePiece(ctx context.Context, bagID [32]byte, pieceIndex int
 		return nil, nil, fmt.Errorf("piece %d out of range [0, %d)", pieceIndex, meta.PieceCount)
 	}
 
-	headerBytes, err := boc.SerializeTorrentHeader(meta.Header)
-	if err != nil {
-		return nil, nil, fmt.Errorf("serialize header: %w", err)
+	headerBytes := meta.HeaderBytes
+	if len(headerBytes) == 0 {
+		headerBytes, err = boc.SerializeTorrentHeader(meta.Header)
+		if err != nil {
+			return nil, nil, fmt.Errorf("serialize header: %w", err)
+		}
 	}
 
 	segmentData, err := h.fetchSegmentForPiece(ctx, bagID, meta, pieceIndex)
@@ -62,9 +57,12 @@ func (h *Handler) handleGetPiece(ctx context.Context, bagID [32]byte, pieceIndex
 		return nil, fmt.Errorf("piece %d out of range [0, %d)", pieceIndex, meta.PieceCount)
 	}
 
-	headerBytes, err := boc.SerializeTorrentHeader(meta.Header)
-	if err != nil {
-		return nil, fmt.Errorf("serialize header: %w", err)
+	headerBytes := meta.HeaderBytes
+	if len(headerBytes) == 0 {
+		headerBytes, err = boc.SerializeTorrentHeader(meta.Header)
+		if err != nil {
+			return nil, fmt.Errorf("serialize header: %w", err)
+		}
 	}
 
 	segmentData, err := h.fetchSegmentForPiece(ctx, bagID, meta, pieceIndex)
@@ -131,6 +129,7 @@ func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta
 	}
 	if closeErr != nil {
 		h.logger.Warn("close segment writer", "error", closeErr)
+		return nil, fmt.Errorf("close segment writer for segment %d: %w", segIdx, closeErr)
 	}
 
 	h.segmentCache.MarkSegmentWritten(bagID, segIdx)

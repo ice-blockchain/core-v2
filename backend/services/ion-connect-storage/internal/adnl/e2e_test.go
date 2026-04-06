@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -74,8 +73,7 @@ func detectTestExternalIP(t *testing.T) string {
 }
 
 func testOverlayKey(bagID [32]byte) []byte {
-	h := sha256.Sum256(bagID[:])
-	return h[:]
+	return bagID[:]
 }
 
 func retryWithBackoff(t *testing.T, attempts int, fn func() error) {

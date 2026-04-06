@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
+	"golang.org/x/sync/singleflight"
 )
 
 const metadataKeyPrefix = "meta/"
@@ -20,6 +22,7 @@ type MetadataStore struct {
 	fetcher *greenfield.Fetcher
 	index   *index.Persister
 	logger  *slog.Logger
+	flight  singleflight.Group
 }
 
 // NewMetadataStore creates a MetadataStore backed by the given PebbleDB instance.
@@ -55,7 +58,22 @@ func (s *MetadataStore) GetBagMetadata(ctx context.Context, bagID [32]byte) (*bo
 		return boc.ParseIonStorageBoC(rawBoC, s.logger)
 	}
 
-	return s.fetchAndCache(ctx, bagID)
+	key := hex.EncodeToString(bagID[:])
+	val, err, _ := s.flight.Do(key, func() (interface{}, error) {
+		// Re-check DB under singleflight: another caller may have cached it.
+		rawBoC, found, err := s.loadFromDB(bagID)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			return boc.ParseIonStorageBoC(rawBoC, s.logger)
+		}
+		return s.fetchAndCache(ctx, bagID)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return val.(*boc.BagMetadata), nil
 }
 
 // DeleteBagMetadata removes cached metadata for a bag.
