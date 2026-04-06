@@ -25,6 +25,7 @@ import { IntroScreen } from "./src/components/intro-screen";
 import { CatalogScreen } from "./src/components/catalog-screen";
 import { ChatPreviewScreen } from "./src/components/chat-preview-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
+import { StorageTestScreen } from "./src/components/storage-test-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -41,6 +42,7 @@ const screens = {
   ProxyTest: ProxyTestScreen,
   IdentityKeyNameNote: IdentityKeyNameNoteScreen,
   VerifyPasskey: VerifyPasskeySheetScreen,
+  StorageTest: StorageTestScreen,
 };
 
 const authScreens = {

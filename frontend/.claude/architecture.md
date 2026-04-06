@@ -28,6 +28,8 @@
 | `@ion/config` | Remote config, env, feature flags | Implemented |
 | `@ion/localization` | i18n, plurals, fallback, device locale, language persistence | Implemented |
 | `@ion/ion-connect-proxy` | ION Connect proxy lifecycle, proxy transport for .ton domains | Implemented |
+| `@ion/ton-storage` | TON Storage daemon lifecycle, bag management client | Implemented |
+| `@ion/file-storage` | File download orchestration (CDN + TON fallback), cache, queue | Implemented |
 | `@ion/auth-ui` | Shared auth screens, forms, buttons, icons, validation | Implemented |
 
 ### Media Layer
@@ -60,7 +62,7 @@
 | `@ion/auth` | Auth flow orchestrator | In Progress |
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
 
-**Total: 23 packages**
+**Total: 25 packages**
 
 ---
 

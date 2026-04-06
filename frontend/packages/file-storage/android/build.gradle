@@ -1,0 +1,21 @@
+buildscript {
+  ext.safeExtGet = {prop, fallback -> rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback}
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.facebook.react'
+
+android {
+  namespace "io.ion.filestorage"
+  compileSdk safeExtGet('compileSdkVersion', 36)
+
+  defaultConfig {
+    minSdk safeExtGet('minSdkVersion', 24)
+    targetSdk safeExtGet('targetSdkVersion', 36)
+  }
+}
+
+dependencies {
+  implementation "com.facebook.react:react-android"
+}

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ScrollView, View, StyleSheet, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Text, Icon, useTheme } from "@ion/ui";
-import { useAppNavigation } from "@ion/navigation";
+import { useAppNavigation, Routes } from "@ion/navigation";
 import { createProxyManager } from "@ion/ion-connect-proxy";
 import type { ProxyManager, ProxyStatus } from "@ion/ion-connect-proxy";
 
@@ -123,6 +123,14 @@ export function ProxyTestScreen() {
           Result: {requestResult}
         </Text>
       )}
+
+      <Button
+        label="Storage Test"
+        onPress={() => navigation.navigate(Routes.StorageTest)}
+        color="secondary"
+        height={44}
+        style={{ marginTop: theme.spacing.lg }}
+      />
 
       <Text variant="subtitle" style={{ color: theme.colors.primaryText, marginTop: theme.spacing.xl }}>Logs</Text>
       <View style={[styles.logBox, { marginTop: theme.spacing.sm, borderColor: theme.colors.strokeElements }]}>

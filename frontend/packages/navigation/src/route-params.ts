@@ -12,6 +12,7 @@ export type RootStackParamList = {
   Catalog: undefined;
   ChatPreview: undefined;
   ProxyTest: undefined;
+  StorageTest: undefined;
   'Sheet/Auth': NavigatorScreenParams<AuthStackParamList> | undefined;
   'Sheet/NicknameReserved': undefined;
   'Sheet/IdentityKeyNameNote': undefined;
