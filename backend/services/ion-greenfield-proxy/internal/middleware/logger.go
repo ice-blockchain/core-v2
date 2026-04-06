@@ -13,6 +13,7 @@ import (
 const (
 	ContextKeyADNLAddress = "adnl_address"
 	ContextKeyADNLRLDPID  = "adnl_rldp_id"
+	ContextKeyTxSigner    = "tx_signer"
 )
 
 func Logger(logger *slog.Logger) gin.HandlerFunc {
@@ -44,6 +45,10 @@ func Logger(logger *slog.Logger) gin.HandlerFunc {
 		}
 		if rldp, ok := c.Get(ContextKeyADNLRLDPID); ok {
 			fields = append(fields, "adnl_rldp_id", rldp)
+		}
+
+		if signer, ok := c.Get(ContextKeyTxSigner); ok {
+			fields = append(fields, "tx_signer", signer)
 		}
 
 		if parsed := rpcbody.FromContext(c); parsed != nil {

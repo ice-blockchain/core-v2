@@ -9,6 +9,7 @@ require (
 	github.com/bnb-chain/greenfield-common/go v0.0.0-20240410092538-5e3891943cbb
 	github.com/bnb-chain/greenfield-go-sdk v0.0.0-00010101000000-000000000000
 	github.com/buger/jsonparser v1.1.2
+	github.com/cometbft/cometbft v0.38.6
 	github.com/cosmos/cosmos-sdk v0.47.10
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/ethereum/go-ethereum v1.13.1
@@ -17,10 +18,13 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.23.2
+	github.com/prometheus/client_model v0.6.2
 	github.com/puzpuzpuz/xsync/v4 v4.4.0
 	github.com/stretchr/testify v1.11.1
 	github.com/xssnick/tonutils-go v1.16.0
 	go.uber.org/fx v1.24.0
+	golang.org/x/sync v0.20.0
+	golang.org/x/time v0.15.0
 )
 
 require (
@@ -48,7 +52,6 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
-	github.com/cometbft/cometbft v0.38.6 // indirect
 	github.com/cometbft/cometbft-db v0.7.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
@@ -134,7 +137,6 @@ require (
 	github.com/petermattis/goid v0.0.0-20230317030725-371a4b8eda08 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/prysmaticlabs/eth2-types v0.0.0-20210303084904-c9735a06829d // indirect
@@ -181,7 +183,6 @@ require (
 	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
 	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260311193753-579e4da9a98c // indirect
 	golang.org/x/term v0.41.0 // indirect

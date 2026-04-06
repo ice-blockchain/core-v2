@@ -7,33 +7,64 @@ import (
 	"time"
 
 	gnfdsdktypes "github.com/bnb-chain/greenfield/sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
 )
 
-// GrantFeeAllowance grants a short-lived fee allowance to the given
-// address so it can broadcast transactions with the proxy as fee payer.
-func (bp *BucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr string) error {
+// allowedFeeGrantMsgs is the on-chain whitelist of message types that a
+// fee-granted user can broadcast at the proxy's expense. Must match the
+// types recognised by extractUserBucketMsg in broadcast_intercept.go.
+var allowedFeeGrantMsgs = []string{
+	"/greenfield.storage.MsgCreateObject",
+	"/greenfield.storage.MsgDelegateCreateObject",
+	"/greenfield.storage.MsgUpdateObjectContent",
+	"/greenfield.storage.MsgDeleteObject",
+	"/greenfield.storage.MsgDeleteBucket",
+}
+
+// GrantFeeAllowance grants a short-lived, message-scoped fee allowance
+// to the given address so it can broadcast storage transactions with
+// the proxy as fee payer. Only the message types in allowedFeeGrantMsgs
+// are permitted; the chain rejects anything else.
+func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr string) error {
 	addr := strings.TrimPrefix(granteeAddr, "0x")
 
 	expiration := time.Now().Add(FeeGrantExpiration)
 	amount := bp.feeGrantAmount
 
+	basic := feegrant.BasicAllowance{
+		SpendLimit: sdk.NewCoins(sdk.NewCoin(gnfdsdktypes.Denom, amount)),
+		Expiration: &expiration,
+	}
+	allowance, err := feegrant.NewAllowedMsgAllowance(&basic, allowedFeeGrantMsgs)
+	if err != nil {
+		return fmt.Errorf("create allowed msg allowance: %w", err)
+	}
+
 	bp.logger.Info("granting fee allowance",
 		"grantee", granteeAddr,
 		"amount_wei", amount.String(),
 		"expiration", expiration.Format(time.RFC3339),
+		"allowed_msgs", allowedFeeGrantMsgs,
 	)
 
-	txHash, err := bp.client.GrantBasicAllowance(ctx, addr, amount, &expiration, gnfdsdktypes.TxOption{})
+	// Serialise with other on-chain transactions from the proxy wallet.
+	if err := bp.txLock.Lock(ctx, "GrantFeeAllowance:"+granteeAddr); err != nil {
+		return fmt.Errorf("acquire tx lock: %w", err)
+	}
+	defer bp.txLock.Unlock()
+
+	txHash, err := bp.client.GrantAllowance(ctx, addr, allowance, gnfdsdktypes.TxOption{})
 	if err != nil {
 		if strings.Contains(err.Error(), "fee allowance already exists") {
 			bp.logger.Debug("fee allowance already active", "grantee", granteeAddr)
 			return nil
 		}
-		return fmt.Errorf("GrantBasicAllowance: %w", err)
+		return fmt.Errorf("GrantAllowance: %w", err)
 	}
 
 	if _, err = bp.client.WaitForTx(ctx, txHash); err != nil {
-		return fmt.Errorf("wait for GrantBasicAllowance tx: %w", err)
+		return fmt.Errorf("wait for GrantAllowance tx: %w", err)
 	}
 
 	bp.logger.Info("fee allowance granted", "grantee", granteeAddr, "tx", txHash)

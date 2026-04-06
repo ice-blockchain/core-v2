@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,6 +24,18 @@ import (
 	"ion-greenfield-proxy/internal/rpcbody"
 )
 
+const maxSPResponseSize = 4 << 20 // 4 MiB
+
+var rpcClient = &http.Client{
+	Transport: &http.Transport{
+		DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
+		IdleConnTimeout:       90 * time.Second,
+		MaxIdleConnsPerHost:   5,
+	},
+}
+
 // RPCIntercept intercepts specific JSON-RPC requests before they reach
 // the ProxyRPC handler:
 //
@@ -31,7 +45,7 @@ import (
 //     the user and returns the real tx hash.
 //
 // Both paths abort the request so it never reaches the handler.
-func RPCIntercept(logger *slog.Logger, rpcEndpoint string, adnlAddress string, provisioner *gf.BucketProvisioner) gin.HandlerFunc {
+func RPCIntercept(logger *slog.Logger, rpcEndpoint string, adnlAddress string, provisioner gf.BucketProvisioner, chainID string) gin.HandlerFunc {
 	logger = logger.With("middleware", "rpc_intercept")
 	return func(c *gin.Context) {
 		parsed := rpcbody.FromContext(c)
@@ -45,7 +59,7 @@ func RPCIntercept(logger *slog.Logger, rpcEndpoint string, adnlAddress string, p
 		}
 
 		if parsed.IsBroadcast() && provisioner != nil {
-			interceptCreateBucket(logger, provisioner, c, parsed)
+			interceptCreateBucket(logger, provisioner, chainID, c, parsed)
 		}
 	}
 }
@@ -57,20 +71,23 @@ func interceptStorageProviders(logger *slog.Logger, rpcEndpoint, adnlAddress str
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, rpcEndpoint, bytes.NewReader(parsed.Raw))
 	if err != nil {
 		logger.Error("failed to create upstream request", "error", err)
+		abortJSONRPCError(c, parsed.Raw, "internal error")
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := rpcClient.Do(req)
 	if err != nil {
 		logger.Error("upstream request failed", "error", err)
+		abortJSONRPCError(c, parsed.Raw, "internal error")
 		return
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxSPResponseSize))
 	if err != nil {
 		logger.Error("failed to read upstream response", "error", err)
+		abortJSONRPCError(c, parsed.Raw, "internal error")
 		return
 	}
 
@@ -136,7 +153,7 @@ type spABCIResult struct {
 
 // interceptCreateBucket only intercepts broadcast requests.
 // Simulations are forwarded to the chain so the SDK gets real gas estimates.
-func interceptCreateBucket(logger *slog.Logger, provisioner *gf.BucketProvisioner, c *gin.Context, parsed *rpcbody.Body) {
+func interceptCreateBucket(logger *slog.Logger, provisioner gf.BucketProvisioner, chainID string, c *gin.Context, parsed *rpcbody.Body) {
 	tx, err := decodeTx(parsed)
 	if err != nil || tx == nil || len(tx.Messages) == 0 {
 		return
@@ -153,9 +170,32 @@ func interceptCreateBucket(logger *slog.Logger, provisioner *gf.BucketProvisione
 	}
 
 	creatorAddr := "0x" + creatorHex
+
+	// Verify signature before creating the bucket on-chain.
+	// interceptCreateBucket is only called for broadcasts, so full ecrecover.
+	signer, err := verifyTxSigner(c.Request.Context(), tx, chainID, provisioner, true)
+	if err != nil {
+		logger.Warn("CreateBucket signature verification failed",
+			"creator", creatorAddr,
+			"error", err,
+		)
+		abortJSONRPCError(c, parsed.Raw, "signature verification failed")
+		return
+	}
+	if !strings.EqualFold(signer, creatorAddr) {
+		logger.Warn("CreateBucket signer mismatch",
+			"creator", creatorAddr,
+			"signer", signer,
+		)
+		abortJSONRPCError(c, parsed.Raw, "signature verification failed")
+		return
+	}
+
+	c.Set(ContextKeyTxSigner, signer)
 	logger.Info("CreateBucket intercepted",
 		"bucket", bucket.BucketName,
 		"creator", creatorAddr,
+		"verified_signer", signer,
 	)
 
 	txHash, err := provisioner.EnsureBucket(c.Request.Context(), bucket.BucketName, creatorAddr)
@@ -172,6 +212,26 @@ func interceptCreateBucket(logger *slog.Logger, provisioner *gf.BucketProvisione
 		txHash = syntheticTxHash(bucket.BucketName)
 	}
 	abortBroadcastOK(c, parsed, txHash)
+}
+
+// verifyTxSigner recovers the signer from the transaction.
+// When requireEcrecover is true (broadcast path), performs full EIP-712
+// ecrecover against the raw tx bytes. When false (simulate path),
+// extracts the pubkey from AuthInfo — simulate requests may carry
+// placeholder signatures that would fail ecrecover.
+func verifyTxSigner(ctx context.Context, tx *decodedTx, chainID string, provisioner gf.BucketProvisioner, requireEcrecover bool) (string, error) {
+	if requireEcrecover && len(tx.TxBytes) > 0 {
+		addr, err := gf.ExtractSignerAddress(tx.AuthInfo)
+		if err != nil {
+			return "", err
+		}
+		accNum, err := provisioner.GetAccountNumber(ctx, addr)
+		if err != nil {
+			return "", fmt.Errorf("get account number: %w", err)
+		}
+		return gf.RecoverTxSigner(tx.TxBytes, chainID, accNum)
+	}
+	return gf.ExtractSignerAddress(tx.AuthInfo)
 }
 
 func findCreateBucketMsg(msgs []*codectypes.Any) *storageTypes.MsgCreateBucket {

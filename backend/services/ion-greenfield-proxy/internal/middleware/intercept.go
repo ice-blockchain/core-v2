@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -17,10 +18,22 @@ import (
 	"ion-greenfield-proxy/internal/rpcbody"
 )
 
-// decodedTx holds the decoded messages and fee granter from a transaction.
+// decodedTx holds the decoded messages, fee granter, and crypto data
+// needed for signature verification.
 type decodedTx struct {
 	Messages   []*codectypes.Any
 	FeeGranter string // empty if not set
+
+	// TxBytes is the raw transaction bytes (for broadcast path only).
+	// Nil for the Simulate path when simReq.Tx is pre-decoded.
+	TxBytes []byte
+
+	// AuthInfo holds signer infos (pubkeys, sequences) and fee info.
+	// Nil only when the tx has no AuthInfo bytes.
+	AuthInfo *sdktx.AuthInfo
+
+	// Signatures from TxRaw.Signatures (broadcast path only).
+	Signatures [][]byte
 }
 
 // decodeTx extracts messages and fee granter from a JSON-RPC request
@@ -54,6 +67,8 @@ func decodeSimulateTx(parsed *rpcbody.Body) (*decodedTx, error) {
 		return &decodedTx{
 			Messages:   simReq.Tx.Body.Messages,
 			FeeGranter: feeGranterFromAuthInfo(simReq.Tx.AuthInfo),
+			AuthInfo:   simReq.Tx.AuthInfo,
+			Signatures: simReq.Tx.Signatures,
 		}, nil
 	}
 	if len(simReq.TxBytes) == 0 {
@@ -84,15 +99,27 @@ func decodeTxRaw(txBytes []byte) (*decodedTx, error) {
 		return nil, fmt.Errorf("unmarshal TxBody: %w", err)
 	}
 
-	var granter string
+	dt := &decodedTx{
+		Messages:   body.Messages,
+		TxBytes:    txBytes,
+		Signatures: raw.Signatures,
+	}
+
 	if len(raw.AuthInfoBytes) > 0 {
 		var authInfo sdktx.AuthInfo
-		if authInfo.Unmarshal(raw.AuthInfoBytes) == nil && authInfo.Fee != nil {
-			granter = authInfo.Fee.Granter
+
+		err := authInfo.Unmarshal(raw.AuthInfoBytes)
+		if err == nil {
+			dt.AuthInfo = &authInfo
+			if authInfo.Fee != nil {
+				dt.FeeGranter = authInfo.Fee.Granter
+			}
+		} else {
+			slog.Error("cannot decode AuthInfo from TxRaw, proceeding without fee granter info", "error", err)
 		}
 	}
 
-	return &decodedTx{Messages: body.Messages, FeeGranter: granter}, nil
+	return dt, nil
 }
 
 func feeGranterFromAuthInfo(authInfo *sdktx.AuthInfo) string {

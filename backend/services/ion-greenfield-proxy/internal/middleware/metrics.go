@@ -9,8 +9,11 @@ import (
 )
 
 type MetricsCollectors struct {
-	RequestsTotal   *prometheus.CounterVec
-	RequestDuration *prometheus.HistogramVec
+	RequestsTotal      *prometheus.CounterVec
+	RequestDuration    *prometheus.HistogramVec
+	RateLimitedByUser  prometheus.Counter
+	RateLimitedByIP    prometheus.Counter
+	RateLimitedGlobal  prometheus.Counter
 }
 
 func NewMetricsCollectors(reg *prometheus.Registry) *MetricsCollectors {
@@ -25,7 +28,22 @@ func NewMetricsCollectors(reg *prometheus.Registry) *MetricsCollectors {
 			Buckets: []float64{0.005, 0.025, 0.1, 0.5, 1, 5, 10},
 		}, []string{"method", "path", "status_code"}),
 	}
-	reg.MustRegister(m.RequestsTotal, m.RequestDuration)
+	m.RateLimitedByUser = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "req_limited_by_user",
+		Help: "Requests rejected by per-user-key rate limit.",
+	})
+	m.RateLimitedByIP = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "req_limited_by_ip",
+		Help: "Requests rejected by per-IP rate limit.",
+	})
+	m.RateLimitedGlobal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "req_limited_global",
+		Help: "Requests rejected by global rate limit.",
+	})
+	reg.MustRegister(
+		m.RequestsTotal, m.RequestDuration,
+		m.RateLimitedByUser, m.RateLimitedByIP, m.RateLimitedGlobal,
+	)
 	return m
 }
 

@@ -20,7 +20,7 @@ import (
 //
 // Recognised messages: object CUD (create, update, delete) and DeleteBucket.
 // CreateBucket is handled separately by interceptCreateBucket.
-func interceptFeeAllowance(logger *slog.Logger, provisioner *gf.BucketProvisioner, proxyAddr string, c *gin.Context) {
+func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner, proxyAddr, chainID string, c *gin.Context) {
 	parsed := rpcbody.FromContext(c)
 	if parsed == nil || provisioner == nil {
 		return
@@ -51,10 +51,31 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner *gf.BucketProvisione
 
 		creatorAddr := "0x" + creatorHex
 
+		// Verify the signer matches the message creator.
+		// Full ecrecover for broadcasts; pubkey extraction for simulates
+		// (simulate requests may have placeholder signatures).
+		signer, err := verifyTxSigner(c.Request.Context(), tx, chainID, provisioner, parsed.IsBroadcast())
+		if err != nil {
+			logger.Warn("fee allowance signature verification failed",
+				"creator", creatorAddr,
+				"error", err,
+			)
+			return
+		}
+		if !strings.EqualFold(signer, creatorAddr) {
+			logger.Warn("fee allowance signer mismatch",
+				"creator", creatorAddr,
+				"signer", signer,
+			)
+			return
+		}
+
+		c.Set(ContextKeyTxSigner, signer)
 		logger.Info("granting fee allowance",
 			"type", a.TypeUrl,
 			"creator", creatorAddr,
 			"bucket", bucket,
+			"verified_signer", signer,
 		)
 
 		if err := provisioner.GrantFeeAllowance(c.Request.Context(), creatorAddr); err != nil {

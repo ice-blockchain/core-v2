@@ -3,9 +3,7 @@ package e2e
 import (
 	"bytes"
 	"crypto/rand"
-	"encoding/hex"
 	"io"
-	"os"
 	"testing"
 	"time"
 
@@ -17,25 +15,19 @@ import (
 
 func TestSDK_CRUD(t *testing.T) {
 	t.Parallel()
-
-	if os.Getenv("TEST_GREENFIELD_PRIVATE_KEY") == "" {
-		t.Skip("TEST_GREENFIELD_PRIVATE_KEY not set")
-	}
+	helperSkipWithoutKey(t)
 
 	account := helperNewAccountWithFunds(t)
-	bucketName := hex.EncodeToString(account.GetAddress().Bytes())
+	bucketName := helperAddrHex(account.GetAddress())
 	objectName := "test-" + rand.Text()[:8] + ".txt"
 	payload := []byte("hello greenfield " + rand.Text())
 
-	// Proxy pays gas via fee grant — client must set FeeGranter.
-	proxyAccount, err := testProxySDK.GetDefaultAccount()
-	require.NoError(t, err)
-	txOpt := &gnfdsdktypes.TxOption{FeeGranter: proxyAccount.GetAddress()}
+	txOpt := &gnfdsdktypes.TxOption{FeeGranter: testProxyAddr}
 
 	t.Logf("user:       0x%s", bucketName)
 	t.Logf("bucket:     %s", bucketName)
 	t.Logf("object:     %s", objectName)
-	t.Logf("fee_granter: %s", proxyAccount.GetAddress().String())
+	t.Logf("fee_granter: %s", testProxyAddr.String())
 
 	sdk := helperNewClient(t, testProxy.URL, account)
 

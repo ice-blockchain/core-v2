@@ -2,8 +2,6 @@ package e2e
 
 import (
 	"crypto/rand"
-	"encoding/hex"
-	"os"
 	"strings"
 	"testing"
 
@@ -20,20 +18,13 @@ import (
 // The user's MsgCreateBucket never reaches the chain or SP.
 func TestSDK_CreateBucketIntercept(t *testing.T) {
 	t.Parallel()
-
-	if os.Getenv("TEST_GREENFIELD_PRIVATE_KEY") == "" {
-		t.Skip("TEST_GREENFIELD_PRIVATE_KEY not set")
-	}
+	helperSkipWithoutKey(t)
 
 	account := helperNewAccountWithFunds(t)
-	bucketName := hex.EncodeToString(account.GetAddress().Bytes())
+	bucketName := helperAddrHex(account.GetAddress())
 	userAddr := account.GetAddress().String()
 
 	sdk := helperNewClient(t, testProxy.URL, account)
-
-	proxyAccount, err := testProxySDK.GetDefaultAccount()
-	require.NoError(t, err)
-	proxyAddr := proxyAccount.GetAddress()
 
 	sps, err := sdk.ListStorageProviders(t.Context(), true)
 	require.NoError(t, err, "ListStorageProviders")
@@ -59,7 +50,7 @@ func TestSDK_CreateBucketIntercept(t *testing.T) {
 	t.Run("HeadBucket", func(t *testing.T) {
 		info, err := sdk.HeadBucket(t.Context(), bucketName)
 		require.NoError(t, err, "HeadBucket")
-		require.Equal(t, proxyAddr.String(), info.Owner,
+		require.Equal(t, testProxyAddr.String(), info.Owner,
 			"bucket owner must be the proxy")
 		t.Logf("owner: %s, visibility: %s", info.Owner, info.Visibility)
 	})
@@ -84,7 +75,7 @@ func TestSDK_CreateBucketIntercept(t *testing.T) {
 		txHash, err := sdk.DeleteBucket(
 			t.Context(), bucketName,
 			gnfdtypes.DeleteBucketOption{
-				TxOpts: &gnfdsdktypes.TxOption{FeeGranter: proxyAddr},
+				TxOpts: &gnfdsdktypes.TxOption{FeeGranter: testProxyAddr},
 			},
 		)
 		require.NoError(t, err, "DeleteBucket by user")

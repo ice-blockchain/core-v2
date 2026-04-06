@@ -22,6 +22,17 @@ import (
 	"github.com/puzpuzpuz/xsync/v4"
 
 	"ion-greenfield-proxy/internal/config"
+	"ion-greenfield-proxy/internal/ctxlock"
+)
+
+type (
+	BucketProvisioner interface {
+		ProxyAddress() string
+		GetAccountNumber(ctx context.Context, hexAddr string) (uint64, error)
+		IsKnownSPHost(ctx context.Context, host string) (bool, error)
+		EnsureBucket(ctx context.Context, bucketName string, creatorAddr string) (string, error)
+		GrantFeeAllowance(ctx context.Context, granteeAddr string) error
+	}
 )
 
 const (
@@ -53,29 +64,42 @@ const spCacheTTL = 1 * time.Hour
 
 // BucketProvisioner creates user buckets and grants object-level
 // permissions on demand.
-type BucketProvisioner struct {
+type bucketProvisioner struct {
 	client         gnfdclient.IClient
 	logger         *slog.Logger
 	known          *xsync.Map[string, struct{}]
 	feeGrantAmount sdkmath.Int
+
+	// accountNumbers caches address → account number. Account numbers
+	// are immutable once assigned, so entries never expire.
+	accountNumbers *xsync.Map[string, uint64]
+
+	// txLock serialises all on-chain transactions broadcast from the
+	// proxy wallet. The Greenfield SDK client does not handle
+	// concurrent broadcasts — each tx requires a monotonically
+	// increasing sequence number that would race without this lock.
+	txLock *ctxlock.Mutex
 
 	spMu      sync.Mutex
 	spCache   []spTypes.StorageProvider
 	spExpires time.Time
 }
 
-func NewBucketProvisioner(client gnfdclient.IClient, logger *slog.Logger, cfg *config.Config) *BucketProvisioner {
+func NewBucketProvisioner(client gnfdclient.IClient, logger *slog.Logger, cfg *config.Config) (BucketProvisioner, error) {
 	amount, err := parseBNBToWei(cfg.GreenfieldFeeGrantAmount)
 	if err != nil {
-		panic(fmt.Sprintf("invalid GREENFIELD_FEE_GRANT_AMOUNT_BNB %q: %v", cfg.GreenfieldFeeGrantAmount, err))
+		return nil, fmt.Errorf("invalid GREENFIELD_FEE_GRANT_AMOUNT_BNB %q: %w", cfg.GreenfieldFeeGrantAmount, err)
 	}
 
-	return &BucketProvisioner{
+	l := cmp.Or(logger, slog.Default()).With("component", "bucket_provisioner")
+	return &bucketProvisioner{
 		client:         client,
-		logger:         cmp.Or(logger, slog.Default()).With("component", "bucket_provisioner"),
+		logger:         l,
 		known:          xsync.NewMap[string, struct{}](),
 		feeGrantAmount: amount,
-	}
+		accountNumbers: xsync.NewMap[string, uint64](),
+		txLock:         ctxlock.New(l, 3*time.Second),
+	}, nil
 }
 
 // parseBNBToWei converts a BNB decimal string (e.g. "0.001") to wei.
@@ -89,7 +113,7 @@ func parseBNBToWei(bnb string) (sdkmath.Int, error) {
 }
 
 // ProxyAddress returns the proxy account's bech32 address.
-func (bp *BucketProvisioner) ProxyAddress() string {
+func (bp *bucketProvisioner) ProxyAddress() string {
 	account, err := bp.client.GetDefaultAccount()
 	if err != nil {
 		return ""
@@ -97,10 +121,27 @@ func (bp *BucketProvisioner) ProxyAddress() string {
 	return account.GetAddress().String()
 }
 
+// GetAccountNumber returns the on-chain account number for the given hex
+// address. Results are cached permanently (account numbers are immutable).
+func (bp *bucketProvisioner) GetAccountNumber(ctx context.Context, hexAddr string) (uint64, error) {
+	addr := strings.ToLower(strings.TrimPrefix(hexAddr, "0x"))
+
+	var fetchErr error
+	num, _ := bp.accountNumbers.LoadOrCompute(addr, func() (uint64, bool) {
+		account, err := bp.client.GetAccount(ctx, addr)
+		if err != nil {
+			fetchErr = fmt.Errorf("get account %s: %w", addr, err)
+			return 0, true // cancel — don't cache failures
+		}
+		return account.GetAccountNumber(), false
+	})
+	return num, fetchErr
+}
+
 // IsKnownSPHost checks whether the given host matches any cached storage
 // provider endpoint (exact match or bucket-prefixed subdomain).
 // Returns false if the SP list is empty or stale and cannot be refreshed.
-func (bp *BucketProvisioner) IsKnownSPHost(ctx context.Context, host string) (bool, error) {
+func (bp *bucketProvisioner) IsKnownSPHost(ctx context.Context, host string) (bool, error) {
 	sps, err := bp.storageProviders(ctx)
 	if err != nil {
 		return false, err
@@ -119,7 +160,7 @@ func (bp *BucketProvisioner) IsKnownSPHost(ctx context.Context, host string) (bo
 	return false, nil
 }
 
-func (bp *BucketProvisioner) storageProviders(ctx context.Context) ([]spTypes.StorageProvider, error) {
+func (bp *bucketProvisioner) storageProviders(ctx context.Context) ([]spTypes.StorageProvider, error) {
 	bp.spMu.Lock()
 	defer bp.spMu.Unlock()
 
@@ -159,7 +200,7 @@ func (bp *BucketProvisioner) storageProviders(ctx context.Context) ([]spTypes.St
 // user's lowercase hex address (without 0x prefix).
 // Returns the CreateBucket tx hash when a new bucket is created, or
 // empty string if the bucket already existed.
-func (bp *BucketProvisioner) EnsureBucket(ctx context.Context, bucketName string, creatorAddr string) (string, error) {
+func (bp *bucketProvisioner) EnsureBucket(ctx context.Context, bucketName string, creatorAddr string) (string, error) {
 	if _, ok := bp.known.Load(bucketName); ok {
 		return "", nil
 	}
@@ -168,6 +209,12 @@ func (bp *BucketProvisioner) EnsureBucket(ctx context.Context, bucketName string
 	if err != nil {
 		return "", fmt.Errorf("check bucket existence: %w", err)
 	}
+
+	// Serialise all on-chain transactions from the proxy wallet.
+	if err := bp.txLock.Lock(ctx, "EnsureBucket:"+bucketName); err != nil {
+		return "", fmt.Errorf("acquire tx lock: %w", err)
+	}
+	defer bp.txLock.Unlock()
 
 	var txHash string
 	if !exists {
@@ -196,7 +243,7 @@ func isBucketAlreadyExists(err error) bool {
 		strings.Contains(err.Error(), "BucketAlreadyExists")
 }
 
-func (bp *BucketProvisioner) bucketExists(ctx context.Context, bucketName string) (bool, error) {
+func (bp *bucketProvisioner) bucketExists(ctx context.Context, bucketName string) (bool, error) {
 	_, err := bp.client.HeadBucket(ctx, bucketName)
 	if err == nil {
 		return true, nil
@@ -207,7 +254,7 @@ func (bp *BucketProvisioner) bucketExists(ctx context.Context, bucketName string
 	return false, err
 }
 
-func (bp *BucketProvisioner) createBucket(ctx context.Context, bucketName string) (string, error) {
+func (bp *bucketProvisioner) createBucket(ctx context.Context, bucketName string) (string, error) {
 	sps, err := bp.storageProviders(ctx)
 	if err != nil {
 		return "", err
@@ -259,7 +306,7 @@ func (bp *BucketProvisioner) createBucket(ctx context.Context, bucketName string
 	return "", fmt.Errorf("all SPs failed: %w", lastErr)
 }
 
-func (bp *BucketProvisioner) grantObjectPermissions(ctx context.Context, bucketName string, creatorAddr string) error {
+func (bp *bucketProvisioner) grantObjectPermissions(ctx context.Context, bucketName string, creatorAddr string) error {
 	addr, err := sdk.AccAddressFromHexUnsafe(strings.TrimPrefix(creatorAddr, "0x"))
 	if err != nil {
 		return fmt.Errorf("parse creator address %q: %w", creatorAddr, err)
@@ -309,7 +356,7 @@ func (bp *BucketProvisioner) grantObjectPermissions(ctx context.Context, bucketN
 	return nil
 }
 
-func (bp *BucketProvisioner) enableDelegatedAgent(ctx context.Context, bucketName string) error {
+func (bp *bucketProvisioner) enableDelegatedAgent(ctx context.Context, bucketName string) error {
 	info, err := bp.client.HeadBucket(ctx, bucketName)
 	if err != nil {
 		return fmt.Errorf("head bucket: %w", err)

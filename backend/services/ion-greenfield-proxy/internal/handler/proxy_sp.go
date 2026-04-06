@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/base64"
 	"log/slog"
 	"net/http"
@@ -11,13 +12,18 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"ion-greenfield-proxy/internal/apperror"
-	gf "ion-greenfield-proxy/internal/greenfield"
 )
 
 // ProxySP handles requests at /sp/{base64Target}[/subpath...].
 // It decodes the base64-encoded original SP URL and forwards the request.
 // Only HTTPS SP origins that belong to known storage providers are accepted.
-func ProxySP(logger *slog.Logger, adnlAddress string, provisioner *gf.BucketProvisioner) gin.HandlerFunc {
+func ProxySP(
+	logger *slog.Logger,
+	adnlAddress string,
+	provisioner interface {
+		IsKnownSPHost(ctx context.Context, host string) (bool, error)
+	},
+	allowInsecure bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := strings.TrimPrefix(c.Param("path"), "/")
 		if raw == "" {
@@ -42,12 +48,18 @@ func ProxySP(logger *slog.Logger, adnlAddress string, provisioner *gf.BucketProv
 		}
 
 		// Only allow proxying to HTTPS SP endpoints.
-		if spURL.Scheme != "https" {
+		if !allowInsecure && spURL.Scheme != "https" {
 			apperror.WriteError(c, apperror.New(http.StatusForbidden, "INVALID_SP_SCHEME", "only HTTPS storage providers are allowed"))
 			return
 		}
 
 		// Validate that the target host belongs to a known storage provider.
+		// Fail closed: if the provisioner is unavailable, reject the request
+		// rather than allowing unvalidated proxying.
+		if provisioner == nil {
+			apperror.WriteError(c, apperror.New(http.StatusForbidden, "SP_VALIDATION_UNAVAILABLE", "storage provider validation unavailable"))
+			return
+		}
 		known, err := provisioner.IsKnownSPHost(c.Request.Context(), spURL.Host)
 		if err != nil {
 			logger.Error("failed to check SP allowlist", "host", spURL.Host, "error", err)
@@ -68,7 +80,7 @@ func ProxySP(logger *slog.Logger, adnlAddress string, provisioner *gf.BucketProv
 		// The SDK sets req.Host to the real SP host (including bucket
 		// subdomain for virtual-hosted style). Use it directly.
 		host := c.Request.Host
-		if host == "" || host == adnlAddress {
+		if host == "" || strings.EqualFold(host, adnlAddress) {
 			host = spURL.Host
 		}
 

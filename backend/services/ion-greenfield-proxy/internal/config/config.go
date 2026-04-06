@@ -26,6 +26,9 @@ type Config struct {
 	ADNLExternalAddr         string
 	DNSPrivateKey            string
 	DNSName                  string
+	RateLimitPerKey          int
+	RateLimitPerIP           int
+	RateLimitGlobal          int
 	LogLevel                 string
 	Env                      string
 }
@@ -51,6 +54,10 @@ func Load(adnlKey, dnsKey, dnsName string) (*Config, error) {
 	cfg.GreenfieldFeeGrantAmount = envOrDefault("GREENFIELD_FEE_GRANT_AMOUNT_BNB", "0.001")
 	cfg.Port, errs = optionalPort(errs, "PORT", 3000)
 	cfg.LogLevel = resolveLogLevel(envOrDefault("LOG_LEVEL", "info"))
+
+	cfg.RateLimitPerKey = optionalInt("RATE_LIMIT_PER_KEY", 100)
+	cfg.RateLimitPerIP = optionalInt("RATE_LIMIT_PER_IP", 1000)
+	cfg.RateLimitGlobal = optionalInt("RATE_LIMIT_GLOBAL", 5000)
 
 	cfg.MetricsPort, errs = parseMetricsPort(errs, env)
 
@@ -97,6 +104,9 @@ func (c *Config) LogFields() []any {
 		"adnl_key_set", c.ADNLPrivateKey != "",
 		"adnl_config_url", c.ADNLConfigURL,
 		"dns_key_set", c.DNSPrivateKey != "",
+		"rate_limit_per_key", c.RateLimitPerKey,
+		"rate_limit_per_ip", c.RateLimitPerIP,
+		"rate_limit_global", c.RateLimitGlobal,
 	}
 }
 
@@ -183,6 +193,19 @@ func parseMetricsPort(errs []string, env string) (int, []string) {
 		return 0, append(errs, "METRICS_PORT must be an integer")
 	}
 	return n, errs
+}
+
+func optionalInt(key string, fallback int) int {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(val)
+	if err != nil {
+		slog.Warn("invalid integer for "+key+", using default", "value", val, "default", fallback)
+		return fallback
+	}
+	return n
 }
 
 func resolveLogLevel(s string) string {
