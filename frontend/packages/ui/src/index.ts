@@ -80,6 +80,17 @@ export type { NotificationBarItem, NotificationBarActions } from "./components/N
 export { Icon } from "./icons/Icon";
 export type { IconProps, IconName } from "./icons/Icon";
 
+export { BottomNavBar } from "./components/BottomNavBar";
+export { BottomNavBarSheet } from "./components/BottomNavBarSheet";
+export { SheetBackdrop, SheetBackground, SheetHandle } from "./components/sheet-parts";
+export type {
+  BottomNavBarProps,
+  BottomNavBarTabConfig,
+  BottomNavBarTabIndex,
+  BottomNavBarSheetProps,
+  BottomNavBarSheetAction,
+} from "./components/bottom-nav-bar-types";
+
 // Catalog
 export { CatalogScreen } from "./catalog/CatalogScreen";
 

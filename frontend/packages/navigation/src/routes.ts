@@ -1,6 +1,7 @@
 export const Routes = {
   Splash: 'Splash',
   GetStarted: 'GetStarted',
+  Main: 'Main',
   Catalog: 'Catalog',
   ChatPreview: 'ChatPreview',
   ProxyTest: 'ProxyTest',

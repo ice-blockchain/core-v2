@@ -8,6 +8,7 @@ export interface VerifyPasskeyNextRoute {
 export type RootStackParamList = {
   Splash: undefined;
   GetStarted: undefined;
+  Main: undefined;
   Onboarding: undefined;
   Catalog: undefined;
   ChatPreview: undefined;

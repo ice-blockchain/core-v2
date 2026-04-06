@@ -9,13 +9,17 @@ function DefaultFallback({ size, scale, color }: { size: number; scale: (n: numb
   return <Icon name="profile-noimage" size={scale(size * 0.75)} color={color} />;
 }
 
+function useImageError(imageUrl?: string) {
+  const [hasError, setHasError] = useState(false);
+  useEffect(() => setHasError(false), [imageUrl]);
+  return { hasError, onError: () => setHasError(true) };
+}
+
 export function Avatar({ size, imageUrl, imageElement, fallback, badge, borderRadius, contentFit = "cover", testID }: AvatarProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const resolvedRadius = borderRadius ?? size * 0.3;
-  const [hasImageError, setHasImageError] = useState(false);
-
-  useEffect(() => setHasImageError(false), [imageUrl]);
+  const { hasError, onError } = useImageError(imageUrl);
 
   const styleOptions = useMemo(
     () => ({ size, borderRadius: resolvedRadius, scale, colors: theme.colors }),
@@ -26,13 +30,12 @@ export function Avatar({ size, imageUrl, imageElement, fallback, badge, borderRa
   const imgStyle = useMemo(() => buildImageStyle({ ...styleOptions, contentFit }), [styleOptions, contentFit]);
   const fallbackStyle = useMemo(() => buildFallbackStyle(styleOptions), [styleOptions]);
   const badgeStyle = useMemo(() => buildBadgeOverlayStyle(styleOptions), [styleOptions]);
-
-  const hasImage = imageUrl && !hasImageError;
+  const hasImage = imageUrl && !hasError;
 
   return (
     <View style={containerStyle} testID={testID}>
       {hasImage ? (
-        <Image source={{ uri: imageUrl }} style={imgStyle} resizeMode={contentFit} onError={() => setHasImageError(true)} />
+        <Image source={{ uri: imageUrl }} style={imgStyle} resizeMode={contentFit} onError={onError} />
       ) : imageElement ? (
         <View style={{ ...imgStyle, overflow: "hidden" }}>{imageElement}</View>
       ) : (

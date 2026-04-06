@@ -31,7 +31,19 @@ export function computeTitleOpacity(scrollOffset: number): number {
   return (scrollOffset - 120) / 20;
 }
 
-export function buildWebOverlayStyle(bgColor: string): ViewStyle {
+export function buildWebOverlayStyle(bgColor: string, inline?: boolean): ViewStyle {
+  if (inline) {
+    return {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: bgColor,
+      justifyContent: "flex-end",
+      alignItems: "center",
+    };
+  }
   return {
     position: "fixed" as unknown as ViewStyle["position"],
     top: 0,

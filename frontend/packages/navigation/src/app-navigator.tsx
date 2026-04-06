@@ -19,6 +19,7 @@ interface AppNavigatorProps {
   screens: {
     Splash: ComponentType;
     GetStarted: ComponentType;
+    Main?: ComponentType;
     Catalog: ComponentType;
     ChatPreview: ComponentType;
     ProxyTest?: ComponentType;
@@ -30,13 +31,17 @@ interface AppNavigatorProps {
   authScreens: AuthScreens;
 }
 
-export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
-  const AuthScreen = useMemo(
+function useAuthScreen(authScreens: AuthScreens) {
+  return useMemo(
     () => function AuthScreen() {
       return <AuthSheetNavigator screens={authScreens} />;
     },
     [authScreens],
   );
+}
+
+export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
+  const AuthScreen = useAuthScreen(authScreens);
 
   return (
     <Stack.Navigator
@@ -44,6 +49,9 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
     >
       <Stack.Screen name={Routes.Splash} component={screens.Splash} />
       <Stack.Screen name={Routes.GetStarted} component={screens.GetStarted} />
+      {screens.Main && (
+        <Stack.Screen name={Routes.Main} component={screens.Main} />
+      )}
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
       <Stack.Screen name={Routes.ChatPreview} component={screens.ChatPreview} />
       {screens.ProxyTest && (

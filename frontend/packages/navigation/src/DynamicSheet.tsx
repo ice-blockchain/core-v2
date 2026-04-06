@@ -3,9 +3,8 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { Icon, Text, useTheme } from '@ion/ui';
+import { Icon, Text, useTheme, SheetBackdrop, SheetBackground, SheetHandle } from '@ion/ui';
 import { useAppNavigation } from './use-app-navigation';
-import { SheetBackdrop, SheetBackground, SheetHandle } from './sheet-parts';
 
 interface DynamicSheetHeaderProps {
   title: string;

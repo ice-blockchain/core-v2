@@ -12,6 +12,7 @@ import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
 import { ChannelPrivateIcon } from "./generated/ChannelPrivateIcon";
 import { ChatBubbleIcon } from "./generated/ChatBubbleIcon";
+import { ChatCreatenewIcon } from "./generated/ChatCreatenewIcon";
 import { ChatOffIcon } from "./generated/ChatOffIcon";
 import { CheckGreenIcon } from "./generated/CheckGreenIcon";
 import { CheckboxOffIcon } from "./generated/CheckboxOffIcon";
@@ -23,11 +24,14 @@ import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
+import { FeedPostIcon } from "./generated/FeedPostIcon";
+import { FeedStoriesIcon } from "./generated/FeedStoriesIcon";
 import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
+import { HomeOffIcon } from "./generated/HomeOffIcon";
 import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
 import { IdentityKeyNoteIcon } from "./generated/IdentityKeyNoteIcon";
 import { KeysErrorIcon } from "./generated/KeysErrorIcon";
@@ -47,10 +51,15 @@ import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
 import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
 import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
 import { RestoreKeyIcon } from "./generated/RestoreKeyIcon";
+import { SearchChannelIcon } from "./generated/SearchChannelIcon";
+import { SearchGroupsIcon } from "./generated/SearchGroupsIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SendIcon } from "./generated/SendIcon";
 import { SheetCloseIcon } from "./generated/SheetCloseIcon";
+import { SwapIcon } from "./generated/SwapIcon";
 import { TrashIcon } from "./generated/TrashIcon";
+import { VideosTradingIcon } from "./generated/VideosTradingIcon";
+import { WalletOffIcon } from "./generated/WalletOffIcon";
 
 interface IconComponentProps {
   size?: number;
@@ -68,6 +77,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "camera": CameraIcon,
   "channel-private": ChannelPrivateIcon,
   "chat-bubble": ChatBubbleIcon,
+  "chat-createnew": ChatCreatenewIcon,
   "chat-off": ChatOffIcon,
   "check_green": CheckGreenIcon,
   "checkbox-off": CheckboxOffIcon,
@@ -79,11 +89,14 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "close": CloseIcon,
   "danger_triangle": DangerTriangleIcon,
   "edit-link": EditLinkIcon,
+  "feed-post": FeedPostIcon,
+  "feed-stories": FeedStoriesIcon,
   "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
   "field-search": FieldSearchIcon,
+  "home-off": HomeOffIcon,
   "icon-identitykey": IconIdentitykeyIcon,
   "identity-key-note": IdentityKeyNoteIcon,
   "keys-error": KeysErrorIcon,
@@ -103,8 +116,13 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "restore-cloud": RestoreCloudIcon,
   "restore-credentials": RestoreCredentialsIcon,
   "restore-key": RestoreKeyIcon,
+  "search-channel": SearchChannelIcon,
+  "search-groups": SearchGroupsIcon,
   "search": SearchIcon,
   "send": SendIcon,
   "sheet-close": SheetCloseIcon,
+  "swap": SwapIcon,
   "trash": TrashIcon,
+  "videos-trading": VideosTradingIcon,
+  "wallet-off": WalletOffIcon,
 };
