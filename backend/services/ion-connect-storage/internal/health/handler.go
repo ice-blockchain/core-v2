@@ -47,7 +47,7 @@ func makeHealthHandler(deps Deps) gin.HandlerFunc {
 		}
 
 		if err := probePebbleDB(deps.DB); err != nil {
-			status.Components["pebbledb"] = err.Error()
+			status.Components["pebbledb"] = "unhealthy"
 			isHealthy = false
 		} else {
 			status.Components["pebbledb"] = "ok"

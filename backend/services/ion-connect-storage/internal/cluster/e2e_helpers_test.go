@@ -69,7 +69,8 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 	env := storage.SetupSeederServer(t, privKey, coord, logger)
 
 	// Wire transport: broadcast + block exchange + piece forwarding over cluster overlay.
-	transport := cluster.NewClusterTransport(env.Server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)
+	transport, err := cluster.NewClusterTransport(env.Server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)
+	require.NoError(t, err)
 	transport.RegisterWithServer()
 	transport.SetPieceHandler(env.StorageHandler.ServePiece)
 	transport.SetRawQueryHandler(env.StorageHandler.HandleOverlayQuery)

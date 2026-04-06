@@ -78,6 +78,9 @@ func (h *Handler) HandleOverlayQuery(ctx context.Context, bagID [32]byte, rawQue
 			if pErr != nil {
 				return nil, pErr
 			}
+			if pieceID < 0 {
+				return nil, fmt.Errorf("invalid piece ID: %d", pieceID)
+			}
 			return h.handleForwardedPiece(ctx, bagID, int(pieceID))
 		}
 		// Forward getTorrentInfo/addUpdate as raw queries to the owner.

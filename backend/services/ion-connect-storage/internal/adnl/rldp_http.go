@@ -144,12 +144,31 @@ func (b *RLDPHTTPBridge) reapStalePayloads(ctx context.Context) {
 	}
 }
 
+const (
+	maxURLLength    = 16 * 1024 // 16 KB
+	maxMethodLength = 32
+	maxHeaderCount  = 100
+	maxHeaderSize   = 8192 // 8 KB per header name+value
+)
+
 func buildHTTPRequest(req Request) (*http.Request, error) {
+	if len(req.URL) > maxURLLength {
+		return nil, fmt.Errorf("URL too long: %d bytes", len(req.URL))
+	}
+	if len(req.Method) > maxMethodLength {
+		return nil, fmt.Errorf("method too long: %d bytes", len(req.Method))
+	}
+	if len(req.Headers) > maxHeaderCount {
+		return nil, fmt.Errorf("too many headers: %d", len(req.Headers))
+	}
 	httpReq, err := http.NewRequest(req.Method, req.URL, nil)
 	if err != nil {
 		return nil, err
 	}
 	for _, h := range req.Headers {
+		if len(h.Name)+len(h.Value) > maxHeaderSize {
+			return nil, fmt.Errorf("header too large: %d bytes", len(h.Name)+len(h.Value))
+		}
 		httpReq.Header.Add(h.Name, h.Value)
 	}
 	return httpReq, nil
@@ -172,6 +191,9 @@ func buildTLResponse(w *responseWriter) Response {
 }
 
 func extractChunk(data []byte, seqno int) ([]byte, bool) {
+	if seqno < 0 || seqno > len(data)/chunkSize {
+		return nil, true
+	}
 	offset := seqno * chunkSize
 	if offset >= len(data) {
 		return nil, true

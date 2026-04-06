@@ -94,17 +94,22 @@ func (s *sweeper) walkToClosest(ctx context.Context, targetKey []byte) ([]adnl.P
 	return peers, nil
 }
 
+const maxConcurrentStores = 50
+
 // batchStore sends dht.Store for each value to each peer concurrently.
+// Limits concurrency to maxConcurrentStores to prevent goroutine exhaustion.
 func (s *sweeper) batchStore(ctx context.Context, peers []adnl.Peer, values []*dht.Value) error {
 	var wg sync.WaitGroup
 	var stored int32
 	var storedMu sync.Mutex
+	sem := make(chan struct{}, maxConcurrentStores)
 
 	for _, peer := range peers {
 		for _, val := range values {
 			wg.Add(1)
+			sem <- struct{}{}
 			go func(p adnl.Peer, v *dht.Value) {
-				defer wg.Done()
+				defer func() { <-sem; wg.Done() }()
 				if err := storeSingleValue(ctx, p, v); err == nil {
 					storedMu.Lock()
 					stored++

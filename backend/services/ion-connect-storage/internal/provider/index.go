@@ -63,8 +63,19 @@ func (p *ProviderIndex) Deregister(bagID [32]byte) error {
 }
 
 // Lookup returns all known providers for a bag.
-// In cluster mode, queries the CRDT owner first. Falls back to PebbleDB.
+// Checks PebbleDB first to confirm the bag is registered, then enriches
+// with the CRDT owner's ADNL address if available.
 func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
+	val, closer, err := p.db.Get(makeProviderKey(bagID))
+	if err == pebble.ErrNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get provider: %w", err)
+	}
+	closer.Close()
+
+	// Bag is registered. Use CRDT owner for the freshest ADNL address.
 	ownerNodeID := p.ownerResolver.Owner(bagID)
 	if ownerNodeID != "" {
 		adnlAddr, _, _, found := p.ownerResolver.NodeADNLAddress(ownerNodeID)
@@ -73,15 +84,7 @@ func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
 		}
 	}
 
-	val, closer, err := p.db.Get(makeProviderKey(bagID))
-	if err == pebble.ErrNotFound {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("get provider: %w", err)
-	}
-	defer closer.Close()
-
+	// Fall back to the persisted provider records.
 	var records []ProviderRecord
 	if err := json.Unmarshal(val, &records); err != nil {
 		return nil, fmt.Errorf("unmarshal provider records: %w", err)

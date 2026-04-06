@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"log/slog"
+	"strings"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 )
@@ -12,6 +13,9 @@ const (
 	eventTypeSetTag       = "greenfield.storage.EventSetTag"
 	eventTypeCreateObject = "greenfield.storage.EventCreateObject"
 	eventTypeUpdateObject = "greenfield.storage.EventUpdateObjectContent"
+
+	maxBucketNameLen = 255
+	maxObjectNameLen = 1024
 )
 
 // OwnershipChecker decides whether this node should own a bag.
@@ -110,6 +114,11 @@ func (s *Subscriber) collectEntries(txEvent *greenfieldclient.TxEvent) []BagEntr
 		if err != nil || ste.BucketName == "" || ste.ObjectName == "" {
 			continue
 		}
+		if !isValidBucketName(ste.BucketName) || !isValidObjectName(ste.ObjectName) {
+			s.logger.Warn("invalid bucket/object name",
+				"bucket", ste.BucketName, "object", ste.ObjectName)
+			continue
+		}
 
 		key := objectKey{bucket: ste.BucketName, object: ste.ObjectName}
 		if _, matched := knownObjects[key]; !matched {
@@ -193,4 +202,12 @@ func decodeBagID(hexStr string) ([32]byte, error) {
 	}
 	copy(bagID[:], b)
 	return bagID, nil
+}
+
+func isValidBucketName(name string) bool {
+	return len(name) <= maxBucketNameLen && !strings.Contains(name, "\x00")
+}
+
+func isValidObjectName(name string) bool {
+	return len(name) <= maxObjectNameLen && !strings.Contains(name, "\x00")
 }

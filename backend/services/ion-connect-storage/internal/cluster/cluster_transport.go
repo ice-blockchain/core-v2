@@ -62,10 +62,10 @@ func NewClusterTransport(
 	broadcaster *ADNLBroadcaster,
 	dagService *ADNLDAGService,
 	logger *slog.Logger,
-) *ClusterTransport {
+) (*ClusterTransport, error) {
 	clientGateway := adnl.NewGateway(server.PrivateKey())
 	if err := clientGateway.StartClient(); err != nil {
-		logger.Error("failed to start cluster client gateway", "error", err)
+		return nil, fmt.Errorf("start cluster client gateway: %w", err)
 	}
 	return &ClusterTransport{
 		serverGateway: server.Gateway(),
@@ -76,7 +76,7 @@ func NewClusterTransport(
 		overlayID:     overlayID[:],
 		peers:         make(map[[32]byte]*clusterPeer),
 		logger:        logger,
-	}
+	}, nil
 }
 
 // SetPieceHandler registers the handler for forwarded piece requests.
@@ -96,7 +96,7 @@ func (t *ClusterTransport) RegisterWithServer() {
 	t.server.SetClusterOverlay(oid, t.handleClusterQuery)
 }
 
-func (t *ClusterTransport) handleClusterQuery(_ context.Context, rawQuery []byte) ([]byte, error) {
+func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []byte) ([]byte, error) {
 	if len(rawQuery) < 4 {
 		return nil, fmt.Errorf("cluster query too short")
 	}
@@ -124,7 +124,7 @@ func (t *ClusterTransport) handleClusterQuery(_ context.Context, rawQuery []byte
 		}
 		var bagID [32]byte
 		copy(bagID[:], fwdRaw.BagID)
-		resp, qErr := t.rawQueryHandler(context.Background(), bagID, fwdRaw.RawQuery)
+		resp, qErr := t.rawQueryHandler(ctx, bagID, fwdRaw.RawQuery)
 		if qErr != nil {
 			return tl.Serialize(ForwardRawResponseMsg{}, true)
 		}
@@ -138,7 +138,7 @@ func (t *ClusterTransport) handleClusterQuery(_ context.Context, rawQuery []byte
 		}
 		var bagID [32]byte
 		copy(bagID[:], fwdReq.BagID)
-		data, proof, pErr := t.pieceHandler(context.Background(), bagID, int(fwdReq.PieceID))
+		data, proof, pErr := t.pieceHandler(ctx, bagID, int(fwdReq.PieceID))
 		if pErr != nil {
 			t.logger.Debug("forward piece handler error", "error", pErr)
 			return tl.Serialize(PieceNotFoundMsg{}, true)

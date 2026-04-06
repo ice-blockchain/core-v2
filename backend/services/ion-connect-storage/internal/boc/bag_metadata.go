@@ -156,7 +156,13 @@ func parseTorrentInfoCell(root *cell.Cell, rawBoC []byte, logger *slog.Logger) (
 	copy(headerHash[:], headerHashBytes)
 
 	ps := uint32(pieceSize)
+	if ps == 0 {
+		return nil, fmt.Errorf("piece_size is zero")
+	}
 	pieceCount := int((fileSize + uint64(ps) - 1) / uint64(ps))
+	if pieceCount > maxPieceCount {
+		return nil, fmt.Errorf("piece count %d exceeds maximum %d", pieceCount, maxPieceCount)
+	}
 
 	var bagID [32]byte
 	copy(bagID[:], root.Hash())

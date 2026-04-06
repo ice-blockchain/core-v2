@@ -21,6 +21,9 @@ func fetchSegment(
 	w io.Writer,
 	logger *slog.Logger,
 ) ([]byte, error) {
+	if segmentIndex < 0 {
+		return nil, fmt.Errorf("invalid segment index: %d", segmentIndex)
+	}
 	start := int64(segmentIndex) * boc.SegmentSize
 	end := start + boc.SegmentSize - 1
 	rangeStr := fmt.Sprintf("bytes=%d-%d", start, end)

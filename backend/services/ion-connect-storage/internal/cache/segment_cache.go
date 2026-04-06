@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -37,6 +36,8 @@ type SegmentCache struct {
 	logger  *slog.Logger
 }
 
+const defaultMaxCachedBags = 10000
+
 // NewSegmentCache creates a disk-based segment cache with TTL eviction.
 func NewSegmentCache(
 	directory string,
@@ -44,12 +45,27 @@ func NewSegmentCache(
 	onEvict func(bagID [32]byte),
 	logger *slog.Logger,
 ) *SegmentCache {
+	return NewSegmentCacheWithLimit(directory, ttl, defaultMaxCachedBags, onEvict, logger)
+}
+
+// NewSegmentCacheWithLimit creates a disk-based segment cache with TTL eviction
+// and a maximum number of cached bags to prevent memory exhaustion.
+func NewSegmentCacheWithLimit(
+	directory string,
+	ttl time.Duration,
+	maxBags int,
+	onEvict func(bagID [32]byte),
+	logger *slog.Logger,
+) *SegmentCache {
+	if maxBags <= 0 {
+		maxBags = defaultMaxCachedBags
+	}
 	c := &SegmentCache{
 		dir:     directory,
 		onEvict: onEvict,
 		logger:  logger,
 	}
-	c.lru = expirable.NewLRU[[32]byte, *cachedBag](math.MaxInt, c.handleEviction, ttl)
+	c.lru = expirable.NewLRU[[32]byte, *cachedBag](maxBags, c.handleEviction, ttl)
 	return c
 }
 

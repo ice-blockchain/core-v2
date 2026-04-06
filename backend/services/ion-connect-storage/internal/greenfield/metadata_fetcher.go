@@ -29,10 +29,15 @@ func fetchMetadata(
 		return nil, fmt.Errorf("get metadata %s/%s: %w", bucket, metaName, err)
 	}
 
-	data, err := io.ReadAll(reader)
+	const maxMetadataSize = 10 << 20 // 10 MB
+	limited := io.LimitReader(reader, int64(maxMetadataSize)+1)
+	data, err := io.ReadAll(limited)
 	reader.Close()
 	if err != nil {
 		return nil, fmt.Errorf("read metadata %s/%s: %w", bucket, metaName, err)
+	}
+	if len(data) > maxMetadataSize {
+		return nil, fmt.Errorf("metadata %s/%s exceeds max size %d bytes", bucket, metaName, maxMetadataSize)
 	}
 
 	return boc.ParseIonStorageBoC(data, logger)

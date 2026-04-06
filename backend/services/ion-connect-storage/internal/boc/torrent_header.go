@@ -10,6 +10,7 @@ const (
 	headerMinSize     = 32 // TLConstructor(4) + FilesCount(4) + TotalNameSize(8) + TotalDataSize(8) + FEC(4) + DirNameSize(4)
 	torrentHeaderTLID = 0x9128aab7
 	fecInfoNoneID     = 0xc82a1964
+	maxFilesCount     = 1_000_000 // safety limit to prevent integer overflow in index arithmetic
 )
 
 // FileEntry describes a single file within a torrent bag.
@@ -109,7 +110,25 @@ func (h *TorrentHeader) parse(data []byte) ([]byte, error) {
 	dirNameSize := binary.LittleEndian.Uint32(data)
 	data = data[4:]
 
-	needed := uint64(dirNameSize) + uint64(filesCount)*16 + totalNameSize + totalDataSize
+	if filesCount > maxFilesCount {
+		return nil, fmt.Errorf("files count %d exceeds maximum %d", filesCount, maxFilesCount)
+	}
+
+	// Overflow-safe addition: check each term before accumulating.
+	indexSize := uint64(filesCount) * 16
+	needed := uint64(dirNameSize) + indexSize
+	if needed < uint64(dirNameSize) { // overflow check
+		return nil, fmt.Errorf("header size overflow")
+	}
+	if needed+totalNameSize < needed { // overflow check
+		return nil, fmt.Errorf("header size overflow")
+	}
+	needed += totalNameSize
+	if needed+totalDataSize < needed { // overflow check
+		return nil, fmt.Errorf("header size overflow")
+	}
+	needed += totalDataSize
+
 	if uint64(len(data)) < needed {
 		return nil, fmt.Errorf("header truncated: need %d, have %d", needed, len(data))
 	}
@@ -136,13 +155,18 @@ func buildIndices(files []FileEntry) (names []byte, nameIndex, dataIndex []uint6
 }
 
 func parseFileEntries(data []byte, filesCount uint32, totalNameSize, totalDataSize uint64) ([]FileEntry, []byte, error) {
+	indexBytes := int(filesCount) * 16
+	if len(data) < indexBytes {
+		return nil, nil, fmt.Errorf("data too short for file indices: need %d, have %d", indexBytes, len(data))
+	}
+
 	nameIndex := make([]uint64, filesCount)
 	dataIndex := make([]uint64, filesCount)
 	for i := uint32(0); i < filesCount; i++ {
 		nameIndex[i] = binary.LittleEndian.Uint64(data[i*8:])
-		dataIndex[i] = binary.LittleEndian.Uint64(data[filesCount*8+i*8:])
+		dataIndex[i] = binary.LittleEndian.Uint64(data[uint64(filesCount)*8+uint64(i)*8:])
 	}
-	data = data[filesCount*16:]
+	data = data[indexBytes:]
 
 	names := data[:totalNameSize]
 	data = data[totalNameSize+totalDataSize:]

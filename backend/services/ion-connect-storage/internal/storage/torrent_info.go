@@ -22,14 +22,19 @@ func (h *Handler) handleGetTorrentInfo(ctx context.Context, bagID [32]byte) ([]b
 	return serializeTorrentInfoResponse(torrentInfoBoC), nil
 }
 
+const maxTorrentInfoBoCSize = 10 << 20 // 10 MB
+
 // extractTorrentInfoBoC extracts the TorrentInfo BoC section from v2 .ionstorage bytes.
 // Format: [1 byte: version][4 bytes LE: BoC len][TorrentInfo BoC][...rest...]
 func extractTorrentInfoBoC(rawBoC []byte) ([]byte, error) {
 	if len(rawBoC) < 5 {
 		return nil, fmt.Errorf("raw BoC too short: %d bytes", len(rawBoC))
 	}
-	bocLen := int(binary.LittleEndian.Uint32(rawBoC[1:5]))
-	end := 5 + bocLen
+	bocLen := binary.LittleEndian.Uint32(rawBoC[1:5])
+	if bocLen > maxTorrentInfoBoCSize {
+		return nil, fmt.Errorf("BoC length %d exceeds maximum %d", bocLen, maxTorrentInfoBoCSize)
+	}
+	end := 5 + int(bocLen)
 	if len(rawBoC) < end {
 		return nil, fmt.Errorf("raw BoC truncated: need %d, have %d", end, len(rawBoC))
 	}

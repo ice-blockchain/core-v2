@@ -94,6 +94,16 @@ func TestHandlerUnknownConstructor(t *testing.T) {
 	require.Contains(t, err.Error(), "unknown TL constructor")
 }
 
+func TestHandlerRejectsNegativePieceID(t *testing.T) {
+	h, bagID, _ := createHandlerWithPayload(t, 1024)
+	ctx := context.Background()
+
+	req := buildTestGetPieceRequest(-1)
+	_, err := h.HandleOverlayQuery(ctx, bagID, req)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "out of range")
+}
+
 // createHandlerWithPayload builds a handler with in-memory metadata (no Greenfield).
 // The fetcher is nil-client so getPiece will use segment cache directly.
 func createHandlerWithPayload(t *testing.T, payloadSize int) (*storage.Handler, [32]byte, *boc.BagMetadata) {

@@ -75,6 +75,25 @@ func TestBuildIonStorageBoCRoundTrip(t *testing.T) {
 	require.Equal(t, expectedPieces, meta.PieceCount)
 }
 
+func TestParseTorrentInfoZeroPieceSize(t *testing.T) {
+	// Build a valid .ionstorage, then corrupt piece_size to 0.
+	payload := make([]byte, 1024)
+	header := SingleFileHeader("data", uint64(len(payload)))
+	_, rawData := MustBuildIonStorageBoC(t, payload, PieceSize, header)
+
+	// The BoC starts: [0x02][4 bytes LE: boc len][boc bytes]...
+	// We need to find the piece_size field inside the TorrentInfo cell BoC
+	// and zero it out. Since the BoC is a serialized Cell, we can't easily
+	// patch it without breaking the hash. Instead, test via parseTorrentInfoCell
+	// by building a cell with pieceSize=0 directly.
+	cell, err := BuildTorrentInfoCell(0, 1024, [32]byte{}, [32]byte{}, 100)
+	require.NoError(t, err)
+
+	_, err = parseTorrentInfoCell(cell, rawData, testLogger())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "piece_size is zero")
+}
+
 func TestMerkleTreeRoundTrip(t *testing.T) {
 	payload := make([]byte, 2*1024*1024) // 2MB
 	for i := range payload {

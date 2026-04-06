@@ -165,7 +165,11 @@ func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server,
 
 	// Wire CRDT transport over ADNL cluster overlay.
 	overlayID := cluster.ComputeClusterOverlayID(cfg.ClusterOverlayID)
-	transport := cluster.NewClusterTransport(server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)
+	transport, err := cluster.NewClusterTransport(server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)
+	if err != nil {
+		logger.Error("create cluster transport failed", "error", err)
+		os.Exit(1)
+	}
 	transport.RegisterWithServer()
 	coord.SetTransport(transport)
 	coord.SetPieceForwarder(cluster.NewPieceForwarder(transport, coord, nil, logger))

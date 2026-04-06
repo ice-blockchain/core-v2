@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/cockroachdb/pebble/v2"
@@ -222,4 +223,21 @@ func TestDecodeBagID_InvalidHex(t *testing.T) {
 func TestDecodeBagID_WrongLength(t *testing.T) {
 	_, err := decodeBagID("aabb")
 	require.Error(t, err)
+}
+
+func TestIsValidBucketName(t *testing.T) {
+	require.True(t, isValidBucketName("my-bucket"))
+	require.True(t, isValidBucketName("a"))
+	require.True(t, isValidBucketName(strings.Repeat("x", maxBucketNameLen)))
+
+	require.False(t, isValidBucketName(strings.Repeat("x", maxBucketNameLen+1)))
+	require.False(t, isValidBucketName("bad\x00name"))
+}
+
+func TestIsValidObjectName(t *testing.T) {
+	require.True(t, isValidObjectName("my-object.dat"))
+	require.True(t, isValidObjectName(strings.Repeat("o", maxObjectNameLen)))
+
+	require.False(t, isValidObjectName(strings.Repeat("o", maxObjectNameLen+1)))
+	require.False(t, isValidObjectName("null\x00byte"))
 }

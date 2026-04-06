@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"log/slog"
+	"time"
 
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
@@ -12,7 +13,10 @@ import (
 	"github.com/xssnick/tonutils-go/tl"
 )
 
-const tlPingConstructor uint32 = 0x44f3f211
+const (
+	tlPingConstructor   uint32 = 0x44f3f211
+	queryHandlerTimeout        = 30 * time.Second
+)
 
 // handleNewConnection is called when a new ADNL peer connects.
 func (s *Server) handleNewConnection(client adnl.Peer) error {
@@ -25,8 +29,11 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
 	extADNL.SetQueryHandler(func(query *adnl.MessageQuery) error {
+		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
+		defer cancel()
+
 		if _, ok := query.Data.(GetCapabilities); ok {
-			return client.Answer(context.Background(), query.ID, &Capabilities{Value: capabilityRLDP2})
+			return client.Answer(ctx, query.ID, &Capabilities{Value: capabilityRLDP2})
 		}
 		// Handle cluster queries sent without overlay wrapping (block exchange).
 		if clusterHandler != nil {
@@ -35,12 +42,12 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 				logger.Debug("root handler: extractRawTL returned nil", "type", query.Data)
 			}
 			if rawQuery != nil && len(rawQuery) >= 4 {
-				resp, err := clusterHandler(context.Background(), rawQuery)
+				resp, err := clusterHandler(ctx, rawQuery)
 				if err != nil {
 					return err
 				}
 				if resp != nil {
-					return client.Answer(context.Background(), query.ID, tl.Raw(resp))
+					return client.Answer(ctx, query.ID, tl.Raw(resp))
 				}
 			}
 		}
@@ -60,6 +67,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 // storage overlays go to OverlayManager.
 func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, rawPeer adnl.Peer, logger *slog.Logger) func(query *adnl.MessageQuery) error {
 	return func(query *adnl.MessageQuery) error {
+		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
+		defer cancel()
+
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
 			return nil
@@ -72,8 +82,6 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 		if rawQuery == nil {
 			return nil
 		}
-
-		ctx := context.Background()
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
 			resp, err := clusterHandler(ctx, rawQuery)
@@ -101,6 +109,9 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 
 func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
 	return func(transferID []byte, query *rldp.Query) error {
+		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
+		defer cancel()
+
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
 			logger.Debug("RLDP: no overlay in query")
@@ -115,8 +126,6 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 		if rawQuery == nil {
 			return nil
 		}
-
-		ctx := context.Background()
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
 			resp, err := clusterHandler(ctx, rawQuery)

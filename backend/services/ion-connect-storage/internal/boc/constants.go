@@ -9,4 +9,7 @@ const (
 
 	// PiecesPerSegment is the number of ION pieces per Greenfield segment.
 	PiecesPerSegment = SegmentSize / PieceSize // 32
+
+	// maxPieceCount is the safety limit for piece count (~4.7 TB at 512 KB pieces).
+	maxPieceCount = 10_000_000
 )

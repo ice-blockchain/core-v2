@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -35,6 +36,7 @@ type BagIndexedCallback func(bagID [32]byte)
 type Persister struct {
 	db           *pebble.DB
 	index        *xsync.Map[[32]byte, BagLocation]
+	cbMu         sync.RWMutex
 	onBagIndexed BagIndexedCallback
 }
 
@@ -48,7 +50,9 @@ func NewPersister(db *pebble.DB) *Persister {
 
 // SetOnBagIndexed registers a callback invoked for each newly persisted bag.
 func (p *Persister) SetOnBagIndexed(cb BagIndexedCallback) {
+	p.cbMu.Lock()
 	p.onBagIndexed = cb
+	p.cbMu.Unlock()
 }
 
 // LoadLastHeight returns the last persisted block height, or 0 if none.
@@ -126,9 +130,12 @@ func (p *Persister) PersistBagsAndHeight(entries []BagEntry, height int64) error
 		p.index.Store(entry.BagID, entry.Location)
 	}
 
-	if p.onBagIndexed != nil {
+	p.cbMu.RLock()
+	cb := p.onBagIndexed
+	p.cbMu.RUnlock()
+	if cb != nil {
 		for _, entry := range entries {
-			p.onBagIndexed(entry.BagID)
+			cb(entry.BagID)
 		}
 	}
 

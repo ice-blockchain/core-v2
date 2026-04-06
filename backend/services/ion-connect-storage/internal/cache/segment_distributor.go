@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -58,6 +59,9 @@ func (d *segmentDistributor) writeChunk(p []byte) (int, error) {
 // Offsets are relative to raw file data (no torrent header prefix).
 func (d *segmentDistributor) resolveOffset(absOffset int64) (string, int64, int64) {
 	for _, f := range d.layout.Files {
+		if f.Offset > math.MaxInt64-f.Size {
+			continue // skip entries where Offset+Size overflows
+		}
 		fileEnd := int64(f.Offset + f.Size)
 		if absOffset < fileEnd {
 			localOffset := absOffset - int64(f.Offset)

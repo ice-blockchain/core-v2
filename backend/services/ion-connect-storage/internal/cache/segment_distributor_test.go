@@ -93,3 +93,47 @@ func TestSegmentCacheConcurrentSegmentWrites(t *testing.T) {
 	require.Equal(t, seg0, fullData[:1024])
 	require.Equal(t, seg1, fullData[1024:])
 }
+
+func TestPreallocateRejectsPathTraversal(t *testing.T) {
+	dir := t.TempDir()
+
+	malicious := []string{
+		"../../../etc/passwd",
+		"/etc/passwd",
+		"foo/../../../bar",
+		"..\\windows\\system32",
+	}
+	for _, name := range malicious {
+		layout := BagFileLayout{
+			Files:     []boc.FileEntry{{Name: name, Size: 10, Offset: 0}},
+			TotalSize: 10,
+		}
+		err := preallocateFiles(dir, layout)
+		require.Error(t, err, "expected error for %q", name)
+	}
+}
+
+func TestPreallocateAcceptsValidNames(t *testing.T) {
+	dir := t.TempDir()
+
+	valid := []string{"data.bin", "subdir/file.txt"}
+	for _, name := range valid {
+		layout := BagFileLayout{
+			Files:     []boc.FileEntry{{Name: name, Size: 10, Offset: 0}},
+			TotalSize: 10,
+		}
+		err := preallocateFiles(dir, layout)
+		require.NoError(t, err, "unexpected error for %q", name)
+	}
+}
+
+func TestPreallocateRejectsEmptyName(t *testing.T) {
+	dir := t.TempDir()
+	layout := BagFileLayout{
+		Files:     []boc.FileEntry{{Name: "", Size: 10, Offset: 0}},
+		TotalSize: 10,
+	}
+	err := preallocateFiles(dir, layout)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "empty file name")
+}

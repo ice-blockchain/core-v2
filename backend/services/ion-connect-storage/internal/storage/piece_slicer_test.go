@@ -92,3 +92,16 @@ func TestBuildFullBitfield(t *testing.T) {
 	require.Equal(t, byte(0xff), bf[0])
 	require.Equal(t, byte(0x01), bf[1])
 }
+
+func TestBuildFullBitfieldRejectsInvalid(t *testing.T) {
+	require.Nil(t, buildFullBitfield(0))
+	require.Nil(t, buildFullBitfield(-1))
+	require.Nil(t, buildFullBitfield(maxPieceCount+1))
+}
+
+func TestBuildFullBitfieldAcceptsMaximum(t *testing.T) {
+	// Just verify it doesn't panic at the boundary.
+	bf := buildFullBitfield(maxPieceCount)
+	require.NotNil(t, bf)
+	require.Equal(t, (maxPieceCount+7)/8, len(bf))
+}

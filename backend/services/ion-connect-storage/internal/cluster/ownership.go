@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 )
+
+const ownerQueryTimeout = 5 * time.Second
 
 // ClaimBag adds this node's ownership claim for a bag.
 // Writes dual keys: own/<bagID> -> nodeID and bynode/<nodeID>/<bagID> -> "".
@@ -55,7 +58,9 @@ func (c *Coordinator) OwnsBag(bagID [32]byte) bool {
 
 // Owner returns the nodeID that owns a bag, or empty string if unclaimed.
 func (c *Coordinator) Owner(bagID [32]byte) string {
-	val, err := c.crdt.Get(context.Background(), ds.NewKey(OwnershipKey(bagID)))
+	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	defer cancel()
+	val, err := c.crdt.Get(ctx, ds.NewKey(OwnershipKey(bagID)))
 	if err != nil {
 		return ""
 	}
@@ -98,7 +103,9 @@ func (c *Coordinator) OwnedCount() int {
 
 // NodeADNLAddress reads a node's network info from CRDT key nodeinfo/<nodeID>.
 func (c *Coordinator) NodeADNLAddress(nodeID string) ([32]byte, string, int, bool) {
-	val, err := c.crdt.Get(context.Background(), ds.NewKey(NodeInfoKey(nodeID)))
+	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	defer cancel()
+	val, err := c.crdt.Get(ctx, ds.NewKey(NodeInfoKey(nodeID)))
 	if err != nil {
 		return [32]byte{}, "", 0, false
 	}
@@ -106,27 +113,47 @@ func (c *Coordinator) NodeADNLAddress(nodeID string) ([32]byte, string, int, boo
 	if err != nil {
 		return [32]byte{}, "", 0, false
 	}
-	var addr [32]byte
-	decodeHexToBytes(info.ADNLAddress, addr[:])
-	return addr, info.IP, info.Port, true
-}
-
-func decodeHexToBytes(hex string, dst []byte) {
-	hex = strings.TrimPrefix(hex, "0x")
-	for i := 0; i < len(dst) && i*2+1 < len(hex); i++ {
-		dst[i] = hexVal(hex[i*2])<<4 | hexVal(hex[i*2+1])
+	if info.ADNLAddress == "" {
+		return [32]byte{}, info.IP, info.Port, true
 	}
+	addr, err := decodeHexToBytes(info.ADNLAddress, 32)
+	if err != nil {
+		return [32]byte{}, "", 0, false
+	}
+	var addrArr [32]byte
+	copy(addrArr[:], addr)
+	return addrArr, info.IP, info.Port, true
 }
 
-func hexVal(b byte) byte {
+func decodeHexToBytes(hexStr string, expectedLen int) ([]byte, error) {
+	hexStr = strings.TrimPrefix(hexStr, "0x")
+	if len(hexStr) != expectedLen*2 {
+		return nil, fmt.Errorf("hex string length %d, expected %d", len(hexStr), expectedLen*2)
+	}
+	dst := make([]byte, expectedLen)
+	for i := 0; i < expectedLen; i++ {
+		hi, ok := hexVal(hexStr[i*2])
+		if !ok {
+			return nil, fmt.Errorf("invalid hex char at position %d: %c", i*2, hexStr[i*2])
+		}
+		lo, ok := hexVal(hexStr[i*2+1])
+		if !ok {
+			return nil, fmt.Errorf("invalid hex char at position %d: %c", i*2+1, hexStr[i*2+1])
+		}
+		dst[i] = hi<<4 | lo
+	}
+	return dst, nil
+}
+
+func hexVal(b byte) (byte, bool) {
 	switch {
 	case b >= '0' && b <= '9':
-		return b - '0'
+		return b - '0', true
 	case b >= 'a' && b <= 'f':
-		return b - 'a' + 10
+		return b - 'a' + 10, true
 	case b >= 'A' && b <= 'F':
-		return b - 'A' + 10
+		return b - 'A' + 10, true
 	default:
-		return 0
+		return 0, false
 	}
 }

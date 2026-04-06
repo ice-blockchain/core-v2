@@ -109,6 +109,11 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 	c.cleanupDeadNodeKeys(ctx, deadNodeID)
 }
 
+// reclaimSingleBag reclaims a bag from a dead node. The TOCTOU window between
+// Owner() and ClaimBag() is mitigated by isResponsibleForReclamation (only the
+// XOR-closest active node reclaims) combined with ClaimBag's post-claim
+// verification via CRDT convergence (OwnsOrClaim pattern). If two nodes race,
+// CRDT last-write-wins resolves it deterministically.
 func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, deadNodeID string) error {
 	current := c.Owner(bagID)
 	if current != "" && current != deadNodeID {
@@ -140,8 +145,12 @@ func extractBagIDFromByNodeKey(key string, nodeID string) [32]byte {
 	if len(hexStr) != 64 {
 		return [32]byte{}
 	}
+	decoded, err := decodeHexToBytes(hexStr, 32)
+	if err != nil {
+		return [32]byte{}
+	}
 	var bagID [32]byte
-	decodeHexToBytes(hexStr, bagID[:])
+	copy(bagID[:], decoded)
 	return bagID
 }
 

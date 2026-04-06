@@ -1,6 +1,7 @@
 package boc
 
 import (
+	"encoding/binary"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -76,6 +77,50 @@ func TestParseTorrentHeaderTooShort(t *testing.T) {
 	_, err := ParseTorrentHeader([]byte{0, 1, 2})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "too short")
+}
+
+func TestParseTorrentHeaderZeroFiles(t *testing.T) {
+	header := &TorrentHeader{
+		DirName: "empty",
+		Files:   []FileEntry{},
+	}
+	data, err := SerializeTorrentHeader(header)
+	require.NoError(t, err)
+
+	parsed, err := ParseTorrentHeader(data)
+	require.NoError(t, err)
+	require.Len(t, parsed.Files, 0)
+	require.Equal(t, "empty", parsed.DirName)
+}
+
+func TestParseTorrentHeaderOverflowFilesCount(t *testing.T) {
+	// Craft a minimal header with filesCount = 0xFFFFFFFF to trigger overflow.
+	data := make([]byte, headerMinSize+20)
+	binary.LittleEndian.PutUint32(data[0:], torrentHeaderTLID) // TL ID
+	binary.LittleEndian.PutUint32(data[4:], 0xFFFFFFFF)        // filesCount
+	binary.LittleEndian.PutUint64(data[8:], 0)                 // totalNameSize
+	binary.LittleEndian.PutUint64(data[16:], 0)                // totalDataSize
+	binary.LittleEndian.PutUint32(data[24:], fecInfoNoneID)    // FEC
+	binary.LittleEndian.PutUint32(data[28:], 0)                // dirNameSize
+
+	_, err := ParseTorrentHeader(data)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "exceeds maximum")
+}
+
+func TestParseTorrentHeaderOverflowTotalSize(t *testing.T) {
+	// Craft header where totalNameSize + totalDataSize overflows uint64.
+	data := make([]byte, headerMinSize+20)
+	binary.LittleEndian.PutUint32(data[0:], torrentHeaderTLID)
+	binary.LittleEndian.PutUint32(data[4:], 1)              // filesCount
+	binary.LittleEndian.PutUint64(data[8:], ^uint64(0))     // totalNameSize = max uint64
+	binary.LittleEndian.PutUint64(data[16:], 1)             // totalDataSize = 1 -> overflow
+	binary.LittleEndian.PutUint32(data[24:], fecInfoNoneID) // FEC
+	binary.LittleEndian.PutUint32(data[28:], 0)             // dirNameSize
+
+	_, err := ParseTorrentHeader(data)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "overflow")
 }
 
 func TestParseTorrentHeaderWithDirName(t *testing.T) {
