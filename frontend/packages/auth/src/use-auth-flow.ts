@@ -150,16 +150,20 @@ function buildRestoreProps(input: RestorePropsInput) {
     },
     restoreCredentials: buildRestoreCredentialsProps(input),
     setNewPassword: buildSetNewPasswordProps(input),
-    restoreSuccessModal: buildRestoreSuccessModal(deps.dispatch, state),
+    restoreSuccessModal: buildRestoreSuccessModal(deps.dispatch, state, input.recoveryDataRef),
     identityKeyNotFoundModal: buildIdentityKeyNotFoundModal(deps.dispatch, state),
   };
 }
 
-function buildRestoreSuccessModal(dispatch: (action: AuthFlowAction) => void, state: AuthFlowState) {
+function buildRestoreSuccessModal(
+  dispatch: (action: AuthFlowAction) => void,
+  state: AuthFlowState,
+  recoveryDataRef: React.RefObject<RecoveryData | null>,
+) {
   return {
     isVisible: state.isRestoreSuccessVisible,
-    onClose: () => { dispatch({ type: 'HIDE_RESTORE_SUCCESS' }); dispatch({ type: 'GO_TO_GET_STARTED' }); },
-    onLogin: () => { dispatch({ type: 'HIDE_RESTORE_SUCCESS' }); dispatch({ type: 'GO_TO_GET_STARTED', identityKeyName: state.identityKeyName }); },
+    onClose: () => { recoveryDataRef.current = null; dispatch({ type: 'HIDE_RESTORE_SUCCESS' }); dispatch({ type: 'GO_TO_GET_STARTED' }); },
+    onLogin: () => { recoveryDataRef.current = null; dispatch({ type: 'HIDE_RESTORE_SUCCESS' }); dispatch({ type: 'GO_TO_GET_STARTED', identityKeyName: state.identityKeyName }); },
   };
 }
 

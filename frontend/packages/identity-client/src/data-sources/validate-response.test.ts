@@ -95,7 +95,7 @@ describe('validateRegistrationResultResponse', () => {
 
 describe('validateRecoveryResultResponse', () => {
   const validAuth = { token: 't', refreshToken: 'r' };
-  const validRecovery = { credential: { id: 'cr-1' }, authentication: validAuth, user: { id: 'u1' } };
+  const validRecovery = { credential: { uuid: 'cr-1' }, authentication: validAuth, user: { id: 'u1' } };
 
   it('accepts valid recovery result', () => {
     expect(() => validateRecoveryResultResponse(validRecovery)).not.toThrow();
@@ -105,16 +105,16 @@ describe('validateRecoveryResultResponse', () => {
     expect(() => validateRecoveryResultResponse({ authentication: validAuth, user: { id: 'u1' } })).toThrow('missing credential');
   });
 
-  it('rejects credential without id', () => {
-    expect(() => validateRecoveryResultResponse({ credential: { kind: 'K' }, authentication: validAuth, user: { id: 'u1' } })).toThrow('missing or empty id');
+  it('rejects credential without uuid', () => {
+    expect(() => validateRecoveryResultResponse({ credential: { kind: 'K' }, authentication: validAuth, user: { id: 'u1' } })).toThrow('missing or empty uuid');
   });
 
   it('rejects missing authentication', () => {
-    expect(() => validateRecoveryResultResponse({ credential: { id: 'cr-1' }, user: { id: 'u1' } })).toThrow('missing authentication');
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1' }, user: { id: 'u1' } })).toThrow('missing authentication');
   });
 
   it('rejects missing user', () => {
-    expect(() => validateRecoveryResultResponse({ credential: { id: 'cr-1' }, authentication: validAuth })).toThrow('missing user');
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1' }, authentication: validAuth })).toThrow('missing user');
   });
 
   it('rejects null', () => {
