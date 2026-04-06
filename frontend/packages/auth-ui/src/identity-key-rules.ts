@@ -19,8 +19,8 @@ export function validateIdentityKeyName(value: string): string | null {
   return null;
 }
 
-export function useIdentityKeyValidation() {
-  const [value, setValue] = useState("");
+export function useIdentityKeyValidation(initialValue = "") {
+  const [value, setValue] = useState(initialValue);
   const [submitted, setSubmitted] = useState(false);
   const charError = useMemo(() => validateIdentityKeyName(value), [value]);
   const emptyError = submitted && value.length === 0 ? translate("auth:enterIdentityKeyNameError") : null;

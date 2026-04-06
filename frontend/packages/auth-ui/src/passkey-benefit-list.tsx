@@ -79,6 +79,7 @@ export function PasskeyBenefitList() {
     gap: scale.scaleSize(12),
     marginTop: scale.scaleSize(37),
     alignSelf: "stretch" as const,
+    paddingHorizontal: scale.scaleSize(44),
   }), [scale]);
 
   const benefits = buildBenefits();

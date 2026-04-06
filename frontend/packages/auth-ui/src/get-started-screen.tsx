@@ -69,6 +69,9 @@ function useGetStartedNavigation() {
     handleRestore: useCallback(() => {
       navigation.navigate(Routes.Auth.ProfileSetup);
     }, [navigation]),
+    handleFullAuthFlow: useCallback(() => {
+      navigation.navigate(Routes.Auth.FullAuthFlow);
+    }, [navigation]),
   };
 }
 
@@ -118,6 +121,10 @@ function GetStartedActions({ identity, nav }: {
           leftIcon={<Icon name="restore-key" size={actionStyles.iconSize} color={colors.secondaryText} />}
         />
       </View>
+      <TextButton
+        label={translate("auth:fullAuthFlowButton")} onPress={nav.handleFullAuthFlow}
+        leftIcon={<Icon name="action-wallet-passkey" size={actionStyles.iconSize} color={colors.secondaryText} />}
+      />
     </>
   );
 }

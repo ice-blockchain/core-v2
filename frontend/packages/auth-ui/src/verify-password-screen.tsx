@@ -76,11 +76,11 @@ function InnerSheetForm({ onConfirm }: { onConfirm: (password: string) => void }
           hasPrefixDivider
           suffixIcon={<Pressable onPress={toggleShowPassword}><EyeIcon isOff={!showPassword} /></Pressable>}
           isSecureTextEntry={!showPassword}
-          textInputProps={{ textContentType: "oneTimeCode", autoComplete: "off", autoCorrect: false }}
+          textInputProps={{ textContentType: "password", autoComplete: "off", autoCorrect: false }}
           style={styles.fieldWidth}
         />
       </View>
-      <Pressable style={confirmButtonStyle} onPress={() => { if (password.trim()) onConfirm(password); }}>
+      <Pressable style={confirmButtonStyle} onPress={() => { const trimmed = password.trim(); if (trimmed) onConfirm(trimmed); }}>
         <Text variant="body" color={colors.onPrimaryAccent}>{translate("auth:confirmButton")}</Text>
       </Pressable>
     </View>
