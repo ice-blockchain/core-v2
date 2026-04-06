@@ -13,6 +13,8 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 )
 
+const maxBlockSize = 1 << 20 // 1 MB — prevent OOM from rogue peers
+
 // BlockFetcher fetches IPLD blocks from cluster peers.
 // Implemented by the Coordinator using ADNL overlay queries.
 type BlockFetcher interface {
@@ -51,6 +53,10 @@ func (s *ADNLDAGService) Get(ctx context.Context, c cid.Cid) (ipld.Node, error) 
 		return nil, fmt.Errorf("fetch block %s from peers: %w", c, err)
 	}
 
+	if len(remote) > maxBlockSize {
+		return nil, fmt.Errorf("block %s too large from peer: %d bytes (max %d)", c, len(remote), maxBlockSize)
+	}
+
 	if storeErr := s.storeLocal(c, remote); storeErr != nil {
 		s.logger.Warn("cache fetched block", "cid", c, "error", storeErr)
 	}
@@ -72,8 +78,10 @@ func (s *ADNLDAGService) getManyAsync(ctx context.Context, cids []cid.Cid, out c
 	for _, c := range cids {
 		select {
 		case <-ctx.Done():
-			goto done
 		case sem <- struct{}{}:
+		}
+		if ctx.Err() != nil {
+			break
 		}
 
 		wg.Add(1)
@@ -88,7 +96,6 @@ func (s *ADNLDAGService) getManyAsync(ctx context.Context, cids []cid.Cid, out c
 			}
 		}(c)
 	}
-done:
 	wg.Wait()
 	close(out)
 }

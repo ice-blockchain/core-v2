@@ -182,19 +182,19 @@ func parsePieceResponsePayload(data []byte) ([]byte, []byte, bool, error) {
 		return nil, nil, false, fmt.Errorf("piece response truncated")
 	}
 	dataLen := binary.LittleEndian.Uint32(data[4:8])
-	if dataLen > uint32(len(data)-8) {
+	if uint64(dataLen) > uint64(len(data)-8) {
 		return nil, nil, false, fmt.Errorf("piece data length %d exceeds available %d", dataLen, len(data)-8)
 	}
-	off := 8 + int(dataLen)
-	if len(data) < off+4 {
+	dataEnd := 8 + int(dataLen) // safe: dataLen <= len(data)-8, len(data) fits in int
+	if len(data) < dataEnd+4 {
 		return nil, nil, false, fmt.Errorf("piece response proof length truncated")
 	}
-	proofLen := binary.LittleEndian.Uint32(data[off : off+4])
-	if proofLen > uint32(len(data)-off-4) {
-		return nil, nil, false, fmt.Errorf("proof length %d exceeds available %d", proofLen, len(data)-off-4)
+	proofLen := binary.LittleEndian.Uint32(data[dataEnd : dataEnd+4])
+	if uint64(proofLen) > uint64(len(data)-dataEnd-4) {
+		return nil, nil, false, fmt.Errorf("proof length %d exceeds available %d", proofLen, len(data)-dataEnd-4)
 	}
-	pieceData := data[8:off]
-	proof := data[off+4 : off+4+int(proofLen)]
+	pieceData := data[8:dataEnd]
+	proof := data[dataEnd+4 : dataEnd+4+int(proofLen)]
 	return pieceData, proof, true, nil
 }
 

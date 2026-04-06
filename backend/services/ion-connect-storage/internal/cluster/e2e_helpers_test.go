@@ -74,6 +74,7 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 	transport.RegisterWithServer()
 	transport.SetPieceHandler(env.StorageHandler.ServePiece)
 	transport.SetRawQueryHandler(env.StorageHandler.HandleOverlayQuery)
+	transport.SetOwnershipChecker(coord)
 	coord.SetTransport(transport)
 
 	coord.SetPieceForwarder(cluster.NewPieceForwarder(transport, coord, nil, logger))

@@ -168,6 +168,9 @@ func parseFileEntries(data []byte, filesCount uint32, totalNameSize, totalDataSi
 	}
 	data = data[indexBytes:]
 
+	if totalNameSize+totalDataSize < totalNameSize {
+		return nil, nil, fmt.Errorf("name+data size overflow")
+	}
 	names := data[:totalNameSize]
 	data = data[totalNameSize+totalDataSize:]
 
@@ -184,6 +187,9 @@ func parseFileEntries(data []byte, filesCount uint32, totalNameSize, totalDataSi
 		dataStart := uint64(0)
 		if i > 0 {
 			dataStart = dataIndex[i-1]
+		}
+		if dataIndex[i] < dataStart {
+			return nil, nil, fmt.Errorf("file %d: data index not monotonically increasing", i)
 		}
 		files[i] = FileEntry{
 			Name:   string(names[nameStart:nameEnd]),

@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/hex"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -49,6 +51,9 @@ func Load() (Config, error) {
 	globalConfigURL := os.Getenv("GLOBAL_CONFIG_URL")
 	if globalConfigURL == "" {
 		return Config{}, fmt.Errorf("GLOBAL_CONFIG_URL is required")
+	}
+	if err := validateURL(globalConfigURL); err != nil {
+		return Config{}, fmt.Errorf("GLOBAL_CONFIG_URL: %w", err)
 	}
 
 	rpcURLs, err := parseRpcURLs(os.Getenv("GREENFIELD_RPC_URLS"))
@@ -129,6 +134,9 @@ func parseRpcURLs(raw string) ([]string, error) {
 	for _, u := range strings.Split(raw, ",") {
 		u = strings.TrimSpace(u)
 		if u != "" {
+			if err := validateURL(u); err != nil {
+				return nil, fmt.Errorf("GREENFIELD_RPC_URLS: %q: %w", u, err)
+			}
 			urls = append(urls, u)
 		}
 	}
@@ -136,6 +144,26 @@ func parseRpcURLs(raw string) ([]string, error) {
 		return nil, fmt.Errorf("GREENFIELD_RPC_URLS contains no valid URLs")
 	}
 	return urls, nil
+}
+
+// validateURL rejects non-HTTP(S) schemes and private/metadata IP addresses to prevent SSRF.
+func validateURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+	if u.Scheme != "https" && u.Scheme != "http" {
+		return fmt.Errorf("URL scheme must be http or https, got %q", u.Scheme)
+	}
+	host := u.Hostname()
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return nil // hostname, not IP — DNS resolution is fine
+	}
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		return fmt.Errorf("URL host %q resolves to a private/metadata IP", host)
+	}
+	return nil
 }
 
 func parseRequiredPort(key string) (int, error) {

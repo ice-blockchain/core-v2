@@ -106,8 +106,16 @@ func (s *sweeper) batchStore(ctx context.Context, peers []adnl.Peer, values []*d
 
 	for _, peer := range peers {
 		for _, val := range values {
+			select {
+			case <-ctx.Done():
+				wg.Wait()
+				if stored == 0 {
+					return fmt.Errorf("no values stored: %w", ctx.Err())
+				}
+				return nil
+			case sem <- struct{}{}:
+			}
 			wg.Add(1)
-			sem <- struct{}{}
 			go func(p adnl.Peer, v *dht.Value) {
 				defer func() { <-sem; wg.Done() }()
 				if err := storeSingleValue(ctx, p, v); err == nil {

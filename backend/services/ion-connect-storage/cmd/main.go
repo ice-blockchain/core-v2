@@ -101,6 +101,7 @@ func main() {
 	if realCoord, ok := coord.(*cluster.Coordinator); ok && realCoord.Transport() != nil {
 		realCoord.Transport().SetPieceHandler(storageHandler.ServePiece)
 		realCoord.Transport().SetRawQueryHandler(storageHandler.HandleOverlayQuery)
+		realCoord.Transport().SetOwnershipChecker(realCoord)
 	}
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
@@ -118,8 +119,13 @@ func main() {
 		}
 	}()
 
-	go health.StartServer(ctx, privateEngine, "127.0.0.1:"+cfg.HttpPort, logger)
-	startSeparateMetricsServer(ctx, cfg, m, logger)
+	var httpWg sync.WaitGroup
+	httpWg.Add(1)
+	go func() {
+		defer httpWg.Done()
+		health.StartServer(ctx, privateEngine, "127.0.0.1:"+cfg.HttpPort, logger)
+	}()
+	startSeparateMetricsServer(ctx, cfg, m, &httpWg, logger)
 
 	logger.Info("ion-connect-storage started")
 	<-ctx.Done()
@@ -128,6 +134,7 @@ func main() {
 	bridge.Stop()
 	subscriberWg.Wait()
 	shutdownServer(server, logger)
+	httpWg.Wait()
 	logger.Info("ion-connect-storage stopped")
 }
 
@@ -289,13 +296,17 @@ func createPrivateEngine(
 	return engine
 }
 
-func startSeparateMetricsServer(ctx context.Context, cfg config.Config, m *metrics.Metrics, logger *slog.Logger) {
+func startSeparateMetricsServer(ctx context.Context, cfg config.Config, m *metrics.Metrics, wg *sync.WaitGroup, logger *slog.Logger) {
 	if cfg.MetricsPort == "" || cfg.MetricsPort == cfg.HttpPort {
 		return
 	}
 	metricsEngine := gin.New()
 	metrics.RegisterRoutes(metricsEngine, m.Registry())
-	go health.StartServer(ctx, metricsEngine, "127.0.0.1:"+cfg.MetricsPort, logger)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		health.StartServer(ctx, metricsEngine, "127.0.0.1:"+cfg.MetricsPort, logger)
+	}()
 }
 
 func parseExternalAddr(addr string) (string, int) {

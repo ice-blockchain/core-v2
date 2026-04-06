@@ -21,7 +21,7 @@ const (
 	payloadTTL         = 30 * time.Second
 	reaperInterval     = 10 * time.Second
 	chunkSize          = 1 << 20
-	maxPendingPayloads = 10_000
+	maxPendingPayloads = 500
 )
 
 // RLDPHTTPBridge forwards HTTP-over-RLDP requests to a gin.Engine.
@@ -60,7 +60,8 @@ func (b *RLDPHTTPBridge) Stop() {
 // MakeRLDPQueryHandler returns a handler for the overlay
 // RLDPWrapper rootQueryHandler slot (non-overlay RLDP queries).
 func (b *RLDPHTTPBridge) MakeRLDPQueryHandler(rl *overlay.RLDPWrapper) func([]byte, *rldp.Query) error {
-	return func(transferID []byte, query *rldp.Query) error {
+	return func(transferID []byte, query *rldp.Query) (retErr error) {
+		defer recoverPanic(b.logger, &retErr)
 		switch req := query.Data.(type) {
 		case Request:
 			return b.handleHTTPRequest(rl, query, transferID, req)
@@ -93,8 +94,10 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 		resp.NoPayload = false
 	}
 
+	answerCtx, answerCancel := context.WithDeadline(context.Background(), time.Unix(int64(query.Timeout), 0))
+	defer answerCancel()
 	return rl.SendAnswer(
-		context.Background(),
+		answerCtx,
 		query.MaxAnswerSize, query.Timeout,
 		query.ID, transferID, &resp,
 	)
@@ -103,6 +106,9 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 func (b *RLDPHTTPBridge) handlePayloadPart(
 	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart,
 ) error {
+	answerCtx, answerCancel := context.WithDeadline(context.Background(), time.Unix(int64(query.Timeout), 0))
+	defer answerCancel()
+
 	reqID := hex.EncodeToString(req.ID)
 	payload, ok := b.payloads.Load(reqID)
 	if !ok || time.Since(payload.createdAt) > payloadTTL {
@@ -110,7 +116,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 			b.deletePayload(reqID)
 		}
 		return rl.SendAnswer(
-			context.Background(),
+			answerCtx,
 			query.MaxAnswerSize, query.Timeout,
 			query.ID, transferID,
 			&PayloadPart{IsLast: true},
@@ -123,7 +129,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	}
 
 	return rl.SendAnswer(
-		context.Background(),
+		answerCtx,
 		query.MaxAnswerSize, query.Timeout,
 		query.ID, transferID,
 		&PayloadPart{Data: chunk, IsLast: isLast},

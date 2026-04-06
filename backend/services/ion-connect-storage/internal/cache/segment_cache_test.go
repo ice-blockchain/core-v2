@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -159,12 +161,15 @@ func TestSegmentWriterRejectsOverflowIndex(t *testing.T) {
 }
 
 func TestSegmentCacheEvictionDeletesDirectory(t *testing.T) {
+	var mu sync.Mutex
 	var evictedBagID [32]byte
-	evicted := false
+	var evicted atomic.Bool
 
 	cache := NewSegmentCache(t.TempDir(), 50*time.Millisecond, func(bagID [32]byte) {
+		mu.Lock()
 		evictedBagID = bagID
-		evicted = true
+		mu.Unlock()
+		evicted.Store(true)
 	}, testLogger())
 
 	bagID := testBagID()
@@ -176,7 +181,9 @@ func TestSegmentCacheEvictionDeletesDirectory(t *testing.T) {
 	cache.HasBag(bagID)
 	time.Sleep(50 * time.Millisecond)
 
-	require.True(t, evicted)
+	require.True(t, evicted.Load())
+	mu.Lock()
 	require.Equal(t, bagID, evictedBagID)
+	mu.Unlock()
 	require.False(t, cache.HasBag(bagID))
 }

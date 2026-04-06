@@ -24,6 +24,11 @@ const (
 	rldpMaxRawQueryAnswer uint64 = 256 * 1024
 )
 
+// BagOwnershipChecker checks if this node owns a given bag.
+type BagOwnershipChecker interface {
+	OwnsBag(bagID [32]byte) bool
+}
+
 // PieceHandler serves a local piece request (used for forwarded pieces).
 type PieceHandler func(ctx context.Context, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
 
@@ -43,6 +48,7 @@ type ClusterTransport struct {
 	dagService      *ADNLDAGService
 	pieceHandler    PieceHandler
 	rawQueryHandler RawQueryHandler
+	ownerChecker    BagOwnershipChecker
 	overlayID       []byte
 	mu              sync.RWMutex
 	peers           map[[32]byte]*clusterPeer
@@ -89,6 +95,11 @@ func (t *ClusterTransport) SetRawQueryHandler(h RawQueryHandler) {
 	t.rawQueryHandler = h
 }
 
+// SetOwnershipChecker registers the checker used to validate forwarded queries.
+func (t *ClusterTransport) SetOwnershipChecker(c BagOwnershipChecker) {
+	t.ownerChecker = c
+}
+
 // RegisterWithServer registers the cluster overlay query handler.
 func (t *ClusterTransport) RegisterWithServer() {
 	var oid [32]byte
@@ -124,6 +135,10 @@ func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []by
 		}
 		var bagID [32]byte
 		copy(bagID[:], fwdRaw.BagID)
+		if t.ownerChecker != nil && !t.ownerChecker.OwnsBag(bagID) {
+			t.logger.Debug("rejected forwarded raw query for non-owned bag", "bag", bagID[:4])
+			return tl.Serialize(ForwardRawResponseMsg{}, true)
+		}
 		resp, qErr := t.rawQueryHandler(ctx, bagID, fwdRaw.RawQuery)
 		if qErr != nil {
 			return tl.Serialize(ForwardRawResponseMsg{}, true)
@@ -138,6 +153,10 @@ func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []by
 		}
 		var bagID [32]byte
 		copy(bagID[:], fwdReq.BagID)
+		if t.ownerChecker != nil && !t.ownerChecker.OwnsBag(bagID) {
+			t.logger.Debug("rejected forwarded piece request for non-owned bag", "bag", bagID[:4])
+			return tl.Serialize(PieceNotFoundMsg{}, true)
+		}
 		data, proof, pErr := t.pieceHandler(ctx, bagID, int(fwdReq.PieceID))
 		if pErr != nil {
 			t.logger.Debug("forward piece handler error", "error", pErr)
@@ -271,8 +290,9 @@ func (t *ClusterTransport) ConnectToPeer(addr string, pubKey ed25519.PublicKey) 
 		adnlWrapper: extADNL,
 		rldpWrapper: extRLDP,
 	}
+	peerCount := len(t.peers)
 	t.mu.Unlock()
 
-	t.logger.Info("cluster peer connected", "addr", addr, "total", len(t.peers))
+	t.logger.Info("cluster peer connected", "addr", addr, "total", peerCount)
 	return rawPeer, nil
 }

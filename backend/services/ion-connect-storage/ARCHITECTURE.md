@@ -207,16 +207,17 @@ The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases wi
 - `Register/Deregister/Lookup` methods for PebbleDB persistence
 - Populated via `Persister.SetOnBagIndexed` callback when new bags are indexed
 
-### Provider Handler (`internal/provider/handler.go`)
+### Provider Handler (`internal/provider/handler.go`) -- PUBLIC
+- **Public endpoint** served via RLDP-HTTP bridge over ADNL, accessible to any ADNL peer
 - Gin route: `GET /bags/:bagId` -> parse hex, lookup provider index, return JSON or 404
 - Response: `{"bagId": "hex", "providers": [{"adnlAddress": "hex"}]}`
 
-### Health Handler (`internal/health/handler.go`)
+### Health Handler (`internal/health/handler.go`) -- LOCALHOST ONLY
 - Deep dependency checks: `greenfieldclient.Client.IsSubscribed()`, PebbleDB probe, `Server.IsRunning()`
 - Returns 200 + `{"status":"ok","components":{...}}` or 503 + `{"status":"degraded",...}`
 
-### Health Server (`internal/health/server.go`)
-- TCP HTTP server bound to `127.0.0.1:HTTP_PORT` (localhost only)
+### Health Server (`internal/health/server.go`) -- LOCALHOST ONLY
+- TCP HTTP server bound to `127.0.0.1:HTTP_PORT` (localhost only, not exposed to network)
 - Timeouts: Read 5s, Write 10s, Idle 30s. Graceful shutdown on context cancel.
 
 ### Metrics (`internal/metrics/metrics.go`)
@@ -225,7 +226,7 @@ The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases wi
 - CounterVec: `greenfield_fetch_total` (labels: type, status)
 - HistogramVec: `greenfield_fetch_duration_seconds` (labels: type)
 - Cluster metrics: `cluster_nodes_active` (gauge), `cluster_bags_owned` (gauge), `cluster_crdt_deltas_sent`/`received` (counters), `cluster_conflicts_resolved` (counter), `cluster_piece_forwards_total` (counter, direction label), `cluster_piece_forward_duration_seconds` (histogram), `cluster_active_peer_connections` (gauge)
-- Served at `GET /metrics` on private engine (or separate `METRICS_PORT` if configured)
+- Served at `GET /metrics` on private engine, **localhost only** (or separate `METRICS_PORT` if configured, also localhost-bound)
 
 ### TL Schema (`internal/cluster/tl_schema.go`)
 - TL constructor IDs for cluster protocols: `cluster.crdtHead`, `cluster.getBlock`/`cluster.block`/`cluster.blockNotFound`, `cluster.forwardPieceRequest`/`cluster.pieceResponse`/`cluster.pieceNotFound`

@@ -115,7 +115,9 @@ func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta
 		return nil, fmt.Errorf("bag not found in index")
 	}
 
-	h.ensureBagCacheOpen(bagID, meta)
+	if err := h.ensureBagCacheOpen(bagID, meta); err != nil {
+		return nil, fmt.Errorf("open bag cache: %w", err)
+	}
 
 	wc, err := h.segmentCache.SegmentWriter(bagID, segIdx)
 	if err != nil {
@@ -138,12 +140,12 @@ func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta
 
 // ensureBagCacheOpen creates the cache directory if not already present.
 // Uses singleflight to prevent concurrent OpenBag calls for the same bag.
-func (h *Handler) ensureBagCacheOpen(bagID [32]byte, meta *boc.BagMetadata) {
+func (h *Handler) ensureBagCacheOpen(bagID [32]byte, meta *boc.BagMetadata) error {
 	if h.segmentCache.HasBag(bagID) {
-		return
+		return nil
 	}
 	key := hex.EncodeToString(bagID[:])
-	h.bagOpenFlight.Do(key, func() (any, error) {
+	_, err, _ := h.bagOpenFlight.Do(key, func() (any, error) {
 		if h.segmentCache.HasBag(bagID) {
 			return nil, nil
 		}
@@ -151,9 +153,7 @@ func (h *Handler) ensureBagCacheOpen(bagID [32]byte, meta *boc.BagMetadata) {
 			Files:     meta.Header.Files,
 			TotalSize: meta.FileSize - meta.HeaderSize,
 		}
-		if err := h.segmentCache.OpenBag(bagID, layout); err != nil {
-			h.logger.Warn("open bag cache", "error", err)
-		}
-		return nil, nil
+		return nil, h.segmentCache.OpenBag(bagID, layout)
 	})
+	return err
 }
