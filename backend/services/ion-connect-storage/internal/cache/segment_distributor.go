@@ -59,10 +59,17 @@ func (d *segmentDistributor) writeChunk(p []byte) (int, error) {
 // Offsets are relative to raw file data (no torrent header prefix).
 func (d *segmentDistributor) resolveOffset(absOffset int64) (string, int64, int64) {
 	for _, f := range d.layout.Files {
-		if f.Offset > math.MaxInt64-f.Size {
-			continue // skip entries where Offset+Size overflows
+		if f.Offset > uint64(math.MaxInt64) || f.Size > uint64(math.MaxInt64) {
+			continue
 		}
-		fileEnd := int64(f.Offset + f.Size)
+		if f.Offset > math.MaxUint64-f.Size {
+			continue // skip entries where Offset+Size overflows uint64
+		}
+		sum := f.Offset + f.Size
+		if sum > uint64(math.MaxInt64) {
+			continue
+		}
+		fileEnd := int64(sum)
 		if absOffset < fileEnd {
 			localOffset := absOffset - int64(f.Offset)
 			remaining := int64(f.Size) - localOffset
@@ -97,6 +104,9 @@ func (d *segmentDistributor) Close() error {
 
 // readSegmentFromFiles reads a cached segment from disk files into a buffer.
 func readSegmentFromFiles(bag *cachedBag, segmentIndex int) ([]byte, bool, error) {
+	if segmentIndex < 0 || int64(segmentIndex) > maxSegmentIndex {
+		return nil, false, fmt.Errorf("segment index %d out of safe range", segmentIndex)
+	}
 	startOffset := int64(segmentIndex) * int64(boc.SegmentSize)
 	segmentEnd := startOffset + int64(boc.SegmentSize)
 	if segmentEnd > int64(bag.layout.TotalSize) {

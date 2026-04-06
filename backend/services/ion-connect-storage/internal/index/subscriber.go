@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"strings"
+	"time"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 )
@@ -71,7 +72,7 @@ func (s *Subscriber) Run(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if err := s.ProcessEvent(txEvent); err != nil {
+		if err := s.ProcessEvent(ctx, txEvent); err != nil {
 			s.logger.Error("process event", "height", txEvent.Height, "error", err)
 		}
 	}
@@ -81,8 +82,8 @@ func (s *Subscriber) Run(ctx context.Context) error {
 
 // ProcessEvent correlates EventCreateObject/EventUpdateObjectContent with
 // EventSetTag to build (bagID -> BagLocation) entries.
-func (s *Subscriber) ProcessEvent(txEvent *greenfieldclient.TxEvent) error {
-	entries := s.collectEntries(txEvent)
+func (s *Subscriber) ProcessEvent(ctx context.Context, txEvent *greenfieldclient.TxEvent) error {
+	entries := s.collectEntries(ctx, txEvent)
 	if len(entries) == 0 {
 		return nil
 	}
@@ -99,7 +100,7 @@ type objectKey struct {
 // collectEntries correlates SetTag events (with ion-bag-id) against
 // CreateObject/UpdateObject events in the same transaction. Only SetTag
 // events whose resource GRN matches a CreateObject or UpdateObject are indexed.
-func (s *Subscriber) collectEntries(txEvent *greenfieldclient.TxEvent) []BagEntry {
+func (s *Subscriber) collectEntries(ctx context.Context, txEvent *greenfieldclient.TxEvent) []BagEntry {
 	knownObjects := collectKnownObjects(txEvent)
 	if len(knownObjects) == 0 {
 		return nil
@@ -138,7 +139,9 @@ func (s *Subscriber) collectEntries(txEvent *greenfieldclient.TxEvent) []BagEntr
 		// Attempt to claim ownership. All nodes index the bag regardless
 		// of ownership so that forwarding nodes can load metadata and
 		// serve pieces via the owner.
-		owned, err := s.ownershipChecker.OwnsOrClaim(context.Background(), bagID)
+		claimCtx, claimCancel := context.WithTimeout(ctx, 10*time.Second)
+		owned, err := s.ownershipChecker.OwnsOrClaim(claimCtx, bagID)
+		claimCancel()
 		if err != nil {
 			s.logger.Warn("ownership check failed", "bag_id", bagIDHex, "error", err)
 		}

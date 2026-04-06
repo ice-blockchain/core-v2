@@ -75,7 +75,7 @@ func TestProcessEvent_CorrelatesCreateAndSetTag(t *testing.T) {
 	bagIDHex := "bb5b3a4bd4775cc5f89b2f2c80ec8c699662b26c2ab475248d721ed381ab3423"
 	txEvent := makeTxEventWithBag(bagIDHex, "user-bucket10", "test-object", 29574600)
 
-	err := s.ProcessEvent(txEvent)
+	err := s.ProcessEvent(context.Background(), txEvent)
 	require.NoError(t, err)
 
 	bagID := decodeBagIDHelper(t, bagIDHex)
@@ -115,7 +115,7 @@ func TestProcessEvent_SkipsTxWithoutBagID(t *testing.T) {
 		},
 	}
 
-	err := s.ProcessEvent(txEvent)
+	err := s.ProcessEvent(context.Background(), txEvent)
 	require.NoError(t, err)
 
 	// Height should not be persisted (no entries)
@@ -165,7 +165,7 @@ func TestProcessEvent_MultipleObjectsInOneTx(t *testing.T) {
 		},
 	}
 
-	err := s.ProcessEvent(txEvent)
+	err := s.ProcessEvent(context.Background(), txEvent)
 	require.NoError(t, err)
 
 	bagID1 := decodeBagIDHelper(t, bagID1Hex)
@@ -200,7 +200,7 @@ func TestProcessEvent_SkipsSetTagWithoutMatchingCreateObject(t *testing.T) {
 		},
 	}
 
-	err := s.ProcessEvent(txEvent)
+	err := s.ProcessEvent(context.Background(), txEvent)
 	require.NoError(t, err)
 
 	bagID := decodeBagIDHelper(t, bagIDHex)

@@ -1,9 +1,13 @@
 package adnl
 
 import (
+	"context"
 	"math"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -18,6 +22,24 @@ func TestExtractChunkNegativeSeqno(t *testing.T) {
 func TestExtractChunkOverflowSeqno(t *testing.T) {
 	data := make([]byte, chunkSize)
 	chunk, isLast := extractChunk(data, math.MaxInt32)
+	require.Nil(t, chunk)
+	require.True(t, isLast)
+}
+
+func TestExtractChunkMaxIntSeqnoRejectsOverflow(t *testing.T) {
+	data := make([]byte, chunkSize)
+	// math.MaxInt / chunkSize + 1 would overflow when multiplied by chunkSize
+	hugeSeqno := math.MaxInt/chunkSize + 1
+	chunk, isLast := extractChunk(data, hugeSeqno)
+	require.Nil(t, chunk)
+	require.True(t, isLast)
+}
+
+func TestExtractChunkBoundarySeqnoSafe(t *testing.T) {
+	data := make([]byte, chunkSize)
+	// Exactly at the limit -- won't overflow but exceeds data length
+	boundarySeqno := math.MaxInt / chunkSize
+	chunk, isLast := extractChunk(data, boundarySeqno)
 	require.Nil(t, chunk)
 	require.True(t, isLast)
 }
@@ -39,10 +61,76 @@ func TestExtractChunkValidLast(t *testing.T) {
 	require.True(t, isLast)
 }
 
+func TestBuildHTTPRequestRejectsAbsoluteURL(t *testing.T) {
+	req := Request{
+		Method: "GET",
+		URL:    "http://169.254.169.254/latest/meta-data/",
+	}
+	_, err := buildHTTPRequest(req)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "relative path")
+}
+
+func TestBuildHTTPRequestRejectsSchemeInPath(t *testing.T) {
+	req := Request{
+		Method: "GET",
+		URL:    "/redirect?url=http://evil.com",
+	}
+	_, err := buildHTTPRequest(req)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "scheme")
+}
+
+func TestBuildHTTPRequestRejectsLocalhostURL(t *testing.T) {
+	req := Request{
+		Method: "GET",
+		URL:    "http://localhost:8080/admin",
+	}
+	_, err := buildHTTPRequest(req)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "relative path")
+}
+
+func TestBuildHTTPRequestRejectsEmptyURL(t *testing.T) {
+	req := Request{
+		Method: "GET",
+		URL:    "",
+	}
+	_, err := buildHTTPRequest(req)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "relative path")
+}
+
+func TestBuildHTTPRequestAcceptsRelativePath(t *testing.T) {
+	req := Request{
+		Method: "GET",
+		URL:    "/bags/abc123",
+		Headers: []Header{
+			{Name: "Accept", Value: "application/json"},
+		},
+	}
+	httpReq, err := buildHTTPRequest(req)
+	require.NoError(t, err)
+	require.Equal(t, "GET", httpReq.Method)
+	require.Equal(t, "/bags/abc123", httpReq.URL.Path)
+	require.Equal(t, "application/json", httpReq.Header.Get("Accept"))
+}
+
+func TestBuildHTTPRequestAcceptsRelativePathWithQuery(t *testing.T) {
+	req := Request{
+		Method: "GET",
+		URL:    "/bags/abc123?format=json",
+	}
+	httpReq, err := buildHTTPRequest(req)
+	require.NoError(t, err)
+	require.Equal(t, "/bags/abc123", httpReq.URL.Path)
+	require.Equal(t, "format=json", httpReq.URL.RawQuery)
+}
+
 func TestBuildHTTPRequestRejectsLongURL(t *testing.T) {
 	req := Request{
 		Method: "GET",
-		URL:    "http://example.com/" + strings.Repeat("a", maxURLLength),
+		URL:    "/" + strings.Repeat("a", maxURLLength),
 	}
 	_, err := buildHTTPRequest(req)
 	require.Error(t, err)
@@ -52,7 +140,7 @@ func TestBuildHTTPRequestRejectsLongURL(t *testing.T) {
 func TestBuildHTTPRequestRejectsLongMethod(t *testing.T) {
 	req := Request{
 		Method: strings.Repeat("X", maxMethodLength+1),
-		URL:    "http://example.com",
+		URL:    "/test",
 	}
 	_, err := buildHTTPRequest(req)
 	require.Error(t, err)
@@ -66,7 +154,7 @@ func TestBuildHTTPRequestRejectsTooManyHeaders(t *testing.T) {
 	}
 	req := Request{
 		Method:  "GET",
-		URL:     "http://example.com",
+		URL:     "/test",
 		Headers: headers,
 	}
 	_, err := buildHTTPRequest(req)
@@ -77,7 +165,7 @@ func TestBuildHTTPRequestRejectsTooManyHeaders(t *testing.T) {
 func TestBuildHTTPRequestRejectsOversizedHeader(t *testing.T) {
 	req := Request{
 		Method: "GET",
-		URL:    "http://example.com",
+		URL:    "/test",
 		Headers: []Header{
 			{Name: "X-Big", Value: strings.Repeat("v", maxHeaderSize)},
 		},
@@ -87,16 +175,78 @@ func TestBuildHTTPRequestRejectsOversizedHeader(t *testing.T) {
 	require.Contains(t, err.Error(), "header too large")
 }
 
-func TestBuildHTTPRequestAcceptsValid(t *testing.T) {
-	req := Request{
-		Method: "GET",
-		URL:    "http://example.com/path",
-		Headers: []Header{
-			{Name: "Accept", Value: "application/json"},
-		},
+func TestPayloadCountAtomicUnderConcurrency(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	bridge := NewRLDPHTTPBridge(ctx, nil, testLogger())
+	defer bridge.Stop()
+
+	const goroutines = 200
+	var reserved atomic.Int64
+	var wg sync.WaitGroup
+
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if bridge.tryReservePayloadSlot() {
+				reserved.Add(1)
+			}
+		}()
 	}
-	httpReq, err := buildHTTPRequest(req)
-	require.NoError(t, err)
-	require.Equal(t, "GET", httpReq.Method)
-	require.Equal(t, "application/json", httpReq.Header.Get("Accept"))
+	wg.Wait()
+
+	// All should succeed since goroutines < maxPendingPayloads
+	require.Equal(t, int64(goroutines), reserved.Load())
+	require.Equal(t, int64(goroutines), bridge.payloadCount.Load())
+}
+
+func TestPayloadCountNeverExceedsLimit(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	bridge := NewRLDPHTTPBridge(ctx, nil, testLogger())
+	defer bridge.Stop()
+
+	// Fill to the limit
+	bridge.payloadCount.Store(maxPendingPayloads - 1)
+
+	const goroutines = 100
+	var reserved atomic.Int64
+	var wg sync.WaitGroup
+
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if bridge.tryReservePayloadSlot() {
+				reserved.Add(1)
+			}
+		}()
+	}
+	wg.Wait()
+
+	// Exactly 1 slot was available
+	require.Equal(t, int64(1), reserved.Load())
+	require.Equal(t, int64(maxPendingPayloads), bridge.payloadCount.Load())
+}
+
+func TestDeletePayloadDecrementsSafely(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	bridge := NewRLDPHTTPBridge(ctx, nil, testLogger())
+	defer bridge.Stop()
+
+	bridge.payloads.Store("key1", &pendingPayload{data: []byte("x"), createdAt: time.Now()})
+	bridge.payloadCount.Store(1)
+
+	// First delete decrements
+	bridge.deletePayload("key1")
+	require.Equal(t, int64(0), bridge.payloadCount.Load())
+
+	// Second delete on same key is a no-op (no double decrement)
+	bridge.deletePayload("key1")
+	require.Equal(t, int64(0), bridge.payloadCount.Load())
 }

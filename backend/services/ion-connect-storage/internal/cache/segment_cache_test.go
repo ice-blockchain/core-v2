@@ -138,6 +138,26 @@ func TestSegmentCacheTeeReaderPattern(t *testing.T) {
 	require.Equal(t, original, buf2.Bytes())
 }
 
+func TestSegmentWriterRejectsNegativeIndex(t *testing.T) {
+	cache := NewSegmentCache(t.TempDir(), time.Hour, nil, testLogger())
+	bagID := testBagID()
+	require.NoError(t, cache.OpenBag(bagID, testLayout()))
+
+	_, err := cache.SegmentWriter(bagID, -1)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "safe range")
+}
+
+func TestSegmentWriterRejectsOverflowIndex(t *testing.T) {
+	cache := NewSegmentCache(t.TempDir(), time.Hour, nil, testLogger())
+	bagID := testBagID()
+	require.NoError(t, cache.OpenBag(bagID, testLayout()))
+
+	_, err := cache.SegmentWriter(bagID, int(maxSegmentIndex)+1)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "safe range")
+}
+
 func TestSegmentCacheEvictionDeletesDirectory(t *testing.T) {
 	var evictedBagID [32]byte
 	evicted := false

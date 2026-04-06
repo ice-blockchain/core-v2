@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
@@ -21,7 +22,7 @@ func fetchSegment(
 	w io.Writer,
 	logger *slog.Logger,
 ) ([]byte, error) {
-	if segmentIndex < 0 {
+	if segmentIndex < 0 || int64(segmentIndex) > math.MaxInt64/boc.SegmentSize {
 		return nil, fmt.Errorf("invalid segment index: %d", segmentIndex)
 	}
 	start := int64(segmentIndex) * boc.SegmentSize

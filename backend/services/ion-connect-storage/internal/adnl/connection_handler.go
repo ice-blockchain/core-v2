@@ -34,15 +34,21 @@ func (s *Server) handleNewConnection(client adnl.Peer) error {
 	client.SetDisconnectHandler(func(_ string, _ ed25519.PublicKey) {
 		s.activeConnections.Add(-1)
 	})
-	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.logger)
+	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.querySemaphore, s.logger)
 	return nil
 }
 
-func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, logger *slog.Logger) {
+func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, querySem chan struct{}, logger *slog.Logger) {
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
 	extADNL.SetQueryHandler(func(query *adnl.MessageQuery) error {
+		select {
+		case querySem <- struct{}{}:
+			defer func() { <-querySem }()
+		default:
+			return fmt.Errorf("query concurrency limit reached")
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
 

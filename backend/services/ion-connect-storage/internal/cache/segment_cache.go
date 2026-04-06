@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -87,12 +88,18 @@ func (c *SegmentCache) OpenBag(bagID [32]byte, layout BagFileLayout) error {
 	return nil
 }
 
+// maxSegmentIndex is the largest segment index that won't overflow int64 when multiplied by SegmentSize.
+const maxSegmentIndex = math.MaxInt64 / int64(boc.SegmentSize)
+
 // SegmentWriter returns a WriteCloser that distributes segment bytes
 // to the correct cache files based on the bag's file layout.
 func (c *SegmentCache) SegmentWriter(bagID [32]byte, segmentIndex int) (io.WriteCloser, error) {
 	bag, ok := c.lru.Get(bagID)
 	if !ok {
 		return nil, fmt.Errorf("bag %x not opened in cache", bagID)
+	}
+	if segmentIndex < 0 || int64(segmentIndex) > maxSegmentIndex {
+		return nil, fmt.Errorf("segment index %d out of safe range", segmentIndex)
 	}
 	startOffset := int64(segmentIndex) * int64(boc.SegmentSize)
 	return newSegmentDistributor(bag.dirPath, bag.layout, startOffset), nil

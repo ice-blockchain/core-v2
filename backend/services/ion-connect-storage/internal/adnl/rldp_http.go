@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -83,12 +85,11 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 	resp := buildTLResponse(w)
 	reqID := hex.EncodeToString(req.ID)
 
-	if w.body.Len() > 0 && b.payloadCount.Load() < maxPendingPayloads {
+	if w.body.Len() > 0 && b.tryReservePayloadSlot() {
 		b.payloads.Store(reqID, &pendingPayload{
 			data:      w.body.Bytes(),
 			createdAt: time.Now(),
 		})
-		b.payloadCount.Add(1)
 		resp.NoPayload = false
 	}
 
@@ -106,8 +107,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	payload, ok := b.payloads.Load(reqID)
 	if !ok || time.Since(payload.createdAt) > payloadTTL {
 		if ok {
-			b.payloads.Delete(reqID)
-			b.payloadCount.Add(-1)
+			b.deletePayload(reqID)
 		}
 		return rl.SendAnswer(
 			context.Background(),
@@ -119,8 +119,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 
 	chunk, isLast := extractChunk(payload.data, int(req.Seqno))
 	if isLast {
-		b.payloads.Delete(reqID)
-		b.payloadCount.Add(-1)
+		b.deletePayload(reqID)
 	}
 
 	return rl.SendAnswer(
@@ -129,6 +128,26 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 		query.ID, transferID,
 		&PayloadPart{Data: chunk, IsLast: isLast},
 	)
+}
+
+// tryReservePayloadSlot atomically increments the payload counter if below the limit.
+func (b *RLDPHTTPBridge) tryReservePayloadSlot() bool {
+	for {
+		current := b.payloadCount.Load()
+		if current >= maxPendingPayloads {
+			return false
+		}
+		if b.payloadCount.CompareAndSwap(current, current+1) {
+			return true
+		}
+	}
+}
+
+// deletePayload atomically removes a payload and decrements the counter.
+func (b *RLDPHTTPBridge) deletePayload(reqID string) {
+	if _, loaded := b.payloads.LoadAndDelete(reqID); loaded {
+		b.payloadCount.Add(-1)
+	}
 }
 
 func (b *RLDPHTTPBridge) reapStalePayloads(ctx context.Context) {
@@ -142,8 +161,7 @@ func (b *RLDPHTTPBridge) reapStalePayloads(ctx context.Context) {
 			now := time.Now()
 			b.payloads.Range(func(key string, p *pendingPayload) bool {
 				if now.Sub(p.createdAt) > payloadTTL {
-					b.payloads.Delete(key)
-					b.payloadCount.Add(-1)
+					b.deletePayload(key)
 				}
 				return true
 			})
@@ -167,6 +185,14 @@ func buildHTTPRequest(req Request) (*http.Request, error) {
 	}
 	if len(req.Headers) > maxHeaderCount {
 		return nil, fmt.Errorf("too many headers: %d", len(req.Headers))
+	}
+	// RLDP-HTTP operates over ADNL: only relative paths are valid.
+	// Reject absolute URLs to prevent SSRF via scheme://host targets.
+	if !strings.HasPrefix(req.URL, "/") {
+		return nil, fmt.Errorf("URL must be a relative path: %q", req.URL)
+	}
+	if strings.Contains(req.URL, "://") {
+		return nil, fmt.Errorf("URL must not contain a scheme: %q", req.URL)
 	}
 	httpReq, err := http.NewRequest(req.Method, req.URL, nil)
 	if err != nil {
@@ -198,7 +224,7 @@ func buildTLResponse(w *responseWriter) Response {
 }
 
 func extractChunk(data []byte, seqno int) ([]byte, bool) {
-	if seqno < 0 || seqno > len(data)/chunkSize {
+	if seqno < 0 || seqno > math.MaxInt/chunkSize {
 		return nil, true
 	}
 	offset := seqno * chunkSize

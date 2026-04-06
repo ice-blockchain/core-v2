@@ -66,14 +66,13 @@ func (s *ADNLDAGService) GetMany(ctx context.Context, cids []cid.Cid) <-chan *ip
 }
 
 func (s *ADNLDAGService) getManyAsync(ctx context.Context, cids []cid.Cid, out chan<- *ipld.NodeOption) {
-	defer close(out)
 	sem := make(chan struct{}, 8)
 	var wg sync.WaitGroup
 
 	for _, c := range cids {
 		select {
 		case <-ctx.Done():
-			return
+			goto done
 		case sem <- struct{}{}:
 		}
 
@@ -89,7 +88,9 @@ func (s *ADNLDAGService) getManyAsync(ctx context.Context, cids []cid.Cid, out c
 			}
 		}(c)
 	}
+done:
 	wg.Wait()
+	close(out)
 }
 
 // Add stores an IPLD node locally.

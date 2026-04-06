@@ -104,11 +104,35 @@ func (s *MetadataStore) fetchAndCache(ctx context.Context, bagID [32]byte) (*boc
 		return nil, fmt.Errorf("fetch metadata from greenfield: %w", err)
 	}
 
+	if err := validateBagMetadata(bagID, meta); err != nil {
+		return nil, fmt.Errorf("fetched metadata validation failed: %w", err)
+	}
+
 	if err := s.PutBagMetadata(bagID, meta.RawBoC); err != nil {
 		s.logger.Warn("failed to cache metadata", "bag_id", fmt.Sprintf("%x", bagID), "error", err)
 	}
 
 	return meta, nil
+}
+
+// validateBagMetadata checks that fetched metadata is consistent before caching.
+func validateBagMetadata(expectedBagID [32]byte, meta *boc.BagMetadata) error {
+	if meta.BagID != expectedBagID {
+		return fmt.Errorf("bag ID mismatch: expected %x, got %x", expectedBagID, meta.BagID)
+	}
+	if meta.PieceSize == 0 {
+		return fmt.Errorf("piece size is zero")
+	}
+	if meta.PieceCount <= 0 {
+		return fmt.Errorf("piece count %d must be positive", meta.PieceCount)
+	}
+	if meta.FileSize == 0 {
+		return fmt.Errorf("file size is zero")
+	}
+	if meta.HeaderSize > meta.FileSize {
+		return fmt.Errorf("header size %d exceeds file size %d", meta.HeaderSize, meta.FileSize)
+	}
+	return nil
 }
 
 func makeMetadataKey(bagID [32]byte) []byte {

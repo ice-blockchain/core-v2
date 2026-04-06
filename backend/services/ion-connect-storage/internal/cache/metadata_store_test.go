@@ -136,6 +136,70 @@ func TestMetadataStoreKeyIsolation(t *testing.T) {
 	require.False(t, has)
 }
 
+func TestValidateBagMetadataRejectsMismatchedBagID(t *testing.T) {
+	meta := &boc.BagMetadata{
+		BagID:      [32]byte{0x01},
+		PieceSize:  boc.PieceSize,
+		FileSize:   1024,
+		PieceCount: 1,
+	}
+	err := validateBagMetadata([32]byte{0x02}, meta)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "bag ID mismatch")
+}
+
+func TestValidateBagMetadataRejectsZeroPieceSize(t *testing.T) {
+	id := [32]byte{0x01}
+	meta := &boc.BagMetadata{
+		BagID:      id,
+		PieceSize:  0,
+		FileSize:   1024,
+		PieceCount: 1,
+	}
+	err := validateBagMetadata(id, meta)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "piece size is zero")
+}
+
+func TestValidateBagMetadataRejectsZeroPieceCount(t *testing.T) {
+	id := [32]byte{0x01}
+	meta := &boc.BagMetadata{
+		BagID:      id,
+		PieceSize:  boc.PieceSize,
+		FileSize:   1024,
+		PieceCount: 0,
+	}
+	err := validateBagMetadata(id, meta)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "piece count")
+}
+
+func TestValidateBagMetadataRejectsHeaderExceedingFile(t *testing.T) {
+	id := [32]byte{0x01}
+	meta := &boc.BagMetadata{
+		BagID:      id,
+		PieceSize:  boc.PieceSize,
+		FileSize:   100,
+		HeaderSize: 200,
+		PieceCount: 1,
+	}
+	err := validateBagMetadata(id, meta)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "header size")
+}
+
+func TestValidateBagMetadataAcceptsValid(t *testing.T) {
+	id := [32]byte{0x01}
+	meta := &boc.BagMetadata{
+		BagID:      id,
+		PieceSize:  boc.PieceSize,
+		FileSize:   1024,
+		HeaderSize: 100,
+		PieceCount: 1,
+	}
+	require.NoError(t, validateBagMetadata(id, meta))
+}
+
 type noopGreenfieldClient struct{}
 
 func (c *noopGreenfieldClient) Subscribe(_ context.Context, _ greenfieldclient.SubscribeOpts) (<-chan *greenfieldclient.TxEvent, error) {

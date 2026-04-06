@@ -73,6 +73,29 @@ func TestSlicePieceDataOutOfRange(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestSlicePieceDataRejectsNegativeIndex(t *testing.T) {
+	_, err := slicePieceData(nil, nil, -1, boc.PieceSize, 1000, 100)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "safe range")
+}
+
+func TestSlicePieceDataRejectsOverflowIndex(t *testing.T) {
+	// An index that would overflow when multiplied by PieceSize
+	hugeIndex := int(maxSafePieceIndex) + 1
+	_, err := slicePieceData(nil, nil, hugeIndex, boc.PieceSize, 1000, 100)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "safe range")
+}
+
+func TestPayloadSegmentIndexRejectsNegative(t *testing.T) {
+	require.Equal(t, -1, payloadSegmentIndex(-1, 100, boc.PieceSize))
+}
+
+func TestPayloadSegmentIndexRejectsOverflow(t *testing.T) {
+	hugeIndex := int(maxSafePieceIndex) + 1
+	require.Equal(t, -1, payloadSegmentIndex(hugeIndex, 100, boc.PieceSize))
+}
+
 func TestPayloadSegmentIndex(t *testing.T) {
 	require.Equal(t, -1, payloadSegmentIndex(0, 600000, boc.PieceSize)) // piece fully in header
 	require.Equal(t, 0, payloadSegmentIndex(0, 100, boc.PieceSize))     // piece spans header

@@ -45,6 +45,7 @@ type Server struct {
 	externalIP          net.IP
 	externalPort        int
 	maxConnections      int
+	querySemaphore      chan struct{}
 	activeConnections   atomic.Int64
 	running             atomic.Bool
 	ready               atomic.Bool
@@ -95,6 +96,7 @@ func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*
 		externalIP:     externalIP,
 		externalPort:   externalPort,
 		maxConnections: maxConn,
+		querySemaphore: make(chan struct{}, maxConn),
 		logger:         logger,
 	}, nil
 }

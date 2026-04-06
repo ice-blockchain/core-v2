@@ -155,11 +155,18 @@ const broadcastPeerTimeout = 3 * time.Second
 // Uses ADNL overlay query with per-peer timeout to prevent goroutine leaks.
 func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) error {
 	t.mu.RLock()
-	defer t.mu.RUnlock()
+	peers := make(map[[32]byte]*clusterPeer, len(t.peers))
+	for k, v := range t.peers {
+		peers[k] = v
+	}
+	t.mu.RUnlock()
 
+	var wg sync.WaitGroup
 	msg := CRDTHeadMsg{Data: data}
-	for addr, cp := range t.peers {
+	for addr, cp := range peers {
+		wg.Add(1)
 		go func(addr [32]byte, cp *clusterPeer) {
+			defer wg.Done()
 			peerCtx, cancel := context.WithTimeout(ctx, broadcastPeerTimeout)
 			defer cancel()
 			var ack BlockMsg
@@ -168,6 +175,7 @@ func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) 
 			}
 		}(addr, cp)
 	}
+	wg.Wait()
 	return nil
 }
 

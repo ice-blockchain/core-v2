@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	coord := createCoordinator(cfg, db, server, logger)
+	coord := createCoordinator(ctx, cfg, db, server, logger)
 
 	m := metrics.NewMetrics()
 	persister := index.NewPersister(db)
@@ -131,7 +131,7 @@ func main() {
 	logger.Info("ion-connect-storage stopped")
 }
 
-func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server, logger *slog.Logger) coordinatorInterface {
+func createCoordinator(ctx context.Context, cfg config.Config, db *pebble.DB, server *ionadnl.Server, logger *slog.Logger) coordinatorInterface {
 	adnlAddr := adnlAddrFromGateway(server)
 	ip, port := parseExternalAddr(cfg.AdnlExternalAddr)
 
@@ -177,7 +177,7 @@ func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server,
 	coord.SetTransport(transport)
 	coord.SetPieceForwarder(cluster.NewPieceForwarder(transport, coord, nil, logger))
 
-	if err := coord.Start(context.Background()); err != nil {
+	if err := coord.Start(ctx); err != nil {
 		logger.Error("start coordinator failed", "error", err)
 		os.Exit(1)
 	}

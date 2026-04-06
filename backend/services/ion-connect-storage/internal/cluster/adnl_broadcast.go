@@ -27,7 +27,7 @@ type ADNLBroadcaster struct {
 func NewADNLBroadcaster(peer PeerBroadcaster, logger *slog.Logger) *ADNLBroadcaster {
 	return &ADNLBroadcaster{
 		peer:     peer,
-		incoming: make(chan []byte, 256),
+		incoming: make(chan []byte, 4096),
 		closed:   make(chan struct{}),
 		logger:   logger,
 	}
