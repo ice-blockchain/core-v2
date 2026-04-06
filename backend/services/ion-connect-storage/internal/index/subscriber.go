@@ -138,8 +138,10 @@ func (s *Subscriber) collectEntries(ctx context.Context, txEvent *greenfieldclie
 
 		// Attempt to claim ownership. All nodes index the bag regardless
 		// of ownership so that forwarding nodes can load metadata and
-		// serve pieces via the owner.
-		claimCtx, claimCancel := context.WithTimeout(ctx, 10*time.Second)
+		// serve pieces via the owner. Timeout must accommodate the
+		// deterministic stagger (up to 2s per node) + verifyClaim (~3.5s)
+		// + retries in OwnsOrClaim.
+		claimCtx, claimCancel := context.WithTimeout(ctx, 30*time.Second)
 		owned, err := s.ownershipChecker.OwnsOrClaim(claimCtx, bagID)
 		claimCancel()
 		if err != nil {

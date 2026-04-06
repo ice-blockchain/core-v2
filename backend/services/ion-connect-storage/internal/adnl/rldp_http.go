@@ -61,21 +61,24 @@ func (b *RLDPHTTPBridge) Stop() {
 
 // MakeRLDPQueryHandler returns a handler for the overlay
 // RLDPWrapper rootQueryHandler slot (non-overlay RLDP queries).
-func (b *RLDPHTTPBridge) MakeRLDPQueryHandler(rl *overlay.RLDPWrapper) func([]byte, *rldp.Query) error {
+// peerID is the connecting peer's ADNL ID, used to namespace payload keys
+// so that one peer cannot retrieve another peer's pending response payloads.
+func (b *RLDPHTTPBridge) MakeRLDPQueryHandler(rl *overlay.RLDPWrapper, peerID []byte) func([]byte, *rldp.Query) error {
+	peerPrefix := hex.EncodeToString(peerID)
 	return func(transferID []byte, query *rldp.Query) (retErr error) {
 		defer recoverPanic(b.logger, &retErr)
 		switch req := query.Data.(type) {
 		case Request:
-			return b.handleHTTPRequest(rl, query, transferID, req)
+			return b.handleHTTPRequest(rl, query, transferID, req, peerPrefix)
 		case GetNextPayloadPart:
-			return b.handlePayloadPart(rl, query, transferID, req)
+			return b.handlePayloadPart(rl, query, transferID, req, peerPrefix)
 		}
 		return nil
 	}
 }
 
 func (b *RLDPHTTPBridge) handleHTTPRequest(
-	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req Request,
+	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req Request, peerPrefix string,
 ) error {
 	httpReq, err := buildHTTPRequest(req)
 	if err != nil {
@@ -86,7 +89,7 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 	b.engine.ServeHTTP(w, httpReq)
 
 	resp := buildTLResponse(w)
-	reqID := hex.EncodeToString(req.ID)
+	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
 
 	if w.body.Len() > 0 && b.tryReservePayloadSlot() {
 		b.payloads.Store(reqID, &pendingPayload{
@@ -106,12 +109,12 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 }
 
 func (b *RLDPHTTPBridge) handlePayloadPart(
-	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart,
+	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart, peerPrefix string,
 ) error {
 	answerCtx, answerCancel := context.WithDeadline(context.Background(), clampDeadline(query.Timeout))
 	defer answerCancel()
 
-	reqID := hex.EncodeToString(req.ID)
+	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
 	payload, ok := b.payloads.Load(reqID)
 	if !ok || time.Since(payload.createdAt) > payloadTTL {
 		if ok {

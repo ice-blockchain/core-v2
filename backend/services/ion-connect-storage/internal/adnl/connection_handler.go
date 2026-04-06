@@ -26,11 +26,12 @@ func (s *Server) handleNewConnection(client adnl.Peer) error {
 		s.logger.Debug("rejecting connection: server not ready")
 		return fmt.Errorf("server not ready")
 	}
-	if s.activeConnections.Load() >= int64(s.maxConnections) {
+	newCount := s.activeConnections.Add(1)
+	if newCount > int64(s.maxConnections) {
+		s.activeConnections.Add(-1)
 		s.logger.Warn("rejecting connection: max connections reached", "max", s.maxConnections)
 		return fmt.Errorf("max connections reached")
 	}
-	s.activeConnections.Add(1)
 	client.SetDisconnectHandler(func(_ string, _ ed25519.PublicKey) {
 		s.activeConnections.Add(-1)
 	})
@@ -78,7 +79,7 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, logger))
 
 	if bridge != nil {
-		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl))
+		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl, client.GetID()))
 	}
 
 	logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
@@ -155,6 +156,9 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 			resp, err := clusterHandler(ctx, rawQuery)
 			if err != nil {
 				return err
+			}
+			if resp == nil {
+				return nil
 			}
 			return peer.SendAnswer(ctx, query.MaxAnswerSize, query.Timeout, query.ID, transferID, tl.Raw(resp))
 		}

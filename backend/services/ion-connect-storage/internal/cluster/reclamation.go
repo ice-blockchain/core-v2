@@ -118,22 +118,21 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 	}
 }
 
-// reclaimSingleBag reclaims a bag from a dead node. The TOCTOU window between
-// Owner() and ClaimBag() is mitigated by isResponsibleForReclamation (only the
-// XOR-closest active node reclaims) combined with ClaimBag's post-claim
-// verification via CRDT convergence (OwnsOrClaim pattern). If two nodes race,
-// CRDT last-write-wins resolves it deterministically.
+// reclaimSingleBag reclaims a bag from a dead node. Uses OwnsOrClaim (with
+// post-claim verification) to prevent counter drift when multiple nodes race
+// to reclaim the same bag.
 func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, deadNodeID string) error {
 	current := c.Owner(bagID)
 	if current != "" && current != deadNodeID {
 		return nil // already claimed by another active node
 	}
 
-	// Claim first, then clean up the dead node's key.
-	// This avoids a window where the bag has no owner (delete-before-claim).
-	// CRDT last-write-wins ensures the new ownership overwrites the dead value.
-	if err := c.ClaimBag(ctx, bagID); err != nil {
+	owned, err := c.OwnsOrClaim(ctx, bagID)
+	if err != nil {
 		return err
+	}
+	if !owned {
+		return nil // another node won the claim
 	}
 	if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
 		c.logger.Error("orphaned bynode key after claim",

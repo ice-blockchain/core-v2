@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/xssnick/tonutils-go/adnl/overlay"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
@@ -125,7 +126,28 @@ func (h *Handler) handleForwardedPiece(ctx context.Context, bagID [32]byte, piec
 	if err != nil {
 		return nil, fmt.Errorf("forward piece %d: %w", pieceID, err)
 	}
+	if err := h.verifyForwardedProof(ctx, bagID, proof); err != nil {
+		return nil, fmt.Errorf("forwarded piece %d proof invalid: %w", pieceID, err)
+	}
 	return serializePieceResponse(proof, data), nil
+}
+
+// verifyForwardedProof checks the Merkle proof received from a peer against
+// the bag's root hash to prevent a compromised cluster node from serving
+// corrupted data through forwarding nodes.
+func (h *Handler) verifyForwardedProof(ctx context.Context, bagID [32]byte, proof []byte) error {
+	if len(proof) == 0 {
+		return fmt.Errorf("empty proof")
+	}
+	meta, err := h.ensureBagLoaded(ctx, bagID)
+	if err != nil {
+		return fmt.Errorf("load bag metadata: %w", err)
+	}
+	proofCell, err := cell.FromBOC(proof)
+	if err != nil {
+		return fmt.Errorf("parse proof BoC: %w", err)
+	}
+	return cell.CheckProof(proofCell, meta.RootHash[:])
 }
 
 func (h *Handler) handleAddUpdateFromTL(ctx context.Context, bagID [32]byte, payload []byte) ([]byte, error) {

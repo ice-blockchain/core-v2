@@ -105,6 +105,101 @@ func TestHandlerRejectsNegativePieceID(t *testing.T) {
 	require.Contains(t, err.Error(), "invalid piece ID")
 }
 
+func TestHandlerRejectsForwardedPieceWithTamperedProof(t *testing.T) {
+	payload := make([]byte, 1024*1024)
+	for i := range payload {
+		payload[i] = byte(i % 256)
+	}
+	logger := testLogger()
+	header := boc.SingleFileHeader("data", uint64(len(payload)))
+	bagID, ionStorageData := boc.MustBuildIonStorageBoC(t, payload, boc.PieceSize, header)
+
+	meta, err := boc.ParseIonStorageBoC(ionStorageData, logger)
+	require.NoError(t, err)
+
+	db, err := pebble.Open(t.TempDir(), &pebble.Options{})
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	persister := index.NewPersister(db)
+	fetcher := greenfield.NewFetcher(nil, logger)
+	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
+	cacheDir := t.TempDir()
+	segmentCache := cache.NewSegmentCache(cacheDir, time.Hour, nil, logger)
+
+	require.NoError(t, persister.PersistBagsAndHeight([]index.BagEntry{
+		{BagID: bagID, Location: index.BagLocation{BucketName: "test", ObjectName: "data"}},
+	}, 1))
+	require.NoError(t, metadataStore.PutBagMetadata(bagID, ionStorageData))
+
+	headerBytes, err := boc.SerializeTorrentHeader(header)
+	require.NoError(t, err)
+	layout := cache.BagFileLayout{
+		Files:     meta.Header.Files,
+		TotalSize: uint64(len(payload)),
+	}
+	require.NoError(t, segmentCache.OpenBag(bagID, layout))
+	populateSegmentCache(t, segmentCache, bagID, payload, headerBytes)
+
+	// Generate a valid proof for piece 0, then tamper with it.
+	validProof, err := boc.GenerateMerkleProof(meta.MerkleTree, 0, meta.PieceCount)
+	require.NoError(t, err)
+
+	tamperedProof := make([]byte, len(validProof))
+	copy(tamperedProof, validProof)
+	// Flip a byte in the middle to corrupt the proof
+	if len(tamperedProof) > 10 {
+		tamperedProof[10] ^= 0xFF
+	}
+
+	// Build a forwarder that returns tampered proof
+	tamperedForwarder := &mockTamperedForwarder{
+		data:  []byte("fake-piece-data"),
+		proof: tamperedProof,
+	}
+
+	_, priv, _ := ed25519.GenerateKey(rand.Reader)
+	nodeBuilder := func(overlayID []byte) (*tonoverlay.Node, error) {
+		return tonoverlay.NewNode(overlayID, priv)
+	}
+
+	// OwnershipChecker that says we do NOT own the bag (forces forwarding path)
+	nonOwner := &mockNonOwner{}
+
+	h := storage.NewHandler(storage.HandlerConfig{
+		MetadataStore:      metadataStore,
+		SegmentCache:       segmentCache,
+		Fetcher:            fetcher,
+		Index:              persister,
+		OwnershipChecker:   nonOwner,
+		PieceForwarder:     tamperedForwarder,
+		OverlayNodeBuilder: nodeBuilder,
+		Logger:             logger,
+	})
+
+	req := buildTestGetPieceRequest(0)
+	_, err = h.HandleOverlayQuery(context.Background(), bagID, req)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "proof invalid")
+}
+
+type mockTamperedForwarder struct {
+	data  []byte
+	proof []byte
+}
+
+func (m *mockTamperedForwarder) ForwardGetPiece(_ context.Context, _ [32]byte, _ int) ([]byte, []byte, error) {
+	return m.data, m.proof, nil
+}
+
+func (m *mockTamperedForwarder) ForwardRawQuery(_ context.Context, _ [32]byte, _ []byte) ([]byte, error) {
+	return nil, nil
+}
+
+type mockNonOwner struct{}
+
+func (m *mockNonOwner) OwnsBag(_ [32]byte) bool { return false }
+
 // createHandlerWithPayload builds a handler with in-memory metadata (no Greenfield).
 // The fetcher is nil-client so getPiece will use segment cache directly.
 func createHandlerWithPayload(t *testing.T, payloadSize int) (*storage.Handler, [32]byte, *boc.BagMetadata) {

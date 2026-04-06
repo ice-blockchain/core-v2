@@ -3,13 +3,20 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"strings"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
 )
 
-const ownerQueryTimeout = 5 * time.Second
+const (
+	ownerQueryTimeout = 5 * time.Second
+	maxClaimAttempts  = 3
+	// claimSlotInterval is the delay between consecutive claim slots.
+	// Must be >= verifyClaim total duration (500ms + 1s + 2s = 3.5s).
+	claimSlotInterval = 4 * time.Second
+)
 
 // ClaimBag adds this node's ownership claim for a bag.
 // Writes dual keys: own/<bagID> -> nodeID and bynode/<nodeID>/<bagID> -> "".
@@ -74,23 +81,50 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 // Returns true if this node is (or became) the owner.
 // Uses ValidatedOwner to reject ownership claims from nodes without
 // fresh heartbeats (prevents identity spoofing).
+// Retries with deterministic backoff when all competing nodes roll back
+// simultaneously (CRDT convergence race). Each node gets a different
+// delay based on hash(nodeID+bagID), breaking the symmetry that causes
+// all claimants to collide repeatedly.
 func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error) {
-	current := c.ValidatedOwner(bagID)
-	if current == c.nodeID {
-		return true, nil
-	}
-	if current != "" {
-		return false, nil
-	}
+	// Deterministic per-node delay so different nodes stagger their claims.
+	// Uses a slot based on hash(nodeID+bagID) mod activeNodes, multiplied
+	// by the verifyClaim duration (~3.5s). This ensures the fastest node
+	// completes its claim before the next node even starts, eliminating
+	// CRDT write collisions that cause all claimants to roll back.
+	bagHex := fmt.Sprintf("%x", bagID)
+	claimSlot := simpleHash(c.nodeID+bagHex) % uint64(max(c.ActiveNodeCount(), 2))
+	nodeDelay := time.Duration(claimSlot) * claimSlotInterval
 
-	if err := c.ClaimBag(ctx, bagID); err != nil {
-		return false, err
-	}
+	for attempt := range maxClaimAttempts {
+		current := c.ValidatedOwner(bagID)
+		if current == c.nodeID {
+			return true, nil
+		}
+		if current != "" {
+			return false, nil
+		}
 
-	if c.verifyClaim(ctx, bagID) {
-		return true, nil
+		backoff := nodeDelay
+		if attempt > 0 {
+			// On retry, use random backoff since the slot-based stagger
+			// already failed (all slots may have collided).
+			backoff = time.Duration(rand.IntN(1000*(attempt+1))) * time.Millisecond
+		}
+		select {
+		case <-ctx.Done():
+			return false, ctx.Err()
+		case <-time.After(backoff):
+		}
+
+		if err := c.ClaimBag(ctx, bagID); err != nil {
+			return false, err
+		}
+
+		if c.verifyClaim(ctx, bagID) {
+			return true, nil
+		}
+		c.rollbackClaim(ctx, bagID)
 	}
-	c.rollbackClaim(ctx, bagID)
 	return false, nil
 }
 

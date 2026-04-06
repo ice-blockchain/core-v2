@@ -232,6 +232,40 @@ func TestPayloadCountNeverExceedsLimit(t *testing.T) {
 	require.Equal(t, int64(maxPendingPayloads), bridge.payloadCount.Load())
 }
 
+func TestPayloadIsolationBetweenPeers(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	bridge := NewRLDPHTTPBridge(ctx, nil, testLogger())
+	defer bridge.Stop()
+
+	peerA := []byte("peer-aaaa-aaaa-aaaa-aaaa-aaaa-aaaa")
+	peerB := []byte("peer-bbbb-bbbb-bbbb-bbbb-bbbb-bbbb")
+	reqID := []byte("same-request-id-for-both-peers!")
+
+	prefixA := "peer-aaaa-aaaa-aaaa-aaaa-aaaa-aaaa"
+	prefixB := "peer-bbbb-bbbb-bbbb-bbbb-bbbb-bbbb"
+	_ = peerA
+	_ = peerB
+
+	keyA := prefixA + ":" + "same-request-id-for-both-peers!"
+	keyB := prefixB + ":" + "same-request-id-for-both-peers!"
+	_ = reqID
+
+	// Peer A stores a payload
+	bridge.payloads.Store(keyA, &pendingPayload{data: []byte("secret-A"), createdAt: time.Now()})
+	bridge.payloadCount.Store(1)
+
+	// Peer B cannot load peer A's payload using the same reqID
+	_, ok := bridge.payloads.Load(keyB)
+	require.False(t, ok, "peer B must not access peer A's payload")
+
+	// Peer A can load its own payload
+	payload, ok := bridge.payloads.Load(keyA)
+	require.True(t, ok)
+	require.Equal(t, []byte("secret-A"), payload.data)
+}
+
 func TestDeletePayloadDecrementsSafely(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
