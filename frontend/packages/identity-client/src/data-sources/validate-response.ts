@@ -65,6 +65,19 @@ export function validateRegistrationResultResponse(value: unknown): void {
   assertString(value.user as Record<string, unknown>, 'id');
 }
 
+export function validateRecoveryResultResponse(value: unknown): void {
+  if (!isNonNullObject(value)) {
+    throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid recovery result response');
+  }
+  if (!isNonNullObject(value.credential)) {
+    throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid response: missing credential');
+  }
+  if (!isNonNullObject(value.user)) {
+    throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid response: missing user');
+  }
+  assertString(value.user as Record<string, unknown>, 'id');
+}
+
 export function validateRefreshTokenResponse(value: unknown): void {
   if (!isNonNullObject(value)) {
     throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid refresh token response');

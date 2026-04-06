@@ -10,6 +10,7 @@ export interface IdentityClientConfig {
   baseUrl: string;
   appId: string;
   nativePbkdf2?: (password: string, salt: Uint8Array, iterations: number, keyLength: number, hash: string) => Uint8Array;
+  interceptors?: import('@ion/network').Interceptor[];
 }
 
 export interface PasswordRegistrationInput {
@@ -143,6 +144,11 @@ export interface AllowedRecoveryCredential {
 
 export interface RegistrationResult {
   authentication: AuthTokens;
+  user: { id: string };
+}
+
+export interface RecoveryResult {
+  credential: { uuid: string; kind: string; name: string };
   user: { id: string };
 }
 

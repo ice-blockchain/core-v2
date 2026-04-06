@@ -51,7 +51,8 @@ function buildContext(config: IdentityClientConfig) {
   const lazyDeps = {} as { sessionDataSource: ReturnType<typeof createSessionDataSource> };
   const refreshFn = (username: string) => refreshToken(username, { sessionDataSource: lazyDeps.sessionDataSource, tokenManager });
   const interceptor = createIdentityAuthInterceptor({ tokenManager, refreshFn, refreshLocks, trustedBaseUrl: config.baseUrl });
-  const httpClient = createHttpClient({ baseUrl: config.baseUrl, interceptors: [interceptor], headers: { 'X-Client-ID': config.appId } });
+  const allInterceptors = [...(config.interceptors ?? []), interceptor];
+  const httpClient = createHttpClient({ baseUrl: config.baseUrl, interceptors: allInterceptors, headers: { 'X-Client-ID': config.appId } });
   lazyDeps.sessionDataSource = createSessionDataSource(httpClient);
   const { sessionDataSource } = lazyDeps;
 

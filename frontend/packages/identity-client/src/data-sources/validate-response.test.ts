@@ -4,6 +4,7 @@ import {
   validateRegistrationChallengeResponse,
   validateAuthTokensResponse,
   validateRegistrationResultResponse,
+  validateRecoveryResultResponse,
   validateRefreshTokenResponse,
 } from './validate-response';
 
@@ -89,6 +90,25 @@ describe('validateRegistrationResultResponse', () => {
 
   it('rejects missing authentication', () => {
     expect(() => validateRegistrationResultResponse({ user: { id: 'u1' } })).toThrow('missing authentication');
+  });
+});
+
+describe('validateRecoveryResultResponse', () => {
+  it('accepts valid recovery result', () => {
+    const valid = { credential: { uuid: 'cr-1', kind: 'PasswordProtectedKey', name: 'Default' }, user: { id: 'u1' } };
+    expect(() => validateRecoveryResultResponse(valid)).not.toThrow();
+  });
+
+  it('rejects missing credential', () => {
+    expect(() => validateRecoveryResultResponse({ user: { id: 'u1' } })).toThrow('missing credential');
+  });
+
+  it('rejects missing user', () => {
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1', kind: 'K', name: 'N' } })).toThrow('missing user');
+  });
+
+  it('rejects null', () => {
+    expect(() => validateRecoveryResultResponse(null)).toThrow('Invalid recovery result');
   });
 });
 
