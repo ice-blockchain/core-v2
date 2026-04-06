@@ -29,6 +29,7 @@ type CoordinatorConfig struct {
 	HeartbeatInterval     time.Duration
 	ReclamationInterval   time.Duration
 	StaleHeartbeatTimeout time.Duration
+	ReclamationStartDelay time.Duration
 }
 
 func (c *CoordinatorConfig) applyDefaults() {
@@ -40,6 +41,9 @@ func (c *CoordinatorConfig) applyDefaults() {
 	}
 	if c.StaleHeartbeatTimeout == 0 {
 		c.StaleHeartbeatTimeout = 10 * time.Minute
+	}
+	if c.ReclamationStartDelay == 0 {
+		c.ReclamationStartDelay = c.StaleHeartbeatTimeout
 	}
 }
 

@@ -28,6 +28,7 @@ type Config struct {
 	HeartbeatInterval     time.Duration
 	ReclamationInterval   time.Duration
 	StaleHeartbeatTimeout time.Duration
+	ReclamationStartDelay time.Duration
 	ActiveDHTLimit        int
 	HttpPort              string
 	MetricsPort           string
@@ -99,6 +100,7 @@ func Load() (Config, error) {
 		HeartbeatInterval:     parseDuration("HEARTBEAT_INTERVAL", 60*time.Second),
 		ReclamationInterval:   parseDuration("RECLAMATION_INTERVAL", 5*time.Minute),
 		StaleHeartbeatTimeout: parseDuration("STALE_HEARTBEAT_TIMEOUT", 10*time.Minute),
+		ReclamationStartDelay: parseDuration("RECLAMATION_START_DELAY", 0),
 		ActiveDHTLimit:        activeDHTLimit,
 		HttpPort:              envOrDefault("HTTP_PORT", "8080"),
 		MetricsPort:           os.Getenv("METRICS_PORT"),

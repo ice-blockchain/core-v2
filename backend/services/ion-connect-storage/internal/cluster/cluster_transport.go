@@ -15,6 +15,15 @@ import (
 	"github.com/xssnick/tonutils-go/tl"
 )
 
+const (
+	// rldpMaxPieceAnswer is the max RLDP response size for piece forwarding (1MB).
+	// Covers 512KB piece data + proof + TL overhead.
+	rldpMaxPieceAnswer uint64 = 1 << 20
+
+	// rldpMaxRawQueryAnswer is the max RLDP response size for raw query forwarding (256KB).
+	rldpMaxRawQueryAnswer uint64 = 256 * 1024
+)
+
 // PieceHandler serves a local piece request (used for forwarded pieces).
 type PieceHandler func(ctx context.Context, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
 
@@ -22,9 +31,13 @@ type PieceHandler func(ctx context.Context, bagID [32]byte, pieceID int) (data [
 type RawQueryHandler func(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
 
 // ClusterTransport handles ADNL communication for the cluster.
-// Uses overlay-wrapped queries (same mechanism as tonutils-storage).
+// Uses a dedicated client gateway to avoid handler conflicts with
+// the server-side connection handler (both create overlay/RLDP stacks
+// on ADNL peers, and creating two stacks on the same peer overwrites
+// the custom message handler, breaking RLDP).
 type ClusterTransport struct {
-	gateway         *adnl.Gateway
+	serverGateway   *adnl.Gateway
+	clientGateway   *adnl.Gateway
 	server          *ionadnl.Server
 	broadcaster     *ADNLBroadcaster
 	dagService      *ADNLDAGService
@@ -42,6 +55,7 @@ type clusterPeer struct {
 }
 
 // NewClusterTransport creates a transport using overlay-wrapped queries.
+// Uses a separate client gateway for outgoing peer connections.
 func NewClusterTransport(
 	server *ionadnl.Server,
 	overlayID [32]byte,
@@ -49,14 +63,19 @@ func NewClusterTransport(
 	dagService *ADNLDAGService,
 	logger *slog.Logger,
 ) *ClusterTransport {
+	clientGateway := adnl.NewGateway(server.PrivateKey())
+	if err := clientGateway.StartClient(); err != nil {
+		logger.Error("failed to start cluster client gateway", "error", err)
+	}
 	return &ClusterTransport{
-		gateway:     server.Gateway(),
-		server:      server,
-		broadcaster: broadcaster,
-		dagService:  dagService,
-		overlayID:   overlayID[:],
-		peers:       make(map[[32]byte]*clusterPeer),
-		logger:      logger,
+		serverGateway: server.Gateway(),
+		clientGateway: clientGateway,
+		server:        server,
+		broadcaster:   broadcaster,
+		dagService:    dagService,
+		overlayID:     overlayID[:],
+		peers:         make(map[[32]byte]*clusterPeer),
+		logger:        logger,
 	}
 }
 
@@ -172,7 +191,8 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 }
 
 // ForwardPieceViaPeer sends a ForwardPieceRequest to a specific peer
-// using the overlay-wrapped ADNL connection.
+// using RLDP over the cluster overlay. RLDP is required because piece
+// payloads (512KB) exceed the ADNL message size limit.
 func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
 	t.mu.RLock()
 	cp, ok := t.peers[adnlAddr]
@@ -183,7 +203,7 @@ func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32
 
 	msg := ForwardPieceRequestMsg{BagID: bagID[:], PieceID: int32(pieceID)}
 	var resp PieceResponseMsg
-	err := cp.adnlWrapper.Query(ctx, overlay.WrapQuery(t.overlayID, msg), &resp)
+	err := cp.rldpWrapper.DoQuery(ctx, rldpMaxPieceAnswer, overlay.WrapQuery(t.overlayID, msg), &resp)
 	if err != nil {
 		return nil, nil, fmt.Errorf("forward piece query: %w", err)
 	}
@@ -193,7 +213,8 @@ func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32
 	return resp.Data, resp.Proof, nil
 }
 
-// ForwardRawQuery forwards a raw storage query to the bag owner via the cluster overlay.
+// ForwardRawQuery forwards a raw storage query to the bag owner via the
+// cluster overlay. Uses ADNL (responses are small control messages).
 func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error) {
 	t.mu.RLock()
 	cp, ok := t.peers[ownerADNLAddr]
@@ -202,24 +223,31 @@ func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [3
 		return nil, fmt.Errorf("owner peer %x not connected", ownerADNLAddr[:4])
 	}
 
+	t.logger.Debug("forwarding raw query to owner", "owner", ownerADNLAddr[:4], "query_len", len(rawQuery))
 	msg := ForwardRawQueryMsg{BagID: bagID[:], RawQuery: rawQuery}
+
+	queryCtx, queryCancel := context.WithTimeout(ctx, 15*time.Second)
+	defer queryCancel()
+
 	var resp ForwardRawResponseMsg
-	err := cp.adnlWrapper.Query(ctx, overlay.WrapQuery(t.overlayID, msg), &resp)
+	err := cp.adnlWrapper.Query(queryCtx, overlay.WrapQuery(t.overlayID, msg), &resp)
 	if err != nil {
+		t.logger.Debug("forward raw query failed", "error", err)
 		return nil, fmt.Errorf("forward raw query: %w", err)
 	}
+	t.logger.Debug("forward raw query success", "resp_len", len(resp.Data))
 	return resp.Data, nil
 }
 
-// ConnectToPeer establishes an ADNL connection with overlay wrappers.
-// This mirrors tonutils-storage's bootstrapPeer: creates ADNLWrapper + RLDPWrapper.
+// ConnectToPeer establishes an ADNL connection to the remote peer using
+// the dedicated client gateway. This ensures the overlay/RLDP wrappers
+// don't conflict with the server-side wrappers created by handleNewConnection.
 func (t *ClusterTransport) ConnectToPeer(addr string, pubKey ed25519.PublicKey) (adnl.Peer, error) {
-	rawPeer, err := t.gateway.RegisterClient(addr, pubKey)
+	rawPeer, err := t.clientGateway.RegisterClient(addr, pubKey)
 	if err != nil {
 		return nil, fmt.Errorf("connect to peer %s: %w", addr, err)
 	}
 
-	// Create overlay wrappers (same as tonutils-storage server.bootstrapPeer).
 	extADNL := overlay.CreateExtendedADNL(rawPeer)
 	extRLDP := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 

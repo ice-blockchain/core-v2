@@ -40,8 +40,6 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 					return err
 				}
 				if resp != nil {
-					// Answer with raw bytes. The sender will receive these
-					// in the MessageAnswer.answer field.
 					return client.Answer(context.Background(), query.ID, tl.Raw(resp))
 				}
 			}
@@ -80,13 +78,12 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 		if clusterHandler != nil && overlayID == clusterOverlayID {
 			resp, err := clusterHandler(ctx, rawQuery)
 			if err != nil {
-				logger.Debug("cluster handler error", "error", err)
 				return err
 			}
 			if resp != nil {
-				ansErr := rawPeer.Answer(ctx, query.ID, tl.Raw(resp))
-				logger.Debug("cluster answer sent", "resp_len", len(resp), "error", ansErr)
-				return ansErr
+				// Answer via the overlay wrapper (not raw peer) so the
+				// sender's adnlWrapper.Query receives the response.
+				return peer.Answer(ctx, query.ID, tl.Raw(resp))
 			}
 			return nil
 		}
@@ -106,8 +103,10 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 	return func(transferID []byte, query *rldp.Query) error {
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil {
+			logger.Debug("RLDP: no overlay in query")
 			return nil
 		}
+		logger.Debug("RLDP overlay query received")
 
 		var overlayID [32]byte
 		copy(overlayID[:], overlayIDBytes)

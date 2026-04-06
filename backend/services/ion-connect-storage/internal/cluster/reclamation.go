@@ -11,6 +11,15 @@ import (
 // StartReclamation begins the dead node detection and bag reclamation loop.
 // Runs until ctx is cancelled. Should be called as a goroutine.
 func (c *Coordinator) StartReclamation(ctx context.Context) {
+	// Wait before first reclamation cycle so CRDT heartbeats from other
+	// nodes have time to propagate. Without this delay a freshly joined
+	// node would immediately classify peers as dead.
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(c.cfg.ReclamationStartDelay):
+	}
+
 	ticker := time.NewTicker(c.cfg.ReclamationInterval)
 	defer ticker.Stop()
 

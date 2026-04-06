@@ -156,6 +156,7 @@ func createCoordinator(cfg config.Config, db *pebble.DB, server *ionadnl.Server,
 		HeartbeatInterval:     cfg.HeartbeatInterval,
 		ReclamationInterval:   cfg.ReclamationInterval,
 		StaleHeartbeatTimeout: cfg.StaleHeartbeatTimeout,
+		ReclamationStartDelay: cfg.ReclamationStartDelay,
 	})
 	if err != nil {
 		logger.Error("create coordinator failed", "error", err)

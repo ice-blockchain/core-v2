@@ -30,6 +30,7 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 	nodes := []*clusterNode{node0, node1, node2}
 	wireCluster(t, nodes)
 	t.Logf("cluster wired: %s / %s / %s", node0.nodeID[:12], node1.nodeID[:12], node2.nodeID[:12])
+	waitForClusterConvergence(t, nodes, 30*time.Second)
 
 	bagID0, payload0, _, _ := uploadBag(t, ctx, 64*1024+137, "bag0")
 	bagID1, _, _, _ := uploadBag(t, ctx, 128*1024+42, "bag1")
@@ -41,8 +42,10 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 		waitForBagIndexedOnAnyNode(t, nodes, bagID, 3*time.Minute)
 	}
 
-	// Allow CRDT convergence.
-	time.Sleep(2 * time.Second)
+	// Wait for CRDT ownership convergence — each bag owned by exactly one node.
+	for _, bagID := range bagIDs {
+		waitForExactlyOneOwner(t, nodes, bagID, 30*time.Second)
+	}
 
 	t.Run("each bag owned by exactly one node", func(t *testing.T) {
 		for _, bagID := range bagIDs {
@@ -112,26 +115,15 @@ func TestE2E_ClusterDownloadFromNonOwningNode(t *testing.T) {
 	proxyNode := startClusterNode(t, ctx)
 	wireCluster(t, []*clusterNode{ownerNode, proxyNode})
 	t.Logf("owner=%s proxy=%s", ownerNode.nodeID[:12], proxyNode.nodeID[:12])
+	waitForClusterConvergence(t, []*clusterNode{ownerNode, proxyNode}, 30*time.Second)
 
 	bagID, payload, _, _ := uploadBag(t, ctx, 48*1024+77, "forward")
 
 	// Wait for bag to be indexed on at least one node.
 	waitForBagIndexedOnAnyNode(t, []*clusterNode{ownerNode, proxyNode}, bagID, 3*time.Minute)
 
-	// Wait for CRDT convergence -- one node should lose ownership.
-	deadline := time.Now().Add(30 * time.Second)
-	for time.Now().Before(deadline) {
-		ownerCount := 0
-		for _, n := range []*clusterNode{ownerNode, proxyNode} {
-			if n.coordinator.OwnsBag(bagID) {
-				ownerCount++
-			}
-		}
-		if ownerCount == 1 {
-			break
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
+	// Wait for CRDT ownership convergence — exactly one node owns the bag.
+	waitForExactlyOneOwner(t, []*clusterNode{ownerNode, proxyNode}, bagID, 30*time.Second)
 
 	owner := findOwner([]*clusterNode{ownerNode, proxyNode}, bagID)
 	require.NotNil(t, owner, "one node must own the bag")

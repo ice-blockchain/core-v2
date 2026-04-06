@@ -60,9 +60,9 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 		ClusterOverlayID:      clusterOverlayName,
 		DB:                    coordDB,
 		Logger:                logger,
-		HeartbeatInterval:     200 * time.Millisecond,
-		ReclamationInterval:   500 * time.Millisecond,
-		StaleHeartbeatTimeout: 1 * time.Second,
+		HeartbeatInterval:     500 * time.Millisecond,
+		ReclamationInterval:   3 * time.Second,
+		StaleHeartbeatTimeout: 5 * time.Second,
 	})
 	require.NoError(t, err)
 
@@ -182,4 +182,49 @@ func randomNodeID() string {
 	b := make([]byte, 16)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
+}
+
+// waitForClusterConvergence polls until every node sees all nodes as active
+// via CRDT heartbeats. Replaces fragile time.Sleep calls.
+func waitForClusterConvergence(t *testing.T, nodes []*clusterNode, timeout time.Duration) {
+	t.Helper()
+	expected := len(nodes)
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		allConverged := true
+		for _, n := range nodes {
+			if n.coordinator.ActiveNodeCount() < expected {
+				allConverged = false
+				break
+			}
+		}
+		if allConverged {
+			t.Logf("cluster converged: all %d nodes see %d active", expected, expected)
+			return
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	for _, n := range nodes {
+		t.Logf("node %s sees %d active nodes", n.nodeID[:12], n.coordinator.ActiveNodeCount())
+	}
+	t.Fatalf("cluster did not converge within %s", timeout)
+}
+
+// waitForExactlyOneOwner polls until exactly one node owns the bag.
+func waitForExactlyOneOwner(t *testing.T, nodes []*clusterNode, bagID [32]byte, timeout time.Duration) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		ownerCount := 0
+		for _, n := range nodes {
+			if n.coordinator.OwnsBag(bagID) {
+				ownerCount++
+			}
+		}
+		if ownerCount == 1 {
+			return
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	t.Fatalf("bag %x: expected exactly 1 owner, timed out", bagID[:8])
 }

@@ -126,14 +126,12 @@ func (s *Subscriber) collectEntries(txEvent *greenfieldclient.TxEvent) []BagEntr
 			continue
 		}
 
+		// Attempt to claim ownership. All nodes index the bag regardless
+		// of ownership so that forwarding nodes can load metadata and
+		// serve pieces via the owner.
 		owned, err := s.ownershipChecker.OwnsOrClaim(context.Background(), bagID)
 		if err != nil {
 			s.logger.Warn("ownership check failed", "bag_id", bagIDHex, "error", err)
-			continue
-		}
-		if !owned {
-			s.logger.Debug("bag not owned, skipping", "bag_id", bagIDHex)
-			continue
 		}
 
 		loc := BagLocation{BucketName: ste.BucketName, ObjectName: ste.ObjectName}
@@ -143,6 +141,7 @@ func (s *Subscriber) collectEntries(txEvent *greenfieldclient.TxEvent) []BagEntr
 			"bucket", loc.BucketName,
 			"object", loc.ObjectName,
 			"height", txEvent.Height,
+			"owned", owned,
 		)
 
 		entries = append(entries, BagEntry{BagID: bagID, Location: loc})
