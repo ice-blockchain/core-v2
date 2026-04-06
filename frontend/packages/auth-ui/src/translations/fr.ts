@@ -16,6 +16,7 @@ export const authFR: Record<keyof typeof authEN, string> = {
   registerSubtitle:
     'Choisissez un mot de passe fort pour créer un compte',
   passwordsMatchLabel: 'Les mots de passe correspondent',
+  passwordMismatchError: 'Les mots de passe ne correspondent pas',
   verifyPasskeyTitle: 'Vérifier avec une clé d\'accès',
   verifyPasskeySubtitle:
     'Votre appareil vous demandera de confirmer cette action avec votre empreinte digitale, visage ou verrouillage d\'écran',
@@ -105,4 +106,15 @@ export const authFR: Record<keyof typeof authEN, string> = {
   identityKeyNameNoteSecuredBy:
     'Utilisez-le pour vous connecter à toute application sécurisée par',
   errorInvalidIdentityKeyName: 'Nom de clé d\'identité invalide.',
+  verifyOnOtherDeviceTitle: 'Vérification de la clé d\'identité requise',
+  verifyOnOtherDeviceDescription:
+    'Vérifiez la propriété de ce compte en scannant un code QR à l\'étape suivante à l\'aide de l\'appareil où votre clé est stockée.',
+  cancelButton: 'Annuler',
+  skipButton: 'Passer',
+  addPasskeyCredentialsTitle: 'Ajouter des identifiants de clé d\'accès',
+  addPasskeyCredentialsDescription:
+    'Souhaitez-vous créer de nouveaux identifiants sur cet appareil ?',
+  linkDeviceTitle: 'Lier un nouvel appareil',
+  linkDeviceDescription:
+    'Vous accédez à votre compte depuis un nouvel appareil. Pour continuer à utiliser l\'application, veuillez le lier à votre compte',
 };

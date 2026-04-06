@@ -13,6 +13,7 @@ export const authEN = {
   registerSubtitle: 'Choose a strong password to create an account',
   passkeyRegisterTitle: 'Register with a passkey',
   passwordsMatchLabel: 'Passwords match',
+  passwordMismatchError: 'Passwords do not match',
   verifyPasskeyTitle: 'Verify with a passkey',
   verifyPasskeySubtitle:
     'Your device will prompt you to confirm this action using your fingerprint, face, or screen lock',
@@ -100,4 +101,15 @@ export const authEN = {
   identityKeyNameNoteSecuredBy:
     'Use it to log in on any app secured by',
   errorInvalidIdentityKeyName: 'Invalid identity key name.',
+  verifyOnOtherDeviceTitle: 'Identity key verification required',
+  verifyOnOtherDeviceDescription:
+    'Verify the ownership of this account by scanning a QR code on the next step using the device where your key is stored.',
+  cancelButton: 'Cancel',
+  skipButton: 'Skip',
+  addPasskeyCredentialsTitle: 'Add passkey credentials',
+  addPasskeyCredentialsDescription:
+    'Do you want to create new credentials on this device?',
+  linkDeviceTitle: 'Link new device',
+  linkDeviceDescription:
+    'You\'re accessing your account from a new device. To continue using the app, please link it to your account',
 } as const;

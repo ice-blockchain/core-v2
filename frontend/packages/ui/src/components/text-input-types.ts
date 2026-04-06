@@ -16,6 +16,8 @@ export interface TextInputProps {
   debounceMs?: number;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   keyboardType?: "default" | "email-address" | "numeric";
+  secureTextEntry?: boolean;
+  autoCorrect?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
   style?: StyleProp<ViewStyle>;

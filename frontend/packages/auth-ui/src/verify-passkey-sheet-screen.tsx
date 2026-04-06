@@ -13,6 +13,10 @@ function buildNavigateAction(name: string, params?: Record<string, unknown>) {
   return action as { type: string; payload: object };
 }
 
+function buildResetAction(name: string) {
+  return CommonActions.reset({ index: 0, routes: [{ name }] }) as unknown as { type: string; payload: object };
+}
+
 function useDismissHandler() {
   const appNavigation = useAppNavigation();
   const route = useRoute<VerifyPasskeyRoute>();
@@ -24,7 +28,11 @@ function useDismissHandler() {
     const { next } = route.params;
     appNavigation.goBack();
     requestAnimationFrame(() => {
-      appNavigation.dispatch(buildNavigateAction(next.name, next.params));
+      if (next.reset) {
+        appNavigation.dispatch(buildResetAction(next.name));
+      } else {
+        appNavigation.dispatch(buildNavigateAction(next.name, next.params));
+      }
     });
   }, [appNavigation, route.params]);
 }

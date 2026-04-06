@@ -9,6 +9,9 @@ export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";
 export { RestoreSuccessModal } from "./restore-success-modal";
 export { SetNewPasswordScreen } from "./set-new-password-screen";
+export { AddPasskeyCredentialsScreen } from "./add-passkey-credentials-screen";
+export { LinkDeviceScreen, hasLinkDeviceBeenShown, markLinkDeviceShown } from "./link-device-screen";
+export { VerifyOnOtherDeviceScreen } from "./verify-on-other-device-screen";
 export { VerifyPasskeyScreen } from "./verify-passkey-screen";
 export { VerifyPasskeySheetScreen } from "./verify-passkey-sheet-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
@@ -23,6 +26,7 @@ export { RegisterHeader } from "./register-header";
 export { SheetHeader } from "./sheet-header";
 
 // Footers
+export { AuthFooter } from "./auth-footer";
 export { SecuredByFooter } from "./secured-by-footer";
 export { TermsFooter } from "./terms-footer";
 
@@ -31,6 +35,7 @@ export { RestoreOptionCard } from "./restore-option-card";
 
 // Inputs
 export { IdentityKeyNameInput } from "./identity-key-name-input";
+export { PasswordInput } from "./password-input";
 
 // Forms
 export { RegisterForm } from "./register-form";
@@ -48,9 +53,7 @@ export { authTranslations, AUTH_NAMESPACE } from "./translations";
 // Icons
 export { ArrowIcon } from "./arrow-icon";
 export { BackArrowIcon } from "./back-arrow-icon";
-export { CheckIcon } from "./check-icon";
 export { CreateAccountIcon } from "./create-account-icon";
-export { CrossIcon } from "./cross-icon";
 export { DeviceIcon } from "./device-icon";
 export { EyeIcon } from "./eye-icon";
 export { FingerprintIcon } from "./fingerprint-icon";

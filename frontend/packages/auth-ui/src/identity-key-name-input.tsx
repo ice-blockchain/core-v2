@@ -1,6 +1,6 @@
 import { Pressable } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
-import { TextInput } from "@ion/ui";
+import { TextInput, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { InfoIcon } from "./info-icon";
 import type { useIdentityKeyValidation } from "./identity-key-rules";
@@ -12,13 +12,14 @@ interface IdentityKeyNameInputProps {
 }
 
 export function IdentityKeyNameInput({ identity, onInfoPress, style }: IdentityKeyNameInputProps) {
+  const { scale } = useTheme();
   const errorProps = identity.errorMessage
     ? { state: "error" as const, errorMessage: identity.errorMessage }
     : {};
 
   const suffixIcon = (
     <Pressable onPress={onInfoPress} hitSlop={8} accessibilityRole="button">
-      <InfoIcon />
+      <InfoIcon size={scale.scaleSize(24)} />
     </Pressable>
   );
 

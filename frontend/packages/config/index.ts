@@ -1,4 +1,5 @@
 export { environmentConfig } from './src/environment/environment';
+export { externalLinks } from './src/external-links';
 export type { AppEnvironment, EnvironmentConfig, LogLevel } from './src/environment/types';
 
 export { timingConfig } from './src/timing';

@@ -7,28 +7,46 @@ import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@io
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
-import { SecuredByFooter } from "./secured-by-footer";
-import { TermsFooter } from "./terms-footer";
+import { AuthFooter } from "./auth-footer";
 import { IceLogoIcon } from "./ice-logo-icon";
 import { CreateAccountIcon } from "./create-account-icon";
 import { IdentityKeyNameInput } from "./identity-key-name-input";
 import { useIdentityKeyValidation } from "./identity-key-rules";
 
+function useHeaderStyles() {
+  const { colors, scale } = useTheme();
+
+  return useMemo(() => ({
+    iconCircle: {
+      ...styles.iconCircle,
+      width: scale.scaleSize(65),
+      height: scale.scaleSize(65),
+      borderRadius: scale.scaleRadius(32.5),
+      marginBottom: scale.scaleSize(20),
+      backgroundColor: colors.primaryAccent,
+    },
+    subtitle: {
+      ...styles.subtitle,
+      maxWidth: scale.scaleSize(320),
+      marginTop: scale.scaleSize(8),
+      marginBottom: scale.scaleSize(56),
+    },
+    logoWidth: scale.scaleSize(44),
+    logoHeight: scale.scaleSize(45),
+  }), [colors.primaryAccent, scale]);
+}
+
 function GetStartedHeader() {
   const { colors } = useTheme();
-
-  const iconCircleStyle = useMemo(() => ({
-    ...styles.iconCircle,
-    backgroundColor: colors.primaryAccent,
-  }), [colors.primaryAccent]);
+  const headerStyles = useHeaderStyles();
 
   return (
     <>
-      <View style={iconCircleStyle}>
-        <IceLogoIcon />
+      <View style={headerStyles.iconCircle}>
+        <IceLogoIcon width={headerStyles.logoWidth} height={headerStyles.logoHeight} />
       </View>
       <Text variant="headline1" color={colors.primaryText}>{translate("auth:getStartedTitle")}</Text>
-      <Text variant="body2" color={colors.tertiaryText} style={styles.subtitle}>
+      <Text variant="body2" color={colors.tertiaryText} style={headerStyles.subtitle}>
         {translate("auth:getStartedSubtitle")}
       </Text>
     </>
@@ -40,17 +58,38 @@ function useGetStartedNavigation() {
 
   return {
     handleRegister: useCallback(() => {
-      navigation.navigate(Routes.Auth.PasswordRegister);
+      const route = [Routes.Auth.PasswordRegister, Routes.Auth.PasskeyRegister][
+        Date.now() % 2
+      ];
+      navigation.navigate(route);
     }, [navigation]),
-    // TODO: wire to actual password verification before navigating
     handleVerifyPassword: useCallback(() => {
       navigation.navigate(Routes.Auth.ProfileSetup);
     }, [navigation]),
-    // TODO: wire to actual credential restore before navigating
     handleRestore: useCallback(() => {
       navigation.navigate(Routes.Auth.ProfileSetup);
     }, [navigation]),
   };
+}
+
+function useActionStyles() {
+  const { scale } = useTheme();
+
+  return useMemo(() => ({
+    continueWrapper: { marginTop: scale.scaleSize(16) },
+    orText: { marginVertical: scale.scaleSize(14) },
+    restoreWrapper: { marginTop: scale.scaleSize(16) },
+    iconSize: scale.scaleSize(24),
+  }), [scale]);
+}
+
+function useHandleContinue(identity: ReturnType<typeof useIdentityKeyValidation>) {
+  const appNavigation = useAppNavigation();
+  return useCallback(() => {
+    if (identity.validate()) {
+      appNavigation.navigate(Routes.Sheet.VerifyOnOtherDevice);
+    }
+  }, [identity, appNavigation]);
 }
 
 function GetStartedActions({ identity, nav }: {
@@ -58,20 +97,38 @@ function GetStartedActions({ identity, nav }: {
   nav: ReturnType<typeof useGetStartedNavigation>;
 }) {
   const { colors } = useTheme();
-  const handleContinue = useCallback(() => {
-    if (identity.validate()) { nav.handleVerifyPassword(); }
-  }, [identity, nav]);
+  const actionStyles = useActionStyles();
+  const handleContinue = useHandleContinue(identity);
 
   return (
     <>
-      <View style={styles.continueWrapper}>
+      <View style={actionStyles.continueWrapper}>
         <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} />
       </View>
-      <Text variant="caption" color={colors.tertiaryText} style={styles.orText}>{translate("auth:orDivider")}</Text>
-      <SecondaryButton label={translate("auth:registerButton")} onPress={nav.handleRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={24} />} onPress={nav.handleRestore} />
+      <Text variant="caption" color={colors.tertiaryText} style={actionStyles.orText}>
+        {translate("auth:orDivider")}
+      </Text>
+      <SecondaryButton
+        label={translate("auth:registerButton")} onPress={nav.handleRegister}
+        leftIcon={<CreateAccountIcon color={colors.secondaryText} size={actionStyles.iconSize} />}
+      />
+      <View style={actionStyles.restoreWrapper}>
+        <TextButton
+          label={translate("auth:restoreIdentityKeyButton")} onPress={nav.handleRestore}
+          leftIcon={<Icon name="restore-key" size={actionStyles.iconSize} color={colors.secondaryText} />}
+        />
+      </View>
     </>
   );
+}
+
+function useContentStyles() {
+  const { scale } = useTheme();
+
+  return useMemo(() => ({
+    page: { ...styles.page, paddingTop: scale.scaleSize(5) },
+    field: { width: scale.scaleSize(287) },
+  }), [scale]);
 }
 
 function GetStartedContent({ identity, nav }: {
@@ -80,20 +137,18 @@ function GetStartedContent({ identity, nav }: {
 }) {
   const sheetScroll = useSheetScroll();
   const appNavigation = useAppNavigation();
+  const contentStyles = useContentStyles();
   const handleInfoPress = useCallback(() => {
     appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
   }, [appNavigation]);
 
   return (
-    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled">
-      <View style={styles.page}>
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
+      <View style={contentStyles.page}>
         <GetStartedHeader />
-        <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={styles.field} />
+        <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={contentStyles.field} />
         <GetStartedActions identity={identity} nav={nav} />
-        <View style={styles.footer}>
-          <SecuredByFooter />
-          <TermsFooter />
-        </View>
+        <AuthFooter />
       </View>
     </BottomSheetScrollView>
   );
@@ -120,38 +175,19 @@ export function GetStartedScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   page: {
     flexGrow: 1,
     alignItems: "center",
     width: "100%",
-    paddingTop: 50,
   },
   iconCircle: {
-    width: 65,
-    height: 65,
-    borderRadius: 32.5,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
   },
   subtitle: {
     textAlign: "center",
-    maxWidth: 320,
-    marginBottom: 40,
-  },
-  field: {
-    width: 287,
-  },
-  continueWrapper: {
-    marginTop: 16,
-  },
-  orText: {
-    marginVertical: 16,
-  },
-  footer: {
-    marginTop: "auto",
-    alignItems: "center",
-    gap: 12,
-    paddingBottom: 40,
   },
 });

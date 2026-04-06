@@ -24,6 +24,7 @@ export function RegisterHeader({ icon, title, subtitle }: RegisterHeaderProps) {
   const subtitleStyle = useMemo(() => ({
     textAlign: "center" as const,
     maxWidth: scale.scaleSize(320),
+    marginTop: scale.scaleSize(8),
   }), [scale]);
 
   return (

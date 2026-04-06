@@ -22,5 +22,6 @@ module.exports = {
     "#fff": "{color}",
     "#ffffff": "{color}",
     white: "{color}",
+    currentColor: "{color}",
   },
 };

@@ -3,6 +3,7 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export interface VerifyPasskeyNextRoute {
   name: string;
   params?: Record<string, unknown>;
+  reset?: boolean;
 }
 
 export type RootStackParamList = {
@@ -18,6 +19,9 @@ export type RootStackParamList = {
   'Sheet/NicknameReserved': undefined;
   'Sheet/IdentityKeyNameNote': undefined;
   'Sheet/VerifyPasskey': { next: VerifyPasskeyNextRoute };
+  'Sheet/LinkDevice': undefined;
+  'Sheet/VerifyOnOtherDevice': undefined;
+  'Sheet/AddPasskeyCredentials': undefined;
 };
 
 export type AuthStackParamList = {

@@ -12,6 +12,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@ion/config": "workspace:*",
     "@ion/localization": "workspace:*",
     "@ion/navigation": "workspace:*",
     "@ion/ui": "workspace:*"

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 
@@ -9,10 +10,19 @@ interface TextButtonProps {
 }
 
 export function TextButton({ label, onPress, leftIcon }: TextButtonProps) {
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
+
+  const buttonStyle = useMemo(() => ({
+    ...styles.button,
+    gap: scale.scaleSize(9),
+    width: scale.scaleSize(287),
+    height: scale.scaleSize(56),
+    paddingHorizontal: scale.scaleSize(24),
+    borderRadius: scale.scaleRadius(16),
+  }), [scale]);
 
   return (
-    <Pressable style={styles.button} onPress={onPress}>
+    <Pressable style={buttonStyle} onPress={onPress}>
       {leftIcon && <View>{leftIcon}</View>}
       <Text variant="body" color={colors.secondaryText}>{label}</Text>
     </Pressable>
@@ -24,9 +34,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 9,
-    width: 287,
-    height: 56,
-    paddingHorizontal: 24,
   },
 });

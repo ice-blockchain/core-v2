@@ -12,6 +12,9 @@ export const Routes = {
     NicknameReserved: 'Sheet/NicknameReserved',
     IdentityKeyNameNote: 'Sheet/IdentityKeyNameNote',
     VerifyPasskey: 'Sheet/VerifyPasskey',
+    LinkDevice: 'Sheet/LinkDevice',
+    VerifyOnOtherDevice: 'Sheet/VerifyOnOtherDevice',
+    AddPasskeyCredentials: 'Sheet/AddPasskeyCredentials',
   },
 
   Auth: {

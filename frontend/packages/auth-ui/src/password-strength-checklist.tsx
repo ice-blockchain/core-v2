@@ -1,7 +1,6 @@
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
-import { Text, useTheme } from "@ion/ui";
-import { CheckIcon } from "./check-icon";
-import { CrossIcon } from "./cross-icon";
+import { Icon, Text, useTheme } from "@ion/ui";
 
 interface PasswordRule {
   label: string;
@@ -13,13 +12,18 @@ interface PasswordStrengthChecklistProps {
 }
 
 export function PasswordStrengthChecklist({ rules }: PasswordStrengthChecklistProps) {
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
+  const dynamicStyles = useMemo(() => ({
+    container: { gap: scale.scaleSize(6) },
+    row: { ...styles.row, gap: scale.scaleSize(6) },
+  }), [scale]);
+  const iconSize = scale.scaleSize(16);
 
   return (
-    <View style={styles.container}>
+    <View style={dynamicStyles.container}>
       {rules.map((rule) => (
-        <View key={rule.label} style={styles.row}>
-          {rule.isMet ? <CheckIcon /> : <CrossIcon />}
+        <View key={rule.label} style={dynamicStyles.row}>
+          <Icon name={rule.isMet ? "password-check-pass" : "password-check-fail"} size={iconSize} />
           <Text variant="caption2" color={colors.primaryText}>{rule.label}</Text>
         </View>
       ))}
@@ -28,12 +32,8 @@ export function PasswordStrengthChecklist({ rules }: PasswordStrengthChecklistPr
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 6,
-  },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
   },
 });

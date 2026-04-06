@@ -2,11 +2,15 @@
 
 import type { ComponentType } from "react";
 
+import { ActionLoginLinkaccountIcon } from "./generated/ActionLoginLinkaccountIcon";
+import { ActionWalletAddpasskeyIcon } from "./generated/ActionWalletAddpasskeyIcon";
 import { ActionWalletPasskeyIcon } from "./generated/ActionWalletPasskeyIcon";
 import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
+import { BlockEyeOffIcon } from "./generated/BlockEyeOffIcon";
+import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
@@ -30,6 +34,7 @@ import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
+import { FieldPassIcon } from "./generated/FieldPassIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
 import { HomeOffIcon } from "./generated/HomeOffIcon";
 import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
@@ -41,6 +46,8 @@ import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
+import { PasswordCheckFailIcon } from "./generated/PasswordCheckFailIcon";
+import { PasswordCheckPassIcon } from "./generated/PasswordCheckPassIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
 import { PersonFollowingIcon } from "./generated/PersonFollowingIcon";
 import { PlusCreatechannelIcon } from "./generated/PlusCreatechannelIcon";
@@ -67,11 +74,15 @@ interface IconComponentProps {
 }
 
 export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
+  "action-login-linkaccount": ActionLoginLinkaccountIcon,
+  "action-wallet-addpasskey": ActionWalletAddpasskeyIcon,
   "action-wallet-passkey": ActionWalletPasskeyIcon,
   "articles": ArticlesIcon,
   "at-sign": AtSignIcon,
   "back-arrow": BackArrowIcon,
   "badge-verify": BadgeVerifyIcon,
+  "block-eye-off": BlockEyeOffIcon,
+  "block-eye-on": BlockEyeOnIcon,
   "button-next": ButtonNextIcon,
   "button-receive": ButtonReceiveIcon,
   "camera": CameraIcon,
@@ -95,6 +106,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
+  "field-pass": FieldPassIcon,
   "field-search": FieldSearchIcon,
   "home-off": HomeOffIcon,
   "icon-identitykey": IconIdentitykeyIcon,
@@ -106,6 +118,8 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "manage": ManageIcon,
   "name-reserved": NameReservedIcon,
   "news": NewsIcon,
+  "password-check-fail": PasswordCheckFailIcon,
+  "password-check-pass": PasswordCheckPassIcon,
   "person-add": PersonAddIcon,
   "person-following": PersonFollowingIcon,
   "plus-createchannel": PlusCreatechannelIcon,
