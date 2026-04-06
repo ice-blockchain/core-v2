@@ -90,14 +90,16 @@ Request
   | ADNLContextMiddleware   -- extracts X-ADNL-Address, X-ADNL-RLDP-ID from headers
   | CORS                    -- cors.Default() via gin-contrib/cors
   | Metrics                 -- http_requests_total, http_request_duration_seconds
-  | RateLimiter             -- global, per-IP, per-user-key token buckets
   | RPCParser               -- parses JSON-RPC body if POST /
   | RPCIntercept            -- StorageProviders rewrite, CreateBucket intercept
-  | FeeGuarantee            -- grants fee allowance for object CRUD
+  | FeeGuarantee            -- grants fee allowance for object CRUD (sets tx signer key)
+  | RateLimiter             -- global, per-IP, per-user-key token buckets
   | Logger                  -- structured JSON log per request
   v
 Handler (ProxySP, ProxyRPC, health-check, metrics)
 ```
+
+Note: RateLimiter runs **after** FeeGuarantee so that per-user-key rate limiting can use the tx signer address set by the fee guarantee middleware. Trusted proxy headers (`X-Forwarded-For`) are disabled -- `c.ClientIP()` always returns the actual `RemoteAddr`.
 
 ---
 
@@ -144,7 +146,7 @@ Client                         Proxy                          Greenfield RPC
 
 **Where:** `internal/middleware/rpc_intercept.go` -> `interceptCreateBucket()`
 
-**Trigger:** `broadcast_tx_*` JSON-RPC call containing a `MsgCreateBucket` where `bucket_name == lowercase(creator_hex_address)`
+**Trigger:** `broadcast_tx_*` JSON-RPC call containing exactly one message: `MsgCreateBucket` where `bucket_name == lowercase(creator_hex_address)`
 
 ```
 Client                         Proxy                          Greenfield Chain
@@ -183,7 +185,7 @@ Client                         Proxy                          Greenfield Chain
 
 **Where:** `internal/middleware/broadcast_intercept.go` -> `interceptFeeAllowance()`
 
-**Trigger:** Simulate or `broadcast_tx_*` containing one of these messages, where `bucket_name == creator_hex_address` AND `fee_granter == proxy_address`:
+**Trigger:** `broadcast_tx_sync` or `broadcast_tx_commit` containing one or more of these messages, where **all** messages target the signer's own bucket (`bucket_name == creator_hex_address`) AND `fee_granter == proxy_address`:
 
 | Message Type | Description |
 |---|---|
@@ -221,10 +223,15 @@ Client                         Proxy                          Greenfield Chain
 
 **Does NOT abort:** The request continues to upstream after the grant succeeds.
 
+**Excluded request types:**
+- `broadcast_tx_async` -- returns before chain confirmation, grant could be wasted
+- Simulate (`/cosmos.tx.v1beta1.Service/Simulate`) -- carries unverified placeholder signatures; the initial fee grant is created during bucket provisioning instead
+
 **Fee allowance parameters:**
-- Spend limit: configurable via `GREENFIELD_FEE_GRANT_AMOUNT_BNB` (default `0.001`)
+- Spend limit: configurable via `GREENFIELD_FEE_GRANT_AMOUNT_BNB` (default `0.001`, max `1` BNB)
 - Expiration: 5 minutes
 - Message whitelist: only the 5 message types above
+- Deduplication: 10-second local cache prevents repeated on-chain grants for the same address (stale entries evicted every 30s)
 
 ---
 
@@ -246,7 +253,7 @@ Client request:  GET /sp/{base64(https://sp1.example.com)}/object/foo
 ```
 
 **Validation:**
-- Only HTTPS SP endpoints allowed (unless `allowInsecureSP` flag is set)
+- Scheme allowlist: HTTPS always accepted; HTTP only when `allowInsecureSP` flag is set; all other schemes (`file://`, `gopher://`, etc.) are rejected
 - Target host must be in the cached SP list (`IsKnownSPHost`)
 - Host header must match or be a subdomain of the decoded SP origin
 - Fail-closed: if validation is unavailable, request is rejected
@@ -300,7 +307,9 @@ All on-chain transactions are serialized through a context-aware mutex (`interna
 | `CreateBucket` | CreateBucket intercept | Creates bucket owned by proxy, with user's address as name |
 | `PutBucketPolicy` | After CreateBucket | Grants object CRUD permissions to the user |
 | `ToggleSPAsDelegatedAgent` | After PutBucketPolicy | Enables SP to act as delegated agent for the bucket |
-| `GrantAllowance` | Fee guarantee middleware | Short-lived fee grant so user can broadcast at proxy's expense |
+| `GrantAllowance` | After bucket setup + fee guarantee middleware | Short-lived fee grant so user can broadcast at proxy's expense |
+
+**Initial fee grant:** `EnsureBucket` grants a fee allowance to the creator immediately after bucket setup (permissions + delegated agent). This ensures the SDK can simulate operations right away. Subsequent grants are triggered by the fee guarantee middleware on sync broadcasts.
 
 **Bucket provisioning details (`internal/greenfield/bucket.go`):**
 - Buckets are named after the user's lowercase hex address (without `0x`)
@@ -318,14 +327,13 @@ All intercepted transactions are verified before the proxy takes any on-chain ac
 
 **Broadcast path (full ecrecover):**
 1. Decode `TxRaw` -> extract `AuthInfo` pubkey
-2. Fetch account number from chain (cached permanently)
-3. Compute EIP-712 sign bytes
-4. Recover signer address via secp256k1 ecrecover
-5. Compare recovered address against declared creator
+2. Validate signature length (65 bytes)
+3. Fetch account number from chain (cached permanently)
+4. Compute EIP-712 sign bytes (tries standard + Altai scheme)
+5. Recover signer address via secp256k1 ecrecover
+6. Compare recovered address against declared creator
 
-**Simulate path (pubkey extraction only):**
-- Simulate requests may carry placeholder signatures
-- Signer address is extracted from `AuthInfo` pubkeys directly (no ecrecover)
+Fee grants and bucket creation require full ecrecover verification. Simulate requests are not used for fee grant decisions.
 
 Implementation: `internal/greenfield/tx_signer.go`, `internal/greenfield/ecrecover.go`
 
@@ -338,7 +346,7 @@ Implementation: `internal/greenfield/tx_signer.go`, `internal/greenfield/ecrecov
 | Variable | Type | Description |
 |---|---|---|
 | `GREENFIELD_RPC_ENDPOINT` | URL | Upstream Greenfield RPC endpoint |
-| `GREENFIELD_PRIVATE_KEY` | `0x`-prefixed hex | Proxy wallet's private key for signing on-chain tx |
+| `GREENFIELD_PRIVATE_KEY` | `0x`-prefixed hex (32 bytes) | Proxy wallet's private key for signing on-chain tx |
 | `GREENFIELD_CHAIN_ID` | integer | Greenfield network chain ID |
 | `ADNL_PRIVATE_KEY` | hex string | Ed25519 seed defining the ADNL identity (auto-generated in `development`) |
 
@@ -346,7 +354,7 @@ Implementation: `internal/greenfield/tx_signer.go`, `internal/greenfield/ecrecov
 
 | Variable | Default | Description |
 |---|---|---|
-| `GREENFIELD_FEE_GRANT_AMOUNT_BNB` | `0.001` | BNB spend limit per fee grant |
+| `GREENFIELD_FEE_GRANT_AMOUNT_BNB` | `0.001` | BNB spend limit per fee grant (must be positive, max 1 BNB) |
 | `PORT` | `3000` | TCP + ADNL listen port |
 | `METRICS_PORT` | *(required in prod)* | Separate port for `/metrics`. If unset in dev, served on main port |
 | `ADNL_CONFIG_URL` | `https://cdn.ice.io/testnet/global.config.json` | DHT bootstrap config URL |

@@ -12,6 +12,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
@@ -68,6 +69,10 @@ func (*mockedProvisioner) GetAccountNumber(context.Context, string) (uint64, err
 
 func (*mockedProvisioner) ProxyAddress() string {
 	return testProxyAddr.String()
+}
+
+func (*mockedProvisioner) StartGrantCleanup(time.Duration) func() {
+	return func() {}
 }
 
 func TestMain(m *testing.M) {

@@ -32,6 +32,7 @@ type (
 		IsKnownSPHost(ctx context.Context, host string) (bool, error)
 		EnsureBucket(ctx context.Context, bucketName string, creatorAddr string) (string, error)
 		GrantFeeAllowance(ctx context.Context, granteeAddr string) error
+		StartGrantCleanup(interval time.Duration) func()
 	}
 )
 
@@ -41,6 +42,10 @@ const (
 
 	// FeeGrantExpiration is how long each fee grant lasts.
 	FeeGrantExpiration = 5 * time.Minute
+
+	// feeGrantDedupTTL is the deduplication window for fee grant requests.
+	// Within this window, repeated requests for the same address are skipped.
+	feeGrantDedupTTL = 10 * time.Second
 )
 
 // bucketActions are granted on the bucket resource itself.
@@ -74,6 +79,9 @@ type bucketProvisioner struct {
 	// are immutable once assigned, so entries never expire.
 	accountNumbers *xsync.Map[string, uint64]
 
+	// recentGrants deduplicates fee grant requests within feeGrantDedupTTL.
+	recentGrants *xsync.Map[string, time.Time]
+
 	// txLock serialises all on-chain transactions broadcast from the
 	// proxy wallet. The Greenfield SDK client does not handle
 	// concurrent broadcasts — each tx requires a monotonically
@@ -98,15 +106,24 @@ func NewBucketProvisioner(client gnfdclient.IClient, logger *slog.Logger, cfg *c
 		known:          xsync.NewMap[string, struct{}](),
 		feeGrantAmount: amount,
 		accountNumbers: xsync.NewMap[string, uint64](),
+		recentGrants:   xsync.NewMap[string, time.Time](),
 		txLock:         ctxlock.New(l, 3*time.Second),
 	}, nil
 }
 
 // parseBNBToWei converts a BNB decimal string (e.g. "0.001") to wei.
+// Rejects non-positive values and amounts exceeding 1 BNB.
 func parseBNBToWei(bnb string) (sdkmath.Int, error) {
 	dec, err := sdkmath.LegacyNewDecFromStr(bnb)
 	if err != nil {
 		return sdkmath.Int{}, fmt.Errorf("parse BNB amount: %w", err)
+	}
+	if !dec.IsPositive() {
+		return sdkmath.Int{}, fmt.Errorf("fee grant amount must be positive, got %s", bnb)
+	}
+	maxBNB := sdkmath.LegacyNewDec(1)
+	if dec.GT(maxBNB) {
+		return sdkmath.Int{}, fmt.Errorf("fee grant amount %s exceeds maximum of 1 BNB", bnb)
 	}
 	weiPerBNB := sdkmath.LegacyNewDec(1e18)
 	return dec.Mul(weiPerBNB).TruncateInt(), nil
@@ -205,16 +222,21 @@ func (bp *bucketProvisioner) EnsureBucket(ctx context.Context, bucketName string
 		return "", nil
 	}
 
-	exists, err := bp.bucketExists(ctx, bucketName)
-	if err != nil {
-		return "", fmt.Errorf("check bucket existence: %w", err)
-	}
-
 	// Serialise all on-chain transactions from the proxy wallet.
 	if err := bp.txLock.Lock(ctx, "EnsureBucket:"+bucketName); err != nil {
 		return "", fmt.Errorf("acquire tx lock: %w", err)
 	}
 	defer bp.txLock.Unlock()
+
+	// Re-check after lock acquisition (another goroutine may have created it).
+	if _, ok := bp.known.Load(bucketName); ok {
+		return "", nil
+	}
+
+	exists, err := bp.bucketExists(ctx, bucketName)
+	if err != nil {
+		return "", fmt.Errorf("check bucket existence: %w", err)
+	}
 
 	var txHash string
 	if !exists {
@@ -232,6 +254,12 @@ func (bp *bucketProvisioner) EnsureBucket(ctx context.Context, bucketName string
 	}
 	if err := bp.enableDelegatedAgent(ctx, bucketName); err != nil {
 		return "", fmt.Errorf("enable delegated agent: %w", err)
+	}
+
+	// Grant an initial fee allowance so the user can immediately
+	// simulate and broadcast operations on their new bucket.
+	if err := bp.grantFeeAllowanceLocked(ctx, creatorAddr); err != nil {
+		return "", fmt.Errorf("grant initial fee allowance: %w", err)
 	}
 
 	bp.known.Store(bucketName, struct{}{})

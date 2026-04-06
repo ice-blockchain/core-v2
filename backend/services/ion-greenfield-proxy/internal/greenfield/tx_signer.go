@@ -162,6 +162,9 @@ func getSignBytesAltai(signerData signing.SignerData, tx sdk.Tx) ([]byte, error)
 // ecrecoverVerify recovers the pubkey from (msg, sig) and compares it
 // against the expected pubkey. Mirrors the SDK's verifyEip712Signature.
 func ecrecoverVerify(pubKey cryptotypes.PubKey, sig, msg []byte) error {
+	if len(sig) != ethcrypto.SignatureLength {
+		return fmt.Errorf("invalid signature length: got %d, want %d", len(sig), ethcrypto.SignatureLength)
+	}
 	if sig[ethcrypto.RecoveryIDOffset] == 27 || sig[ethcrypto.RecoveryIDOffset] == 28 {
 		sig[ethcrypto.RecoveryIDOffset] -= 27
 	}

@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 
@@ -115,7 +114,7 @@ func decodeTxRaw(txBytes []byte) (*decodedTx, error) {
 				dt.FeeGranter = authInfo.Fee.Granter
 			}
 		} else {
-			slog.Error("cannot decode AuthInfo from TxRaw, proceeding without fee granter info", "error", err)
+			return nil, fmt.Errorf("decode AuthInfo: %w", err)
 		}
 	}
 

@@ -31,7 +31,7 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner
 	if parsed == nil || provisioner == nil {
 		return FeeGuaranteeSkipped
 	}
-	if !parsed.IsBroadcast() && !parsed.IsABCIQuery("/cosmos.tx.v1beta1.Service/Simulate") {
+	if !parsed.IsSyncBroadcast() {
 		return FeeGuaranteeSkipped
 	}
 
@@ -44,53 +44,62 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner
 		return FeeGuaranteeSkipped
 	}
 
+	// First pass: validate ALL messages are recognized and target the
+	// signer's own bucket. Reject if any message fails.
+	var validatedBucket string
 	for _, a := range tx.Messages {
 		addr, bucket, ok := extractUserBucketMsg(a)
 		if !ok {
-			continue
+			return FeeGuaranteeSkipped
 		}
-
 		creatorHex := strings.ToLower(strings.TrimPrefix(addr, "0x"))
 		if bucket != creatorHex {
-			continue
-		}
-
-		creatorAddr := "0x" + creatorHex
-
-		signer, err := verifyTxSigner(c.Request.Context(), tx, chainID, provisioner, parsed.IsBroadcast())
-		if err != nil {
-			logger.Warn("fee allowance signature verification failed",
-				"creator", creatorAddr,
-				"error", err,
-			)
 			return FeeGuaranteeSkipped
 		}
-		if !strings.EqualFold(signer, creatorAddr) {
-			logger.Warn("fee allowance signer mismatch",
-				"creator", creatorAddr,
-				"signer", signer,
-			)
+		if validatedBucket == "" {
+			validatedBucket = bucket
+		} else if validatedBucket != bucket {
 			return FeeGuaranteeSkipped
 		}
-
-		c.Set(ContextKeyTxSigner, signer)
-		logger.Info("granting fee allowance",
-			"type", a.TypeUrl,
-			"creator", creatorAddr,
-			"bucket", bucket,
-			"verified_signer", signer,
-		)
-
-		if err := provisioner.GrantFeeAllowance(c.Request.Context(), creatorAddr); err != nil {
-			logger.Error("failed to grant fee allowance",
-				"grantee", creatorAddr,
-				"error", err,
-			)
-			return FeeGuaranteeFailed
-		}
-		return FeeGuaranteeGranted
 	}
-	return FeeGuaranteeSkipped
+
+	// All messages validated. Use first message's creator for verification.
+	firstAddr, _, _ := extractUserBucketMsg(tx.Messages[0])
+	creatorHex := strings.ToLower(strings.TrimPrefix(firstAddr, "0x"))
+	creatorAddr := "0x" + creatorHex
+
+	signer, err := verifyTxSigner(c.Request.Context(), tx, chainID, provisioner, true)
+	if err != nil {
+		logger.Warn("fee allowance signature verification failed",
+			"creator", creatorAddr,
+			"error", err,
+		)
+		return FeeGuaranteeSkipped
+	}
+	if !strings.EqualFold(signer, creatorAddr) {
+		logger.Warn("fee allowance signer mismatch",
+			"creator", creatorAddr,
+			"signer", signer,
+		)
+		return FeeGuaranteeSkipped
+	}
+
+	c.Set(ContextKeyTxSigner, signer)
+	logger.Info("granting fee allowance",
+		"creator", creatorAddr,
+		"bucket", validatedBucket,
+		"message_count", len(tx.Messages),
+		"verified_signer", signer,
+	)
+
+	if err := provisioner.GrantFeeAllowance(c.Request.Context(), creatorAddr); err != nil {
+		logger.Error("failed to grant fee allowance",
+			"grantee", creatorAddr,
+			"error", err,
+		)
+		return FeeGuaranteeFailed
+	}
+	return FeeGuaranteeGranted
 }
 
 // extractUserBucketMsg returns (address, bucketName, true) for messages

@@ -30,10 +30,12 @@ func WriteError(c *gin.Context, err error) {
 	if errors.As(err, &appErr) {
 		c.Error(err) // Log the error in Gin's context.
 		c.JSON(appErr.StatusCode, appErr)
+		c.Abort()
 		return
 	}
 	c.JSON(http.StatusInternalServerError, &AppError{
 		Code:    "INTERNAL_ERROR",
 		Message: "internal server error",
 	})
+	c.Abort()
 }

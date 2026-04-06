@@ -159,6 +159,11 @@ func interceptCreateBucket(logger *slog.Logger, provisioner gf.BucketProvisioner
 		return
 	}
 
+	// Only intercept single-message transactions for bucket creation.
+	if len(tx.Messages) != 1 {
+		return
+	}
+
 	bucket := findCreateBucketMsg(tx.Messages)
 	if bucket == nil {
 		return

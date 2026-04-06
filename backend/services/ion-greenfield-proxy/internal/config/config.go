@@ -67,8 +67,7 @@ func Load(adnlKey, dnsKey, dnsName string) (*Config, error) {
 				return nil, fmt.Errorf("failed to generate random ADNL key: %w", err)
 			}
 			cfg.ADNLPrivateKey = hex.EncodeToString(seed)
-			slog.Info("ADNL_PRIVATE_KEY not set — generated ephemeral key for development",
-				"private_key", cfg.ADNLPrivateKey)
+			slog.Info("ADNL_PRIVATE_KEY not set — generated ephemeral key for development")
 		} else {
 			errs = append(errs, "ADNL_PRIVATE_KEY (or --adnl-key) is required")
 		}
@@ -139,8 +138,12 @@ func requireHex(errs []string, key string, prefixed bool) (string, []string) {
 		return "", append(errs, key+" must be 0x-prefixed hex")
 	}
 
-	if _, err := hex.DecodeString(strings.TrimPrefix(val, "0x")); err != nil {
+	decoded, err := hex.DecodeString(strings.TrimPrefix(val, "0x"))
+	if err != nil {
 		return "", append(errs, key+" must be valid hex")
+	}
+	if len(decoded) != 32 {
+		return "", append(errs, key+" must be 32 bytes (64 hex chars)")
 	}
 
 	return val, errs

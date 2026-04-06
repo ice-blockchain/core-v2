@@ -49,8 +49,8 @@ func ProxySP(
 			return
 		}
 
-		// Only allow proxying to HTTPS SP endpoints.
-		if !allowInsecure && spURL.Scheme != "https" {
+		// Only allow HTTPS, or HTTP when explicitly permitted.
+		if spURL.Scheme != "https" && !(allowInsecure && spURL.Scheme == "http") {
 			apperror.WriteError(c, apperror.New(http.StatusForbidden, "INVALID_SP_SCHEME", "only HTTPS storage providers are allowed"))
 			return
 		}

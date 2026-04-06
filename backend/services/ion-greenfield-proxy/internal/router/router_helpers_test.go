@@ -61,8 +61,9 @@ func newTestProxy(t *testing.T) *httptest.Server {
 	gin.SetMode(gin.TestMode)
 	r, err := router.New(router.Params{
 		Config: &config.Config{
-			GreenfieldRPCEndpoint: "http://127.0.0.1:1",
-			Env:                   "development",
+			GreenfieldRPCEndpoint:    "http://127.0.0.1:1",
+			GreenfieldFeeGrantAmount: "0.001",
+			Env:                      "development",
 		},
 		Key: &adnl.Key{Address: testADNLAddress},
 	})

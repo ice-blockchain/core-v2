@@ -27,6 +27,25 @@ var allowedFeeGrantMsgs = []string{
 // the proxy as fee payer. Only the message types in allowedFeeGrantMsgs
 // are permitted; the chain rejects anything else.
 func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr string) error {
+	if lastGrant, ok := bp.recentGrants.Load(granteeAddr); ok {
+		if time.Since(lastGrant) < feeGrantDedupTTL {
+			bp.logger.Debug("fee grant dedup hit, skipping", "grantee", granteeAddr)
+			return nil
+		}
+	}
+
+	// Serialise with other on-chain transactions from the proxy wallet.
+	if err := bp.txLock.Lock(ctx, "GrantFeeAllowance:"+granteeAddr); err != nil {
+		return fmt.Errorf("acquire tx lock: %w", err)
+	}
+	defer bp.txLock.Unlock()
+
+	return bp.grantFeeAllowanceLocked(ctx, granteeAddr)
+}
+
+// grantFeeAllowanceLocked performs the on-chain fee grant.
+// Caller must hold txLock.
+func (bp *bucketProvisioner) grantFeeAllowanceLocked(ctx context.Context, granteeAddr string) error {
 	addr := strings.TrimPrefix(granteeAddr, "0x")
 
 	expiration := time.Now().Add(FeeGrantExpiration)
@@ -48,16 +67,11 @@ func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr 
 		"allowed_msgs", allowedFeeGrantMsgs,
 	)
 
-	// Serialise with other on-chain transactions from the proxy wallet.
-	if err := bp.txLock.Lock(ctx, "GrantFeeAllowance:"+granteeAddr); err != nil {
-		return fmt.Errorf("acquire tx lock: %w", err)
-	}
-	defer bp.txLock.Unlock()
-
 	txHash, err := bp.client.GrantAllowance(ctx, addr, allowance, gnfdsdktypes.TxOption{})
 	if err != nil {
 		if strings.Contains(err.Error(), "fee allowance already exists") {
 			bp.logger.Debug("fee allowance already active", "grantee", granteeAddr)
+			bp.recentGrants.Store(granteeAddr, time.Now())
 			return nil
 		}
 		return fmt.Errorf("GrantAllowance: %w", err)
@@ -67,6 +81,32 @@ func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr 
 		return fmt.Errorf("wait for GrantAllowance tx: %w", err)
 	}
 
+	bp.recentGrants.Store(granteeAddr, time.Now())
 	bp.logger.Info("fee allowance granted", "grantee", granteeAddr, "tx", txHash)
 	return nil
+}
+
+// StartGrantCleanup starts a background goroutine that evicts stale
+// fee grant dedup entries. Call the returned function to stop it.
+func (bp *bucketProvisioner) StartGrantCleanup(interval time.Duration) func() {
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				cutoff := time.Now().Add(-feeGrantDedupTTL)
+				bp.recentGrants.Range(func(key string, ts time.Time) bool {
+					if ts.Before(cutoff) {
+						bp.recentGrants.Delete(key)
+					}
+					return true
+				})
+			case <-done:
+				return
+			}
+		}
+	}()
+	return func() { close(done) }
 }

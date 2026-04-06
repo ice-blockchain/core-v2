@@ -74,6 +74,12 @@ func (p *Body) IsBroadcast() bool {
 	return false
 }
 
+// IsSyncBroadcast returns true only for sync and commit broadcast methods.
+// Excludes broadcast_tx_async which returns before chain confirmation.
+func (p *Body) IsSyncBroadcast() bool {
+	return p.Method == "broadcast_tx_sync" || p.Method == "broadcast_tx_commit"
+}
+
 // ParamString extracts a string value from params by key path.
 func (p *Body) ParamString(keys ...string) (string, error) {
 	return jsonparser.GetString(p.Raw, append([]string{"params"}, keys...)...)

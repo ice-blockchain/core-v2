@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 
 	"ion-greenfield-proxy/internal/adnl"
 	"ion-greenfield-proxy/internal/apperror"
@@ -58,19 +59,32 @@ func New(p Params) (*gin.Engine, error) {
 	chainID := fmt.Sprintf("greenfield_%d-1", p.Config.GreenfieldChainID)
 	adnlAddress := p.Key.Address
 
-	feeGrantBNB, _ := strconv.ParseFloat(p.Config.GreenfieldFeeGrantAmount, 64)
+	feeGrantBNB, err := strconv.ParseFloat(p.Config.GreenfieldFeeGrantAmount, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid GREENFIELD_FEE_GRANT_AMOUNT_BNB %q: %w", p.Config.GreenfieldFeeGrantAmount, err)
+	}
 
 	rateLimiterMw, stopRateLimiterCleanup := middleware.RateLimiter(logger, p.Config, p.MetricsCollectors)
+
+	var stopGrantCleanup func()
+	if p.Provisioner != nil {
+		stopGrantCleanup = p.Provisioner.StartGrantCleanup(30 * time.Second)
+	}
+
 	if p.Lifecycle != nil {
 		p.Lifecycle.Append(fx.Hook{
 			OnStop: func(ctx context.Context) error {
 				stopRateLimiterCleanup()
+				if stopGrantCleanup != nil {
+					stopGrantCleanup()
+				}
 				return nil
 			},
 		})
 	}
 
 	r := gin.New()
+	r.SetTrustedProxies(nil)
 	r.Use(
 		adnl.ADNLContextMiddleware(),
 		middleware.CORS(),
@@ -79,10 +93,10 @@ func New(p Params) (*gin.Engine, error) {
 		r.Use(middleware.Metrics(p.MetricsCollectors))
 	}
 	r.Use(
-		rateLimiterMw,
 		middleware.RPCParser(),
 		middleware.RPCIntercept(logger, p.Config.GreenfieldRPCEndpoint, adnlAddress, p.Provisioner, chainID),
 		middleware.FeeGuarantee(logger, p.Provisioner, proxyAddr, chainID, p.MetricsCollectors, feeGrantBNB),
+		rateLimiterMw,
 		middleware.Logger(logger),
 	)
 

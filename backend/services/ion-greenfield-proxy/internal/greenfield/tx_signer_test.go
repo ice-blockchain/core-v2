@@ -371,12 +371,20 @@ func TestEcrecoverVerify_handles_metamask_v_offset(t *testing.T) {
 	require.NoError(t, ecrecoverVerify(pub, sig, msg))
 }
 
-func TestEcrecoverVerify_short_signature_panics(t *testing.T) {
+func TestEcrecoverVerify_short_signature_returns_error(t *testing.T) {
 	t.Parallel()
 
 	_, pub, _ := testKey(t)
 
-	require.Panics(t, func() {
-		_ = ecrecoverVerify(pub, []byte{1, 2, 3}, ethcrypto.Keccak256([]byte("x")))
-	})
+	err := ecrecoverVerify(pub, []byte{1, 2, 3}, ethcrypto.Keccak256([]byte("x")))
+	require.ErrorContains(t, err, "invalid signature length")
+}
+
+func TestEcrecoverVerify_empty_signature_returns_error(t *testing.T) {
+	t.Parallel()
+
+	_, pub, _ := testKey(t)
+
+	err := ecrecoverVerify(pub, nil, ethcrypto.Keccak256([]byte("x")))
+	require.ErrorContains(t, err, "invalid signature length")
 }
