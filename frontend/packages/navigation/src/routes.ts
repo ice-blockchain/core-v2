@@ -25,5 +25,6 @@ export const Routes = {
     SelectLanguages: 'SelectLanguages',
     DiscoverCreators: 'DiscoverCreators',
     Notifications: 'Notifications',
+    FullAuthFlow: 'FullAuthFlow',
   },
 } as const;
