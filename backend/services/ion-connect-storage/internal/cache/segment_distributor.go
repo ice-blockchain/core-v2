@@ -70,7 +70,7 @@ func (d *segmentDistributor) resolveOffset(absOffset int64) (string, int64, int6
 			continue
 		}
 		fileEnd := int64(sum)
-		if absOffset < fileEnd {
+		if absOffset >= int64(f.Offset) && absOffset < fileEnd {
 			localOffset := absOffset - int64(f.Offset)
 			remaining := int64(f.Size) - localOffset
 			return f.Name, localOffset, remaining
@@ -83,7 +83,11 @@ func (d *segmentDistributor) openFile(name string) (*os.File, error) {
 	if f, ok := d.files[name]; ok {
 		return f, nil
 	}
-	f, err := os.OpenFile(filepath.Join(d.dirPath, name), os.O_WRONLY, 0o644)
+	fullPath := filepath.Join(d.dirPath, name)
+	if err := ensurePathInside(d.dirPath, fullPath); err != nil {
+		return nil, fmt.Errorf("path traversal in cache file: %w", err)
+	}
+	f, err := os.OpenFile(fullPath, os.O_WRONLY, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("open cache file %s: %w", name, err)
 	}
@@ -171,7 +175,11 @@ func (r *segmentFileReader) openFile(name string) (*os.File, error) {
 	if f, ok := r.files[name]; ok {
 		return f, nil
 	}
-	f, err := os.Open(filepath.Join(r.dirPath, name))
+	fullPath := filepath.Join(r.dirPath, name)
+	if err := ensurePathInside(r.dirPath, fullPath); err != nil {
+		return nil, fmt.Errorf("path traversal in cache file: %w", err)
+	}
+	f, err := os.Open(fullPath)
 	if err != nil {
 		return nil, fmt.Errorf("open cache file %s for read: %w", name, err)
 	}

@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
-	"crypto/ed25519"
 	"fmt"
 	"log/slog"
 
+	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
@@ -28,40 +28,40 @@ type PieceForwarder interface {
 
 // Handler implements TON Storage protocol RPC methods.
 type Handler struct {
-	metadataStore    *cache.MetadataStore
-	segmentCache     *cache.SegmentCache
-	fetcher          *greenfield.Fetcher
-	index            *index.Persister
-	ownershipChecker LocalOwnershipChecker
-	pieceForwarder   PieceForwarder
-	privateKey       ed25519.PrivateKey
-	logger           *slog.Logger
-	bagOpenFlight    singleflight.Group
+	metadataStore      *cache.MetadataStore
+	segmentCache       *cache.SegmentCache
+	fetcher            *greenfield.Fetcher
+	index              *index.Persister
+	ownershipChecker   LocalOwnershipChecker
+	pieceForwarder     PieceForwarder
+	overlayNodeBuilder func(overlayID []byte) (*overlay.Node, error)
+	logger             *slog.Logger
+	bagOpenFlight      singleflight.Group
 }
 
 // HandlerConfig holds dependencies for creating a Handler.
 type HandlerConfig struct {
-	MetadataStore    *cache.MetadataStore
-	SegmentCache     *cache.SegmentCache
-	Fetcher          *greenfield.Fetcher
-	Index            *index.Persister
-	OwnershipChecker LocalOwnershipChecker
-	PieceForwarder   PieceForwarder
-	PrivateKey       ed25519.PrivateKey
-	Logger           *slog.Logger
+	MetadataStore      *cache.MetadataStore
+	SegmentCache       *cache.SegmentCache
+	Fetcher            *greenfield.Fetcher
+	Index              *index.Persister
+	OwnershipChecker   LocalOwnershipChecker
+	PieceForwarder     PieceForwarder
+	OverlayNodeBuilder func(overlayID []byte) (*overlay.Node, error)
+	Logger             *slog.Logger
 }
 
 // NewHandler creates a storage protocol handler.
 func NewHandler(cfg HandlerConfig) *Handler {
 	return &Handler{
-		metadataStore:    cfg.MetadataStore,
-		segmentCache:     cfg.SegmentCache,
-		fetcher:          cfg.Fetcher,
-		index:            cfg.Index,
-		ownershipChecker: cfg.OwnershipChecker,
-		pieceForwarder:   cfg.PieceForwarder,
-		privateKey:       cfg.PrivateKey,
-		logger:           cfg.Logger,
+		metadataStore:      cfg.MetadataStore,
+		segmentCache:       cfg.SegmentCache,
+		fetcher:            cfg.Fetcher,
+		index:              cfg.Index,
+		ownershipChecker:   cfg.OwnershipChecker,
+		pieceForwarder:     cfg.PieceForwarder,
+		overlayNodeBuilder: cfg.OverlayNodeBuilder,
+		logger:             cfg.Logger,
 	}
 }
 

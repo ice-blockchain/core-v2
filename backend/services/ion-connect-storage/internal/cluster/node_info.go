@@ -29,6 +29,20 @@ func UnmarshalNodeInfo(data []byte) (NodeInfo, error) {
 	return info, nil
 }
 
+// ValidateNodeID rejects node IDs that could cause CRDT key injection.
+// Only alphanumeric characters, hyphens, and underscores are allowed.
+func ValidateNodeID(id string) error {
+	if id == "" {
+		return fmt.Errorf("node ID must not be empty")
+	}
+	for _, c := range id {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_') {
+			return fmt.Errorf("node ID contains invalid character: %c", c)
+		}
+	}
+	return nil
+}
+
 // CRDT key helpers.
 
 const (
@@ -66,7 +80,7 @@ func NodeInfoKey(nodeID string) string {
 
 // BlockKey returns the PebbleDB key for an IPLD block by CID bytes.
 func BlockKey(cidBytes []byte) string {
-	return prefixBlock + string(cidBytes)
+	return prefixBlock + hexEncode(cidBytes)
 }
 
 // FormatHeartbeat encodes a unix timestamp as a heartbeat value.

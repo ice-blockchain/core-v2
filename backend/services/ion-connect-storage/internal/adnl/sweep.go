@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	kClosest     = 7
-	queryTimeout = 3 * time.Second
+	kClosest                     = 7
+	queryTimeout                 = 3 * time.Second
+	maxConcurrentKademliaQueries = 20
 )
 
 type seedNode struct {
@@ -172,11 +173,17 @@ func (s *sweeper) querySeeds(ctx context.Context, targetKey []byte, checked *syn
 	var result []foundNode
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+	sem := make(chan struct{}, maxConcurrentKademliaQueries)
 
 	for _, seed := range s.seedNodes {
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			break
+		}
 		wg.Add(1)
 		go func(sn seedNode) {
-			defer wg.Done()
+			defer func() { <-sem; wg.Done() }()
 			nodes := s.findNodesVia(ctx, sn.addr, sn.serverKey, targetKey, checked)
 			mu.Lock()
 			result = append(result, nodes...)
@@ -191,11 +198,17 @@ func (s *sweeper) queryNodes(ctx context.Context, nodes []foundNode, targetKey [
 	var result []foundNode
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+	sem := make(chan struct{}, maxConcurrentKademliaQueries)
 
 	for _, n := range nodes {
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			break
+		}
 		wg.Add(1)
 		go func(fn foundNode) {
-			defer wg.Done()
+			defer func() { <-sem; wg.Done() }()
 			addr := fn.peer.RemoteAddr()
 			key := fn.peer.GetPubKey()
 			discovered := s.findNodesVia(ctx, addr, key, targetKey, checked)

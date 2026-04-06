@@ -101,6 +101,9 @@ func (c *Coordinator) Transport() *ClusterTransport {
 
 // NewCoordinator creates a cluster coordinator. Call Start() to begin operation.
 func NewCoordinator(cfg CoordinatorConfig) (*Coordinator, error) {
+	if err := ValidateNodeID(cfg.NodeID); err != nil {
+		return nil, fmt.Errorf("invalid node ID: %w", err)
+	}
 	cfg.applyDefaults()
 
 	pebbleDS := NewPebbleDatastore(cfg.DB, "crdt/")

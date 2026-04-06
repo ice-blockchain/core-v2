@@ -141,6 +141,11 @@ func (c *SegmentCache) HasBag(bagID [32]byte) bool {
 	return c.lru.Contains(bagID)
 }
 
+// handleEviction removes cache files on TTL expiry. On Linux, RemoveAll on
+// an open fd unlinks the name but data stays accessible until the fd is closed.
+// Concurrent readers/writers that already hold an fd are unaffected; those that
+// attempt to open after removal get os.ErrNotExist, which is handled gracefully
+// by the segment distributor and reader.
 func (c *SegmentCache) handleEviction(bagID [32]byte, bag *cachedBag) {
 	if err := os.RemoveAll(bag.dirPath); err != nil {
 		c.logger.Warn("failed to remove cache dir", "path", bag.dirPath, "error", err)

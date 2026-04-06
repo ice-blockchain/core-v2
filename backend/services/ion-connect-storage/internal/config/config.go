@@ -85,6 +85,19 @@ func Load() (Config, error) {
 	shardCount := parseInt("SHARD_COUNT", 1)
 	activeDHTLimit := parseInt("ACTIVE_DHT_LIMIT", 100000)
 
+	if shardCount <= 0 {
+		return Config{}, fmt.Errorf("SHARD_COUNT must be positive, got %d", shardCount)
+	}
+	if shardIndex < 0 || shardIndex >= shardCount {
+		return Config{}, fmt.Errorf("SHARD_INDEX must be in [0, SHARD_COUNT), got %d/%d", shardIndex, shardCount)
+	}
+	if activeDHTLimit <= 0 || activeDHTLimit > 10_000_000 {
+		return Config{}, fmt.Errorf("ACTIVE_DHT_LIMIT must be in (0, 10000000], got %d", activeDHTLimit)
+	}
+	if cacheTTL <= 0 {
+		return Config{}, fmt.Errorf("CACHE_TTL must be positive, got %v", cacheTTL)
+	}
+
 	return Config{
 		AdnlPrivateKey:        adnlKey,
 		AdnlPort:              adnlPort,

@@ -59,6 +59,9 @@ func (s *MetadataStore) GetBagMetadata(ctx context.Context, bagID [32]byte) (*bo
 	}
 
 	key := hex.EncodeToString(bagID[:])
+	// Use WithoutCancel so the first caller's cancellation doesn't poison
+	// coalesced requests sharing the same singleflight key.
+	bgCtx := context.WithoutCancel(ctx)
 	val, err, _ := s.flight.Do(key, func() (interface{}, error) {
 		// Re-check DB under singleflight: another caller may have cached it.
 		rawBoC, found, err := s.loadFromDB(bagID)
@@ -68,12 +71,16 @@ func (s *MetadataStore) GetBagMetadata(ctx context.Context, bagID [32]byte) (*bo
 		if found {
 			return boc.ParseIonStorageBoC(rawBoC, s.logger)
 		}
-		return s.fetchAndCache(ctx, bagID)
+		return s.fetchAndCache(bgCtx, bagID)
 	})
 	if err != nil {
 		return nil, err
 	}
-	return val.(*boc.BagMetadata), nil
+	meta, ok := val.(*boc.BagMetadata)
+	if !ok {
+		return nil, fmt.Errorf("metadata fetch returned unexpected type %T", val)
+	}
+	return meta, nil
 }
 
 // DeleteBagMetadata removes cached metadata for a bag.

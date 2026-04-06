@@ -9,7 +9,10 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
-const ionStorageVersion = 0x02
+const (
+	ionStorageVersion = 0x02
+	maxBocSectionSize = 100 << 20 // 100 MB max per BoC section
+)
 
 // BagMetadata holds parsed .ionstorage BoC fields.
 type BagMetadata struct {
@@ -74,6 +77,9 @@ func parseTorrentInfoSection(data []byte, offset int, logger *slog.Logger) (*Bag
 		return nil, 0, fmt.Errorf("ionstorage truncated at torrent info length")
 	}
 	bocLen := int(binary.LittleEndian.Uint32(data[offset : offset+4]))
+	if bocLen > maxBocSectionSize {
+		return nil, 0, fmt.Errorf("torrent info BoC too large: %d bytes (max %d)", bocLen, maxBocSectionSize)
+	}
 	offset += 4
 	if offset+bocLen > len(data) {
 		return nil, 0, fmt.Errorf("ionstorage truncated: need %d, have %d", offset+bocLen, len(data))
@@ -90,6 +96,9 @@ func parseMerkleTreeSection(data []byte, offset int) (*cell.Cell, int, error) {
 		return nil, 0, fmt.Errorf("ionstorage truncated at merkle tree length")
 	}
 	treeLen := int(binary.LittleEndian.Uint32(data[offset : offset+4]))
+	if treeLen > maxBocSectionSize {
+		return nil, 0, fmt.Errorf("merkle tree BoC too large: %d bytes (max %d)", treeLen, maxBocSectionSize)
+	}
 	offset += 4
 	if offset+treeLen > len(data) {
 		return nil, 0, fmt.Errorf("ionstorage truncated at merkle tree data")

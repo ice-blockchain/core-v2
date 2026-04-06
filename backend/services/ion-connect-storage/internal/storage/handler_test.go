@@ -19,6 +19,7 @@ import (
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/index"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/storage"
 	"github.com/stretchr/testify/require"
+	tonoverlay "github.com/xssnick/tonutils-go/adnl/overlay"
 )
 
 func testLogger() *slog.Logger {
@@ -150,17 +151,20 @@ func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Ha
 	populateSegmentCache(t, segmentCache, bagID, payload, headerBytes)
 
 	_, priv, _ := ed25519.GenerateKey(rand.Reader)
+	nodeBuilder := func(overlayID []byte) (*tonoverlay.Node, error) {
+		return tonoverlay.NewNode(overlayID, priv)
+	}
 
 	singleNode := cluster.NewSingleNodeCoordinator("test-node", [32]byte{}, "127.0.0.1", 0)
 	h := storage.NewHandler(storage.HandlerConfig{
-		MetadataStore:    metadataStore,
-		SegmentCache:     segmentCache,
-		Fetcher:          fetcher,
-		Index:            persister,
-		OwnershipChecker: singleNode,
-		PieceForwarder:   singleNode,
-		PrivateKey:       priv,
-		Logger:           logger,
+		MetadataStore:      metadataStore,
+		SegmentCache:       segmentCache,
+		Fetcher:            fetcher,
+		Index:              persister,
+		OwnershipChecker:   singleNode,
+		PieceForwarder:     singleNode,
+		OverlayNodeBuilder: nodeBuilder,
+		Logger:             logger,
 	})
 	return h, bagID, meta
 }

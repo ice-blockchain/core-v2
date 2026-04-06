@@ -84,14 +84,14 @@ func main() {
 	}, logger)
 
 	storageHandler := storage.NewHandler(storage.HandlerConfig{
-		MetadataStore:    metadataStore,
-		SegmentCache:     segmentCache,
-		Fetcher:          fetcher,
-		Index:            persister,
-		OwnershipChecker: coord,
-		PieceForwarder:   coord,
-		PrivateKey:       server.PrivateKey(),
-		Logger:           logger,
+		MetadataStore:      metadataStore,
+		SegmentCache:       segmentCache,
+		Fetcher:            fetcher,
+		Index:              persister,
+		OwnershipChecker:   coord,
+		PieceForwarder:     coord,
+		OverlayNodeBuilder: server.NewOverlayNode,
+		Logger:             logger,
 	})
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
 	sessionInit := storage.NewSessionInitiator(storageHandler, logger)

@@ -14,14 +14,17 @@ const ownerQueryTimeout = 5 * time.Second
 // ClaimBag adds this node's ownership claim for a bag.
 // Writes dual keys: own/<bagID> -> nodeID and bynode/<nodeID>/<bagID> -> "".
 func (c *Coordinator) ClaimBag(ctx context.Context, bagID [32]byte) error {
-	ownerKey := ds.NewKey(OwnershipKey(bagID))
 	byNodeKey := ds.NewKey(ByNodeKey(c.nodeID, bagID))
+	ownerKey := ds.NewKey(OwnershipKey(bagID))
 
-	if err := c.crdt.Put(ctx, ownerKey, []byte(c.nodeID)); err != nil {
-		return fmt.Errorf("put ownership key: %w", err)
-	}
+	// Write bynode/ first so reconciliation can detect orphaned entries
+	// if a crash occurs between the two writes.
 	if err := c.crdt.Put(ctx, byNodeKey, nil); err != nil {
 		return fmt.Errorf("put bynode key: %w", err)
+	}
+	if err := c.crdt.Put(ctx, ownerKey, []byte(c.nodeID)); err != nil {
+		_ = c.crdt.Delete(ctx, byNodeKey) // best-effort cleanup
+		return fmt.Errorf("put ownership key: %w", err)
 	}
 
 	c.ownedCount.Add(1)

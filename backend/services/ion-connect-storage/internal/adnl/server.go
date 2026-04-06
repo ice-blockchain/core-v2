@@ -15,6 +15,7 @@ import (
 	"github.com/xssnick/tonutils-go/adnl/address"
 	"github.com/xssnick/tonutils-go/adnl/dht"
 	"github.com/xssnick/tonutils-go/adnl/keys"
+	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/liteclient"
 )
 
@@ -160,9 +161,26 @@ func (s *Server) OverlayManager() *OverlayManager { return s.overlays }
 func (s *Server) Gateway() *adnl.Gateway          { return s.gateway }
 func (s *Server) DHTClient() *dht.Client          { return s.dhtClient }
 
-// PrivateKey returns the server's private key. Used internally for signing.
-// Callers should prefer Sign() where possible.
-func (s *Server) PrivateKey() ed25519.PrivateKey { return s.privateKey }
+// PublicKey returns the server's public key (safe to expose).
+func (s *Server) PublicKey() ed25519.PublicKey {
+	return s.privateKey.Public().(ed25519.PublicKey)
+}
+
+// NewClientGateway creates an ADNL gateway for outgoing connections
+// using the server's identity, without exposing the private key.
+func (s *Server) NewClientGateway() (*adnl.Gateway, error) {
+	gw := adnl.NewGateway(s.privateKey)
+	if err := gw.StartClient(); err != nil {
+		return nil, fmt.Errorf("start client gateway: %w", err)
+	}
+	return gw, nil
+}
+
+// NewOverlayNode creates a signed overlay node descriptor for the given
+// overlay ID, without exposing the private key to callers.
+func (s *Server) NewOverlayNode(overlayID []byte) (*overlay.Node, error) {
+	return overlay.NewNode(overlayID, s.privateKey)
+}
 
 // Sign signs the given data using the server's private key.
 func (s *Server) Sign(data []byte) []byte { return ed25519.Sign(s.privateKey, data) }

@@ -69,9 +69,9 @@ func NewClusterTransport(
 	dagService *ADNLDAGService,
 	logger *slog.Logger,
 ) (*ClusterTransport, error) {
-	clientGateway := adnl.NewGateway(server.PrivateKey())
-	if err := clientGateway.StartClient(); err != nil {
-		return nil, fmt.Errorf("start cluster client gateway: %w", err)
+	clientGateway, err := server.NewClientGateway()
+	if err != nil {
+		return nil, fmt.Errorf("cluster client gateway: %w", err)
 	}
 	return &ClusterTransport{
 		serverGateway: server.Gateway(),
@@ -135,7 +135,7 @@ func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []by
 		}
 		var bagID [32]byte
 		copy(bagID[:], fwdRaw.BagID)
-		if t.ownerChecker != nil && !t.ownerChecker.OwnsBag(bagID) {
+		if t.ownerChecker == nil || !t.ownerChecker.OwnsBag(bagID) {
 			t.logger.Debug("rejected forwarded raw query for non-owned bag", "bag", bagID[:4])
 			return tl.Serialize(ForwardRawResponseMsg{}, true)
 		}
@@ -153,7 +153,7 @@ func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []by
 		}
 		var bagID [32]byte
 		copy(bagID[:], fwdReq.BagID)
-		if t.ownerChecker != nil && !t.ownerChecker.OwnsBag(bagID) {
+		if t.ownerChecker == nil || !t.ownerChecker.OwnsBag(bagID) {
 			t.logger.Debug("rejected forwarded piece request for non-owned bag", "bag", bagID[:4])
 			return tl.Serialize(PieceNotFoundMsg{}, true)
 		}

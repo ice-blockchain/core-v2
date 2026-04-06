@@ -29,7 +29,6 @@ import (
 	"github.com/xssnick/tonutils-go/adnl"
 	adnladdr "github.com/xssnick/tonutils-go/adnl/address"
 	"github.com/xssnick/tonutils-go/adnl/dht"
-	tonoverlay "github.com/xssnick/tonutils-go/adnl/overlay"
 	tondb "github.com/xssnick/tonutils-storage/db"
 	tonstorage "github.com/xssnick/tonutils-storage/storage"
 )
@@ -130,14 +129,14 @@ func SetupSeederServer(
 	server.SetHTTPBridge(bridge)
 
 	storageHandler := NewHandler(HandlerConfig{
-		MetadataStore:    metadataStore,
-		SegmentCache:     segmentCache,
-		Fetcher:          fetcher,
-		Index:            persister,
-		OwnershipChecker: coord,
-		PieceForwarder:   coord,
-		PrivateKey:       server.PrivateKey(),
-		Logger:           logger,
+		MetadataStore:      metadataStore,
+		SegmentCache:       segmentCache,
+		Fetcher:            fetcher,
+		Index:              persister,
+		OwnershipChecker:   coord,
+		PieceForwarder:     coord,
+		OverlayNodeBuilder: server.NewOverlayNode,
+		Logger:             logger,
 	})
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
 	sessionInit := NewSessionInitiator(storageHandler, logger)
@@ -233,7 +232,7 @@ func ConnectDownloaderToNode(t *testing.T, torrent *tonstorage.Torrent, srv *ton
 	t.Helper()
 
 	bagID := [32]byte(torrent.BagID)
-	seedNode, err := tonoverlay.NewNode(bagID[:], server.PrivateKey())
+	seedNode, err := server.NewOverlayNode(bagID[:])
 	require.NoError(t, err)
 	addrs := server.Gateway().GetAddressList()
 

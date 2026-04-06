@@ -102,7 +102,7 @@ func wireCluster(t *testing.T, nodes []*clusterNode) {
 			if i == j {
 				continue
 			}
-			pubKey := nodeB.env.Server.PrivateKey().Public().(ed25519.PublicKey)
+			pubKey := nodeB.env.Server.PublicKey()
 			addr := fmt.Sprintf("127.0.0.1:%d", nodeB.env.Port)
 			_, err := nodeA.transport.ConnectToPeer(addr, pubKey)
 			require.NoError(t, err)
@@ -137,7 +137,7 @@ func queryProviderOverRLDP(t *testing.T, node *clusterNode, bagID [32]byte) prov
 	require.NoError(t, gateway.StartClient())
 	t.Cleanup(func() { gateway.Close() })
 
-	serverPubKey := node.env.Server.PrivateKey().Public().(ed25519.PublicKey)
+	serverPubKey := node.env.Server.PublicKey()
 	peer, err := gateway.RegisterClient(fmt.Sprintf("127.0.0.1:%d", node.env.Port), serverPubKey)
 	require.NoError(t, err)
 	time.Sleep(500 * time.Millisecond)

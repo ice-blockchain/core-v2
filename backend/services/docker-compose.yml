@@ -43,6 +43,8 @@ services:
       context: ..
       dockerfile: services/ion-connect-storage/Dockerfile
     environment:
+      # WARNING: Use Docker secrets or external vault in production.
+      # Environment variables are visible via docker inspect.
       ADNL_PRIVATE_KEY: ${ADNL_PRIVATE_KEY}
       ADNL_EXTERNAL_ADDR: ${ADNL_EXTERNAL_ADDR:-127.0.0.1:3278}
       PORT: ${ION_STORAGE_PORT:-3278}

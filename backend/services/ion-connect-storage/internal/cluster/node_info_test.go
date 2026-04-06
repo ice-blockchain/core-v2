@@ -31,6 +31,29 @@ func TestCRDTKeyFormats(t *testing.T) {
 	require.Equal(t, "nodeinfo/node-alpha", NodeInfoKey(nodeID))
 }
 
+func TestBlockKeyUsesHexEncoding(t *testing.T) {
+	// CID bytes containing the string "block/" should not collide with other keys.
+	cidA := []byte("block/something")
+	cidB := []byte("other-cid")
+	keyA := BlockKey(cidA)
+	keyB := BlockKey(cidB)
+	require.True(t, len(keyA) > len("block/"))
+	require.NotEqual(t, keyA, keyB)
+	// Key must start with prefix and use hex, not raw bytes.
+	require.Contains(t, keyA, "block/")
+	require.NotContains(t, keyA, "block/block/")
+}
+
+func TestValidateNodeID(t *testing.T) {
+	require.NoError(t, ValidateNodeID("node-alpha"))
+	require.NoError(t, ValidateNodeID("Node_123"))
+	require.Error(t, ValidateNodeID(""))
+	require.Error(t, ValidateNodeID("node/injected"))
+	require.Error(t, ValidateNodeID("../own/target"))
+	require.Error(t, ValidateNodeID("node\x00id"))
+	require.Error(t, ValidateNodeID("node id"))
+}
+
 func TestHeartbeatRoundTrip(t *testing.T) {
 	ts := int64(1700000000)
 	encoded := FormatHeartbeat(ts)

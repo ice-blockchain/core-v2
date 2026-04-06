@@ -22,6 +22,8 @@ const (
 	reaperInterval     = 10 * time.Second
 	chunkSize          = 1 << 20
 	maxPendingPayloads = 500
+	maxRLDPDeadline    = 60 * time.Second
+	rldpGracePeriod    = 5 * time.Second
 )
 
 // RLDPHTTPBridge forwards HTTP-over-RLDP requests to a gin.Engine.
@@ -94,7 +96,7 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 		resp.NoPayload = false
 	}
 
-	answerCtx, answerCancel := context.WithDeadline(context.Background(), time.Unix(int64(query.Timeout), 0))
+	answerCtx, answerCancel := context.WithDeadline(context.Background(), clampDeadline(query.Timeout))
 	defer answerCancel()
 	return rl.SendAnswer(
 		answerCtx,
@@ -106,7 +108,7 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 func (b *RLDPHTTPBridge) handlePayloadPart(
 	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart,
 ) error {
-	answerCtx, answerCancel := context.WithDeadline(context.Background(), time.Unix(int64(query.Timeout), 0))
+	answerCtx, answerCancel := context.WithDeadline(context.Background(), clampDeadline(query.Timeout))
 	defer answerCancel()
 
 	reqID := hex.EncodeToString(req.ID)
@@ -227,6 +229,18 @@ func buildTLResponse(w *responseWriter) Response {
 		Headers:    headers,
 		NoPayload:  w.body.Len() == 0,
 	}
+}
+
+// clampDeadline constrains an untrusted unix timestamp to [now-grace, now+max].
+func clampDeadline(unixTS uint32) time.Time {
+	deadline := time.Unix(int64(unixTS), 0)
+	now := time.Now()
+	earliest := now.Add(-rldpGracePeriod)
+	latest := now.Add(maxRLDPDeadline)
+	if deadline.Before(earliest) || deadline.After(latest) {
+		return latest
+	}
+	return deadline
 }
 
 func extractChunk(data []byte, seqno int) ([]byte, bool) {

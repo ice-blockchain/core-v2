@@ -10,7 +10,7 @@ import (
 // handleGetRandomPeers handles overlay.getRandomPeers RPC.
 // Returns this node as the sole peer (Phase 4: single node, ownership always true).
 func (h *Handler) handleGetRandomPeers(bagID [32]byte) ([]byte, error) {
-	node, err := overlay.NewNode(bagID[:], h.privateKey)
+	node, err := h.overlayNodeBuilder(bagID[:])
 	if err != nil {
 		return nil, fmt.Errorf("build overlay node: %w", err)
 	}
