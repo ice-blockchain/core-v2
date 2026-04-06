@@ -5,6 +5,7 @@ import { authFlowReducer, createInitialState } from './auth-flow-reducer';
 import { handleLoginAttempt } from './handle-login-attempt';
 import { handleRegister } from './handle-register';
 import { handlePasswordLogin } from './handle-password-login';
+import { handleRestoreCredentials, handleSetNewPassword } from './handle-credential-restore';
 
 interface UseAuthFlowResult {
   state: AuthFlowState;
@@ -58,34 +59,72 @@ interface BuildScreenPropsInput {
   guard: GuardFn;
 }
 
-function buildGetStartedProps(deps: FlowDeps, guard: GuardFn): AuthScreenProps['getStarted'] {
+function buildGetStartedProps(deps: FlowDeps, state: AuthFlowState, guard: GuardFn): AuthScreenProps['getStarted'] {
   return {
+    initialIdentityKeyName: state.identityKeyName,
     onNavigateToRegister: () => deps.dispatch({ type: 'GO_TO_REGISTER' }),
     onNavigateToVerifyPassword: (name: string) => guard(() => handleLoginAttempt(deps, name)),
-    onNavigateToRestore: () => { /* TODO: wire restore flow */ },
+    onNavigateToRestore: () => deps.dispatch({ type: 'GO_TO_RESTORE_MENU' }),
   };
 }
 
 function buildScreenProps(input: BuildScreenPropsInput): AuthScreenProps {
   const { deps, state, loadingElement, guard } = input;
   return {
-    getStarted: buildGetStartedProps(deps, guard),
+    getStarted: buildGetStartedProps(deps, state, guard),
     register: {
       onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
       onContinue: (data) => guard(() => handleRegister(deps, data)),
       passkeyAvailable: isPasskeyAvailable(),
     },
-    verifyPasskey: {
-      identityKeyName: state.identityKeyName,
-      onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
-      onDismiss: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
-      loadingElement,
-    },
     verifyPassword: {
       backgroundProps: { loadingElement },
       overlayProps: {
-        onConfirm: (password: string) => guard(() => handlePasswordLogin(deps, state.identityKeyName, password)),
+        onConfirm: (pw: string) => guard(() => handlePasswordLogin(deps, state.identityKeyName, pw)),
       },
     },
+    ...buildRestoreProps(deps, state, guard),
+  };
+}
+
+function buildRestoreProps(deps: FlowDeps, state: AuthFlowState, guard: GuardFn) {
+  const { dispatch } = deps;
+  return {
+    restoreMenu: {
+      onBack: () => dispatch({ type: 'GO_TO_GET_STARTED' }),
+      onSelectCloudRestore: () => {},
+      onSelectCredentialRestore: () => dispatch({ type: 'GO_TO_RESTORE_CREDENTIALS' }),
+    },
+    restoreCredentials: {
+      onBack: () => dispatch({ type: 'GO_TO_RESTORE_MENU' }),
+      onRestore: (data: { identityKeyName: string; recoveryKeyId: string; recoveryCode: string }) =>
+        guard(() => handleRestoreCredentials({ identityClient: deps.identityClient, dispatch }, data)),
+      isLoading: state.isLoading,
+    },
+    setNewPassword: {
+      identityKeyName: state.identityKeyName,
+      onBack: () => dispatch({ type: 'GO_TO_RESTORE_CREDENTIALS' }),
+      onContinue: (password: string) => guard(() => handleSetNewPassword({
+        identityClient: deps.identityClient, dispatch,
+        recoveryData: { identityKeyName: state.identityKeyName, recoveryKeyId: state.recoveryKeyId, recoveryCode: state.recoveryCode },
+      }, password)),
+    },
+    restoreSuccessModal: buildRestoreSuccessModal(dispatch, state),
+    identityKeyNotFoundModal: buildIdentityKeyNotFoundModal(dispatch, state),
+  };
+}
+
+function buildRestoreSuccessModal(dispatch: (action: AuthFlowAction) => void, state: AuthFlowState) {
+  return {
+    isVisible: state.isRestoreSuccessVisible,
+    onClose: () => { dispatch({ type: 'HIDE_RESTORE_SUCCESS' }); dispatch({ type: 'GO_TO_GET_STARTED' }); },
+    onLogin: () => { dispatch({ type: 'HIDE_RESTORE_SUCCESS' }); dispatch({ type: 'GO_TO_GET_STARTED', identityKeyName: state.identityKeyName }); },
+  };
+}
+
+function buildIdentityKeyNotFoundModal(dispatch: (action: AuthFlowAction) => void, state: AuthFlowState) {
+  return {
+    isVisible: state.isIdentityKeyNotFoundVisible,
+    onClose: () => { dispatch({ type: 'HIDE_IDENTITY_KEY_NOT_FOUND' }); },
   };
 }

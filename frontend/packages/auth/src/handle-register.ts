@@ -46,6 +46,8 @@ async function executeRegistration(
   } else {
     await identityClient.registerWithPassword({ username: data.identityKeyName, password: data.password });
   }
+  const method = data.password === undefined || data.password === null ? 'passkey' : 'password';
+  Logger.warning('Registration succeeded', { tag: 'auth', data: { identityKeyName: data.identityKeyName, method } });
   onAuthSuccess(data.identityKeyName);
 }
 

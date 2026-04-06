@@ -4,4 +4,5 @@ export type {
   AuthFlowConfig,
   AuthFlowState,
   AuthScreenProps,
+  RegisterCallbacks,
 } from './types';
