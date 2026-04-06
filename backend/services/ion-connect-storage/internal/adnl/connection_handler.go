@@ -42,7 +42,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
-	extADNL.SetQueryHandler(func(query *adnl.MessageQuery) error {
+	extADNL.SetQueryHandler(func(query *adnl.MessageQuery) (retErr error) {
+		defer recoverPanic(logger, &retErr)
+
 		select {
 		case querySem <- struct{}{}:
 			defer func() { <-querySem }()
@@ -85,7 +87,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 // makeADNLHandler routes overlay queries. Cluster overlay goes to clusterHandler;
 // storage overlays go to OverlayManager.
 func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, rawPeer adnl.Peer, logger *slog.Logger) func(query *adnl.MessageQuery) error {
-	return func(query *adnl.MessageQuery) error {
+	return func(query *adnl.MessageQuery) (retErr error) {
+		defer recoverPanic(logger, &retErr)
+
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
 
@@ -127,7 +131,9 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 }
 
 func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
-	return func(transferID []byte, query *rldp.Query) error {
+	return func(transferID []byte, query *rldp.Query) (retErr error) {
+		defer recoverPanic(logger, &retErr)
+
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
 
@@ -177,6 +183,15 @@ func checkPingAndNotify(rawQuery []byte, overlays *OverlayManager, rl *overlay.R
 		return
 	}
 	overlays.NotifyNewSession(rl, overlayIDBytes, bagID, sessionID)
+}
+
+// recoverPanic catches panics in query handlers and converts them to errors.
+// This prevents a single malformed message from crashing the ADNL server.
+func recoverPanic(logger *slog.Logger, retErr *error) {
+	if r := recover(); r != nil {
+		logger.Error("panic in query handler", "recover", r)
+		*retErr = fmt.Errorf("internal error: panic recovered")
+	}
 }
 
 func extractRawTL(obj tl.Serializable) []byte {
