@@ -61,8 +61,12 @@ type FocusedField = "password" | "confirm" | null;
 
 function useFocusedField() {
   const [focusedField, setFocusedField] = useState<FocusedField>(null);
-  const handlePasswordFocus = useCallback((focused: boolean) => { setFocusedField(focused ? "password" : null); }, []);
-  const handleConfirmFocus = useCallback((focused: boolean) => { setFocusedField(focused ? "confirm" : null); }, []);
+  const handlePasswordFocus = useCallback((focused: boolean) => {
+    setFocusedField((current) => (focused ? "password" : current === "password" ? null : current));
+  }, []);
+  const handleConfirmFocus = useCallback((focused: boolean) => {
+    setFocusedField((current) => (focused ? "confirm" : current === "confirm" ? null : current));
+  }, []);
   return { focusedField, handlePasswordFocus, handleConfirmFocus };
 }
 

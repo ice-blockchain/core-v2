@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Icon, TextInput, useTheme } from "@ion/ui";
+import { translate } from "@ion/localization";
 import type { StyleProp, ViewStyle } from "react-native";
 import type { TextInputState } from "@ion/ui";
 
@@ -31,7 +32,13 @@ function EyeToggle({ isVisible, onPress }: { isVisible: boolean; onPress: () => 
   const { colors, scale } = useTheme();
   const iconName = isVisible ? "block-eye-on" : "block-eye-off";
   return (
-    <Pressable onPress={onPress} hitSlop={8}>
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={isVisible ? translate("auth:hidePassword") : translate("auth:showPassword")}
+      accessibilityState={{ selected: isVisible }}
+    >
       <Icon name={iconName} size={scale.scaleSize(24)} color={colors.secondaryText} />
     </Pressable>
   );

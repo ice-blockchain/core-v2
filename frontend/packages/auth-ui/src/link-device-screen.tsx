@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { ViewStyle } from "react-native";
 import { Button, Icon, Text, useTheme } from "@ion/ui";
@@ -38,13 +38,19 @@ function ContinueButton() {
   const scale = theme.scale.scaleSize;
   const navigation = useAppNavigation();
   const [isLoading, setIsLoading] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
 
   const containerStyle = useMemo(() => buildButtonContainerStyle(scale), [scale]);
 
   const handleContinue = useCallback(() => {
+    if (timerRef.current) return;
     setIsLoading(true);
     timerRef.current = setTimeout(() => {
+      timerRef.current = null;
       markLinkDeviceShown();
       if (navigation.canGoBack()) navigation.goBack();
     }, 2000);

@@ -117,4 +117,6 @@ export const authFR: Record<keyof typeof authEN, string> = {
   linkDeviceTitle: 'Lier un nouvel appareil',
   linkDeviceDescription:
     'Vous accédez à votre compte depuis un nouvel appareil. Pour continuer à utiliser l\'application, veuillez le lier à votre compte',
+  showPassword: 'Afficher le mot de passe',
+  hidePassword: 'Masquer le mot de passe',
 };

@@ -118,4 +118,6 @@ export const authDE: Record<keyof typeof authEN, string> = {
   linkDeviceTitle: 'Neues Gerät verknüpfen',
   linkDeviceDescription:
     'Du greifst von einem neuen Gerät auf dein Konto zu. Um die App weiter zu nutzen, verknüpfe es bitte mit deinem Konto',
+  showPassword: 'Passwort anzeigen',
+  hidePassword: 'Passwort ausblenden',
 };

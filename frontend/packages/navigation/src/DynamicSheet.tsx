@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, Text, useTheme, SheetBackdrop, SheetBackground, SheetHandle } from '@ion/ui';
 import { useAppNavigation } from './use-app-navigation';
@@ -67,6 +68,10 @@ function useBottomInsetStyle() {
   return useMemo((): ViewStyle => ({ paddingBottom: insets.bottom }), [insets.bottom]);
 }
 
+function StaticBackdrop(props: BottomSheetBackdropProps) {
+  return <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="none" />;
+}
+
 export function DynamicSheet({ title, showClose = true, isDismissable = true, onDismiss, children }: DynamicSheetProps) {
   const handleClose = useDismissHandler(onDismiss);
   const handleChange = useCallback((index: number) => {
@@ -84,7 +89,7 @@ export function DynamicSheet({ title, showClose = true, isDismissable = true, on
       <BottomSheet
         enableDynamicSizing
         enablePanDownToClose={isDismissable}
-        backdropComponent={SheetBackdrop}
+        backdropComponent={isDismissable ? SheetBackdrop : StaticBackdrop}
         backgroundComponent={SheetBackground}
         handleComponent={SheetHandle}
         onChange={handleChange}

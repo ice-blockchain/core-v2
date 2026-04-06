@@ -112,4 +112,6 @@ export const authEN = {
   linkDeviceTitle: 'Link new device',
   linkDeviceDescription:
     'You\'re accessing your account from a new device. To continue using the app, please link it to your account',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
 } as const;
