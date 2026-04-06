@@ -219,7 +219,6 @@ describe('useAuthFlow', () => {
       identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
     }));
     expect(result.current.state.phase).toBe('set-new-password');
-    expect(result.current.state.identityKeyName).toBe('alice');
 
     await act(() => result.current.screenProps.setNewPassword.onContinue('NewP@ss1'));
     expect(result.current.state.isRestoreSuccessVisible).toBe(true);
@@ -291,5 +290,21 @@ describe('useAuthFlow', () => {
     await first;
 
     expect(config.identityClient.recoverAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it('setNewPassword.onBack navigates back to restore-credentials', async () => {
+    const config = createConfig();
+    vi.mocked(config.identityClient.recoverAccount).mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
+    await act(() => result.current.screenProps.restoreCredentials.onRestore({
+      identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
+    }));
+    expect(result.current.state.phase).toBe('set-new-password');
+
+    act(() => result.current.screenProps.setNewPassword.onBack());
+    expect(result.current.state.phase).toBe('restore-credentials');
   });
 });

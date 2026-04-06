@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode, isPasskeyAvailable } from '@ion/identity-client';
-import { handleRestoreCredentialsSubmit, handleRestoreCredentials, handleSetNewPassword } from './handle-credential-restore';
+import { handleRestoreCredentials, handleSetNewPassword } from './handle-credential-restore';
 import type { AuthFlowAction } from './types';
 
 vi.mock('@ion/identity-client', async (importOriginal) => {
@@ -30,32 +30,31 @@ function createMockClient(): IdentityClient {
 
 const RECOVERY_DATA = { identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1' };
 
-describe('handleRestoreCredentialsSubmit', () => {
-  it('dispatches GO_TO_SET_NEW_PASSWORD with correct data', () => {
-    const dispatch = vi.fn();
-    handleRestoreCredentialsSubmit(dispatch, RECOVERY_DATA);
-    expect(dispatch).toHaveBeenCalledWith({
-      type: 'GO_TO_SET_NEW_PASSWORD',
-      identityKeyName: 'alice',
-      recoveryKeyId: 'key-1',
-      recoveryCode: 'code-1',
-    });
-  });
-});
-
 describe('handleRestoreCredentials', () => {
   let client: IdentityClient;
   let dispatch: ReturnType<typeof vi.fn>;
+  let onRecoveryData: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     client = createMockClient();
     dispatch = vi.fn();
+    onRecoveryData = vi.fn();
     vi.mocked(isPasskeyAvailable).mockReturnValue(true);
+  });
+
+  function input() {
+    return { identityClient: client, dispatch, onRecoveryData };
+  }
+
+  it('calls onRecoveryData with the provided data', async () => {
+    vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
+    expect(onRecoveryData).toHaveBeenCalledWith(RECOVERY_DATA);
   });
 
   it('attempts passkey recovery when passkey is available', async () => {
     vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     expect(client.recoverAccount).toHaveBeenCalledWith({
       username: 'alice',
       recoveryCode: 'code-1',
@@ -66,7 +65,7 @@ describe('handleRestoreCredentials', () => {
 
   it('dispatches SHOW_RESTORE_SUCCESS on passkey recovery success', async () => {
     vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SHOW_RESTORE_SUCCESS' });
   });
 
@@ -74,58 +73,58 @@ describe('handleRestoreCredentials', () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
     );
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_SET_NEW_PASSWORD' }));
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
+    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: 'alice' });
   });
 
   it('falls back to password screen on PASSKEY_NOT_AVAILABLE', async () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(
       new IdentityError(IdentityErrorCode.PASSKEY_NOT_AVAILABLE, 'not available'),
     );
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_SET_NEW_PASSWORD' }));
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
+    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: 'alice' });
   });
 
   it('dispatches SHOW_IDENTITY_KEY_NOT_FOUND on INVALID_RECOVERY_CREDENTIALS', async () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(
       new IdentityError(IdentityErrorCode.INVALID_RECOVERY_CREDENTIALS, 'bad creds'),
     );
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
-    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_SET_NEW_PASSWORD' }));
+    expect(dispatch).not.toHaveBeenCalledWith({ type: 'GO_TO_SET_NEW_PASSWORD' });
   });
 
   it('dispatches SHOW_IDENTITY_KEY_NOT_FOUND on USER_NOT_FOUND', async () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(
       new IdentityError(IdentityErrorCode.USER_NOT_FOUND, 'not found'),
     );
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     expect(dispatch).toHaveBeenCalledWith({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
-    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_SET_NEW_PASSWORD' }));
+    expect(dispatch).not.toHaveBeenCalledWith({ type: 'GO_TO_SET_NEW_PASSWORD' });
   });
 
   it('dispatches SET_ERROR on server error without fallback', async () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(
       new IdentityError(IdentityErrorCode.NETWORK_ERROR, 'offline'),
     );
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
       type: 'SET_ERROR',
       error: expect.objectContaining({ code: IdentityErrorCode.NETWORK_ERROR }),
     }));
-    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_SET_NEW_PASSWORD' }));
+    expect(dispatch).not.toHaveBeenCalledWith({ type: 'GO_TO_SET_NEW_PASSWORD' });
   });
 
   it('goes straight to password screen when passkey not available', async () => {
     vi.mocked(isPasskeyAvailable).mockReturnValue(false);
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     expect(client.recoverAccount).not.toHaveBeenCalled();
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_SET_NEW_PASSWORD' }));
+    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: 'alice' });
   });
 
   it('toggles loading true then false on success', async () => {
     vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     const loadingCalls = dispatch.mock.calls.filter(
       (call: unknown[]) => (call[0] as AuthFlowAction).type === 'SET_LOADING',
     );
@@ -135,7 +134,7 @@ describe('handleRestoreCredentials', () => {
 
   it('resets loading to false on error', async () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(new Error('fail'));
-    await handleRestoreCredentials({ identityClient: client, dispatch }, RECOVERY_DATA);
+    await handleRestoreCredentials(input(), RECOVERY_DATA);
     const lastLoadingCall = dispatch.mock.calls
       .filter((call: unknown[]) => (call[0] as AuthFlowAction).type === 'SET_LOADING')
       .pop();

@@ -28,7 +28,8 @@ const validChallenge = {
 };
 
 const validResult = {
-  credential: { uuid: 'cr-1', kind: 'PasswordProtectedKey', name: 'Default Credential' },
+  credential: { id: 'cr-1', kind: 'PasswordProtectedKey', name: 'Default Credential' },
+  authentication: { token: 't', refreshToken: 'r' },
   user: { id: 'u1' },
 };
 

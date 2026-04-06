@@ -1,7 +1,5 @@
 import 'react-native-get-random-values';
-if (typeof (globalThis as Record<string, unknown>).TextDecoder === 'undefined') {
-  (globalThis as Record<string, unknown>).TextDecoder = class { decode(buf: Uint8Array) { return String.fromCharCode(...buf); } };
-}
+import 'fast-text-encoding';
 import type { ReactNode } from "react";
 import { useState, useEffect } from 'react';
 import { StatusBar, View } from 'react-native';
@@ -67,7 +65,6 @@ const authScreens = {
   SelectLanguages: SelectLanguagesScreen,
   DiscoverCreators: DiscoverCreatorsScreen,
   Notifications: NotificationsScreen,
-  FullAuthFlow: AuthFlowScreen,
 };
 
 function ThemedRoot({ children }: { children: ReactNode }) {

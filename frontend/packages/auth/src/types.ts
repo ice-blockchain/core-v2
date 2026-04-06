@@ -20,8 +20,6 @@ export interface AuthFlowState {
   identityKeyName: string;
   isLoading: boolean;
   error: AuthFlowError | null;
-  recoveryKeyId: string;
-  recoveryCode: string;
   isRestoreSuccessVisible: boolean;
   isIdentityKeyNotFoundVisible: boolean;
 }
@@ -40,8 +38,8 @@ export type AuthFlowAction =
   | { type: 'CLEAR_ERROR' }
   | { type: 'GO_TO_RESTORE_MENU' }
   | { type: 'GO_TO_RESTORE_CREDENTIALS' }
-  | { type: 'STORE_RECOVERY_DATA'; identityKeyName: string; recoveryKeyId: string; recoveryCode: string }
-  | { type: 'GO_TO_SET_NEW_PASSWORD'; identityKeyName: string; recoveryKeyId: string; recoveryCode: string }
+  | { type: 'GO_TO_SET_NEW_PASSWORD'; identityKeyName: string }
+  | { type: 'GO_BACK_FROM_SET_NEW_PASSWORD' }
   | { type: 'SHOW_RESTORE_SUCCESS' }
   | { type: 'HIDE_RESTORE_SUCCESS' }
   | { type: 'SHOW_IDENTITY_KEY_NOT_FOUND' }

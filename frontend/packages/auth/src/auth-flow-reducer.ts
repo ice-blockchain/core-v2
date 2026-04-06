@@ -6,21 +6,17 @@ export function createInitialState(): AuthFlowState {
     identityKeyName: '',
     isLoading: false,
     error: null,
-    recoveryKeyId: '',
-    recoveryCode: '',
     isRestoreSuccessVisible: false,
     isIdentityKeyNotFoundVisible: false,
   };
 }
 
-const CLEARED_RECOVERY = {
-  recoveryKeyId: '', recoveryCode: '', isRestoreSuccessVisible: false, isIdentityKeyNotFoundVisible: false,
-};
+const CLEARED_FLAGS = { isRestoreSuccessVisible: false, isIdentityKeyNotFoundVisible: false };
 
 export function authFlowReducer(state: AuthFlowState, action: AuthFlowAction): AuthFlowState {
   switch (action.type) {
     case 'GO_TO_GET_STARTED':
-      return { ...state, phase: 'get-started', identityKeyName: action.identityKeyName ?? '', error: null, ...CLEARED_RECOVERY };
+      return { ...state, phase: 'get-started', identityKeyName: action.identityKeyName ?? '', error: null, ...CLEARED_FLAGS };
     case 'GO_TO_REGISTER':
       if (state.phase !== 'get-started') return state;
       return { ...state, phase: 'register', error: null };
@@ -46,34 +42,23 @@ function reduceRestoreActions(state: AuthFlowState, action: AuthFlowAction): Aut
     case 'GO_TO_RESTORE_CREDENTIALS':
       if (state.phase !== 'restore-menu') return state;
       return { ...state, phase: 'restore-credentials', error: null };
-    case 'STORE_RECOVERY_DATA':
-      if (state.phase !== 'restore-credentials') return state;
-      return { ...state, identityKeyName: action.identityKeyName, recoveryKeyId: action.recoveryKeyId, recoveryCode: action.recoveryCode };
     case 'GO_TO_SET_NEW_PASSWORD':
-      return reduceSetNewPassword(state, action);
+      if (state.phase !== 'restore-credentials') return state;
+      return { ...state, phase: 'set-new-password', identityKeyName: action.identityKeyName, error: null };
+    case 'GO_BACK_FROM_SET_NEW_PASSWORD':
+      if (state.phase !== 'set-new-password') return state;
+      return { ...state, phase: 'restore-credentials', error: null, isLoading: false };
     case 'SHOW_RESTORE_SUCCESS':
+      if (state.phase !== 'set-new-password' && state.phase !== 'restore-credentials') return state;
       return { ...state, isRestoreSuccessVisible: true };
     case 'HIDE_RESTORE_SUCCESS':
       return { ...state, isRestoreSuccessVisible: false };
     case 'SHOW_IDENTITY_KEY_NOT_FOUND':
+      if (state.phase !== 'restore-credentials' && state.phase !== 'set-new-password') return state;
       return { ...state, isIdentityKeyNotFoundVisible: true };
     case 'HIDE_IDENTITY_KEY_NOT_FOUND':
       return { ...state, isIdentityKeyNotFoundVisible: false };
     default:
       return state;
   }
-}
-
-type SetNewPasswordAction = Extract<AuthFlowAction, { type: 'GO_TO_SET_NEW_PASSWORD' }>;
-
-function reduceSetNewPassword(state: AuthFlowState, action: SetNewPasswordAction): AuthFlowState {
-  if (state.phase !== 'restore-credentials') return state;
-  return {
-    ...state,
-    phase: 'set-new-password',
-    identityKeyName: action.identityKeyName,
-    recoveryKeyId: action.recoveryKeyId,
-    recoveryCode: action.recoveryCode,
-    error: null,
-  };
 }

@@ -26,7 +26,7 @@ export async function handleRegister(
     await executeRegistration(deps, data);
   } catch (error) {
     Logger.error('Registration failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName: data.identityKeyName } });
-    if ((data.password === undefined || data.password === null) && isPasskeyCancelledError(error)) {
+    if (!data.password && isPasskeyCancelledError(error)) {
       dispatch({ type: 'GO_TO_REGISTER' });
       return;
     }
@@ -41,12 +41,12 @@ async function executeRegistration(
   data: { identityKeyName: string; password?: string },
 ): Promise<void> {
   const { identityClient, onAuthSuccess } = deps;
-  if (data.password === undefined || data.password === null) {
+  if (!data.password) {
     await identityClient.registerWithPasskey(data.identityKeyName);
   } else {
     await identityClient.registerWithPassword({ username: data.identityKeyName, password: data.password });
   }
-  const method = data.password === undefined || data.password === null ? 'passkey' : 'password';
+  const method = !data.password ? 'passkey' : 'password';
   Logger.warning('Registration succeeded', { tag: 'auth', data: { identityKeyName: data.identityKeyName, method } });
   onAuthSuccess(data.identityKeyName);
 }

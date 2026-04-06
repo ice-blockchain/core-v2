@@ -26,7 +26,6 @@ export interface AuthScreens {
   SelectLanguages: ComponentType;
   DiscoverCreators: ComponentType;
   Notifications: ComponentType;
-  FullAuthFlow?: ComponentType;
 }
 
 const TITLE_KEYS: Record<string, string> = {
@@ -75,9 +74,6 @@ function AuthStack({ screens, navRef, setTitle }: { screens: AuthScreens; navRef
       <Stack.Screen name={Routes.Auth.SelectLanguages} component={screens.SelectLanguages} />
       <Stack.Screen name={Routes.Auth.DiscoverCreators} component={screens.DiscoverCreators} />
       <Stack.Screen name={Routes.Auth.Notifications} component={screens.Notifications} />
-      {screens.FullAuthFlow && (
-        <Stack.Screen name={Routes.Auth.FullAuthFlow} component={screens.FullAuthFlow} />
-      )}
     </Stack.Navigator>
   );
 }

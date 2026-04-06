@@ -15,16 +15,29 @@ interface UseAuthFlowResult {
   resetFlow: () => void;
 }
 
+type RecoveryData = { identityKeyName: string; recoveryKeyId: string; recoveryCode: string };
+
 export function useAuthFlow(config: AuthFlowConfig): UseAuthFlowResult {
   const [state, dispatch] = useReducer(authFlowReducer, undefined, createInitialState);
   const { identityClient, onAuthSuccess, loadingElement } = config;
-  const inFlight = useRef(false);
+  const recoveryDataRef = useRef<RecoveryData | null>(null);
+
+  const registerInFlight = useRef(false);
+  const loginInFlight = useRef(false);
+  const restoreInFlight = useRef(false);
 
   const deps = { identityClient, dispatch, onAuthSuccess };
-  const guard = createInFlightGuard(inFlight);
+  const registerGuard = createInFlightGuard(registerInFlight);
+  const loginGuard = createInFlightGuard(loginInFlight);
+  const restoreGuard = createInFlightGuard(restoreInFlight);
 
-  const screenProps = buildScreenProps({ deps, state, loadingElement, guard });
-  const resetFlow = useCallback(() => dispatch({ type: 'GO_TO_GET_STARTED' }), []);
+  const screenProps = buildScreenProps({ deps, state, loadingElement, registerGuard, loginGuard, restoreGuard, recoveryDataRef });
+
+  const resetFlow = useCallback(() => {
+    recoveryDataRef.current = null;
+    dispatch({ type: 'GO_TO_GET_STARTED' });
+  }, []);
+
   const logout = useCallback((u: string) => identityClient.logout(u), [identityClient]);
   const isAuth = useCallback((u: string) => identityClient.isAuthenticated(u), [identityClient]);
 
@@ -56,61 +69,86 @@ interface BuildScreenPropsInput {
   deps: FlowDeps;
   state: AuthFlowState;
   loadingElement: AuthFlowConfig['loadingElement'];
-  guard: GuardFn;
+  registerGuard: GuardFn;
+  loginGuard: GuardFn;
+  restoreGuard: GuardFn;
+  recoveryDataRef: React.RefObject<RecoveryData | null>;
 }
 
-function buildGetStartedProps(deps: FlowDeps, state: AuthFlowState, guard: GuardFn): AuthScreenProps['getStarted'] {
+function buildGetStartedProps(deps: FlowDeps, state: AuthFlowState, loginGuard: GuardFn): AuthScreenProps['getStarted'] {
   return {
     initialIdentityKeyName: state.identityKeyName,
     onNavigateToRegister: () => deps.dispatch({ type: 'GO_TO_REGISTER' }),
-    onNavigateToVerifyPassword: (name: string) => guard(() => handleLoginAttempt(deps, name)),
+    onNavigateToVerifyPassword: (name: string) => loginGuard(() => handleLoginAttempt(deps, name)),
     onNavigateToRestore: () => deps.dispatch({ type: 'GO_TO_RESTORE_MENU' }),
   };
 }
 
 function buildScreenProps(input: BuildScreenPropsInput): AuthScreenProps {
-  const { deps, state, loadingElement, guard } = input;
+  const { deps, state, loadingElement, registerGuard, loginGuard, restoreGuard, recoveryDataRef } = input;
   return {
-    getStarted: buildGetStartedProps(deps, state, guard),
+    getStarted: buildGetStartedProps(deps, state, loginGuard),
     register: {
       onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
-      onContinue: (data) => guard(() => handleRegister(deps, data)),
+      onContinue: (data) => registerGuard(() => handleRegister(deps, data)),
       passkeyAvailable: isPasskeyAvailable(),
     },
     verifyPassword: {
       backgroundProps: { loadingElement },
       overlayProps: {
-        onConfirm: (pw: string) => guard(() => handlePasswordLogin(deps, state.identityKeyName, pw)),
+        onConfirm: (pw: string) => loginGuard(() => handlePasswordLogin(deps, state.identityKeyName, pw)),
       },
     },
-    ...buildRestoreProps(deps, state, guard),
+    ...buildRestoreProps({ deps, state, restoreGuard, recoveryDataRef }),
   };
 }
 
-function buildRestoreProps(deps: FlowDeps, state: AuthFlowState, guard: GuardFn) {
-  const { dispatch } = deps;
+interface RestorePropsInput {
+  deps: FlowDeps;
+  state: AuthFlowState;
+  restoreGuard: GuardFn;
+  recoveryDataRef: React.RefObject<RecoveryData | null>;
+}
+
+function buildRestoreCredentialsProps(input: RestorePropsInput) {
+  const { deps, state, restoreGuard, recoveryDataRef } = input;
+  return {
+    onBack: () => deps.dispatch({ type: 'GO_TO_RESTORE_MENU' }),
+    onRestore: (data: RecoveryData) =>
+      restoreGuard(() => handleRestoreCredentials({
+        identityClient: deps.identityClient,
+        dispatch: deps.dispatch,
+        onRecoveryData: (d) => { recoveryDataRef.current = d; },
+      }, data)),
+    isLoading: state.isLoading,
+  };
+}
+
+function buildSetNewPasswordProps(input: RestorePropsInput) {
+  const { deps, state, restoreGuard, recoveryDataRef } = input;
+  return {
+    identityKeyName: state.identityKeyName,
+    onBack: () => deps.dispatch({ type: 'GO_BACK_FROM_SET_NEW_PASSWORD' }),
+    onContinue: (password: string) => restoreGuard(() => {
+      const rd = recoveryDataRef.current;
+      if (!rd) return Promise.resolve();
+      return handleSetNewPassword({ identityClient: deps.identityClient, dispatch: deps.dispatch, recoveryData: rd }, password);
+    }),
+  };
+}
+
+function buildRestoreProps(input: RestorePropsInput) {
+  const { deps, state } = input;
   return {
     restoreMenu: {
-      onBack: () => dispatch({ type: 'GO_TO_GET_STARTED' }),
+      onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
       onSelectCloudRestore: () => {},
-      onSelectCredentialRestore: () => dispatch({ type: 'GO_TO_RESTORE_CREDENTIALS' }),
+      onSelectCredentialRestore: () => deps.dispatch({ type: 'GO_TO_RESTORE_CREDENTIALS' }),
     },
-    restoreCredentials: {
-      onBack: () => dispatch({ type: 'GO_TO_RESTORE_MENU' }),
-      onRestore: (data: { identityKeyName: string; recoveryKeyId: string; recoveryCode: string }) =>
-        guard(() => handleRestoreCredentials({ identityClient: deps.identityClient, dispatch }, data)),
-      isLoading: state.isLoading,
-    },
-    setNewPassword: {
-      identityKeyName: state.identityKeyName,
-      onBack: () => dispatch({ type: 'GO_TO_RESTORE_CREDENTIALS' }),
-      onContinue: (password: string) => guard(() => handleSetNewPassword({
-        identityClient: deps.identityClient, dispatch,
-        recoveryData: { identityKeyName: state.identityKeyName, recoveryKeyId: state.recoveryKeyId, recoveryCode: state.recoveryCode },
-      }, password)),
-    },
-    restoreSuccessModal: buildRestoreSuccessModal(dispatch, state),
-    identityKeyNotFoundModal: buildIdentityKeyNotFoundModal(dispatch, state),
+    restoreCredentials: buildRestoreCredentialsProps(input),
+    setNewPassword: buildSetNewPasswordProps(input),
+    restoreSuccessModal: buildRestoreSuccessModal(deps.dispatch, state),
+    identityKeyNotFoundModal: buildIdentityKeyNotFoundModal(deps.dispatch, state),
   };
 }
 

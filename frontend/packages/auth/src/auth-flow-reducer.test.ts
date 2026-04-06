@@ -13,8 +13,6 @@ describe('createInitialState', () => {
       identityKeyName: '',
       isLoading: false,
       error: null,
-      recoveryKeyId: '',
-      recoveryCode: '',
       isRestoreSuccessVisible: false,
       isIdentityKeyNotFoundVisible: false,
     });
@@ -45,19 +43,15 @@ describe('authFlowReducer', () => {
     expect(next.error).toBeNull();
   });
 
-  it('GO_TO_GET_STARTED clears all recovery state fields', () => {
+  it('GO_TO_GET_STARTED clears all restore visibility flags', () => {
     const state: AuthFlowState = {
       ...createInitialState(),
       phase: 'set-new-password',
       identityKeyName: 'alice',
-      recoveryKeyId: 'key-1',
-      recoveryCode: 'code-1',
       isRestoreSuccessVisible: true,
       isIdentityKeyNotFoundVisible: true,
     };
     const next = authFlowReducer(state, { type: 'GO_TO_GET_STARTED' });
-    expect(next.recoveryKeyId).toBe('');
-    expect(next.recoveryCode).toBe('');
     expect(next.isRestoreSuccessVisible).toBe(false);
     expect(next.isIdentityKeyNotFoundVisible).toBe(false);
   });
@@ -139,59 +133,46 @@ describe('authFlowReducer', () => {
     expect(next.phase).toBe('get-started');
   });
 
-  it('GO_TO_SET_NEW_PASSWORD stores recovery data in state', () => {
+  it('GO_TO_SET_NEW_PASSWORD transitions from restore-credentials', () => {
     const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials' };
-    const next = authFlowReducer(state, {
-      type: 'GO_TO_SET_NEW_PASSWORD',
-      identityKeyName: 'alice',
-      recoveryKeyId: 'key-1',
-      recoveryCode: 'code-1',
-    });
+    const next = authFlowReducer(state, { type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: 'alice' });
     expect(next.phase).toBe('set-new-password');
-    expect(next.identityKeyName).toBe('alice');
-    expect(next.recoveryKeyId).toBe('key-1');
-    expect(next.recoveryCode).toBe('code-1');
     expect(next.error).toBeNull();
   });
 
   it('GO_TO_SET_NEW_PASSWORD is ignored from non-restore-credentials phase', () => {
-    const next = authFlowReducer(createInitialState(), {
-      type: 'GO_TO_SET_NEW_PASSWORD',
-      identityKeyName: 'alice',
-      recoveryKeyId: 'key-1',
-      recoveryCode: 'code-1',
-    });
+    const next = authFlowReducer(createInitialState(), { type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: 'alice' });
     expect(next.phase).toBe('get-started');
   });
 
-  it('STORE_RECOVERY_DATA stores data without changing phase', () => {
-    const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials' };
-    const next = authFlowReducer(state, {
-      type: 'STORE_RECOVERY_DATA',
-      identityKeyName: 'alice',
-      recoveryKeyId: 'key-1',
-      recoveryCode: 'code-1',
-    });
+  it('GO_BACK_FROM_SET_NEW_PASSWORD returns to restore-credentials', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'set-new-password', isLoading: true, error: TEST_ERROR };
+    const next = authFlowReducer(state, { type: 'GO_BACK_FROM_SET_NEW_PASSWORD' });
     expect(next.phase).toBe('restore-credentials');
-    expect(next.identityKeyName).toBe('alice');
-    expect(next.recoveryKeyId).toBe('key-1');
-    expect(next.recoveryCode).toBe('code-1');
+    expect(next.error).toBeNull();
+    expect(next.isLoading).toBe(false);
   });
 
-  it('STORE_RECOVERY_DATA is ignored from non-restore-credentials phase', () => {
-    const next = authFlowReducer(createInitialState(), {
-      type: 'STORE_RECOVERY_DATA',
-      identityKeyName: 'alice',
-      recoveryKeyId: 'key-1',
-      recoveryCode: 'code-1',
-    });
+  it('GO_BACK_FROM_SET_NEW_PASSWORD is ignored from non-set-new-password phase', () => {
+    const next = authFlowReducer(createInitialState(), { type: 'GO_BACK_FROM_SET_NEW_PASSWORD' });
     expect(next.phase).toBe('get-started');
-    expect(next.identityKeyName).toBe('');
   });
 
-  it('SHOW_RESTORE_SUCCESS sets isRestoreSuccessVisible to true', () => {
-    const next = authFlowReducer(createInitialState(), { type: 'SHOW_RESTORE_SUCCESS' });
+  it('SHOW_RESTORE_SUCCESS sets flag from set-new-password phase', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'set-new-password' };
+    const next = authFlowReducer(state, { type: 'SHOW_RESTORE_SUCCESS' });
     expect(next.isRestoreSuccessVisible).toBe(true);
+  });
+
+  it('SHOW_RESTORE_SUCCESS sets flag from restore-credentials phase', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials' };
+    const next = authFlowReducer(state, { type: 'SHOW_RESTORE_SUCCESS' });
+    expect(next.isRestoreSuccessVisible).toBe(true);
+  });
+
+  it('SHOW_RESTORE_SUCCESS is ignored from unrelated phase', () => {
+    const next = authFlowReducer(createInitialState(), { type: 'SHOW_RESTORE_SUCCESS' });
+    expect(next.isRestoreSuccessVisible).toBe(false);
   });
 
   it('HIDE_RESTORE_SUCCESS sets isRestoreSuccessVisible to false', () => {
@@ -200,9 +181,21 @@ describe('authFlowReducer', () => {
     expect(next.isRestoreSuccessVisible).toBe(false);
   });
 
-  it('SHOW_IDENTITY_KEY_NOT_FOUND sets isIdentityKeyNotFoundVisible to true', () => {
-    const next = authFlowReducer(createInitialState(), { type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
+  it('SHOW_IDENTITY_KEY_NOT_FOUND sets flag from restore-credentials phase', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials' };
+    const next = authFlowReducer(state, { type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
     expect(next.isIdentityKeyNotFoundVisible).toBe(true);
+  });
+
+  it('SHOW_IDENTITY_KEY_NOT_FOUND sets flag from set-new-password phase', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'set-new-password' };
+    const next = authFlowReducer(state, { type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
+    expect(next.isIdentityKeyNotFoundVisible).toBe(true);
+  });
+
+  it('SHOW_IDENTITY_KEY_NOT_FOUND is ignored from unrelated phase', () => {
+    const next = authFlowReducer(createInitialState(), { type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
+    expect(next.isIdentityKeyNotFoundVisible).toBe(false);
   });
 
   it('HIDE_IDENTITY_KEY_NOT_FOUND sets isIdentityKeyNotFoundVisible to false', () => {

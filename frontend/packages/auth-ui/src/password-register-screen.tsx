@@ -28,9 +28,8 @@ function useRegisterPasswordForm() {
   const isIdentityKeyValid = identityKeyName.trim().length > 0 && !identityKeyError;
   const isPasswordValid = areAllPasswordRulesMet(password);
   const isPasswordMatch = password.length > 0 && password === confirmPassword;
-  const isPasswordEmpty = password.length === 0 && confirmPassword.length === 0;
   const isPasswordFormValid = isPasswordValid && isPasswordMatch;
-  const isFormValid = isIdentityKeyValid && (isPasswordFormValid || isPasswordEmpty);
+  const isFormValid = isIdentityKeyValid && isPasswordFormValid;
 
   return {
     identityKeyName, setIdentityKeyName,
@@ -157,8 +156,7 @@ export function PasswordRegisterScreen({ callbacks }: PasswordRegisterScreenProp
 
   const handleContinue = useCallback(() => {
     if (!form.isFormValid) return;
-    const data = form.password ? { identityKeyName: form.identityKeyName, password: form.password } : { identityKeyName: form.identityKeyName };
-    callbacks?.onContinue(data);
+    callbacks?.onContinue({ identityKeyName: form.identityKeyName, password: form.password });
   }, [form.isFormValid, form.identityKeyName, form.password, callbacks]);
 
   return (

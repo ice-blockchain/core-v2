@@ -56,13 +56,13 @@ describe('auth flow integration: back navigation', () => {
     expect(result.current.state.phase).toBe('restore-credentials');
   });
 
-  it('set-new-password back is blocked by reducer guard (stays on set-new-password)', async () => {
+  it('set-new-password back returns to restore-credentials', async () => {
     const { result } = renderHook(() => useAuthFlow(createConfig()));
     act(() => result.current.screenProps.getStarted.onNavigateToRestore());
     act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
     await act(() => result.current.screenProps.restoreCredentials.onRestore(RECOVERY));
     act(() => result.current.screenProps.setNewPassword.onBack());
-    expect(result.current.state.phase).toBe('set-new-password');
+    expect(result.current.state.phase).toBe('restore-credentials');
   });
 
   it('register back returns to get-started', () => {
@@ -221,17 +221,15 @@ describe('auth flow integration: state propagation', () => {
     expect(result.current.state.isLoading).toBe(false);
   });
 
-  it('resetFlow clears recovery data from previous restore attempt', async () => {
+  it('resetFlow clears state from previous restore attempt', async () => {
     const { result } = renderHook(() => useAuthFlow(createConfig()));
     act(() => result.current.screenProps.getStarted.onNavigateToRestore());
     act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
     await act(() => result.current.screenProps.restoreCredentials.onRestore(RECOVERY));
-    expect(result.current.state.recoveryKeyId).toBe('key-1');
 
     act(() => result.current.resetFlow());
     expect(result.current.state.identityKeyName).toBe('');
-    expect(result.current.state.recoveryKeyId).toBe('');
-    expect(result.current.state.recoveryCode).toBe('');
+    expect(result.current.state.phase).toBe('get-started');
   });
 
   it('error clears on phase transition', async () => {

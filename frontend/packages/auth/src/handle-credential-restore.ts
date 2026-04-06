@@ -7,23 +7,22 @@ import { mapIdentityError } from './error-messages';
 type RecoveryData = { identityKeyName: string; recoveryKeyId: string; recoveryCode: string };
 type Dispatch = (action: AuthFlowAction) => void;
 
-export function handleRestoreCredentialsSubmit(
-  dispatch: Dispatch,
-  data: RecoveryData,
-): void {
-  dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', ...data });
+interface RestoreCredentialsInput {
+  identityClient: IdentityClient;
+  dispatch: Dispatch;
+  onRecoveryData: (data: RecoveryData) => void;
 }
 
 export async function handleRestoreCredentials(
-  input: { identityClient: IdentityClient; dispatch: Dispatch },
+  input: RestoreCredentialsInput,
   data: RecoveryData,
 ): Promise<void> {
-  const { identityClient, dispatch } = input;
-  dispatch({ type: 'STORE_RECOVERY_DATA', ...data });
+  const { identityClient, dispatch, onRecoveryData } = input;
+  onRecoveryData(data);
   dispatch({ type: 'SET_LOADING', isLoading: true });
   try {
     if (!isPasskeyAvailable()) {
-      dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', ...data });
+      dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: data.identityKeyName });
       return;
     }
     await callPasskeyRecovery(identityClient, data);
@@ -68,7 +67,7 @@ function callPasskeyRecovery(client: IdentityClient, data: RecoveryData): Promis
 function handlePasskeyRecoveryError(dispatch: Dispatch, error: unknown, data: RecoveryData): void {
   if (isPasskeyPlatformError(error)) {
     Logger.warning('Passkey cancelled, falling back to password', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
-    dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', ...data });
+    dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: data.identityKeyName });
     return;
   }
   logRecoveryError(error, data.identityKeyName);

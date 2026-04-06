@@ -33,5 +33,4 @@ export type AuthStackParamList = {
   SelectLanguages: undefined;
   DiscoverCreators: undefined;
   Notifications: undefined;
-  FullAuthFlow: undefined;
 };

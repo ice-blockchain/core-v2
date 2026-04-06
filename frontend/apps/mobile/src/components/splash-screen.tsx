@@ -3,6 +3,7 @@ import { Image } from "react-native";
 import type { MediaViewerSource } from "@ion/media-viewer";
 import { SplashScreen as SplashScreenCore } from "@ion/splash-ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
+import { Logger } from "@ion/diagnostics";
 import { identityClient } from "../identity-client";
 
 const resolvedAsset = Image.resolveAssetSource(
@@ -31,7 +32,9 @@ export function SplashScreen() {
   useEffect(() => {
     identityClient
       .restoreAuth()
-      .catch(() => {})
+      .catch((error: unknown) => {
+        Logger.error('Auth restore failed', { tag: 'auth', error });
+      })
       .finally(() => {
         restoreComplete.current = true;
         if (videoComplete.current) navigateToTarget();
