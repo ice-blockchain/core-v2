@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-04-03
+> Last updated: 2026-04-06
 
 ---
 
@@ -10,8 +10,7 @@
 | Repo | Purpose | Status |
 |---|---|---|
 | **ion-app** | React Native mobile app | Planning / Migration |
-| **ion-backend** | All backend services | Planning / Migration |
-| **@ion/api-contracts** | Shared typed API contracts | Planning |
+| **ion-backend** | All backend services | Active |
 
 
 ---
@@ -21,12 +20,12 @@
 | Service | Purpose | Status | Architecture |
 |---|---|---|---|
 | greenfield-ingester | Subscribe to Greenfield blockchain events, enqueue to BullMQ Redis | Active | [ARCHITECTURE.md](../../services/greenfield-ingester/ARCHITECTURE.md) |
-| ion-connect-storage | Virtual TON Storage node serving files from Greenfield. ADNL/RLDP, DHT registration, bag indexing, segment caching, TON Storage RPC, HTTP-over-RLDP provider index, health/metrics | Active (Phase 5) | [ARCHITECTURE.md](../../services/ion-connect-storage/ARCHITECTURE.md) |
+| ion-connect-storage | Virtual TON Storage node serving files from Greenfield. ADNL/RLDP, DHT registration, bag indexing, segment caching, TON Storage RPC, HTTP-over-RLDP provider index, health/metrics, CRDT cluster management with bag ownership, piece forwarding, dead node reclamation | Active (Phase 8) | [ARCHITECTURE.md](../../services/ion-connect-storage/ARCHITECTURE.md) |
 | identity | Auth, users, wallets | Planned | -- |
 | wallet | Coin/NFT operations | Planned | -- |
-| feed | Posts, likes, reposts | Planned | -- |
+| feed | Posts, likes, reposts (Fastify, healthcheck endpoint live) | Scaffolded | -- |
 | chat | Messaging | Planned | -- |
-| nft-minter | Minter | Planned | -- |
+| nft-minter | Minter | Placeholder (.gitkeep only) | -- |
 | token-analytics | Trades, holders, stats | Planned | -- |
 | notifications | Push notification dispatch | Planned | -- |
 
@@ -36,6 +35,7 @@
 
 | Package | Purpose | Status | Architecture |
 |---|---|---|---|
+| api-contracts | Shared typed API request/response schemas (used by feed service and future services) | Active | -- |
 | greenfield-client | Go library for Greenfield RPC subscription, object download, event parsing (shared by ingester + storage) | Active | [ARCHITECTURE.md](../../packages/greenfield-client/ARCHITECTURE.md) |
 
 ---

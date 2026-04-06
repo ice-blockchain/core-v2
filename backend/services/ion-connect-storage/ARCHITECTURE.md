@@ -4,13 +4,19 @@
 
 Virtual TON Storage protocol node that serves files cached from BNB Greenfield. Listens on ADNL/RLDP, implements TON storage RPC methods, and uses an LRU+TTL disk cache. Designed to scale to millions of bags using lazy DHT registration, CRDT-based cluster coordination, and hot/cold classification.
 
-## Current State: Phase 5 (HTTP Server + Metrics + Provider Index)
+## Current State: Phase 8 (CRDT Cluster Management)
 
-Phases 1-4 complete (ADNL server, Greenfield indexing, caching layer, TON Storage RPC). Phase 5 adds:
-- **Health HTTP server** on `127.0.0.1:HTTP_PORT` with deep dependency checks (subscriber, PebbleDB, ADNL)
-- **Prometheus metrics** registry with cache/fetch/index/provider counters and gauges
-- **Provider index** serving `GET /bags/:bagId` via HTTP-over-RLDP on the ADNL port (breaks DHT discoverability ceiling)
-- **RLDP-HTTP bridge** forwarding HTTP-over-RLDP requests through a Gin engine
+Phases 1-5 complete (ADNL server, Greenfield indexing, caching layer, TON Storage RPC, HTTP/metrics/provider index, E2E tests). Phase 8 adds:
+- **CRDT-based bag ownership** via `go-ds-crdt` over a dedicated ADNL cluster overlay
+- **Three-layer transport**: CRDT cluster overlay (control plane), direct ADNL peer-to-peer (data plane for piece forwarding), lazy per-bag overlays (client compatibility)
+- **PebbleDB-backed CRDT datastore** adapter implementing `ds.Batching` (key prefix `crdt/`)
+- **ADNL Broadcaster** sending CID head notifications over the cluster overlay
+- **ADNL DAGService** for IPLD block exchange (local PebbleDB + remote fan-out via RLDP)
+- **Ownership management**: claim/release/query via dual-key CRDT format (`own/<bagID>` for lookup + `bynode/<nodeID>/<bagID>` for enumeration)
+- **Dead node reclamation**: heartbeat monitoring + XOR-closest responsibility ring to prevent thundering herd
+- **Piece forwarding**: non-owning nodes forward piece requests to owners via direct ADNL connections (not cluster overlay)
+- **SingleNodeCoordinator**: implements all cluster interfaces for non-cluster mode (backward compatible)
+- Health HTTP server, Prometheus metrics, provider index, RLDP-HTTP bridge (from Phase 5)
 - Two separate Gin engines: public (provider index over RLDP) and private (health + metrics over TCP)
 
 ## .ionstorage Format (v2)
@@ -218,7 +224,65 @@ The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases wi
 - Counters: `cache_hit_total`, `cache_miss_total`, `cache_evictions_total`, `provider_lookups_total`
 - CounterVec: `greenfield_fetch_total` (labels: type, status)
 - HistogramVec: `greenfield_fetch_duration_seconds` (labels: type)
+- Cluster metrics: `cluster_nodes_active` (gauge), `cluster_bags_owned` (gauge), `cluster_crdt_deltas_sent`/`received` (counters), `cluster_conflicts_resolved` (counter), `cluster_piece_forwards_total` (counter, direction label), `cluster_piece_forward_duration_seconds` (histogram), `cluster_active_peer_connections` (gauge)
 - Served at `GET /metrics` on private engine (or separate `METRICS_PORT` if configured)
+
+### TL Schema (`internal/cluster/tl_schema.go`)
+- TL constructor IDs for cluster protocols: `cluster.crdtHead`, `cluster.getBlock`/`cluster.block`/`cluster.blockNotFound`, `cluster.forwardPieceRequest`/`cluster.pieceResponse`/`cluster.pieceNotFound`
+- Manual serialize/deserialize for all cluster message types
+- `tl_register.go`: registers cluster TL types with `tl.Register()` for overlay dispatch
+
+### PebbleDB Datastore Adapter (`internal/cluster/pebble_datastore.go`)
+- Implements `ds.Batching` (go-datastore) backed by PebbleDB with key prefix `crdt/`
+- Methods: Get/Put/Delete/Has/GetSize/Query/Batch/Sync/Close
+- Does NOT own the `*pebble.DB` -- shared with other key prefixes
+
+### Node Info (`internal/cluster/node_info.go`)
+- Read/write helpers for `nodeinfo/<nodeID>` (JSON `{adnlAddr, ip, port}`) and `heartbeat/<nodeID>` (unix timestamp) CRDT keys
+- `NodeInfo` struct for peer resolution during piece forwarding
+
+### Cluster Metrics (`internal/cluster/cluster_metrics.go`)
+- 8 Prometheus metrics registered on the shared registry
+- Zero-value gauges registered unconditionally for consistency
+
+### SingleNodeCoordinator (`internal/cluster/single_node.go`)
+- Implements all cluster interfaces for non-cluster mode
+- `OwnsBag` -> true, `OwnsOrClaim` -> true, `Owner` -> self, `ForwardGetPiece` -> unreachable error, `IsConnected` -> true, `ActiveNodeCount` -> 1
+
+### ADNL Broadcaster (`internal/cluster/adnl_broadcast.go`)
+- Implements `crdt.Broadcaster` interface over the ADNL cluster overlay
+- `Broadcast()`: sends head CID notifications via `overlay.Broadcast()`
+- `Next()`: blocks on incoming channel until next CID arrives or context cancelled
+
+### ADNL DAG Service (`internal/cluster/adnl_dag_service.go`)
+- Implements `ipld.DAGService` over ADNL (Bitswap-over-ADNL)
+- `Get()`: local PebbleDB first (`block/<cid>` prefix), on miss fan-out to `min(3, peers)` via RLDP
+- `Add()`: store in PebbleDB. Blocks are `dag.ProtoNode` (protobuf-encoded IPLD nodes)
+
+### Cluster Transport (`internal/cluster/cluster_transport.go`)
+- Wires the cluster overlay into the ADNL server
+- Routes incoming cluster overlay messages by TL constructor to broadcaster, DAG service, or piece forwarder
+
+### Coordinator (`internal/cluster/coordinator.go`)
+- Central coordination: joins cluster overlay, creates PebbleDB adapter, Broadcaster, DAGService, initializes `crdt.New(...)`
+- `Start(ctx)`: begins CRDT sync, heartbeat writer (configurable interval, default 60s), writes initial `nodeinfo`
+- `Stop()`: leaves overlay, closes CRDT
+
+### Ownership (`internal/cluster/ownership.go`)
+- `ClaimBag`, `ReleaseBag`, `OwnsBag`, `OwnsOrClaim`, `Owner`, `OwnedCount`
+- Dual-key CRDT format: `own/<hex-bagID>` -> `<nodeID>` (O(1) lookup) + `bynode/<nodeID>/<hex-bagID>` -> `""` (per-node enumeration)
+- `OwnedCount` uses local atomic counter -- never iterates
+
+### Reclamation (`internal/cluster/reclamation.go`)
+- Dead node detection goroutine (configurable interval, default 5min)
+- Scans `heartbeat/*` keys (O(nodes), not O(bags))
+- XOR-closest responsibility ring: only the active node closest to the dead node executes reclamation
+- Reclaims orphaned bags via `bynode/<deadNodeID>/` prefix scan
+
+### Piece Forwarder (`internal/cluster/piece_forwarder.go`)
+- Resolves owner from CRDT `nodeinfo`, dials via `gateway.RegisterClient`
+- Sends `cluster.forwardPieceRequest` via RLDP, returns piece data + proof
+- Direct ADNL peer-to-peer connections (not cluster overlay) for 128KB payloads
 
 ## API Surface
 
@@ -339,6 +403,59 @@ NewSegmentCache(directory, ttl, onEvict, logger) *SegmentCache
 (*SegmentCache) HasBag(bagID [32]byte) bool
 ```
 
+### Coordinator (public)
+```go
+NewCoordinator(cfg CoordinatorConfig, adnlServer *Server, logger *slog.Logger) (*Coordinator, error)
+NewSingleNodeCoordinator(nodeID string) *SingleNodeCoordinator
+(*Coordinator) Start(ctx) error
+(*Coordinator) Stop() error
+(*Coordinator) ClaimBag(ctx, bagID [32]byte) error
+(*Coordinator) ReleaseBag(ctx, bagID [32]byte) error
+(*Coordinator) OwnsBag(bagID [32]byte) bool
+(*Coordinator) OwnsOrClaim(ctx, bagID [32]byte) (bool, error)
+(*Coordinator) Owner(bagID [32]byte) string
+(*Coordinator) OwnedCount() int
+(*Coordinator) IsConnected() bool
+(*Coordinator) ActiveNodeCount() int
+(*Coordinator) NodeADNLAddress(nodeID string) (adnlAddr [32]byte, ip string, port int, found bool)
+```
+
+### PieceForwarder (public)
+```go
+NewPieceForwarder(gateway *adnl.Gateway, coordinator *Coordinator, logger *slog.Logger) *PieceForwarder
+(*PieceForwarder) ForwardGetPiece(ctx, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
+```
+
+### Cluster Interfaces (consumed by other packages)
+```go
+// Consumed by index.Subscriber
+type OwnershipChecker interface {
+    OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error)
+}
+
+// Consumed by storage.Handler
+type LocalOwnershipChecker interface {
+    OwnsBag(bagID [32]byte) bool
+}
+
+// Consumed by storage.Handler
+type PieceForwarder interface {
+    ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
+}
+
+// Consumed by provider.ProviderIndex
+type OwnerResolver interface {
+    Owner(bagID [32]byte) string
+    NodeADNLAddress(nodeID string) (adnlAddr [32]byte, ip string, port int, found bool)
+}
+
+// Consumed by health.Deps
+type ClusterChecker interface {
+    IsConnected() bool
+    ActiveNodeCount() int
+}
+```
+
 ## Dependencies
 
 | Package | Purpose |
@@ -346,12 +463,17 @@ NewSegmentCache(directory, ttl, onEvict, logger) *SegmentCache
 | `github.com/xssnick/tonutils-go` | ADNL gateway, DHT, overlay, RLDP, TL serialization, TVM cells, merkle proofs |
 | `github.com/xssnick/tonutils-storage` | Test-only: e2e download client, compatibility verification |
 | `github.com/hashicorp/golang-lru/v2` | LRU cache with eviction callbacks, TTL-based expirable cache |
-| `github.com/cockroachdb/pebble/v2` | PebbleDB for durable bag index, block height, and metadata cache |
+| `github.com/cockroachdb/pebble/v2` | PebbleDB for durable bag index, block height, metadata cache, and CRDT backing store |
 | `github.com/ice-blockchain/ion/packages/greenfield-client` | Greenfield RPC subscription, object download, event parsing |
 | `github.com/puzpuzpuz/xsync/v4` | Sharded concurrent map for in-memory bag index and segment tracking |
 | `golang.org/x/sync` | singleflight for request coalescing |
 | `github.com/gin-gonic/gin` | HTTP framework for health, metrics, and provider index routes (shared by TCP and RLDP transports) |
 | `github.com/prometheus/client_golang` | Prometheus metrics registry and HTTP handler |
+| `github.com/ipfs/go-ds-crdt` | CRDT datastore for distributed bag ownership |
+| `github.com/ipfs/go-ipld-format` | `ipld.DAGService` interface for CRDT block exchange |
+| `github.com/ipfs/go-datastore` | `ds.Batching` interface required by go-ds-crdt (PebbleDB adapter) |
+| `github.com/ipfs/boxo/ipld/merkledag` | `dag.DecodeProtobufBlock` for IPLD node deserialization |
+| `github.com/ipfs/go-block-format` | `blocks.NewBlock` for wrapping raw bytes as IPLD blocks |
 | `github.com/stretchr/testify` | Test assertions |
 
 ## Design Decisions
@@ -378,5 +500,13 @@ NewSegmentCache(directory, ttl, onEvict, logger) *SegmentCache
 - **GetCapabilities on extADNL.SetQueryHandler**: must be set on the `ADNLWrapper` (not raw peer) because `overlay.CreateExtendedADNL` replaces the peer's query handler. Non-overlay ADNL queries fall through to `rootQueryHandler`.
 - **Pending payload reaper**: background goroutine (10s interval) cleans `xsync.Map` entries older than 30s. Required for high traffic -- lazy cleanup would accumulate stale entries between bursts.
 - **Provider index populated via callback**: `Persister.SetOnBagIndexed` fires after each successful `PersistBagsAndHeight`, calling `ProviderIndex.Register` for each new bag. No startup scan -- bags registered as they are indexed.
-- **PebbleDB key prefix `prov/`**: disjoint from `idx/` (bag index) and `meta/` (metadata cache). Provider records stored as JSON `[]ProviderRecord` for easy multi-node extension in Phase 8 CRDT mode.
+- **PebbleDB key prefix `prov/`**: disjoint from `idx/` (bag index), `meta/` (metadata cache), `crdt/` (CRDT state), and `block/` (IPLD blocks). Provider records stored as JSON `[]ProviderRecord`.
 - **Separate METRICS_PORT**: if `METRICS_PORT` env var set and differs from `HTTP_PORT`, metrics served on a separate localhost-only HTTP server. Allows production to isolate scraping from health probes.
+- **Three-layer transport**: cluster overlay for CRDT gossip (control plane), direct ADNL for piece forwarding (data plane), lazy per-bag overlays for client compatibility. Separation prevents data-plane traffic from degrading CRDT convergence.
+- **CRDT OR-Set for ownership**: `go-ds-crdt` convergence handles concurrent claims deterministically. No application-level tiebreaker needed.
+- **Dual-key ownership format**: `own/<bagID>` for O(1) lookup + `bynode/<nodeID>/<bagID>` for O(k) per-node enumeration. Prevents O(total bags) scans.
+- **Ownership persists through cache eviction**: CRDT claims are NOT released on TTL expiry. Releasing on every eviction would create millions of daily Put/Delete mutations, bloating the Merkle-DAG indefinitely. Claims released only on explicit `ReleaseBag`.
+- **XOR-closest responsibility ring for reclamation**: prevents thundering herd where all nodes simultaneously detect a dead node and fire concurrent CRDT mutations.
+- **Direct ADNL for piece forwarding**: 128KB payloads route point-to-point, not through the cluster overlay. At high forwarding volume the overlay would become a bottleneck.
+- **SingleNodeCoordinator**: all cluster interfaces have a non-cluster implementation that returns true/self. No nil checks needed throughout the codebase.
+- **Startup ordering**: coordinator starts before subscriber. Bags indexed without CRDT claims would be invisible to the cluster.
