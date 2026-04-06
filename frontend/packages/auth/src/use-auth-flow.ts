@@ -128,7 +128,10 @@ function buildSetNewPasswordProps(input: RestorePropsInput) {
   const { deps, state, restoreGuard, recoveryDataRef } = input;
   return {
     identityKeyName: state.identityKeyName,
-    onBack: () => deps.dispatch({ type: 'GO_BACK_FROM_SET_NEW_PASSWORD' }),
+    onBack: () => {
+      recoveryDataRef.current = null;
+      deps.dispatch({ type: 'GO_BACK_FROM_SET_NEW_PASSWORD' });
+    },
     onContinue: (password: string) => restoreGuard(() => {
       const rd = recoveryDataRef.current;
       if (!rd) return Promise.resolve();
