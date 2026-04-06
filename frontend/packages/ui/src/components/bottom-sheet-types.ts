@@ -9,6 +9,7 @@ interface BottomSheetBaseProps {
   overlay?: ReactNode;
   inline?: boolean;
   testID?: string;
+
 }
 
 type BottomSheetFooterProps =
