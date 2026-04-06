@@ -27,6 +27,7 @@ import { ListItemSkeletonCatalogSection } from "./ListItemSkeletonCatalogSection
 import { NotificationBarProvider } from "../components/NotificationBarProvider";
 import { SelectableListItemCatalogSection } from "./SelectableListItemCatalogSection";
 import { ListEditActionsBarCatalogSection } from "./ListEditActionsBarCatalogSection";
+import { BottomNavBarCatalogSection } from "./BottomNavBarCatalogSection";
 
 function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
@@ -35,6 +36,29 @@ function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
       <Text variant="headline1">UI Kit Catalog</Text>
       <Button height={44} color="secondary" label={theme.colorMode === "light" ? "Dark Mode" : "Light Mode"} onPress={onToggleMode} />
     </View>
+  );
+}
+
+function CatalogSections() {
+  return (
+    <>
+      <ColorCatalogSection />
+      <TypographyCatalogSection />
+      <IconCatalogSection />
+      <ButtonCatalogSection />
+      <SmallButtonCatalogSection />
+      <TextFieldCatalogSection />
+      <NotificationBarCatalogSection />
+      <IONLoaderCatalogSection />
+      <SeparatorCatalogSection />
+      <ListItemSkeletonCatalogSection />
+      <SelectableListItemCatalogSection />
+      <ListEditActionsBarCatalogSection />
+      <BottomNavBarCatalogSection />
+      <BottomSheetCatalogSection />
+      <AvatarCatalogSection />
+      <StoryAvatarCatalogSection />
+    </>
   );
 }
 
@@ -52,21 +76,7 @@ function CatalogContent({ onToggleMode, headerSlot }: CatalogContentProps) {
           <View style={{ maxWidth: 420, width: "100%" }}>
             <CatalogHeader onToggleMode={onToggleMode} />
             {headerSlot}
-            <ColorCatalogSection />
-            <TypographyCatalogSection />
-            <IconCatalogSection />
-            <ButtonCatalogSection />
-            <SmallButtonCatalogSection />
-            <TextFieldCatalogSection />
-            <NotificationBarCatalogSection />
-            <IONLoaderCatalogSection />
-            <SeparatorCatalogSection />
-            <ListItemSkeletonCatalogSection />
-            <SelectableListItemCatalogSection />
-            <ListEditActionsBarCatalogSection />
-            <BottomSheetCatalogSection />
-            <AvatarCatalogSection />
-            <StoryAvatarCatalogSection />
+            <CatalogSections />
           </View>
         </ScrollView>
       </DismissKeyboardView>

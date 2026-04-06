@@ -3,6 +3,7 @@ import type { ScaleFunctions } from "./scaling-types";
 const BASE_DESIGN_WIDTH = 375;
 
 function roundToPixel(value: number): number {
+  if (value < 3) return value;
   return Math.round(value * 2) / 2;
 }
 
