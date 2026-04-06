@@ -32,7 +32,6 @@ function SheetContent({ title, actions }: { title: string; actions: readonly Bot
   return (
     <>
       <SheetHeader title={title} />
-      <HorizontalSeparator />
       <View style={{ gap: scale(12) }}>
         {actions.map((action, index) => (
           <Fragment key={action.iconName}>
