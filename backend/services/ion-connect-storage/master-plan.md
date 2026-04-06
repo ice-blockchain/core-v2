@@ -6,7 +6,7 @@ ION Connect Storage is a virtual TON Storage protocol node that serves files cac
 
 **Key decisions from requirements:**
 - Tag key: `ion-bag-id` on Greenfield objects
-- Piece size: 512KB (524,288 bytes) -- 1 Greenfield 16MB segment = 32 ION pieces
+- Piece size: 128KB (131,072 bytes) -- 1 Greenfield 16MB segment = 128 ION pieces
 - Naming: "ION" in all internal code, third-party types keep original names
 - Logging: `slog.Logger` with `LOG_LEVEL` env var
 - Protocol: `tonutils-go` low-level (ADNL gateway + DHT + overlays + RLDP)
@@ -16,7 +16,7 @@ ION Connect Storage is a virtual TON Storage protocol node that serves files cac
 - Storage: partitioned PebbleDB (replaces BadgerDB) -- single DB instance with key prefixes for logical separation (index, metadata, CRDT blocks)
 - Three-layer transport architecture:
   1. **CRDT cluster overlay** -- ownership, heartbeats, CRDT deltas, ownership queries (small messages only, control plane)
-  2. **Direct ADNL peer-to-peer connections** -- piece forwarding between specific node pairs (512KB payloads, data plane). Established on demand using ADNL addresses resolved from CRDT ownership map. Keeps cluster overlay lightweight.
+  2. **Direct ADNL peer-to-peer connections** -- piece forwarding between specific node pairs (128KB payloads, data plane). Established on demand using ADNL addresses resolved from CRDT ownership map. Keeps cluster overlay lightweight.
   3. **Lazy per-bag overlays** -- external TON Storage client compatibility. Created on demand when a client request arrives, capped at `ActiveDHTLimit` total. Not proactively created at startup or index time.
 - Cluster: CRDT-based bag ownership via `go-ds-crdt` over the cluster overlay. Replaces modulus sharding.
 - Provider index: IPNI-style federated index for bag discovery beyond DHT cap. Served via **HTTP-over-RLDP** on the same ADNL port (not a separate HTTP server). Clients send `GET /bags/:bagId` over RLDP to the node's ADNL address. Without this, `ActiveDHTLimit` creates a hard discoverability ceiling.
@@ -64,7 +64,7 @@ services/ion-connect-storage/
       add_update.go                  -- storage.addUpdate (bitfield exchange)
       get_piece.go                   -- storage.getPiece (hot path)
       get_piece_test.go
-      piece_slicer.go                -- extract 512KB piece from 16MB segment
+      piece_slicer.go                -- extract 128KB piece from 16MB segment
       piece_slicer_test.go
       merkle_proof.go                -- generate TVM cell Merkle proof branch
       merkle_proof_test.go
@@ -76,7 +76,7 @@ services/ion-connect-storage/
       torrent_header.go              -- TorrentHeader binary serialization
       torrent_header_test.go
     bagid/
-      compute.go                     -- Go-side bag ID computation (512KB pieces)
+      compute.go                     -- Go-side bag ID computation (128KB pieces)
       compute_test.go                -- cross-language test vectors
     cluster/
       coordinator.go                 -- CRDT-based bag ownership + content routing via go-ds-crdt
@@ -278,7 +278,7 @@ type Fetcher struct {
 
 ### `internal/greenfield/segment_fetcher.go` (~80 lines)
 
-Constants: `SegmentSize = 16MB`, `PieceSize = 512KB`, `PiecesPerSegment = 32`
+Constants: `SegmentSize = 16MB`, `PieceSize = 128KB`, `PiecesPerSegment = 128`
 - `downloadSegment(ctx, bucket, object, segmentIndex) (io.ReadCloser, error)` via `GetObject` with Range
 - Returns streaming reader, not full `[]byte`
 
@@ -359,13 +359,13 @@ PebbleDB-backed, keyed by bag ID:
 ### `internal/storage/get_piece.go` (~120 lines, hot path)
 
 ```
-1. segmentIndex = pieceID / 32
+1. segmentIndex = pieceID / PiecesPerSegment (128)
 2. Check segment cache -> hit: read from disk -> slice piece -> return
 3. Cache miss: check if this node owns the bag (CRDT / modulus)
 4a. IF OWNED: look up (bucket, object) from index
     -> Fetch segment from Greenfield via coalescer (key: bucket/object:seg:idx)
     -> Cache fetched segment to disk
-    -> Slice 512KB piece from segment
+    -> Slice 128KB piece from segment
     -> Generate Merkle proof
     -> Return storage.piece{proof, data} in TL format
 4b. IF NOT OWNED: forward to owning node via piece_forwarder
@@ -379,8 +379,8 @@ PebbleDB-backed, keyed by bag ID:
 ### `internal/storage/piece_slicer.go` (~40 lines)
 
 - `SlicePiece(segmentData []byte, pieceID int) ([]byte, error)`
-- Piece offset within segment: `localIndex = pieceID % PiecesPerSegment` (i.e., `pieceID % 32`)
-- Byte offset: `offset = localIndex * PieceSize` (i.e., `localIndex * 512 * 1024`)
+- Piece offset within segment: `localIndex = pieceID % PiecesPerSegment` (i.e., `pieceID % 128`)
+- Byte offset: `offset = localIndex * PieceSize` (i.e., `localIndex * 128 * 1024`)
 - Read `min(PieceSize, len(segmentData) - offset)` bytes -- handles last piece being shorter
 - **Explicit allocation**: `piece := make([]byte, length)` + `copy(piece, segmentData[offset:offset+length])`. Do NOT return a sub-slice of segmentData -- that pins the entire 16MB backing array in memory until the piece response is fully sent over RLDP.
 - **sync.Pool for segment buffers**: use `sync.Pool` for the 16MB download buffers to avoid allocation/GC churn under concurrent fetching. Get buffer before Greenfield download, return to pool after all pieces are sliced.
@@ -485,7 +485,7 @@ Env: `GREENFIELD_E2E_PRIVATE_KEY`, `ADNL_PRIVATE_KEY`, `GLOBAL_CONFIG_URL`
 - Pre-computed `ion-bag-id` tag already set on the object
 - The test **builds the `.ionstorage` BoC from the file** using `internal/bagid` and `internal/boc` packages:
   1. Download the static file from Greenfield
-  2. Hash all 512KB pieces, build Merkle tree, build TorrentInfo cell
+  2. Hash all 128KB pieces, build Merkle tree, build TorrentInfo cell
   3. Verify computed bag ID matches the `ion-bag-id` tag on the object
   4. Serialize TorrentInfo + Merkle tree as BoC
   5. Upload `<objectName>.ionstorage` to Greenfield
@@ -549,13 +549,13 @@ Three transport layers, each with distinct traffic profiles:
    Node C ──┘
 
 2. Direct ADNL Peer-to-Peer (data plane)
-   Node A ───── Node B    (piece forwarding, 512KB payloads, on-demand connections)
+   Node A ───── Node B    (piece forwarding, 128KB payloads, on-demand connections)
 
 3. Lazy Per-Bag Overlays (client compatibility)
    Client ──── Overlay(bagID) ──── Node A    (standard TON Storage protocol)
 ```
 
-The cluster overlay (identified by `CLUSTER_OVERLAY_ID`) stays lightweight -- only CRDT gossip and IPLD block exchange. Piece data (512KB) flows over **direct ADNL connections** between specific node pairs, established on demand using ADNL addresses from the CRDT ownership map. This separation prevents data-plane traffic from degrading CRDT convergence. At low forwarding rates mixing would be fine, but at thousands of forwarded pieces/sec the cluster overlay would become a bottleneck.
+The cluster overlay (identified by `CLUSTER_OVERLAY_ID`) stays lightweight -- only CRDT gossip and IPLD block exchange. Piece data (128KB) flows over **direct ADNL connections** between specific node pairs, established on demand using ADNL addresses from the CRDT ownership map. This separation prevents data-plane traffic from degrading CRDT convergence. At low forwarding rates mixing would be fine, but at thousands of forwarded pieces/sec the cluster overlay would become a bottleneck.
 
 Each node maintains a local `go-ds-crdt` datastore backed by PebbleDB (via a `ds.Datastore` adapter). The CRDT type is an OR-Set (Observed-Remove Set) where each entry is `(bagID, nodeID)` -- meaning "nodeID claims ownership of bagID". When a node indexes a new bag from Greenfield Subscribe, it adds a claim. When a bag is evicted from cache, the claim is removed. CRDT convergence ensures all nodes eventually agree on who owns which bags.
 
@@ -724,7 +724,7 @@ cluster.pieceNotFound = cluster.PieceResponse;
 
 - **On the receiving side**: the ADNL gateway registers a handler for `cluster.forwardPieceRequest` TL constructor. The handler calls the local `storage.Handler.HandleGetPiece()` (same code path as serving a client) and wraps the result in `cluster.pieceResponse`.
 
-- **Why direct ADNL, not cluster overlay**: the cluster overlay is designed for 10-50 nodes exchanging small CRDT deltas. Routing 512KB piece payloads through it mixes control-plane and data-plane traffic. At high forwarding volume (thousands/sec), overlay gossip would degrade. Direct ADNL is point-to-point, no relay, no broadcast overhead.
+- **Why direct ADNL, not cluster overlay**: the cluster overlay is designed for 10-50 nodes exchanging small CRDT deltas. Routing 128KB piece payloads through it mixes control-plane and data-plane traffic. At high forwarding volume (thousands/sec), overlay gossip would degrade. Direct ADNL is point-to-point, no relay, no broadcast overhead.
 
 ### Dead node detection + reclamation
 

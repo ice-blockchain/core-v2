@@ -73,7 +73,7 @@ func serializeState(buf []byte, willUpload, wantDownload bool) []byte {
 	return buf
 }
 
-const maxPieceCount = 10_000_000 // ~4.7 TB at 512 KB pieces
+const maxPieceCount = 10_000_000 // ~1.2 TB at 128 KB pieces
 
 // buildFullBitfield creates a bitfield with all bits set to 1.
 // Returns nil if pieceCount is out of valid range.

@@ -3,6 +3,7 @@ package storage
 import (
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,9 +74,9 @@ func TestSlicePieceDataOutOfRange(t *testing.T) {
 }
 
 func TestPayloadSegmentIndex(t *testing.T) {
-	require.Equal(t, -1, payloadSegmentIndex(0, 600000, 524288)) // piece fully in header
-	require.Equal(t, 0, payloadSegmentIndex(0, 100, 524288))     // piece spans header
-	require.Equal(t, 0, payloadSegmentIndex(1, 100, 524288))     // second piece, payload offset < 16MB
+	require.Equal(t, -1, payloadSegmentIndex(0, 600000, boc.PieceSize)) // piece fully in header
+	require.Equal(t, 0, payloadSegmentIndex(0, 100, boc.PieceSize))     // piece spans header
+	require.Equal(t, 0, payloadSegmentIndex(1, 100, boc.PieceSize))     // second piece, payload offset < 16MB
 }
 
 func TestBuildFullBitfield(t *testing.T) {

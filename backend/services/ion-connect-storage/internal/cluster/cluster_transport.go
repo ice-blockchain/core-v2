@@ -17,7 +17,7 @@ import (
 
 const (
 	// rldpMaxPieceAnswer is the max RLDP response size for piece forwarding (1MB).
-	// Covers 512KB piece data + proof + TL overhead.
+	// Covers 128KB piece data + proof + TL overhead.
 	rldpMaxPieceAnswer uint64 = 1 << 20
 
 	// rldpMaxRawQueryAnswer is the max RLDP response size for raw query forwarding (256KB).
@@ -192,7 +192,7 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 
 // ForwardPieceViaPeer sends a ForwardPieceRequest to a specific peer
 // using RLDP over the cluster overlay. RLDP is required because piece
-// payloads (512KB) exceed the ADNL message size limit.
+// payloads (128KB) exceed the ADNL message size limit.
 func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
 	t.mu.RLock()
 	cp, ok := t.peers[adnlAddr]
