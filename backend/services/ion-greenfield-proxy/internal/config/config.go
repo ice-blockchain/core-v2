@@ -24,8 +24,6 @@ type Config struct {
 	ADNLPrivateKey           string
 	ADNLConfigURL            string
 	ADNLExternalAddr         string
-	DNSPrivateKey            string
-	DNSName                  string
 	RateLimitPerKey          int
 	RateLimitPerIP           int
 	RateLimitGlobal          int
@@ -78,8 +76,6 @@ func Load(adnlKey, dnsKey, dnsName string) (*Config, error) {
 
 	cfg.ADNLConfigURL = envOrDefault("ADNL_CONFIG_URL", DefaultADNLConfigURL)
 	cfg.ADNLExternalAddr = os.Getenv("ADNL_EXTERNAL_ADDR")
-	cfg.DNSPrivateKey = cliOrEnv(dnsKey, "DNS_PRIVATE_KEY")
-	cfg.DNSName = cliOrEnv(dnsName, "DNS_NAME")
 
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("config validation failed:\n  %s", strings.Join(errs, "\n  "))
@@ -100,10 +96,8 @@ func (c *Config) LogFields() []any {
 		"greenfield_chain_id", c.GreenfieldChainID,
 		"fee_grant_amount", c.GreenfieldFeeGrantAmount,
 		"log_level", c.LogLevel,
-		"dns_name", c.DNSName,
 		"adnl_key_set", c.ADNLPrivateKey != "",
 		"adnl_config_url", c.ADNLConfigURL,
-		"dns_key_set", c.DNSPrivateKey != "",
 		"rate_limit_per_key", c.RateLimitPerKey,
 		"rate_limit_per_ip", c.RateLimitPerIP,
 		"rate_limit_global", c.RateLimitGlobal,

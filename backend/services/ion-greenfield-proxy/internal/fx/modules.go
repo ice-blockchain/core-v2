@@ -36,5 +36,4 @@ var ServerModule = fx.Options(
 var GreenfieldModule = fx.Options(
 	fx.Provide(greenfield.NewClient),
 	fx.Provide(greenfield.NewBucketProvisioner),
-	fx.Invoke(greenfield.RegisterDNS),
 )
