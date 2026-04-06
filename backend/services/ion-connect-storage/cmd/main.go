@@ -142,17 +142,12 @@ func createCoordinator(ctx context.Context, cfg config.Config, db *pebble.DB, se
 	adnlAddr := adnlAddrFromGateway(server)
 	ip, port := parseExternalAddr(cfg.AdnlExternalAddr)
 
-	if !cfg.ClusterEnabled() {
-		nodeID := cfg.NodeID
-		if nodeID == "" {
-			nodeID = hexEncodeAddr(adnlAddr)
-		}
-		return cluster.NewSingleNodeCoordinator(nodeID, adnlAddr, ip, port)
-	}
+	// NodeID is always derived from the ADNL address (ed25519-bound).
+	// This prevents identity spoofing via arbitrary NODE_ID env var.
+	nodeID := hexEncodeAddr(adnlAddr)
 
-	nodeID := cfg.NodeID
-	if nodeID == "" {
-		nodeID = hexEncodeAddr(adnlAddr)
+	if !cfg.ClusterEnabled() {
+		return cluster.NewSingleNodeCoordinator(nodeID, adnlAddr, ip, port)
 	}
 
 	coord, err := cluster.NewCoordinator(cluster.CoordinatorConfig{

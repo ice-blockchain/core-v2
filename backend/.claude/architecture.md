@@ -65,6 +65,9 @@
 | MMKV + SQLite for storage | MMKV for fast key-value, SQLite for structured/relational data | 2026-03-20 |
 | Go for Greenfield integration | Greenfield SDK is Go-native; avoids FFI/serialization overhead | 2026-03-27 |
 | BullMQ Redis as event bridge | Go ingester writes BullMQ-compatible jobs; Node.js workers consume them | 2026-03-27 |
+| Open cluster overlay participation | ADNL authenticates peers via ed25519; overlay carries only public bag metadata; no application-level ACL needed | 2026-04-06 |
+| NodeID derived from ADNL key | Prevents identity spoofing; NODE_ID env var removed; nodeID is always hex-encoded ADNL address | 2026-04-06 |
+| Post-claim convergence verification | Prevents TOCTOU split-brain in bag ownership; 3 reads with exponential backoff after CRDT claim | 2026-04-06 |
 
 ---
 

@@ -69,8 +69,10 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 
 // OwnsOrClaim checks ownership. If unclaimed, claims for this node.
 // Returns true if this node is (or became) the owner.
+// Uses ValidatedOwner to reject ownership claims from nodes without
+// fresh heartbeats (prevents identity spoofing).
 func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error) {
-	current := c.Owner(bagID)
+	current := c.ValidatedOwner(bagID)
 	if current == c.nodeID {
 		return true, nil
 	}
@@ -82,17 +84,11 @@ func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, er
 		return false, err
 	}
 
-	// After claiming, verify we won (CRDT may converge to another node).
-	winner := c.Owner(bagID)
-	if winner != c.nodeID {
-		c.ownedCount.Add(-1)
-		if c.metrics != nil {
-			c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
-			c.metrics.ConflictsResolved.Inc()
-		}
-		return false, nil
+	if c.verifyClaim(ctx, bagID) {
+		return true, nil
 	}
-	return true, nil
+	c.rollbackClaim(ctx, bagID)
+	return false, nil
 }
 
 // OwnedCount returns the number of bags this node owns.

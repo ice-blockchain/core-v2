@@ -8,11 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"strings"
-
 	"github.com/cockroachdb/pebble/v2"
 	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
 	crdt "github.com/ipfs/go-ds-crdt"
 )
 
@@ -30,6 +27,7 @@ type CoordinatorConfig struct {
 	ReclamationInterval   time.Duration
 	StaleHeartbeatTimeout time.Duration
 	ReclamationStartDelay time.Duration
+	ClaimVerifyDelay      time.Duration
 }
 
 func (c *CoordinatorConfig) applyDefaults() {
@@ -235,94 +233,6 @@ func (c *Coordinator) writeHeartbeat(ctx context.Context) {
 	if err := c.crdt.Put(ctx, ds.NewKey(HeartbeatKey(c.nodeID)), val); err != nil {
 		if ctx.Err() == nil {
 			c.logger.Warn("write heartbeat", "error", err)
-		}
-	}
-}
-
-// countActiveNodes scans heartbeat/* keys and counts fresh ones.
-// O(nodes) -- never O(bags).
-func countActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *slog.Logger) int {
-	nodes, _ := listActiveNodes(store, staleTimeout, logger)
-	return len(nodes)
-}
-
-// listActiveNodes returns nodeIDs with fresh heartbeats.
-func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *slog.Logger) ([]string, []string) {
-	ctx := context.Background()
-	results, err := store.Query(ctx, dsq.Query{Prefix: prefixHeartbeat})
-	if err != nil {
-		logger.Warn("query heartbeats", "error", err)
-		return nil, nil
-	}
-	defer results.Close()
-
-	now := time.Now().Unix()
-	threshold := now - int64(staleTimeout.Seconds())
-	var active, dead []string
-
-	for r := range results.Next() {
-		if r.Error != nil {
-			continue
-		}
-		nodeID := extractNodeIDFromHeartbeatKey(r.Key)
-		ts, err := ParseHeartbeat(r.Value)
-		if err != nil {
-			continue
-		}
-		if ts >= threshold {
-			active = append(active, nodeID)
-		} else {
-			dead = append(dead, nodeID)
-		}
-	}
-	return active, dead
-}
-
-func extractNodeIDFromHeartbeatKey(key string) string {
-	// Key format: /heartbeat/<nodeID> (ds.Key adds leading /)
-	return strings.TrimPrefix(key, "/"+prefixHeartbeat)
-}
-
-const reconcileInterval = 5 * time.Minute
-
-// reconcileOwnedCountLoop periodically scans bynode/<nodeID>/ keys to correct
-// the atomic ownedCount counter, which can drift due to CRDT race conditions.
-func (c *Coordinator) reconcileOwnedCountLoop(ctx context.Context) {
-	ticker := time.NewTicker(reconcileInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			c.reconcileOwnedCount(ctx)
-		}
-	}
-}
-
-func (c *Coordinator) reconcileOwnedCount(ctx context.Context) {
-	prefix := ByNodePrefix(c.nodeID)
-	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefix, KeysOnly: true})
-	if err != nil {
-		c.logger.Warn("reconcile owned count: query failed", "error", err)
-		return
-	}
-	defer results.Close()
-
-	var count int64
-	for r := range results.Next() {
-		if r.Error != nil {
-			continue
-		}
-		count++
-	}
-
-	old := c.ownedCount.Swap(count)
-	if old != count {
-		c.logger.Info("reconciled owned count", "old", old, "new", count)
-		if c.metrics != nil {
-			c.metrics.BagsOwned.Set(float64(count))
 		}
 	}
 }

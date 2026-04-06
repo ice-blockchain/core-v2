@@ -107,12 +107,18 @@ func readSegmentFromFiles(bag *cachedBag, segmentIndex int) ([]byte, bool, error
 	if segmentIndex < 0 || int64(segmentIndex) > maxSegmentIndex {
 		return nil, false, fmt.Errorf("segment index %d out of safe range", segmentIndex)
 	}
+	if bag.layout.TotalSize > math.MaxInt64 {
+		return nil, false, fmt.Errorf("bag total size %d exceeds int64 max", bag.layout.TotalSize)
+	}
 	startOffset := int64(segmentIndex) * int64(boc.SegmentSize)
 	segmentEnd := startOffset + int64(boc.SegmentSize)
 	if segmentEnd > int64(bag.layout.TotalSize) {
 		segmentEnd = int64(bag.layout.TotalSize)
 	}
 	segmentLen := segmentEnd - startOffset
+	if segmentLen <= 0 {
+		return nil, false, fmt.Errorf("segment %d: invalid length %d", segmentIndex, segmentLen)
+	}
 	buf := make([]byte, segmentLen)
 
 	reader := &segmentFileReader{layout: bag.layout, dirPath: bag.dirPath}

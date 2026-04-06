@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"time"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"golang.org/x/sync/singleflight"
 )
+
+const fetchTimeout = 2 * time.Minute
 
 // Fetcher downloads metadata and segments from Greenfield with request coalescing.
 type Fetcher struct {
@@ -31,7 +34,9 @@ func NewFetcher(client greenfieldclient.Client, logger *slog.Logger) *Fetcher {
 func (f *Fetcher) FetchMetadata(ctx context.Context, bucket, object string) (*boc.BagMetadata, error) {
 	key := fmt.Sprintf("%s/%s.meta", bucket, object)
 	val, err, _ := f.do(key, func() (interface{}, error) {
-		return fetchMetadata(ctx, f.client, bucket, object, f.logger)
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), fetchTimeout)
+		defer cancel()
+		return fetchMetadata(fetchCtx, f.client, bucket, object, f.logger)
 	})
 	if err != nil {
 		return nil, err
@@ -46,7 +51,9 @@ func (f *Fetcher) FetchMetadata(ctx context.Context, bucket, object string) (*bo
 func (f *Fetcher) FetchSegment(ctx context.Context, bucket, object string, segmentIndex int, w io.Writer) ([]byte, error) {
 	key := fmt.Sprintf("%s/%s:seg:%d", bucket, object, segmentIndex)
 	val, err, _ := f.do(key, func() (interface{}, error) {
-		return fetchSegment(ctx, f.client, bucket, object, segmentIndex, w, f.logger)
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), fetchTimeout)
+		defer cancel()
+		return fetchSegment(fetchCtx, f.client, bucket, object, segmentIndex, w, f.logger)
 	})
 	if err != nil {
 		return nil, err

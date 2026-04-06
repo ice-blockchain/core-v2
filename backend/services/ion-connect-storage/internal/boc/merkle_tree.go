@@ -48,6 +48,9 @@ func buildMerkleTreeRecursive(nodes []*cell.Cell) *cell.Cell {
 
 // ComputePieceHashes computes SHA256 hashes for each piece of the given data.
 func ComputePieceHashes(data []byte, pieceSize uint32) [][32]byte {
+	if pieceSize == 0 || len(data) == 0 {
+		return nil
+	}
 	count := (len(data) + int(pieceSize) - 1) / int(pieceSize)
 	hashes := make([][32]byte, count)
 	for i := range count {

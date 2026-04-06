@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"encoding/binary"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -72,6 +73,38 @@ func TestConstructorID(t *testing.T) {
 	id, err := ConstructorID(data)
 	require.NoError(t, err)
 	require.Equal(t, tlCRDTHead, id)
+}
+
+func TestParseCRDTHeadExceedsMaxSize(t *testing.T) {
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint32(buf[0:4], tlCRDTHead)
+	binary.LittleEndian.PutUint32(buf[4:8], maxTLFieldSize+1)
+	_, err := ParseCRDTHead(buf)
+	require.ErrorContains(t, err, "exceeds max")
+}
+
+func TestParseGetBlockExceedsMaxSize(t *testing.T) {
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint32(buf[0:4], tlGetBlock)
+	binary.LittleEndian.PutUint32(buf[4:8], maxTLFieldSize+1)
+	_, err := ParseGetBlock(buf)
+	require.ErrorContains(t, err, "exceeds max")
+}
+
+func TestParseBlockResponseExceedsMaxSize(t *testing.T) {
+	buf := make([]byte, 8)
+	binary.LittleEndian.PutUint32(buf[0:4], tlBlock)
+	binary.LittleEndian.PutUint32(buf[4:8], maxTLFieldSize+1)
+	_, _, err := ParseBlockResponse(buf)
+	require.ErrorContains(t, err, "exceeds max")
+}
+
+func TestParsePieceResponseExceedsMaxSize(t *testing.T) {
+	buf := make([]byte, 12)
+	binary.LittleEndian.PutUint32(buf[0:4], tlPieceResponse)
+	binary.LittleEndian.PutUint32(buf[4:8], maxTLFieldSize+1)
+	_, _, _, err := ParsePieceResponse(buf)
+	require.ErrorContains(t, err, "exceeds max")
 }
 
 func TestParseTruncatedData(t *testing.T) {

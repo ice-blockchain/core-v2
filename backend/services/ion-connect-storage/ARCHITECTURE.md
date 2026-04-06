@@ -285,6 +285,28 @@ The piece slicer (`internal/storage/piece_slicer.go`) handles all three cases wi
 - Sends `cluster.forwardPieceRequest` via RLDP, returns piece data + proof
 - Direct ADNL peer-to-peer connections (not cluster overlay) for 128KB payloads
 
+### Ownership Validation (`internal/cluster/ownership_validation.go`)
+- `ValidatedOwner(bagID)`: returns owner only if that node has a fresh heartbeat; prevents spoofed CRDT ownership values from being trusted
+- `isNodeAlive(nodeID)`: checks heartbeat timestamp against `StaleHeartbeatTimeout`
+
+### Claim Verification (`internal/cluster/claim_verification.go`)
+- `verifyClaim(ctx, bagID)`: post-claim convergence check with exponential backoff (3 reads, 500ms/1s/2s) to prevent TOCTOU split-brain
+- `rollbackClaim(ctx, bagID)`: undoes failed claim, cleans up orphaned `bynode/` key
+
+### Reconciliation (`internal/cluster/reconciliation.go`)
+- Extracted from coordinator.go: `listActiveNodes`, `countActiveNodes`, `reconcileOwnedCountLoop`
+- Enhanced `reconcileOwnedCount`: verifies each `bynode/<self>/<bagID>` still maps to self in `own/<bagID>`; deletes stale keys where ownership was lost to CRDT race resolution
+
+### Cluster Security Model
+The CRDT cluster overlay uses an **open participation model**: any ADNL peer that
+knows the `CLUSTER_OVERLAY_ID` can join and exchange CRDT deltas. This is by design.
+
+- **Network-level authentication**: ADNL protocol proves each peer's identity via ed25519 key exchange. A peer cannot forge another peer's ADNL address.
+- **NodeID = ADNL address**: each node's cluster identity is its hex-encoded ADNL address, derived from its ed25519 key. The `NODE_ID` env var override was removed to prevent identity spoofing.
+- **Ownership validation**: `ValidatedOwner()` cross-references CRDT ownership values against heartbeat liveness. Ownership claims from nodes without a fresh heartbeat are rejected.
+- **No access control on overlay queries**: any ADNL peer can query the cluster overlay (get blocks, forward pieces). The overlay serves public TON Storage data. Authentication gates peer admission at the ADNL layer, not the application layer.
+- **Claim verification**: post-claim convergence delay with retry prevents TOCTOU split-brain where two nodes simultaneously claim the same bag.
+
 ## API Surface
 
 ### Server (public)

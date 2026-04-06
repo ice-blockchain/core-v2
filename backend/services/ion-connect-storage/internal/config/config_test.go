@@ -12,8 +12,8 @@ func setRequiredEnv(t *testing.T) {
 	t.Setenv("ADNL_PRIVATE_KEY", "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")
 	t.Setenv("PORT", "3278")
 	t.Setenv("ADNL_EXTERNAL_ADDR", "1.2.3.4:3278")
-	t.Setenv("GLOBAL_CONFIG_URL", "https://ton.org/testnet-global.config.json")
-	t.Setenv("GREENFIELD_RPC_URLS", "https://rpc1.example.com")
+	t.Setenv("GLOBAL_CONFIG_URL", "https://67.29.155.42/testnet-global.config.json")
+	t.Setenv("GREENFIELD_RPC_URLS", "https://93.184.216.34")
 	t.Setenv("GREENFIELD_PRIVATE_KEY", "deadbeef")
 	t.Setenv("ONLINEIO_ENV", "dev")
 }
@@ -25,8 +25,8 @@ func TestLoad_AllRequired_Success(t *testing.T) {
 	require.Equal(t, "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", cfg.AdnlPrivateKey)
 	require.Equal(t, 3278, cfg.AdnlPort)
 	require.Equal(t, "1.2.3.4:3278", cfg.AdnlExternalAddr)
-	require.Equal(t, "https://ton.org/testnet-global.config.json", cfg.GlobalConfigURL)
-	require.Equal(t, []string{"https://rpc1.example.com"}, cfg.GreenfieldRpcURLs)
+	require.Equal(t, "https://67.29.155.42/testnet-global.config.json", cfg.GlobalConfigURL)
+	require.Equal(t, []string{"https://93.184.216.34"}, cfg.GreenfieldRpcURLs)
 	require.Equal(t, "dev", cfg.OnlineIOEnv)
 }
 
@@ -95,10 +95,37 @@ func TestLoad_InvalidAdnlKeyHex_Error(t *testing.T) {
 	require.ErrorContains(t, err, "not valid hex")
 }
 
+func TestValidateURLRejectsLocalhostHostname(t *testing.T) {
+	err := validateURL("https://localhost/path")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "private/restricted IP")
+}
+
+func TestValidateURLRejectsPrivateIP(t *testing.T) {
+	err := validateURL("https://10.0.0.1/path")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "private/restricted IP")
+}
+
+func TestValidateURLRejectsLoopbackIP(t *testing.T) {
+	err := validateURL("https://127.0.0.1/path")
+	require.Error(t, err)
+}
+
+func TestValidateURLRejectsLinkLocal(t *testing.T) {
+	err := validateURL("https://169.254.169.254/latest/meta-data/")
+	require.Error(t, err)
+}
+
+func TestValidateIPAcceptsPublicIP(t *testing.T) {
+	err := validateURL("https://93.184.216.34/path")
+	require.NoError(t, err)
+}
+
 func TestLoad_CommaSeparatedURLs(t *testing.T) {
 	setRequiredEnv(t)
-	t.Setenv("GREENFIELD_RPC_URLS", " https://rpc1.example.com , https://rpc2.example.com , ")
+	t.Setenv("GREENFIELD_RPC_URLS", " https://93.184.216.34 , https://93.184.216.35 , ")
 	cfg, err := Load()
 	require.NoError(t, err)
-	require.Equal(t, []string{"https://rpc1.example.com", "https://rpc2.example.com"}, cfg.GreenfieldRpcURLs)
+	require.Equal(t, []string{"https://93.184.216.34", "https://93.184.216.35"}, cfg.GreenfieldRpcURLs)
 }

@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"testing"
+	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/require"
@@ -59,9 +60,11 @@ func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
 	defer func() { cancel(); coord.Stop() }()
 
 	bagID := [32]byte{0x04}
-	// Simulate another node owning this bag by writing directly.
+	// Simulate another node owning this bag with a fresh heartbeat.
 	require.NoError(t, coord.crdt.Put(ctx,
 		dsKeyFromString(OwnershipKey(bagID)), []byte("node-b")))
+	require.NoError(t, coord.crdt.Put(ctx,
+		dsKeyFromString(HeartbeatKey("node-b")), FormatHeartbeat(time.Now().Unix())))
 
 	owned, err := coord.OwnsOrClaim(ctx, bagID)
 	require.NoError(t, err)

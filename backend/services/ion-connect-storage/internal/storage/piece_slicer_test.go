@@ -87,6 +87,18 @@ func TestSlicePieceDataRejectsOverflowIndex(t *testing.T) {
 	require.Contains(t, err.Error(), "safe range")
 }
 
+func TestSlicePieceDataHeaderBytesTooShort(t *testing.T) {
+	// headerSize claims 100 bytes but headerBytes is only 10
+	_, err := slicePieceData(make([]byte, 10), nil, 0, 50, 200, 100)
+	require.ErrorContains(t, err, "shorter than headerSize")
+}
+
+func TestSliceBoundaryPieceHeaderOutOfRange(t *testing.T) {
+	// headerBytes is 5 bytes, pieceStart=10 exceeds it
+	_, err := sliceBoundaryPiece(make([]byte, 5), make([]byte, 100), 10, 20, 15)
+	require.ErrorContains(t, err, "exceeds headerBytes length")
+}
+
 func TestPayloadSegmentIndexRejectsNegative(t *testing.T) {
 	require.Equal(t, -1, payloadSegmentIndex(-1, 100, boc.PieceSize))
 }

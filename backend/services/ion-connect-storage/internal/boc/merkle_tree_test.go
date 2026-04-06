@@ -123,6 +123,16 @@ func TestGenerateMerkleProofOutOfRange(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestComputePieceHashesZeroPieceSize(t *testing.T) {
+	result := boc.ComputePieceHashes([]byte("data"), 0)
+	require.Nil(t, result)
+}
+
+func TestComputePieceHashesEmptyData(t *testing.T) {
+	result := boc.ComputePieceHashes(nil, 1024)
+	require.Nil(t, result)
+}
+
 func makeTestHashes(n int) [][32]byte {
 	hashes := make([][32]byte, n)
 	for i := range n {

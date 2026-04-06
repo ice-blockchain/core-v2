@@ -16,6 +16,9 @@ const (
 	tlBlock         uint32 = 0xC0D70011
 	tlBlockNotFound uint32 = 0xC0D70012
 
+	// Max size for any TL variable-length field. Prevents OOM from crafted messages.
+	maxTLFieldSize uint32 = 4 << 20 // 4 MB
+
 	// Piece forwarding (direct ADNL).
 	tlForwardPieceRequest uint32 = 0xC0D70020
 	tlPieceResponse       uint32 = 0xC0D70021
@@ -41,6 +44,9 @@ func ParseCRDTHead(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("unexpected constructor: 0x%08x", id)
 	}
 	length := binary.LittleEndian.Uint32(data[4:8])
+	if length > maxTLFieldSize {
+		return nil, fmt.Errorf("crdt head length %d exceeds max %d", length, maxTLFieldSize)
+	}
 	if uint32(len(data)-8) < length {
 		return nil, fmt.Errorf("crdt head truncated: need %d, have %d", length, len(data)-8)
 	}
@@ -66,6 +72,9 @@ func ParseGetBlock(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("unexpected constructor: 0x%08x", id)
 	}
 	length := binary.LittleEndian.Uint32(data[4:8])
+	if length > maxTLFieldSize {
+		return nil, fmt.Errorf("get block length %d exceeds max %d", length, maxTLFieldSize)
+	}
 	if uint32(len(data)-8) < length {
 		return nil, fmt.Errorf("get block truncated")
 	}
@@ -100,6 +109,9 @@ func ParseBlockResponse(data []byte) ([]byte, bool, error) {
 			return nil, false, fmt.Errorf("block data truncated")
 		}
 		length := binary.LittleEndian.Uint32(data[4:8])
+		if length > maxTLFieldSize {
+			return nil, false, fmt.Errorf("block length %d exceeds max %d", length, maxTLFieldSize)
+		}
 		if uint32(len(data)-8) < length {
 			return nil, false, fmt.Errorf("block data truncated")
 		}
@@ -182,6 +194,9 @@ func parsePieceResponsePayload(data []byte) ([]byte, []byte, bool, error) {
 		return nil, nil, false, fmt.Errorf("piece response truncated")
 	}
 	dataLen := binary.LittleEndian.Uint32(data[4:8])
+	if dataLen > maxTLFieldSize {
+		return nil, nil, false, fmt.Errorf("piece data length %d exceeds max %d", dataLen, maxTLFieldSize)
+	}
 	if uint64(dataLen) > uint64(len(data)-8) {
 		return nil, nil, false, fmt.Errorf("piece data length %d exceeds available %d", dataLen, len(data)-8)
 	}
@@ -190,6 +205,9 @@ func parsePieceResponsePayload(data []byte) ([]byte, []byte, bool, error) {
 		return nil, nil, false, fmt.Errorf("piece response proof length truncated")
 	}
 	proofLen := binary.LittleEndian.Uint32(data[dataEnd : dataEnd+4])
+	if proofLen > maxTLFieldSize {
+		return nil, nil, false, fmt.Errorf("proof length %d exceeds max %d", proofLen, maxTLFieldSize)
+	}
 	if uint64(proofLen) > uint64(len(data)-dataEnd-4) {
 		return nil, nil, false, fmt.Errorf("proof length %d exceeds available %d", proofLen, len(data)-dataEnd-4)
 	}

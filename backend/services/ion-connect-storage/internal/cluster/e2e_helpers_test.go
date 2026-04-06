@@ -181,7 +181,7 @@ func openTestPebble(t *testing.T) *pebble.DB {
 }
 
 func randomNodeID() string {
-	b := make([]byte, 16)
+	b := make([]byte, 32)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
 }

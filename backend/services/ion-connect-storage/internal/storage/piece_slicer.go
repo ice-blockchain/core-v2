@@ -16,6 +16,9 @@ func slicePieceData(headerBytes, segmentData []byte, pieceIndex int, pieceSize u
 	if pieceIndex < 0 || uint64(pieceIndex) > maxSafePieceIndex {
 		return nil, fmt.Errorf("piece index %d out of safe range", pieceIndex)
 	}
+	if uint64(len(headerBytes)) < headerSize {
+		return nil, fmt.Errorf("headerBytes length %d shorter than headerSize %d", len(headerBytes), headerSize)
+	}
 	pieceStart := uint64(pieceIndex) * uint64(pieceSize)
 	pieceEnd := min(pieceStart+uint64(pieceSize), fileSize)
 	if pieceStart >= fileSize {
@@ -44,6 +47,9 @@ func sliceFromPayload(segmentData []byte, pieceStart, pieceEnd, headerSize uint6
 
 // sliceBoundaryPiece assembles a piece that spans the header/payload boundary.
 func sliceBoundaryPiece(headerBytes, segmentData []byte, pieceStart, pieceEnd, headerSize uint64) ([]byte, error) {
+	if pieceStart >= uint64(len(headerBytes)) {
+		return nil, fmt.Errorf("pieceStart %d exceeds headerBytes length %d", pieceStart, len(headerBytes))
+	}
 	headerTail := headerBytes[pieceStart:]
 	payloadNeeded := pieceEnd - headerSize
 	if uint64(len(segmentData)) < payloadNeeded {

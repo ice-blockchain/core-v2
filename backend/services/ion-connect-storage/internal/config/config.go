@@ -26,7 +26,6 @@ type Config struct {
 	ShardIndex            int
 	ShardCount            int
 	ClusterOverlayID      string
-	NodeID                string
 	HeartbeatInterval     time.Duration
 	ReclamationInterval   time.Duration
 	StaleHeartbeatTimeout time.Duration
@@ -101,7 +100,6 @@ func Load() (Config, error) {
 		ShardIndex:            shardIndex,
 		ShardCount:            shardCount,
 		ClusterOverlayID:      os.Getenv("CLUSTER_OVERLAY_ID"),
-		NodeID:                os.Getenv("NODE_ID"),
 		HeartbeatInterval:     parseDuration("HEARTBEAT_INTERVAL", 60*time.Second),
 		ReclamationInterval:   parseDuration("RECLAMATION_INTERVAL", 5*time.Minute),
 		StaleHeartbeatTimeout: parseDuration("STALE_HEARTBEAT_TIMEOUT", 10*time.Minute),
@@ -147,6 +145,7 @@ func parseRpcURLs(raw string) ([]string, error) {
 }
 
 // validateURL rejects non-HTTP(S) schemes and private/metadata IP addresses to prevent SSRF.
+// For hostnames, resolves DNS and validates all returned IPs to prevent DNS rebinding.
 func validateURL(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -157,11 +156,26 @@ func validateURL(raw string) error {
 	}
 	host := u.Hostname()
 	ip := net.ParseIP(host)
-	if ip == nil {
-		return nil // hostname, not IP — DNS resolution is fine
+	if ip != nil {
+		return validateIP(host, ip)
 	}
-	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
-		return fmt.Errorf("URL host %q resolves to a private/metadata IP", host)
+	// Hostname: resolve and validate all IPs to prevent DNS rebinding.
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return fmt.Errorf("cannot resolve hostname %q: %w", host, err)
+	}
+	for _, resolved := range ips {
+		if err := validateIP(host, resolved); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateIP(host string, ip net.IP) error {
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsMulticast() {
+		return fmt.Errorf("URL host %q resolves to a private/restricted IP %s", host, ip)
 	}
 	return nil
 }

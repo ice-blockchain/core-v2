@@ -2,6 +2,7 @@ package cache
 
 import (
 	"crypto/rand"
+	"math"
 	"os"
 	"path/filepath"
 	"sync"
@@ -125,6 +126,24 @@ func TestPreallocateAcceptsValidNames(t *testing.T) {
 		err := preallocateFiles(dir, layout)
 		require.NoError(t, err, "unexpected error for %q", name)
 	}
+}
+
+func TestReadSegmentRejectsOverflowTotalSize(t *testing.T) {
+	bag := &cachedBag{
+		layout:  BagFileLayout{TotalSize: math.MaxUint64},
+		dirPath: t.TempDir(),
+	}
+	_, _, err := readSegmentFromFiles(bag, 0)
+	require.ErrorContains(t, err, "exceeds int64 max")
+}
+
+func TestReadSegmentRejectsZeroLengthSegment(t *testing.T) {
+	bag := &cachedBag{
+		layout:  BagFileLayout{TotalSize: 0},
+		dirPath: t.TempDir(),
+	}
+	_, _, err := readSegmentFromFiles(bag, 0)
+	require.ErrorContains(t, err, "invalid length")
 }
 
 func TestPreallocateRejectsEmptyName(t *testing.T) {

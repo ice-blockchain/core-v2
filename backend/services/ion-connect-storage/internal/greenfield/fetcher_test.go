@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	"github.com/stretchr/testify/require"
@@ -57,4 +58,51 @@ func TestFetcherCoalescesSegmentRequests(t *testing.T) {
 
 	// singleflight should coalesce into 1 call (or very few if timing varies)
 	require.LessOrEqual(t, mock.getObjectCalls.Load(), int64(2))
+}
+
+type slowGreenfieldClient struct {
+	mockGreenfieldClient
+	delay time.Duration
+}
+
+func (m *slowGreenfieldClient) GetObject(ctx context.Context, bucket, object string, opts greenfieldclient.GetObjectOpts) (io.ReadCloser, greenfieldclient.ObjectStat, error) {
+	select {
+	case <-time.After(m.delay):
+	case <-ctx.Done():
+		return nil, greenfieldclient.ObjectStat{}, ctx.Err()
+	}
+	return m.mockGreenfieldClient.GetObject(ctx, bucket, object, opts)
+}
+
+func TestFetcherContextCancelDoesNotAffectCoalescedCallers(t *testing.T) {
+	mock := &slowGreenfieldClient{
+		mockGreenfieldClient: mockGreenfieldClient{objectData: strings.Repeat("y", 512)},
+		delay:                200 * time.Millisecond,
+	}
+	fetcher := NewFetcher(mock, testLogger())
+
+	// First caller cancels immediately, second caller waits.
+	cancelledCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	var wg sync.WaitGroup
+	var result2 []byte
+	var err2 error
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		// Cancelled context -- should not poison the singleflight.
+		_, _ = fetcher.FetchSegment(cancelledCtx, "b", "o", 0, nil)
+	}()
+	go func() {
+		defer wg.Done()
+		time.Sleep(10 * time.Millisecond)
+		result2, err2 = fetcher.FetchSegment(context.Background(), "b", "o", 0, nil)
+	}()
+	wg.Wait()
+
+	// Second caller must succeed despite first caller's cancellation.
+	require.NoError(t, err2)
+	require.Len(t, result2, 512)
 }
