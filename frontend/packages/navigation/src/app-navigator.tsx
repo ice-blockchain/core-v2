@@ -23,6 +23,7 @@ interface AppNavigatorProps {
     Catalog: ComponentType;
     ProxyTest?: ComponentType;
     StorageTest?: ComponentType;
+    AuthFlow?: ComponentType;
     NicknameReserved: ComponentType;
     IdentityKeyNameNote: ComponentType;
     VerifyPasskey: ComponentType;
@@ -52,6 +53,9 @@ function renderAppScreens(screens: AppNavigatorProps['screens'], AuthScreen: Com
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
       {screens.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />}
       {screens.StorageTest && <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />}
+      {screens.AuthFlow && (
+        <Stack.Screen name={Routes.AuthFlow} component={screens.AuthFlow} options={TRANSPARENT_MODAL_OPTIONS} />
+      )}
       <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={screens.IdentityKeyNameNote} options={TRANSPARENT_MODAL_OPTIONS} />

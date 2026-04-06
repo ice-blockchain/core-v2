@@ -1,4 +1,4 @@
 export const splashConfig = {
-  safetyTimeoutMs: 2000,
+  safetyTimeoutMs: 5000,
   backgroundColor: "#FFFFFF",
 } as const;

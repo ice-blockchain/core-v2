@@ -1182,9 +1182,9 @@ importers:
       '@op-engineering/op-sqlite':
         specifier: '>=11.0.0'
         version: 15.2.7(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
-      expo-secure-store:
-        specifier: '>=14.0.0'
-        version: 55.0.9(expo@56.0.0-canary-20260402-87c5ce2)
+      react-native-keychain:
+        specifier: '>=10.0.0'
+        version: 10.0.0
       react-native-mmkv:
         specifier: '>=3.0.0'
         version: 4.3.0(react-native-nitro-modules@0.35.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
@@ -4984,11 +4984,6 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
-
-  expo-secure-store@55.0.9:
-    resolution: {integrity: sha512-TIPGjM73LKlebpXwgAu/yL7lNWr6RQYmFw3vgYHOqLFYQMpsBqkQmopovbNX3c/0+RCE9KZlLAkcz8r6detILQ==}
-    peerDependencies:
-      expo: '*'
 
   expo-server@56.0.0-canary-20260402-87c5ce2:
     resolution: {integrity: sha512-/o6nIR9HvacM5qMLHozOk69Kp+Gq1oIO4oMh8PdLLPtocTYYhpbJr7Ubq4XXk622f/uy3W3aA+x0TeDQGmPIpA==}
@@ -12751,10 +12746,6 @@ snapshots:
       invariant: 2.2.4
       react: 19.2.4
       react-native: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
-
-  expo-secure-store@55.0.9(expo@56.0.0-canary-20260402-87c5ce2):
-    dependencies:
-      expo: 56.0.0-canary-20260402-87c5ce2(@babel/core@7.29.0)(@expo/dom-webview@56.0.0-canary-20260402-87c5ce2)(react-dom@19.2.4(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
 
   expo-server@56.0.0-canary-20260402-87c5ce2: {}
 

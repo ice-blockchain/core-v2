@@ -2,6 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(git rm:*)",
+      "Bash(git stash:*)",
+      "Bash(find /Users/denistaranenko/Work/Ice/core-v2/frontend/packages/ion-connect-proxy/ios -name *.h -o -name *.xcframework)",
+      "Bash(pod install:*)",
+      "Bash(find /Users/denistaranenko/Work/Ice/core-v2/frontend/packages/splash/src -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))",
+      "Bash(xargs cat:*)",
+      "Bash(find /Users/denistaranenko/Work/Ice/core-v2/frontend -name @ion -o -path */node_modules/@ion*)",
+      "Bash(find /Users/denistaranenko/Work/Ice/core-v2/frontend/node_modules/.pnpm -path *@ion/ui* -name index.d.ts -o -path *@ion/ui* -name index.ts)",
       "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   },

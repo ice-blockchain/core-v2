@@ -3,13 +3,13 @@ import { StyleSheet, View } from "react-native";
 import type { MediaViewerSource } from "@ion/media-viewer";
 
 import { Icon, colorPalette } from "@ion/ui";
-import { useAppNavigation, Routes } from "@ion/navigation";
 import { splashConfig } from "@ion/splash";
 
 import { SplashVideo } from "./splash-video";
 
 export interface SplashScreenProps {
   videoSource: MediaViewerSource;
+  onComplete: () => void;
 }
 
 function SplashFallback() {
@@ -20,23 +20,27 @@ function SplashFallback() {
   );
 }
 
-export function SplashScreen({ videoSource }: SplashScreenProps) {
-  const navigation = useAppNavigation();
+export function SplashScreen({ videoSource, onComplete }: SplashScreenProps) {
   const hasAdvanced = useRef(false);
   const [hasError, setHasError] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const advance = useCallback(() => {
     if (hasAdvanced.current) return;
     hasAdvanced.current = true;
-    navigation.reset({ index: 0, routes: [{ name: Routes.GetStarted }] });
-  }, [navigation]);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    onComplete();
+  }, [onComplete]);
 
   useEffect(() => {
-    const timer = setTimeout(advance, splashConfig.safetyTimeoutMs);
-    return () => clearTimeout(timer);
+    timerRef.current = setTimeout(advance, splashConfig.safetyTimeoutMs);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [advance]);
 
-  const handleError = useCallback(() => setHasError(true), []);
+  const handleError = useCallback(() => {
+    setHasError(true);
+    advance();
+  }, [advance]);
 
   if (hasError) return <SplashFallback />;
 

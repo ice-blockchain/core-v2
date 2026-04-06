@@ -5,6 +5,7 @@ export const Routes = {
   Catalog: 'Catalog',
   ProxyTest: 'ProxyTest',
   StorageTest: 'StorageTest',
+  AuthFlow: 'AuthFlow',
 
   Sheet: {
     Auth: 'Sheet/Auth',
