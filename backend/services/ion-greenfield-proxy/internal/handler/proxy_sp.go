@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"ion-greenfield-proxy/internal/apperror"
+	"ion-greenfield-proxy/internal/middleware"
 )
 
 // ProxySP handles requests at /sp/{base64Target}[/subpath...].
@@ -23,7 +24,8 @@ func ProxySP(
 	provisioner interface {
 		IsKnownSPHost(ctx context.Context, host string) (bool, error)
 	},
-	allowInsecure bool) gin.HandlerFunc {
+	allowInsecure bool,
+	mc *middleware.MetricsCollectors) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := strings.TrimPrefix(c.Param("path"), "/")
 		if raw == "" {
@@ -101,7 +103,15 @@ func ProxySP(
 			}
 		}
 
-		proxy := newReverseProxy(spURL, logger)
+		var pm *proxyMetrics
+		if mc != nil {
+			pm = &proxyMetrics{
+				upstreamErrors:       mc.ProxyUpstreamErrors,
+				upstreamResponseTime: mc.ProxyUpstreamResponseTime,
+				label:                "sp",
+			}
+		}
+		proxy := newReverseProxy(spURL, logger, pm)
 		proxy.Rewrite = func(req *httputil.ProxyRequest) {
 			req.Out.URL.Scheme = spURL.Scheme
 			req.Out.URL.Host = host

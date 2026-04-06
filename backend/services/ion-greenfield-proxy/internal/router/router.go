@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"strconv"
 
 	"ion-greenfield-proxy/internal/adnl"
 	"ion-greenfield-proxy/internal/config"
@@ -55,6 +56,8 @@ func New(p Params) (*gin.Engine, error) {
 	chainID := fmt.Sprintf("greenfield_%d-1", p.Config.GreenfieldChainID)
 	adnlAddress := p.Key.Address
 
+	feeGrantBNB, _ := strconv.ParseFloat(p.Config.GreenfieldFeeGrantAmount, 64)
+
 	rateLimiterMw, stopRateLimiterCleanup := middleware.RateLimiter(logger, p.Config, p.MetricsCollectors)
 	if p.Lifecycle != nil {
 		p.Lifecycle.Append(fx.Hook{
@@ -77,7 +80,7 @@ func New(p Params) (*gin.Engine, error) {
 		rateLimiterMw,
 		middleware.RPCParser(),
 		middleware.RPCIntercept(logger, p.Config.GreenfieldRPCEndpoint, adnlAddress, p.Provisioner, chainID),
-		middleware.FeeGuarantee(logger, p.Provisioner, proxyAddr, chainID),
+		middleware.FeeGuarantee(logger, p.Provisioner, proxyAddr, chainID, p.MetricsCollectors, feeGrantBNB),
 		middleware.Logger(logger),
 	)
 
@@ -90,8 +93,8 @@ func New(p Params) (*gin.Engine, error) {
 		"upstream_rpc", rpcURL.String(),
 		"adnl_address", adnlAddress,
 	)
-	r.Any("/sp/*path", handler.ProxySP(logger.With("proxy", "sp"), adnlAddress, p.Provisioner, p.AllowInsecureSP))
-	r.NoRoute(handler.ProxyRPC(rpcURL, logger.With("proxy", "rpc"), adnlAddress))
+	r.Any("/sp/*path", handler.ProxySP(logger.With("proxy", "sp"), adnlAddress, p.Provisioner, p.AllowInsecureSP, p.MetricsCollectors))
+	r.NoRoute(handler.ProxyRPC(rpcURL, logger.With("proxy", "rpc"), adnlAddress, p.MetricsCollectors))
 
 	return r, nil
 }

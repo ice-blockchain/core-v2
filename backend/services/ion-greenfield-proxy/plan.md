@@ -280,14 +280,3 @@ Add `proxy_upstream_errors_total`, `fee_guarantee_total`, and `fee_guarantee_dur
 
 End-to-end tests covering the full request path on both transports: TCP and ADNL. Scenarios include clean proxy passthrough, fee guarantee trigger and skip, rate limit enforcement, auth stub rejection path, and upstream error handling. Tests run against a Greenfield testnet instance.
 
----
-
-## Open Questions
-
-**getSPUrlByBucket response shape.** The handler must return a response that the client treats as a valid SP URL answer. The exact field names and structure of the Greenfield `getSPUrlByBucket` response need to be confirmed so the intercepted response is a drop-in replacement.
-
-**Fee guarantee pattern matching.** The URL patterns that trigger a fee grant are not yet defined. The matching mechanism (exact path, prefix, regex, method+path combination) and the configuration format (hardcoded list, config file, env var) both need to be specified before Phase 6 can begin.
-
-**Fee guarantee grantee identity.** When a fee grant is issued, who is the grantee — the Greenfield address from the JWT subject, a derived ephemeral address, or the client's ADNL address mapped to a chain address? This depends on the auth middleware implementation.
-
-**Auth middleware implementation.** The stub is intentionally thin. The real implementation will require a decision on the authentication scheme (JWT issued by ION Identity, DFNS session token, or ADNL-level identity).

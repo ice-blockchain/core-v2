@@ -20,22 +20,28 @@ import (
 //
 // Recognised messages: object CUD (create, update, delete) and DeleteBucket.
 // CreateBucket is handled separately by interceptCreateBucket.
-func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner, proxyAddr, chainID string, c *gin.Context) {
+const (
+	FeeGuaranteeSkipped = "skipped"
+	FeeGuaranteeGranted = "granted"
+	FeeGuaranteeFailed  = "failed"
+)
+
+func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner, proxyAddr, chainID string, c *gin.Context) string {
 	parsed := rpcbody.FromContext(c)
 	if parsed == nil || provisioner == nil {
-		return
+		return FeeGuaranteeSkipped
 	}
 	if !parsed.IsBroadcast() && !parsed.IsABCIQuery("/cosmos.tx.v1beta1.Service/Simulate") {
-		return
+		return FeeGuaranteeSkipped
 	}
 
 	tx, err := decodeTx(parsed)
 	if err != nil || tx == nil || len(tx.Messages) == 0 {
-		return
+		return FeeGuaranteeSkipped
 	}
 
 	if proxyAddr == "" || !strings.EqualFold(tx.FeeGranter, proxyAddr) {
-		return
+		return FeeGuaranteeSkipped
 	}
 
 	for _, a := range tx.Messages {
@@ -51,23 +57,20 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner
 
 		creatorAddr := "0x" + creatorHex
 
-		// Verify the signer matches the message creator.
-		// Full ecrecover for broadcasts; pubkey extraction for simulates
-		// (simulate requests may have placeholder signatures).
 		signer, err := verifyTxSigner(c.Request.Context(), tx, chainID, provisioner, parsed.IsBroadcast())
 		if err != nil {
 			logger.Warn("fee allowance signature verification failed",
 				"creator", creatorAddr,
 				"error", err,
 			)
-			return
+			return FeeGuaranteeSkipped
 		}
 		if !strings.EqualFold(signer, creatorAddr) {
 			logger.Warn("fee allowance signer mismatch",
 				"creator", creatorAddr,
 				"signer", signer,
 			)
-			return
+			return FeeGuaranteeSkipped
 		}
 
 		c.Set(ContextKeyTxSigner, signer)
@@ -83,9 +86,11 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner
 				"grantee", creatorAddr,
 				"error", err,
 			)
+			return FeeGuaranteeFailed
 		}
-		return
+		return FeeGuaranteeGranted
 	}
+	return FeeGuaranteeSkipped
 }
 
 // extractUserBucketMsg returns (address, bucketName, true) for messages
