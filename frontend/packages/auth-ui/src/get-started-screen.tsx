@@ -58,9 +58,9 @@ function useGetStartedNavigation() {
 
   return {
     handleRegister: useCallback(() => {
-      const route = [Routes.Auth.PasswordRegister, Routes.Auth.PasskeyRegister][
-        Date.now() % 2
-      ];
+      const route = Date.now() % 2 === 0
+        ? Routes.Auth.PasswordRegister
+        : Routes.Auth.PasskeyRegister;
       navigation.navigate(route);
     }, [navigation]),
     handleVerifyPassword: useCallback(() => {
