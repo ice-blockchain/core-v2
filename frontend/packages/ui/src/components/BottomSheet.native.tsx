@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BackHandler, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/ThemeProvider";
@@ -77,35 +77,7 @@ function SheetContent(props: BottomSheetProps) {
   );
 }
 
-function useInlineBackHandler(isVisible: boolean, onClose: () => void) {
-  useEffect(() => {
-    if (!isVisible) return;
-    const handler = BackHandler.addEventListener("hardwareBackPress", () => { onClose(); return true; });
-    return () => handler.remove();
-  }, [isVisible, onClose]);
-}
-
-function InlineBottomSheet(props: BottomSheetProps) {
-  const { isVisible, onClose, overlay, testID } = props;
-  const { overlayStyle, handleStyle } = useBottomSheetStyles();
-  useInlineBackHandler(isVisible, onClose);
-
-  if (!isVisible) return null;
-
-  return (
-    <View style={StyleSheet.absoluteFill} testID={testID}>
-      <Pressable style={overlayStyle} onPress={onClose}>
-        <View style={handleStyle} />
-        <SheetContent {...props} />
-      </Pressable>
-      {overlay}
-    </View>
-  );
-}
-
 export function BottomSheet(props: BottomSheetProps) {
-  if (props.inline) return <InlineBottomSheet {...props} />;
-
   const { isVisible, onClose, overlay, testID } = props;
   const { overlayStyle, handleStyle } = useBottomSheetStyles();
 
