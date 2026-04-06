@@ -23,6 +23,7 @@
     "@ion/auth-ui": "workspace:*",
     "@ion/chat": "workspace:*",
     "@ion/config": "workspace:*",
+    "@ion/feed-ui": "workspace:*",
     "@ion/identity-client": "workspace:*",
     "@ion/ion-connect-proxy": "workspace:*",
     "@ion/ton-storage": "workspace:*",

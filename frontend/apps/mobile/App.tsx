@@ -21,6 +21,7 @@ import { authTranslations, AddPasskeyCredentialsScreen, GetStartedScreen, Identi
 import { chatTranslations } from "@ion/chat";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
+import { CreatePostSheetScreen, feedTranslations } from "@ion/feed-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
 import { CatalogScreen } from "./src/components/catalog-screen";
@@ -35,6 +36,7 @@ registerTranslations(i18n, authTranslations);
 registerTranslations(i18n, chatTranslations);
 registerTranslations(i18n, splashTranslations);
 registerTranslations(i18n, mainShellTranslations);
+registerTranslations(i18n, feedTranslations);
 
 const screens = {
   Splash: SplashScreen,
@@ -50,6 +52,7 @@ const screens = {
   StorageTest: StorageTestScreen,
   VerifyOnOtherDevice: VerifyOnOtherDeviceScreen,
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
+  CreatePost: CreatePostSheetScreen,
 };
 
 const authScreens = {

@@ -24,6 +24,7 @@ export interface SheetProps {
   children: ReactNode;
   onClose: () => void;
   title?: string;
+  titleVisible?: boolean;
   onBack?: (() => void) | undefined;
 }
 
@@ -46,9 +47,10 @@ function useScrollTitleOpacity() {
   return { titleOpacity, handleScroll };
 }
 
-export function Sheet({ children, onClose, title, onBack }: SheetProps) {
+export function Sheet({ children, onClose, title, titleVisible, onBack }: SheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const { titleOpacity, handleScroll } = useScrollTitleOpacity();
+  const { titleOpacity: scrollOpacity, handleScroll } = useScrollTitleOpacity();
+  const titleOpacity = titleVisible ? 1 : scrollOpacity;
   const keyboardOffset = useKeyboardVerticalOffset();
   const bottomInsetStyle = useBottomInsetStyle();
 
