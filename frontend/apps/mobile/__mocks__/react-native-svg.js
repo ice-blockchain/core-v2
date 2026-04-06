@@ -16,4 +16,5 @@ module.exports = {
   ClipPath: mockComponent('ClipPath'),
   LinearGradient: mockComponent('LinearGradient'),
   Stop: mockComponent('Stop'),
+  Mask: mockComponent('Mask'),
 };
