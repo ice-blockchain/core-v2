@@ -144,9 +144,10 @@ func (c *Coordinator) Start(ctx context.Context) error {
 		return fmt.Errorf("publish node info: %w", err)
 	}
 
-	c.wg.Add(2)
+	c.wg.Add(3)
 	go func() { defer c.wg.Done(); c.heartbeatLoop(ctx) }()
 	go func() { defer c.wg.Done(); c.StartReclamation(ctx) }()
+	go func() { defer c.wg.Done(); c.reconcileOwnedCountLoop(ctx) }()
 	return nil
 }
 
@@ -250,6 +251,7 @@ func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *
 		logger.Warn("query heartbeats", "error", err)
 		return nil, nil
 	}
+	defer results.Close()
 
 	now := time.Now().Unix()
 	threshold := now - int64(staleTimeout.Seconds())
@@ -276,4 +278,48 @@ func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *
 func extractNodeIDFromHeartbeatKey(key string) string {
 	// Key format: /heartbeat/<nodeID> (ds.Key adds leading /)
 	return strings.TrimPrefix(key, "/"+prefixHeartbeat)
+}
+
+const reconcileInterval = 5 * time.Minute
+
+// reconcileOwnedCountLoop periodically scans bynode/<nodeID>/ keys to correct
+// the atomic ownedCount counter, which can drift due to CRDT race conditions.
+func (c *Coordinator) reconcileOwnedCountLoop(ctx context.Context) {
+	ticker := time.NewTicker(reconcileInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			c.reconcileOwnedCount(ctx)
+		}
+	}
+}
+
+func (c *Coordinator) reconcileOwnedCount(ctx context.Context) {
+	prefix := ByNodePrefix(c.nodeID)
+	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefix, KeysOnly: true})
+	if err != nil {
+		c.logger.Warn("reconcile owned count: query failed", "error", err)
+		return
+	}
+	defer results.Close()
+
+	var count int64
+	for r := range results.Next() {
+		if r.Error != nil {
+			continue
+		}
+		count++
+	}
+
+	old := c.ownedCount.Swap(count)
+	if old != count {
+		c.logger.Info("reconciled owned count", "old", old, "new", count)
+		if c.metrics != nil {
+			c.metrics.BagsOwned.Set(float64(count))
+		}
+	}
 }

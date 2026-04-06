@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,17 +16,19 @@ import (
 )
 
 const (
-	payloadTTL     = 30 * time.Second
-	reaperInterval = 10 * time.Second
-	chunkSize      = 1 << 20
+	payloadTTL         = 30 * time.Second
+	reaperInterval     = 10 * time.Second
+	chunkSize          = 1 << 20
+	maxPendingPayloads = 10_000
 )
 
 // RLDPHTTPBridge forwards HTTP-over-RLDP requests to a gin.Engine.
 type RLDPHTTPBridge struct {
-	engine   *gin.Engine
-	logger   *slog.Logger
-	payloads *xsync.Map[string, *pendingPayload]
-	cancel   context.CancelFunc
+	engine       *gin.Engine
+	logger       *slog.Logger
+	payloads     *xsync.Map[string, *pendingPayload]
+	payloadCount atomic.Int64
+	cancel       context.CancelFunc
 }
 
 type pendingPayload struct {
@@ -80,11 +83,12 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 	resp := buildTLResponse(w)
 	reqID := hex.EncodeToString(req.ID)
 
-	if w.body.Len() > 0 {
+	if w.body.Len() > 0 && b.payloadCount.Load() < maxPendingPayloads {
 		b.payloads.Store(reqID, &pendingPayload{
 			data:      w.body.Bytes(),
 			createdAt: time.Now(),
 		})
+		b.payloadCount.Add(1)
 		resp.NoPayload = false
 	}
 
@@ -103,6 +107,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	if !ok || time.Since(payload.createdAt) > payloadTTL {
 		if ok {
 			b.payloads.Delete(reqID)
+			b.payloadCount.Add(-1)
 		}
 		return rl.SendAnswer(
 			context.Background(),
@@ -115,6 +120,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	chunk, isLast := extractChunk(payload.data, int(req.Seqno))
 	if isLast {
 		b.payloads.Delete(reqID)
+		b.payloadCount.Add(-1)
 	}
 
 	return rl.SendAnswer(
@@ -137,6 +143,7 @@ func (b *RLDPHTTPBridge) reapStalePayloads(ctx context.Context) {
 			b.payloads.Range(func(key string, p *pendingPayload) bool {
 				if now.Sub(p.createdAt) > payloadTTL {
 					b.payloads.Delete(key)
+					b.payloadCount.Add(-1)
 				}
 				return true
 			})

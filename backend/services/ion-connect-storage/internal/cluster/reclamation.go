@@ -84,6 +84,7 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 		c.logger.Error("query dead node bags", "dead_node", deadNodeID, "error", err)
 		return
 	}
+	defer results.Close()
 
 	var reclaimed int
 	for r := range results.Next() {
@@ -120,14 +121,16 @@ func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, dead
 		return nil // already claimed by another active node
 	}
 
-	if err := c.crdt.Delete(ctx, ds.NewKey(OwnershipKey(bagID))); err != nil {
+	// Claim first, then clean up the dead node's key.
+	// This avoids a window where the bag has no owner (delete-before-claim).
+	// CRDT last-write-wins ensures the new ownership overwrites the dead value.
+	if err := c.ClaimBag(ctx, bagID); err != nil {
 		return err
 	}
 	if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
 		return err
 	}
-
-	return c.ClaimBag(ctx, bagID)
+	return nil
 }
 
 func (c *Coordinator) cleanupDeadNodeKeys(ctx context.Context, deadNodeID string) {

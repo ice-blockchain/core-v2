@@ -104,6 +104,9 @@ func main() {
 	}
 	logger.Info("cache layer initialized", "cache_dir", cfg.CacheDir, "cache_ttl", cfg.CacheTTL)
 
+	// All handlers wired -- mark server ready to accept ADNL queries.
+	server.MarkReady()
+
 	// Subscriber starts AFTER coordinator to avoid indexing without CRDT claims.
 	sub := index.NewSubscriber(gfClient, persister, coord, cfg.OnlineIOEnv, logger)
 	var subscriberWg sync.WaitGroup

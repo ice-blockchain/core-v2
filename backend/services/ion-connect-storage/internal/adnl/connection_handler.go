@@ -2,8 +2,10 @@ package adnl
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -20,6 +22,18 @@ const (
 
 // handleNewConnection is called when a new ADNL peer connects.
 func (s *Server) handleNewConnection(client adnl.Peer) error {
+	if !s.ready.Load() {
+		s.logger.Debug("rejecting connection: server not ready")
+		return fmt.Errorf("server not ready")
+	}
+	if s.activeConnections.Load() >= int64(s.maxConnections) {
+		s.logger.Warn("rejecting connection: max connections reached", "max", s.maxConnections)
+		return fmt.Errorf("max connections reached")
+	}
+	s.activeConnections.Add(1)
+	client.SetDisconnectHandler(func(_ string, _ ed25519.PublicKey) {
+		s.activeConnections.Add(-1)
+	})
 	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.logger)
 	return nil
 }
@@ -38,12 +52,10 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 		// Handle cluster queries sent without overlay wrapping (block exchange).
 		if clusterHandler != nil {
 			rawQuery := extractRawTL(query.Data)
-			if rawQuery == nil {
-				logger.Debug("root handler: extractRawTL returned nil", "type", query.Data)
-			}
 			if rawQuery != nil && len(rawQuery) >= 4 {
 				resp, err := clusterHandler(ctx, rawQuery)
 				if err != nil {
+					logger.Debug("root cluster query handler error", "error", err)
 					return err
 				}
 				if resp != nil {
@@ -51,6 +63,7 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 				}
 			}
 		}
+		logger.Debug("unhandled root ADNL query", "type", fmt.Sprintf("%T", query.Data))
 		return nil
 	})
 	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, client, logger))
@@ -71,7 +84,7 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 		defer cancel()
 
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
-		if overlayIDBytes == nil {
+		if overlayIDBytes == nil || len(overlayIDBytes) != 32 {
 			return nil
 		}
 
@@ -113,11 +126,10 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 		defer cancel()
 
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
-		if overlayIDBytes == nil {
-			logger.Debug("RLDP: no overlay in query")
+		if overlayIDBytes == nil || len(overlayIDBytes) != 32 {
+			logger.Debug("RLDP: no valid overlay in query")
 			return nil
 		}
-		logger.Debug("RLDP overlay query received")
 
 		var overlayID [32]byte
 		copy(overlayID[:], overlayIDBytes)

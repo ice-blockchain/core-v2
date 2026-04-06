@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -137,15 +138,23 @@ func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta
 }
 
 // ensureBagCacheOpen creates the cache directory if not already present.
+// Uses singleflight to prevent concurrent OpenBag calls for the same bag.
 func (h *Handler) ensureBagCacheOpen(bagID [32]byte, meta *boc.BagMetadata) {
 	if h.segmentCache.HasBag(bagID) {
 		return
 	}
-	layout := cache.BagFileLayout{
-		Files:     meta.Header.Files,
-		TotalSize: meta.FileSize - meta.HeaderSize,
-	}
-	if err := h.segmentCache.OpenBag(bagID, layout); err != nil {
-		h.logger.Warn("open bag cache", "error", err)
-	}
+	key := hex.EncodeToString(bagID[:])
+	h.bagOpenFlight.Do(key, func() (any, error) {
+		if h.segmentCache.HasBag(bagID) {
+			return nil, nil
+		}
+		layout := cache.BagFileLayout{
+			Files:     meta.Header.Files,
+			TotalSize: meta.FileSize - meta.HeaderSize,
+		}
+		if err := h.segmentCache.OpenBag(bagID, layout); err != nil {
+			h.logger.Warn("open bag cache", "error", err)
+		}
+		return nil, nil
+	})
 }

@@ -95,47 +95,54 @@ func (d *PebbleDatastore) Close() error {
 // Query searches the datastore with prefix matching and optional filters.
 func (d *PebbleDatastore) Query(_ context.Context, q dsq.Query) (dsq.Results, error) {
 	prefix := d.prefix + q.Prefix
+	var iter *pebble.Iterator
 	return dsq.ResultsFromIterator(q, dsq.Iterator{
-		Next:  d.makeIteratorNext(prefix, q.KeysOnly),
-		Close: nil,
+		Next: d.makeIteratorNext(prefix, q.KeysOnly, &iter),
+		Close: func() error {
+			if iter != nil {
+				return iter.Close()
+			}
+			return nil
+		},
 	}), nil
 }
 
-func (d *PebbleDatastore) makeIteratorNext(prefix string, keysOnly bool) func() (dsq.Result, bool) {
-	var iter *pebble.Iterator
+func (d *PebbleDatastore) makeIteratorNext(prefix string, keysOnly bool, iterPtr **pebble.Iterator) func() (dsq.Result, bool) {
 	var started bool
 
 	return func() (dsq.Result, bool) {
 		if !started {
 			started = true
 			var err error
-			iter, err = d.db.NewIter(&pebble.IterOptions{
+			*iterPtr, err = d.db.NewIter(&pebble.IterOptions{
 				LowerBound: []byte(prefix),
 				UpperBound: prefixUpperBound([]byte(prefix)),
 			})
 			if err != nil {
 				return dsq.Result{Error: err}, false
 			}
-			if !iter.First() {
-				iter.Close()
+			if !(*iterPtr).First() {
+				(*iterPtr).Close()
+				*iterPtr = nil
 				return dsq.Result{}, false
 			}
 		} else {
-			if iter == nil || !iter.Next() {
-				if iter != nil {
-					iter.Close()
+			if *iterPtr == nil || !(*iterPtr).Next() {
+				if *iterPtr != nil {
+					(*iterPtr).Close()
+					*iterPtr = nil
 				}
 				return dsq.Result{}, false
 			}
 		}
 
 		entry := dsq.Entry{
-			Key:  d.dsKey(iter.Key()).String(),
-			Size: len(iter.Value()),
+			Key:  d.dsKey((*iterPtr).Key()).String(),
+			Size: len((*iterPtr).Value()),
 		}
 		if !keysOnly {
-			val := make([]byte, len(iter.Value()))
-			copy(val, iter.Value())
+			val := make([]byte, len((*iterPtr).Value()))
+			copy(val, (*iterPtr).Value())
 			entry.Value = val
 		}
 		return dsq.Result{Entry: entry}, true

@@ -101,7 +101,7 @@ func TestHandlerRejectsNegativePieceID(t *testing.T) {
 	req := buildTestGetPieceRequest(-1)
 	_, err := h.HandleOverlayQuery(ctx, bagID, req)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "out of range")
+	require.Contains(t, err.Error(), "invalid piece ID")
 }
 
 // createHandlerWithPayload builds a handler with in-memory metadata (no Greenfield).

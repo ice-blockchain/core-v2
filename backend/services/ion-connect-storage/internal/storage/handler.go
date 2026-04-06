@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/greenfield"
@@ -34,6 +36,7 @@ type Handler struct {
 	pieceForwarder   PieceForwarder
 	privateKey       ed25519.PrivateKey
 	logger           *slog.Logger
+	bagOpenFlight    singleflight.Group
 }
 
 // HandlerConfig holds dependencies for creating a Handler.
@@ -107,6 +110,9 @@ func (h *Handler) handleGetPieceFromTL(ctx context.Context, bagID [32]byte, payl
 	pieceID, err := parseGetPieceRequest(payload)
 	if err != nil {
 		return nil, err
+	}
+	if pieceID < 0 {
+		return nil, fmt.Errorf("invalid piece ID: %d", pieceID)
 	}
 	if !h.ownershipChecker.OwnsBag(bagID) {
 		return h.handleForwardedPiece(ctx, bagID, int(pieceID))

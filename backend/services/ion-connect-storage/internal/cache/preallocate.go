@@ -7,8 +7,23 @@ import (
 	"strings"
 )
 
+const (
+	maxPreallocTotalSize = 10 << 30 // 10 GB per bag
+	maxPreallocFileCount = 10_000
+)
+
 // preallocateFiles creates and truncates all data files for a bag's layout.
 func preallocateFiles(dirPath string, layout BagFileLayout) error {
+	if len(layout.Files) > maxPreallocFileCount {
+		return fmt.Errorf("too many files in bag: %d (max %d)", len(layout.Files), maxPreallocFileCount)
+	}
+	var totalSize uint64
+	for _, f := range layout.Files {
+		totalSize += f.Size
+		if totalSize > maxPreallocTotalSize {
+			return fmt.Errorf("bag total size %d exceeds max %d", totalSize, maxPreallocTotalSize)
+		}
+	}
 	for _, f := range layout.Files {
 		if err := validateFileName(f.Name); err != nil {
 			return fmt.Errorf("invalid file name %q: %w", f.Name, err)

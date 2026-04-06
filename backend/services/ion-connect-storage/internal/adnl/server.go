@@ -18,12 +18,15 @@ import (
 	"github.com/xssnick/tonutils-go/liteclient"
 )
 
+const defaultMaxConnections = 10_000
+
 type ServerConfig struct {
 	AdnlPrivateKey  string
 	GlobalConfigURL string
 	Port            int
 	ExternalAddr    string
 	ActiveDHTLimit  int
+	MaxConnections  int
 }
 
 // ClusterQueryHandler processes raw TL queries for the cluster overlay.
@@ -41,7 +44,10 @@ type Server struct {
 	port                int
 	externalIP          net.IP
 	externalPort        int
+	maxConnections      int
+	activeConnections   atomic.Int64
 	running             atomic.Bool
+	ready               atomic.Bool
 	logger              *slog.Logger
 }
 
@@ -74,16 +80,22 @@ func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*
 	registrar := newDHTRegistrar(dhtClient, sw, config.ActiveDHTLimit, privateKey, logger)
 	overlays := newOverlayManager(config.ActiveDHTLimit, logger)
 
+	maxConn := config.MaxConnections
+	if maxConn <= 0 {
+		maxConn = defaultMaxConnections
+	}
+
 	return &Server{
-		gateway:      gateway,
-		dhtClient:    dhtClient,
-		registrar:    registrar,
-		overlays:     overlays,
-		privateKey:   privateKey,
-		port:         config.Port,
-		externalIP:   externalIP,
-		externalPort: externalPort,
-		logger:       logger,
+		gateway:        gateway,
+		dhtClient:      dhtClient,
+		registrar:      registrar,
+		overlays:       overlays,
+		privateKey:     privateKey,
+		port:           config.Port,
+		externalIP:     externalIP,
+		externalPort:   externalPort,
+		maxConnections: maxConn,
+		logger:         logger,
 	}, nil
 }
 
@@ -145,8 +157,20 @@ func (s *Server) DHTRegistrar() *DHTRegistrar     { return s.registrar }
 func (s *Server) OverlayManager() *OverlayManager { return s.overlays }
 func (s *Server) Gateway() *adnl.Gateway          { return s.gateway }
 func (s *Server) DHTClient() *dht.Client          { return s.dhtClient }
-func (s *Server) PrivateKey() ed25519.PrivateKey  { return s.privateKey }
-func (s *Server) IsRunning() bool                 { return s.running.Load() }
+
+// PrivateKey returns the server's private key. Used internally for signing.
+// Callers should prefer Sign() where possible.
+func (s *Server) PrivateKey() ed25519.PrivateKey { return s.privateKey }
+
+// Sign signs the given data using the server's private key.
+func (s *Server) Sign(data []byte) []byte { return ed25519.Sign(s.privateKey, data) }
+func (s *Server) IsRunning() bool         { return s.running.Load() }
+
+// MarkReady signals that all handlers are wired and the server can accept queries.
+func (s *Server) MarkReady() { s.ready.Store(true) }
+
+// ActiveConnections returns the current number of active ADNL connections.
+func (s *Server) ActiveConnections() int64 { return s.activeConnections.Load() }
 
 // SetHTTPBridge registers the RLDP-HTTP bridge for incoming connections.
 func (s *Server) SetHTTPBridge(b *RLDPHTTPBridge) { s.httpBridge = b }

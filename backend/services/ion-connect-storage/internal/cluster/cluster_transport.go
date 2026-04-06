@@ -149,8 +149,10 @@ func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []by
 	return nil, fmt.Errorf("unknown cluster query")
 }
 
+const broadcastPeerTimeout = 3 * time.Second
+
 // BroadcastToCluster sends a CRDT head notification to all cluster peers.
-// Uses ADNL overlay query (same as tonutils-storage Ping).
+// Uses ADNL overlay query with per-peer timeout to prevent goroutine leaks.
 func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) error {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
@@ -158,8 +160,10 @@ func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) 
 	msg := CRDTHeadMsg{Data: data}
 	for addr, cp := range t.peers {
 		go func(addr [32]byte, cp *clusterPeer) {
+			peerCtx, cancel := context.WithTimeout(ctx, broadcastPeerTimeout)
+			defer cancel()
 			var ack BlockMsg
-			if err := cp.adnlWrapper.Query(ctx, overlay.WrapQuery(t.overlayID, msg), &ack); err != nil {
+			if err := cp.adnlWrapper.Query(peerCtx, overlay.WrapQuery(t.overlayID, msg), &ack); err != nil {
 				t.logger.Debug("broadcast failed", "peer", addr[:4], "error", err)
 			}
 		}(addr, cp)

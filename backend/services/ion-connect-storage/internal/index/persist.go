@@ -7,12 +7,13 @@ import (
 	"sync"
 
 	"github.com/cockroachdb/pebble/v2"
-	"github.com/puzpuzpuz/xsync/v4"
+	lru "github.com/hashicorp/golang-lru/v2"
 )
 
 const (
-	heightKey    = "idx/height"
-	bagKeyPrefix = "idx/bag/"
+	heightKey       = "idx/height"
+	bagKeyPrefix    = "idx/bag/"
+	maxCachedBagLoc = 500_000
 )
 
 // BagLocation maps a bag ID to its Greenfield bucket and object names.
@@ -30,21 +31,22 @@ type BagEntry struct {
 // BagIndexedCallback is called after a new bag is successfully persisted.
 type BagIndexedCallback func(bagID [32]byte)
 
-// Persister provides a two-tier bag index: in-memory xsync.Map for fast reads
+// Persister provides a two-tier bag index: in-memory LRU cache for fast reads
 // backed by PebbleDB for durability. LookupBag checks memory first, falls back
 // to PebbleDB (populating memory on hit). PersistBagsAndHeight writes to both.
 type Persister struct {
 	db           *pebble.DB
-	index        *xsync.Map[[32]byte, BagLocation]
+	index        *lru.Cache[[32]byte, BagLocation]
 	cbMu         sync.RWMutex
 	onBagIndexed BagIndexedCallback
 }
 
 // NewPersister creates a Persister backed by the given PebbleDB instance.
 func NewPersister(db *pebble.DB) *Persister {
+	cache, _ := lru.New[[32]byte, BagLocation](maxCachedBagLoc)
 	return &Persister{
 		db:    db,
-		index: xsync.NewMap[[32]byte, BagLocation](),
+		index: cache,
 	}
 }
 
@@ -77,7 +79,7 @@ func (p *Persister) LoadLastHeight() (int64, error) {
 // On PebbleDB hit, the entry is promoted to the in-memory index.
 // Returns false if the bag is not found in either tier.
 func (p *Persister) LookupBag(bagID [32]byte) (BagLocation, bool, error) {
-	if loc, ok := p.index.Load(bagID); ok {
+	if loc, ok := p.index.Get(bagID); ok {
 		return loc, true, nil
 	}
 
@@ -96,7 +98,7 @@ func (p *Persister) LookupBag(bagID [32]byte) (BagLocation, bool, error) {
 		return BagLocation{}, false, fmt.Errorf("unmarshal bag location: %w", err)
 	}
 
-	p.index.Store(bagID, loc)
+	p.index.Add(bagID, loc)
 	return loc, true, nil
 }
 
@@ -127,7 +129,7 @@ func (p *Persister) PersistBagsAndHeight(entries []BagEntry, height int64) error
 	}
 
 	for _, entry := range entries {
-		p.index.Store(entry.BagID, entry.Location)
+		p.index.Add(entry.BagID, entry.Location)
 	}
 
 	p.cbMu.RLock()

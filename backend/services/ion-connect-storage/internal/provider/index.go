@@ -73,6 +73,9 @@ func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get provider: %w", err)
 	}
+	// Copy val before closing -- PebbleDB reuses the buffer after Close.
+	valCopy := make([]byte, len(val))
+	copy(valCopy, val)
 	closer.Close()
 
 	// Bag is registered. Use CRDT owner for the freshest ADNL address.
@@ -86,7 +89,7 @@ func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
 
 	// Fall back to the persisted provider records.
 	var records []ProviderRecord
-	if err := json.Unmarshal(val, &records); err != nil {
+	if err := json.Unmarshal(valCopy, &records); err != nil {
 		return nil, fmt.Errorf("unmarshal provider records: %w", err)
 	}
 	return records, nil

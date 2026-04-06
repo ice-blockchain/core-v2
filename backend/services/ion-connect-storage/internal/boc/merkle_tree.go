@@ -99,7 +99,15 @@ func buildProofSkeleton(leafIndex int, treeSize int) *cell.ProofSkeleton {
 	return sk
 }
 
+const maxNextPowerOfTwo = 1 << 30 // ~1 billion
+
 func nextPowerOfTwo(n int) int {
+	if n <= 0 {
+		return 1
+	}
+	if n > maxNextPowerOfTwo {
+		return maxNextPowerOfTwo
+	}
 	p := 1
 	for p < n {
 		p <<= 1

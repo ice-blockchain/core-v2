@@ -4,20 +4,26 @@ import (
 	"context"
 	"encoding/binary"
 	"log/slog"
-	"sync"
 	"time"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/tl"
+)
+
+const (
+	maxTrackedSessions   = 100_000
+	maxConcurrentInits   = 100
+	sessionInitiateQuery = 1 << 25
 )
 
 // SessionInitiator sends the seeder's UpdateInit bitfield to connected peers.
 type SessionInitiator struct {
 	handler   *Handler
 	logger    *slog.Logger
-	mu        sync.Mutex
-	initiated map[sessionKey]struct{}
+	initiated *lru.Cache[sessionKey, struct{}]
+	sem       chan struct{}
 }
 
 type sessionKey struct {
@@ -27,10 +33,12 @@ type sessionKey struct {
 
 // NewSessionInitiator creates a session initiator.
 func NewSessionInitiator(handler *Handler, logger *slog.Logger) *SessionInitiator {
+	cache, _ := lru.New[sessionKey, struct{}](maxTrackedSessions)
 	return &SessionInitiator{
 		handler:   handler,
 		logger:    logger,
-		initiated: make(map[sessionKey]struct{}),
+		initiated: cache,
+		sem:       make(chan struct{}, maxConcurrentInits),
 	}
 }
 
@@ -38,15 +46,20 @@ func NewSessionInitiator(handler *Handler, logger *slog.Logger) *SessionInitiato
 // Sends UpdateInit back to the peer in a goroutine.
 func (s *SessionInitiator) OnNewSession(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID [32]byte, sessionID int64) {
 	key := sessionKey{bagID: bagID, sessionID: sessionID}
-	s.mu.Lock()
-	if _, exists := s.initiated[key]; exists {
-		s.mu.Unlock()
+	if _, ok := s.initiated.Get(key); ok {
 		return
 	}
-	s.initiated[key] = struct{}{}
-	s.mu.Unlock()
+	s.initiated.Add(key, struct{}{})
 
-	go s.sendUpdateInit(rldp, overlayIDBytes, bagID, sessionID)
+	select {
+	case s.sem <- struct{}{}:
+		go func() {
+			defer func() { <-s.sem }()
+			s.sendUpdateInit(rldp, overlayIDBytes, bagID, sessionID)
+		}()
+	default:
+		s.logger.Warn("session init throttled, too many concurrent inits")
+	}
 }
 
 func (s *SessionInitiator) sendUpdateInit(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID [32]byte, sessionID int64) {
@@ -71,7 +84,7 @@ func (s *SessionInitiator) sendUpdateInit(rldp ionadnl.RLDPDoQueryer, overlayIDB
 	fullQuery := append(overlayQueryBytes, updatePayload...)
 
 	var result any
-	if err := rldp.DoQuery(ctx, 1<<25, tl.Raw(fullQuery), &result); err != nil {
+	if err := rldp.DoQuery(ctx, sessionInitiateQuery, tl.Raw(fullQuery), &result); err != nil {
 		s.logger.Debug("session init: send update init failed", "error", err)
 	}
 }

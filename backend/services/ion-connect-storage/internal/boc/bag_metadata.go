@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log/slog"
+	"math"
 
 	"github.com/xssnick/tonutils-go/tvm/cell"
 )
@@ -99,6 +100,9 @@ func parseMerkleTreeSection(data []byte, offset int) (*cell.Cell, int, error) {
 //
 //	[4 bytes LE: merkle tree BoC len][merkle tree BoC][torrent header bytes]
 func BuildIonStorageBytes(torrentInfoBoC, merkleTreeBoC, headerBytes []byte) []byte {
+	if len(torrentInfoBoC) > math.MaxUint32 || len(merkleTreeBoC) > math.MaxUint32 {
+		return nil
+	}
 	totalLen := 1 + 4 + len(torrentInfoBoC) + 4 + len(merkleTreeBoC) + len(headerBytes)
 	result := make([]byte, totalLen)
 	result[0] = ionStorageVersion

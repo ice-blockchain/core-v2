@@ -143,6 +143,9 @@ func SetupSeederServer(
 	sessionInit := NewSessionInitiator(storageHandler, logger)
 	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
 
+	// All handlers wired -- mark server ready for incoming connections.
+	server.MarkReady()
+
 	t.Cleanup(func() {
 		bridge.Stop()
 		subCancel()
