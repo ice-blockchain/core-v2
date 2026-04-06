@@ -61,7 +61,14 @@ export function CreatePostHeader() {
     <View style={containerStyle}>
       <TagPill pillRef={topic.ref} iconName="post-topic" label={translate('feed:addTopicLabel')} onPress={topic.show} />
       <TagPill iconName="post-language" label={translate('feed:languageLabel')} />
-      <Tooltip targetRef={topic.ref} isVisible={topic.isVisible} onDismiss={topic.hide} position="bottom" pointerAlign="left">
+      <Tooltip
+        targetRef={topic.ref}
+        isVisible={topic.isVisible}
+        onDismiss={topic.hide}
+        position="bottom"
+        pointerAlign="left"
+        highlightContent={<TagPill iconName="post-topic" label={translate('feed:addTopicLabel')} />}
+      >
         <TopicTooltipContent />
       </Tooltip>
     </View>

@@ -8,6 +8,7 @@ export interface TooltipProps {
   position?: 'top' | 'bottom';
   pointerAlign?: 'left' | 'center' | 'right';
   autoDismissMs?: number;
+  highlightContent?: ReactNode;
   children: ReactNode;
 }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, StyleSheet, View } from 'react-native';
 import type { TargetLayout, TooltipProps } from './tooltip-types';
 import { TooltipArrow } from './TooltipArrow';
@@ -8,6 +8,7 @@ const ANIMATION_DURATION = 150;
 const DEFAULT_AUTO_DISMISS_MS = 1500;
 const GAP = 8;
 const SCREEN_PADDING = 8;
+const HIGHLIGHT_PADDING = 4;
 
 function useTargetMeasurement(props: Pick<TooltipProps, 'targetRef' | 'isVisible'>) {
   const [layout, setLayout] = useState<TargetLayout | null>(null);
@@ -55,8 +56,26 @@ function computePointerOffset(layout: TargetLayout, pointerAlign: 'left' | 'cent
   return { marginLeft: Math.max(12, targetCenter - 6) };
 }
 
+function TargetHighlight({ layout, children }: { layout: TargetLayout; children?: React.ReactNode }) {
+  const theme = useTheme();
+  const highlightStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      top: layout.y - HIGHLIGHT_PADDING,
+      left: layout.x - HIGHLIGHT_PADDING,
+      paddingHorizontal: HIGHLIGHT_PADDING,
+      paddingVertical: HIGHLIGHT_PADDING,
+      borderRadius: 18,
+      backgroundColor: theme.colors.secondaryBackground,
+    }),
+    [layout, theme],
+  );
+
+  return <View style={highlightStyle}>{children}</View>;
+}
+
 function TooltipContent({ props, layout }: { props: TooltipProps; layout: TargetLayout }) {
-  const { position = 'top', pointerAlign = 'left', children } = props;
+  const { position = 'top', pointerAlign = 'left', highlightContent, children } = props;
   const theme = useTheme();
   const { opacity, scale } = useTooltipAnimation(props.isVisible);
   const posStyle = computeTooltipPosition(layout, position);
@@ -64,6 +83,7 @@ function TooltipContent({ props, layout }: { props: TooltipProps; layout: Target
 
   return (
     <Pressable style={[styles.backdrop, { backgroundColor: theme.colors.backgroundSheet }]} onPress={props.onDismiss}>
+      <TargetHighlight layout={layout}>{highlightContent}</TargetHighlight>
       <Animated.View style={[styles.tooltipContainer, posStyle, { opacity, transform: [{ scale }] }]}>
         {position === 'bottom' && <View style={pointerStyle}><TooltipArrow direction="up" /></View>}
         {children}
