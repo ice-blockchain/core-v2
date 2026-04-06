@@ -22,6 +22,7 @@ interface AppNavigatorProps {
     Catalog: ComponentType;
     ChatPreview: ComponentType;
     ProxyTest?: ComponentType;
+    StorageTest?: ComponentType;
     NicknameReserved: ComponentType;
     IdentityKeyNameNote: ComponentType;
     VerifyPasskey: ComponentType;
@@ -47,6 +48,9 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
       <Stack.Screen name={Routes.ChatPreview} component={screens.ChatPreview} />
       {screens.ProxyTest && (
         <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />
+      )}
+      {screens.StorageTest && (
+        <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />
       )}
       <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} options={TRANSPARENT_MODAL_OPTIONS} />

@@ -25,6 +25,8 @@
     "@ion/config": "workspace:*",
     "@ion/identity-client": "workspace:*",
     "@ion/ion-connect-proxy": "workspace:*",
+    "@ion/ton-storage": "workspace:*",
+    "@ion/file-storage": "workspace:*",
     "@ion/localization": "workspace:*",
     "@ion/platform": "workspace:*",
     "@ion/media-viewer": "workspace:*",

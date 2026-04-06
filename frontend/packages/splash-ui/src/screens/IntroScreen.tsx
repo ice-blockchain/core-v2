@@ -34,6 +34,8 @@ export function IntroScreen() {
         <>
           <View style={{ height: scale(12) }} />
           <DevButton label="Proxy Test (TEST)" onPress={() => navigation.navigate(Routes.ProxyTest)} />
+          <View style={{ height: scale(12) }} />
+          <DevButton label="Storage Test (TEST)" onPress={() => navigation.navigate(Routes.StorageTest)} />
         </>
       )}
     </View>
