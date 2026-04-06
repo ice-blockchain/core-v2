@@ -23,6 +23,7 @@ import (
 const (
 	FeeGuaranteeSkipped = "skipped"
 	FeeGuaranteeGranted = "granted"
+	FeeGuaranteeCached  = "cached"
 	FeeGuaranteeFailed  = "failed"
 )
 
@@ -92,14 +93,18 @@ func interceptFeeAllowance(logger *slog.Logger, provisioner gf.BucketProvisioner
 		"verified_signer", signer,
 	)
 
-	if err := provisioner.GrantFeeAllowance(c.Request.Context(), creatorAddr); err != nil {
+	granted, err := provisioner.GrantFeeAllowance(c.Request.Context(), creatorAddr)
+	if err != nil {
 		logger.Error("failed to grant fee allowance",
 			"grantee", creatorAddr,
 			"error", err,
 		)
 		return FeeGuaranteeFailed
 	}
-	return FeeGuaranteeGranted
+	if granted {
+		return FeeGuaranteeGranted
+	}
+	return FeeGuaranteeCached
 }
 
 // extractUserBucketMsg returns (address, bucketName, true) for messages

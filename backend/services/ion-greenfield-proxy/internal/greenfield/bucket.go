@@ -31,7 +31,7 @@ type (
 		GetAccountNumber(ctx context.Context, hexAddr string) (uint64, error)
 		IsKnownSPHost(ctx context.Context, host string) (bool, error)
 		EnsureBucket(ctx context.Context, bucketName string, creatorAddr string) (string, error)
-		GrantFeeAllowance(ctx context.Context, granteeAddr string) error
+		GrantFeeAllowance(ctx context.Context, granteeAddr string) (bool, error)
 		StartGrantCleanup(interval time.Duration) func()
 	}
 )
@@ -258,7 +258,7 @@ func (bp *bucketProvisioner) EnsureBucket(ctx context.Context, bucketName string
 
 	// Grant an initial fee allowance so the user can immediately
 	// simulate and broadcast operations on their new bucket.
-	if err := bp.grantFeeAllowanceLocked(ctx, creatorAddr); err != nil {
+	if _, err := bp.grantFeeAllowanceLocked(ctx, creatorAddr); err != nil {
 		return "", fmt.Errorf("grant initial fee allowance: %w", err)
 	}
 

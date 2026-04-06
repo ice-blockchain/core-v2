@@ -64,7 +64,8 @@ func TestGrantFeeAllowance_DeduplicatesWithinTTL(t *testing.T) {
 
 	ctx := context.Background()
 	for i := 0; i < 10; i++ {
-		require.NoError(t, bp.GrantFeeAllowance(ctx, "0xABCDEF"))
+		_, err = bp.GrantFeeAllowance(ctx, "0xABCDEF")
+		require.NoError(t, err)
 	}
 
 	require.Equal(t, int64(1), mock.grantCalls.Load(),
@@ -81,13 +82,17 @@ func TestGrantFeeAllowance_GrantsAgainAfterTTL(t *testing.T) {
 	bp := newTestProvisioner(t, mock)
 
 	ctx := context.Background()
-	require.NoError(t, bp.GrantFeeAllowance(ctx, "0x111"))
+	granted, err := bp.GrantFeeAllowance(ctx, "0x111")
+	require.NoError(t, err)
+	require.True(t, granted)
 	require.Equal(t, int64(1), mock.grantCalls.Load())
 
 	// Manually expire the cache entry.
 	bp.recentGrants.Store("0x111", time.Now().Add(-feeGrantDedupTTL-time.Second))
 
-	require.NoError(t, bp.GrantFeeAllowance(ctx, "0x111"))
+	granted, err = bp.GrantFeeAllowance(ctx, "0x111")
+	require.NoError(t, err)
+	require.True(t, granted)
 	require.Equal(t, int64(2), mock.grantCalls.Load(),
 		"expected second grant after TTL expiry")
 }

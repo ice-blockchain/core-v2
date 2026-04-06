@@ -227,11 +227,12 @@ Client                         Proxy                          Greenfield Chain
 - `broadcast_tx_async` -- returns before chain confirmation, grant could be wasted
 - Simulate (`/cosmos.tx.v1beta1.Service/Simulate`) -- carries unverified placeholder signatures; the initial fee grant is created during bucket provisioning instead
 
-**Fee allowance parameters:**
-- Spend limit: configurable via `GREENFIELD_FEE_GRANT_AMOUNT_BNB` (default `0.001`, max `1` BNB)
-- Expiration: 5 minutes
-- Message whitelist: only the 5 message types above
-- Deduplication: 10-second local cache prevents repeated on-chain grants for the same address (stale entries evicted every 30s)
+**Fee allowance parameters (4-layer protection):**
+- **Message whitelist** (`AllowedMsgAllowance`): only the 5 message types above
+- **Expiration**: 5 minutes
+- **Total spend limit** (`BasicAllowance.SpendLimit`): configurable via `GREENFIELD_FEE_GRANT_AMOUNT_BNB` (default `0.001`, max `1` BNB)
+- **Per-period rate limit** (`PeriodicAllowance`): `amount / 3` per 1-minute period -- limits burst spending even if the user bypasses the proxy and broadcasts directly to the chain
+- **Deduplication**: 10-second local cache prevents repeated on-chain grants for the same address (stale entries evicted every 30s)
 
 ---
 

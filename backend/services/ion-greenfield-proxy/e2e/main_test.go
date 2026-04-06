@@ -55,8 +55,8 @@ func (*mockedProvisioner) EnsureBucket(context.Context, string, string) (string,
 	return "", errors.New("mockedProvisioner: EnsureBucket not implemented")
 }
 
-func (*mockedProvisioner) GrantFeeAllowance(context.Context, string) error {
-	return errors.New("mockedProvisioner: GrantFeeAllowance not implemented")
+func (*mockedProvisioner) GrantFeeAllowance(context.Context, string) (bool, error) {
+	return false, errors.New("mockedProvisioner: GrantFeeAllowance not implemented")
 }
 
 func (*mockedProvisioner) IsKnownSPHost(context.Context, string) (bool, error) {

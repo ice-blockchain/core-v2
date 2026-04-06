@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	gnfdsdktypes "github.com/bnb-chain/greenfield/sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
@@ -26,17 +27,20 @@ var allowedFeeGrantMsgs = []string{
 // to the given address so it can broadcast storage transactions with
 // the proxy as fee payer. Only the message types in allowedFeeGrantMsgs
 // are permitted; the chain rejects anything else.
-func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr string) error {
+// GrantFeeAllowance returns (true, nil) when a real on-chain grant was
+// created, (false, nil) when deduped or already active, and (false, err)
+// on failure.
+func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr string) (bool, error) {
 	if lastGrant, ok := bp.recentGrants.Load(granteeAddr); ok {
 		if time.Since(lastGrant) < feeGrantDedupTTL {
 			bp.logger.Debug("fee grant dedup hit, skipping", "grantee", granteeAddr)
-			return nil
+			return false, nil
 		}
 	}
 
 	// Serialise with other on-chain transactions from the proxy wallet.
 	if err := bp.txLock.Lock(ctx, "GrantFeeAllowance:"+granteeAddr); err != nil {
-		return fmt.Errorf("acquire tx lock: %w", err)
+		return false, fmt.Errorf("acquire tx lock: %w", err)
 	}
 	defer bp.txLock.Unlock()
 
@@ -44,20 +48,37 @@ func (bp *bucketProvisioner) GrantFeeAllowance(ctx context.Context, granteeAddr 
 }
 
 // grantFeeAllowanceLocked performs the on-chain fee grant.
-// Caller must hold txLock.
-func (bp *bucketProvisioner) grantFeeAllowanceLocked(ctx context.Context, granteeAddr string) error {
+// Caller must hold txLock. Returns true if a real on-chain grant was
+// created, false if deduped or already active.
+func (bp *bucketProvisioner) grantFeeAllowanceLocked(ctx context.Context, granteeAddr string) (bool, error) {
+	// Re-check dedup after lock acquisition -- a concurrent request may
+	// have granted while we were waiting for the lock.
+	if lastGrant, ok := bp.recentGrants.Load(granteeAddr); ok {
+		if time.Since(lastGrant) < feeGrantDedupTTL {
+			bp.logger.Debug("fee grant dedup hit (post-lock)", "grantee", granteeAddr)
+			return false, nil
+		}
+	}
+
 	addr := strings.TrimPrefix(granteeAddr, "0x")
 
 	expiration := time.Now().Add(FeeGrantExpiration)
 	amount := bp.feeGrantAmount
+	periodAmount := amount.Quo(sdkmath.NewInt(3))
 
-	basic := feegrant.BasicAllowance{
-		SpendLimit: sdk.NewCoins(sdk.NewCoin(gnfdsdktypes.Denom, amount)),
-		Expiration: &expiration,
+	periodic := feegrant.PeriodicAllowance{
+		Basic: feegrant.BasicAllowance{
+			SpendLimit: sdk.NewCoins(sdk.NewCoin(gnfdsdktypes.Denom, amount)),
+			Expiration: &expiration,
+		},
+		Period:           1 * time.Minute,
+		PeriodSpendLimit: sdk.NewCoins(sdk.NewCoin(gnfdsdktypes.Denom, periodAmount)),
+		PeriodCanSpend:   sdk.NewCoins(sdk.NewCoin(gnfdsdktypes.Denom, periodAmount)),
+		PeriodReset:      time.Now().Add(1 * time.Minute),
 	}
-	allowance, err := feegrant.NewAllowedMsgAllowance(&basic, allowedFeeGrantMsgs)
+	allowance, err := feegrant.NewAllowedMsgAllowance(&periodic, allowedFeeGrantMsgs)
 	if err != nil {
-		return fmt.Errorf("create allowed msg allowance: %w", err)
+		return false, fmt.Errorf("create allowed msg allowance: %w", err)
 	}
 
 	bp.logger.Info("granting fee allowance",
@@ -72,18 +93,18 @@ func (bp *bucketProvisioner) grantFeeAllowanceLocked(ctx context.Context, grante
 		if strings.Contains(err.Error(), "fee allowance already exists") {
 			bp.logger.Debug("fee allowance already active", "grantee", granteeAddr)
 			bp.recentGrants.Store(granteeAddr, time.Now())
-			return nil
+			return false, nil
 		}
-		return fmt.Errorf("GrantAllowance: %w", err)
+		return false, fmt.Errorf("GrantAllowance: %w", err)
 	}
 
 	if _, err = bp.client.WaitForTx(ctx, txHash); err != nil {
-		return fmt.Errorf("wait for GrantAllowance tx: %w", err)
+		return false, fmt.Errorf("wait for GrantAllowance tx: %w", err)
 	}
 
 	bp.recentGrants.Store(granteeAddr, time.Now())
 	bp.logger.Info("fee allowance granted", "grantee", granteeAddr, "tx", txHash)
-	return nil
+	return true, nil
 }
 
 // StartGrantCleanup starts a background goroutine that evicts stale
