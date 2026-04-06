@@ -8,21 +8,20 @@ interface BarContainerOptions {
   scale: (n: number) => number;
   bgColor: string;
   bottomInset: number;
-  isModalOpen: boolean;
   shadowColor: string;
 }
 
 export function buildBarContainerStyle(options: BarContainerOptions): ViewStyle {
-  const { scale, bgColor, bottomInset, isModalOpen, shadowColor } = options;
+  const { scale, bgColor, bottomInset, shadowColor } = options;
   return {
     backgroundColor: bgColor,
     paddingTop: scale(9),
     paddingBottom: Math.max(0, bottomInset - scale(ROW_SAFE_AREA_OVERLAP)),
     shadowColor,
     shadowOffset: { width: -2, height: -2 },
-    shadowOpacity: isModalOpen ? 0 : 0.055,
+    shadowOpacity: 0.055,
     shadowRadius: 16,
-    elevation: isModalOpen ? 0 : 4,
+    elevation: 4,
   };
 }
 

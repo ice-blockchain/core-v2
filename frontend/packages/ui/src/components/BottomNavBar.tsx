@@ -8,15 +8,15 @@ import { BottomNavBarCenterButton } from "./BottomNavBarCenterButton";
 import { buildBarContainerStyle, buildBarRowStyle } from "./bottom-nav-bar-styles";
 import type { BottomNavBarProps, BottomNavBarTabIndex } from "./bottom-nav-bar-types";
 
-function useBarStyles(isModalOpen: boolean) {
+function useBarStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const insets = useSafeAreaInsets();
   const bgColor = theme.colors.secondaryBackground;
 
   const containerStyle = useMemo(
-    () => buildBarContainerStyle({ scale, bgColor, bottomInset: insets.bottom, isModalOpen, shadowColor: colorPalette.darkBlue }),
-    [scale, bgColor, insets.bottom, isModalOpen],
+    () => buildBarContainerStyle({ scale, bgColor, bottomInset: insets.bottom, shadowColor: colorPalette.darkBlue }),
+    [scale, bgColor, insets.bottom],
   );
 
   const rowStyle = useMemo(() => buildBarRowStyle(scale, bgColor), [scale, bgColor]);
@@ -26,7 +26,7 @@ function useBarStyles(isModalOpen: boolean) {
 
 export function BottomNavBar(props: BottomNavBarProps) {
   const { activeTab, onTabPress, onCenterPress, isCenterModalOpen, tabs, testID } = props;
-  const { containerStyle, rowStyle } = useBarStyles(isCenterModalOpen);
+  const { containerStyle, rowStyle } = useBarStyles();
 
   return (
     <View style={containerStyle} testID={testID}>

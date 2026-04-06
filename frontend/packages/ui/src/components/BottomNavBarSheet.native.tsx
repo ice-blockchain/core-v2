@@ -32,6 +32,7 @@ function SheetContent({ title, actions }: { title: string; actions: readonly Bot
   return (
     <>
       <SheetHeader title={title} />
+      <HorizontalSeparator />
       <View style={{ gap: scale(12) }}>
         {actions.map((action, index) => (
           <Fragment key={action.iconName}>
@@ -72,14 +73,13 @@ interface InlineSheetStyleOptions {
   scale: (n: number) => number;
   bgColor: string;
   radius: number;
-  bottomInset: number;
 }
 
-function buildInlineSheetStyle({ scale, bgColor, radius, bottomInset }: InlineSheetStyleOptions) {
+function buildInlineSheetStyle({ scale, bgColor, radius }: InlineSheetStyleOptions) {
   return {
     position: "absolute" as const, bottom: 0, left: 0, right: 0,
     backgroundColor: bgColor, borderTopLeftRadius: radius, borderTopRightRadius: radius,
-    paddingBottom: bottomInset, gap: scale(12),
+    gap: scale(12), paddingBottom: scale(12),
   };
 }
 
@@ -103,11 +103,10 @@ function useInlineAnimation(isVisible: boolean) {
 function InlineSheet({ isVisible, onClose, title, actions }: BottomNavBarSheetProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const insets = useSafeAreaInsets();
   const { bg } = useSheetAppearance();
   useInlineBackHandler(isVisible, onClose);
   const backdropStyle = useMemo(() => buildInlineBackdropStyle(theme.colors.backgroundSheet), [theme.colors.backgroundSheet]);
-  const sheetStyle = useMemo(() => buildInlineSheetStyle({ scale, bgColor: bg.backgroundColor, radius: bg.borderTopLeftRadius, bottomInset: insets.bottom }), [scale, bg, insets.bottom]);
+  const sheetStyle = useMemo(() => buildInlineSheetStyle({ scale, bgColor: bg.backgroundColor, radius: bg.borderTopLeftRadius }), [scale, bg]);
   const { backdropAnimStyle, sheetAnimStyle, handleLayout } = useInlineAnimation(isVisible);
 
   return (
