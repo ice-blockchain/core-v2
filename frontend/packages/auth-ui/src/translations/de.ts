@@ -51,9 +51,9 @@ export const authDE: Record<keyof typeof authEN, string> = {
   restoreMenuTitle: 'Identitätsschlüssel wiederherstellen',
   restoreMenuSubtitle:
     'Wähle die Art der Wiederherstellung des Identitätsschlüssels',
-  restoreFromCloudTitle: 'Aus iCloud wiederherstellen',
+  restoreFromCloudTitle: 'Aus {{cloudProvider}} wiederherstellen',
   restoreFromCloudDescription:
-    'Stelle deinen Identitätsschlüssel aus einem iCloud-Backup wieder her',
+    'Stelle deinen Identitätsschlüssel aus einem {{cloudProvider}}-Backup wieder her',
   restoreUsingCredentialsTitle:
     'Mit Wiederherstellungsdaten wiederherstellen',
   restoreUsingCredentialsDescription:
@@ -69,6 +69,7 @@ export const authDE: Record<keyof typeof authEN, string> = {
     'Bitte gib unten deine Wiederherstellungsdaten ein',
   recoveryKeyIdPlaceholder: 'Wiederherstellungsschlüssel-ID',
   recoveryCodePlaceholder: 'Wiederherstellungscode',
+  selectIdentityKeyNameLabel: 'Identitätsschlüssel auswählen',
   restoreButton: 'Wiederherstellen',
   identityKeyNotFoundTitle:
     'Identitätsschlüssel wurde nicht gefunden',

@@ -47,9 +47,9 @@ export const authEN = {
   termsSeparator: ' & ',
   restoreMenuTitle: 'Restore identity key',
   restoreMenuSubtitle: 'Select the type of identity key recovery',
-  restoreFromCloudTitle: 'Restore from iCloud',
+  restoreFromCloudTitle: 'Restore from {{cloudProvider}}',
   restoreFromCloudDescription:
-    'Restore your identity key from an iCloud backup',
+    'Restore your identity key from a {{cloudProvider}} backup',
   restoreUsingCredentialsTitle: 'Restore using recovery credentials',
   restoreUsingCredentialsDescription:
     'Restore with Recovery code and Recovery key ID',
@@ -64,6 +64,7 @@ export const authEN = {
     'Please enter your recovery credentials below',
   recoveryKeyIdPlaceholder: 'Recovery key ID',
   recoveryCodePlaceholder: 'Recovery code',
+  selectIdentityKeyNameLabel: 'Select identity key name',
   restoreButton: 'Restore',
   identityKeyNotFoundTitle: 'Identity key was not found',
   identityKeyNotFoundDescription:
