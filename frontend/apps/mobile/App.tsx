@@ -1,3 +1,7 @@
+import 'react-native-get-random-values';
+if (typeof (globalThis as Record<string, unknown>).TextDecoder === 'undefined') {
+  (globalThis as Record<string, unknown>).TextDecoder = class { decode(buf: Uint8Array) { return String.fromCharCode(...buf); } };
+}
 import type { ReactNode } from "react";
 import { useState, useEffect } from 'react';
 import { StatusBar, View } from 'react-native';
@@ -28,6 +32,7 @@ import { CatalogScreen } from "./src/components/catalog-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
 import { MainScreen } from "./src/components/main-screen";
+import { AuthFlowScreen } from "./src/components/auth-flow-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -61,6 +66,7 @@ const authScreens = {
   SelectLanguages: SelectLanguagesScreen,
   DiscoverCreators: DiscoverCreatorsScreen,
   Notifications: NotificationsScreen,
+  FullAuthFlow: AuthFlowScreen,
 };
 
 function ThemedRoot({ children }: { children: ReactNode }) {

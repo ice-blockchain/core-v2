@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -10,11 +16,6 @@
           }
         ]
       }
-    ]
-  },
-  "permissions": {
-    "allow": [
-      "Bash(git rm:*)"
     ]
   }
 }
