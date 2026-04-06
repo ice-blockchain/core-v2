@@ -4,35 +4,31 @@ import { useTheme } from "../theme/ThemeProvider";
 import { BottomNavBar } from "../components/BottomNavBar";
 import { BottomNavBarSheet } from "../components/BottomNavBarSheet";
 import { colorPalette } from "../tokens/color-palette";
-import { lightSemanticColors } from "../tokens/semantic-colors";
 import type { BottomNavBarTabIndex, BottomNavBarSheetAction } from "../components/bottom-nav-bar-types";
 import { CatalogSection } from "./CatalogSection";
 
-const SUCCESS_COLOR = lightSemanticColors.success;
-
-const FEED_ACTIONS: BottomNavBarSheetAction[] = [
-  { iconName: "feed-post", iconBackgroundColor: colorPalette.purple, title: "Post", description: "Voice your ideas", onPress: noop },
-  { iconName: "feed-stories", iconBackgroundColor: colorPalette.orangePeel, title: "Story", description: "Express the moment", onPress: noop },
-  { iconName: "videos-trading", iconBackgroundColor: colorPalette.raspberry, title: "Video", description: "Show the world in motion", onPress: noop },
-  { iconName: "articles", iconBackgroundColor: SUCCESS_COLOR, title: "Article", description: "Share your wisdom", onPress: noop },
-];
-
-const CHAT_ACTIONS: BottomNavBarSheetAction[] = [
-  { iconName: "chat-createnew", iconBackgroundColor: colorPalette.orangePeel, title: "New chat", description: "Start a private, one-on-one chat", onPress: noop },
-];
-
-const WALLET_ACTIONS: BottomNavBarSheetAction[] = [
-  { iconName: "send", iconBackgroundColor: colorPalette.orangePeel, title: "Send", description: "Send funds quickly and securely", onPress: noop },
-  { iconName: "button-receive", iconBackgroundColor: SUCCESS_COLOR, title: "Receive", description: "Securely receive funds with one tap", onPress: noop },
-  { iconName: "swap", iconBackgroundColor: colorPalette.purple, title: "Swap", description: "Swapping is even easier than it seems", onPress: noop },
-];
-
-const SHEET_CONFIGS: Record<BottomNavBarTabIndex, { title: string; actions: BottomNavBarSheetAction[] }> = {
-  0: { title: "Create value", actions: FEED_ACTIONS },
-  1: { title: "Start conversation", actions: CHAT_ACTIONS },
-  2: { title: "Wallet", actions: WALLET_ACTIONS },
-  3: { title: "Create value", actions: FEED_ACTIONS },
-};
+function buildSheetConfigs(successColor: string) {
+  const feedActions: BottomNavBarSheetAction[] = [
+    { iconName: "feed-post", iconBackgroundColor: colorPalette.purple, title: "Post", description: "Voice your ideas", onPress: noop },
+    { iconName: "feed-stories", iconBackgroundColor: colorPalette.orangePeel, title: "Story", description: "Express the moment", onPress: noop },
+    { iconName: "videos-trading", iconBackgroundColor: colorPalette.raspberry, title: "Video", description: "Show the world in motion", onPress: noop },
+    { iconName: "articles", iconBackgroundColor: successColor, title: "Article", description: "Share your wisdom", onPress: noop },
+  ];
+  const chatActions: BottomNavBarSheetAction[] = [
+    { iconName: "chat-createnew", iconBackgroundColor: colorPalette.orangePeel, title: "New chat", description: "Start a private, one-on-one chat", onPress: noop },
+  ];
+  const walletActions: BottomNavBarSheetAction[] = [
+    { iconName: "send", iconBackgroundColor: colorPalette.orangePeel, title: "Send", description: "Send funds quickly and securely", onPress: noop },
+    { iconName: "button-receive", iconBackgroundColor: successColor, title: "Receive", description: "Securely receive funds with one tap", onPress: noop },
+    { iconName: "swap", iconBackgroundColor: colorPalette.purple, title: "Swap", description: "Swapping is even easier than it seems", onPress: noop },
+  ];
+  return {
+    0: { title: "Create value", actions: feedActions },
+    1: { title: "Start conversation", actions: chatActions },
+    2: { title: "Wallet", actions: walletActions },
+    3: { title: "Create value", actions: feedActions },
+  } as Record<BottomNavBarTabIndex, { title: string; actions: BottomNavBarSheetAction[] }>;
+}
 
 function noop() {}
 
@@ -50,7 +46,8 @@ function useNavBarState() {
 export function BottomNavBarCatalogSection() {
   const theme = useTheme();
   const { activeTab, setActiveTab, isSheetOpen, setSheetOpen, handleCenterPress } = useNavBarState();
-  const sheetConfig = SHEET_CONFIGS[activeTab];
+  const sheetConfigs = buildSheetConfigs(theme.colors.success);
+  const sheetConfig = sheetConfigs[activeTab];
 
   return (
     <CatalogSection title="Bottom Nav Bar">

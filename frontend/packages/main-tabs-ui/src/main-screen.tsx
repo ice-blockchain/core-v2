@@ -11,13 +11,13 @@ import { MAIN_SHELL_NAMESPACE } from "./translations";
 
 const NS = MAIN_SHELL_NAMESPACE;
 
-function useTabConfigs(): readonly [BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig] {
-  return useMemo(() => [
+function buildTabConfigs(): readonly [BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig] {
+  return [
     { label: translate(`${NS}:feedTab`), iconName: "home-off" as const },
     { label: translate(`${NS}:chatTab`), iconName: "chat-off" as const },
     { label: translate(`${NS}:walletTab`), iconName: "wallet-off" as const },
     { label: translate(`${NS}:profileTab`), avatar: {} },
-  ], []);
+  ];
 }
 
 export function MainScreen({ screens }: { screens: MainShellScreens }) {
@@ -25,7 +25,7 @@ export function MainScreen({ screens }: { screens: MainShellScreens }) {
   const { activeTab, isSheetOpen, handleTabPress, handleCenterPress, handleSheetClose } = useMainTabState();
   const sheetConfigs = useMemo(() => buildSheetConfigs(theme.colors.success), [theme.colors.success]);
   const sheetConfig = sheetConfigs[activeTab];
-  const tabConfigs = useTabConfigs();
+  const tabConfigs = buildTabConfigs();
 
   return (
     <View style={styles.root}>
