@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef } from "react";
-import { View } from "react-native";
+import { BackHandler, Pressable, StyleSheet, View } from "react-native";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,7 +8,10 @@ import { HorizontalSeparator } from "./HorizontalSeparator";
 import { Text } from "./Text";
 import { BottomNavBarSheetActionRow } from "./BottomNavBarSheetActionRow";
 import { useTheme } from "../theme/ThemeProvider";
-import type { BottomNavBarSheetProps } from "./bottom-nav-bar-types";
+import type { BottomNavBarSheetAction, BottomNavBarSheetProps } from "./bottom-nav-bar-types";
+
+const ANIMATION_CONFIG = { duration: 300, easing: Easing.out(Easing.cubic) };
+const OFFSCREEN_TRANSLATE = 600;
 
 function useSheetAppearance() {
   const theme = useTheme();
@@ -23,6 +27,23 @@ function SheetHeader({ title }: { title: string }) {
   return <View style={style}><Text variant="subtitle">{title}</Text></View>;
 }
 
+function SheetContent({ title, actions }: { title: string; actions: readonly BottomNavBarSheetAction[] }) {
+  const scale = useTheme().scale.scaleSize;
+  return (
+    <>
+      <SheetHeader title={title} />
+      <View style={{ gap: scale(12) }}>
+        {actions.map((action, index) => (
+          <Fragment key={action.iconName}>
+            {index > 0 ? <HorizontalSeparator /> : null}
+            <BottomNavBarSheetActionRow action={action} />
+          </Fragment>
+        ))}
+      </View>
+    </>
+  );
+}
+
 function renderBackdrop(props: BottomSheetBackdropProps) {
   return <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />;
 }
@@ -35,8 +56,71 @@ function useSheetPresenter(isVisible: boolean, modalRef: React.RefObject<BottomS
   }, [isVisible, modalRef]);
 }
 
-export function BottomNavBarSheet({ isVisible, onClose, title, actions }: BottomNavBarSheetProps) {
-  const scale = useTheme().scale.scaleSize;
+function useInlineBackHandler(isVisible: boolean, onClose: () => void) {
+  useEffect(() => {
+    if (!isVisible) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => { onClose(); return true; });
+    return () => sub.remove();
+  }, [isVisible, onClose]);
+}
+
+function buildInlineBackdropStyle(bgColor: string) {
+  return { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: bgColor };
+}
+
+interface InlineSheetStyleOptions {
+  scale: (n: number) => number;
+  bgColor: string;
+  radius: number;
+  bottomInset: number;
+}
+
+function buildInlineSheetStyle({ scale, bgColor, radius, bottomInset }: InlineSheetStyleOptions) {
+  return {
+    position: "absolute" as const, bottom: 0, left: 0, right: 0,
+    backgroundColor: bgColor, borderTopLeftRadius: radius, borderTopRightRadius: radius,
+    paddingBottom: bottomInset, gap: scale(12),
+  };
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function useInlineAnimation(isVisible: boolean) {
+  const progress = useSharedValue(0);
+  const sheetHeight = useSharedValue(OFFSCREEN_TRANSLATE);
+
+  useEffect(() => {
+    progress.value = withTiming(isVisible ? 1 : 0, ANIMATION_CONFIG);
+  }, [isVisible, progress]);
+
+  const backdropAnimStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+  const sheetAnimStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - progress.value) * sheetHeight.value }] }));
+  const handleLayout = useCallback((e: { nativeEvent: { layout: { height: number } } }) => { sheetHeight.value = e.nativeEvent.layout.height; }, [sheetHeight]);
+
+  return { backdropAnimStyle, sheetAnimStyle, handleLayout };
+}
+
+function InlineSheet({ isVisible, onClose, title, actions }: BottomNavBarSheetProps) {
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
+  const insets = useSafeAreaInsets();
+  const { bg } = useSheetAppearance();
+  useInlineBackHandler(isVisible, onClose);
+  const backdropStyle = useMemo(() => buildInlineBackdropStyle(theme.colors.backgroundSheet), [theme.colors.backgroundSheet]);
+  const sheetStyle = useMemo(() => buildInlineSheetStyle({ scale, bgColor: bg.backgroundColor, radius: bg.borderTopLeftRadius, bottomInset: insets.bottom }), [scale, bg, insets.bottom]);
+  const { backdropAnimStyle, sheetAnimStyle, handleLayout } = useInlineAnimation(isVisible);
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents={isVisible ? "auto" : "none"}>
+      <AnimatedPressable style={[backdropStyle, backdropAnimStyle]} onPress={onClose} />
+      <Animated.View style={[sheetStyle, sheetAnimStyle]} onLayout={handleLayout}>
+        <SheetContent title={title} actions={actions} />
+      </Animated.View>
+    </View>
+  );
+}
+
+function ModalSheet({ isVisible, onClose, title, actions }: BottomNavBarSheetProps) {
   const insets = useSafeAreaInsets();
   const { bg, handle } = useSheetAppearance();
   const modalRef = useRef<BottomSheetModal>(null);
@@ -52,16 +136,13 @@ export function BottomNavBarSheet({ isVisible, onClose, title, actions }: Bottom
   return (
     <BottomSheetModal ref={modalRef} enableDynamicSizing enablePanDownToClose onAnimate={handleAnimate} backdropComponent={renderBackdrop} backgroundStyle={bg} handleIndicatorStyle={handle}>
       <BottomSheetView style={bottomStyle}>
-        <SheetHeader title={title} />
-        <View style={{ gap: scale(12) }}>
-          {actions.map((action, index) => (
-            <Fragment key={action.iconName}>
-              {index > 0 ? <HorizontalSeparator /> : null}
-              <BottomNavBarSheetActionRow action={action} />
-            </Fragment>
-          ))}
-        </View>
+        <SheetContent title={title} actions={actions} />
       </BottomSheetView>
     </BottomSheetModal>
   );
+}
+
+export function BottomNavBarSheet(props: BottomNavBarSheetProps) {
+  if (props.inline) return <InlineSheet {...props} />;
+  return <ModalSheet {...props} />;
 }

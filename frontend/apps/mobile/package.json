@@ -28,6 +28,7 @@
     "@ion/ton-storage": "workspace:*",
     "@ion/file-storage": "workspace:*",
     "@ion/localization": "workspace:*",
+    "@ion/main-tabs-ui": "workspace:*",
     "@ion/platform": "workspace:*",
     "@ion/media-viewer": "workspace:*",
     "@ion/navigation": "workspace:*",

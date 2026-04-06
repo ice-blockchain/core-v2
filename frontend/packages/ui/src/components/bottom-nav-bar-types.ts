@@ -36,5 +36,6 @@ export interface BottomNavBarSheetProps {
   onClose: () => void;
   title: string;
   actions: readonly BottomNavBarSheetAction[];
+  inline?: boolean;
   testID?: string;
 }

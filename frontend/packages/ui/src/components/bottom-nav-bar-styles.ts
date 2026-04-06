@@ -1,5 +1,9 @@
 import type { ViewStyle } from "react-native";
 
+// The 50px row extends 11px into the home indicator safe area by design (Figma: mb-[-11px]).
+// This keeps the bar compact while the 50x50 center button stays vertically centered.
+const ROW_SAFE_AREA_OVERLAP = 11;
+
 interface BarContainerOptions {
   scale: (n: number) => number;
   bgColor: string;
@@ -13,7 +17,7 @@ export function buildBarContainerStyle(options: BarContainerOptions): ViewStyle 
   return {
     backgroundColor: bgColor,
     paddingTop: scale(9),
-    paddingBottom: scale(11) + bottomInset,
+    paddingBottom: Math.max(0, bottomInset - scale(ROW_SAFE_AREA_OVERLAP)),
     shadowColor,
     shadowOffset: { width: -2, height: -2 },
     shadowOpacity: isModalOpen ? 0 : 0.055,

@@ -11,11 +11,11 @@ import { useKeyboardInset } from "./bottom-sheet-hooks";
 
 const BACKDROP_STYLE = { position: "absolute" as const, top: 0, left: 0, right: 0, bottom: 0 };
 
-function useWebBottomSheetStyles() {
+function useWebBottomSheetStyles(inline?: boolean) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
-  const overlayStyle = useMemo(() => buildWebOverlayStyle(theme.colors.backgroundSheet), [theme.colors]);
+  const overlayStyle = useMemo(() => buildWebOverlayStyle(theme.colors.backgroundSheet, inline), [theme.colors, inline]);
   const sheetStyle = useMemo(() => buildWebSheetStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors]);
   const handleStyle = useMemo(() => buildHandleStyle(scale, theme.colors.sheetLine), [scale, theme.colors]);
 
@@ -61,8 +61,8 @@ function SheetContent(props: BottomSheetProps) {
 }
 
 export function BottomSheet(props: BottomSheetProps) {
-  const { isVisible, onClose, testID } = props;
-  const { overlayStyle, handleStyle } = useWebBottomSheetStyles();
+  const { isVisible, onClose, inline, testID } = props;
+  const { overlayStyle, handleStyle } = useWebBottomSheetStyles(inline);
 
   if (!isVisible) return null;
 

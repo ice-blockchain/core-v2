@@ -20,22 +20,26 @@ import {
 import { authTranslations, GetStartedScreen, IdentityKeyNameNoteScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyPasskeySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
 import { splashTranslations } from "@ion/splash-ui";
+import { mainShellTranslations } from "@ion/main-tabs-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
 import { CatalogScreen } from "./src/components/catalog-screen";
 import { ChatPreviewScreen } from "./src/components/chat-preview-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
+import { MainScreen } from "./src/components/main-screen";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
 registerTranslations(i18n, chatTranslations);
 registerTranslations(i18n, splashTranslations);
+registerTranslations(i18n, mainShellTranslations);
 
 const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
+  Main: MainScreen,
   Catalog: CatalogScreen,
   ChatPreview: ChatPreviewScreen,
   NicknameReserved: NicknameReservedScreen,

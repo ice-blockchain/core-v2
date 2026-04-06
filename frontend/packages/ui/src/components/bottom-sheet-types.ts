@@ -7,6 +7,7 @@ interface BottomSheetBaseProps {
   onBack?: () => void;
   children: ReactNode;
   overlay?: ReactNode;
+  inline?: boolean;
   testID?: string;
 }
 
