@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 
 	"ion-greenfield-proxy/internal/adnl"
+	"ion-greenfield-proxy/internal/apperror"
 	"ion-greenfield-proxy/internal/config"
 	gf "ion-greenfield-proxy/internal/greenfield"
 	"ion-greenfield-proxy/internal/handler"
@@ -88,6 +90,16 @@ func New(p Params) (*gin.Engine, error) {
 	if p.Config.MetricsPort == 0 && p.Registry != nil {
 		r.GET("/metrics", handler.MetricsHandler(p.Registry))
 	}
+	r.GET("/guarantor", func(ctx *gin.Context) {
+		if p.Provisioner == nil {
+			apperror.WriteError(ctx, apperror.New(http.StatusForbidden, "PROVISIONER_UNAVAILABLE", "bucket provisioning not configured"))
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{
+			"address": proxyAddr,
+			"amount":  p.Config.GreenfieldFeeGrantAmount,
+		})
+	})
 
 	logger.Info("Starting proxy",
 		"upstream_rpc", rpcURL.String(),
