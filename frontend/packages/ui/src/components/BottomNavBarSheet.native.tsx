@@ -1,14 +1,14 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef } from "react";
 import { BackHandler, Pressable, StyleSheet, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HorizontalSeparator } from "./HorizontalSeparator";
 import { Text } from "./Text";
 import { BottomNavBarSheetActionRow } from "./BottomNavBarSheetActionRow";
 import { useTheme } from "../theme/ThemeProvider";
 import type { BottomNavBarSheetAction, BottomNavBarSheetProps } from "./bottom-nav-bar-types";
+import { SheetBackdrop } from "./sheet-parts";
 
 const ANIMATION_CONFIG = { duration: 300, easing: Easing.out(Easing.cubic) };
 const OFFSCREEN_TRANSLATE = 600;
@@ -42,10 +42,6 @@ function SheetContent({ title, actions }: { title: string; actions: readonly Bot
       </View>
     </>
   );
-}
-
-function renderBackdrop(props: BottomSheetBackdropProps) {
-  return <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />;
 }
 
 function useSheetPresenter(isVisible: boolean, modalRef: React.RefObject<BottomSheetModal | null>) {
@@ -132,7 +128,7 @@ function ModalSheet({ isVisible, onClose, title, actions }: BottomNavBarSheetPro
   if (!isVisible) return null;
 
   return (
-    <BottomSheetModal ref={modalRef} enableDynamicSizing enablePanDownToClose onAnimate={handleAnimate} backdropComponent={renderBackdrop} backgroundStyle={bg} handleIndicatorStyle={handle}>
+    <BottomSheetModal ref={modalRef} enableDynamicSizing enablePanDownToClose onAnimate={handleAnimate} backdropComponent={SheetBackdrop} backgroundStyle={bg} handleIndicatorStyle={handle}>
       <BottomSheetView style={bottomStyle}>
         <SheetContent title={title} actions={actions} />
       </BottomSheetView>

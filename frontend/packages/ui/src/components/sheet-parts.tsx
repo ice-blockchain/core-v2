@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import type { BottomSheetBackdropProps, BottomSheetBackgroundProps, BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import { useTheme } from '@ion/ui';
+import { useTheme } from '../theme/ThemeProvider';
 
 const HANDLE_CONTAINER_STYLE = {
   alignItems: 'center',

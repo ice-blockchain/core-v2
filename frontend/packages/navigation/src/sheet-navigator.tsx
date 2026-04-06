@@ -5,7 +5,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { SheetScreenHeader } from './components/SheetScreenHeader';
 import { SheetScrollProvider } from './sheet-scroll-context';
-import { SheetBackdrop, SheetBackground, SheetHandle } from './sheet-parts';
+import { SheetBackdrop, SheetBackground, SheetHandle } from '@ion/ui';
 
 const SNAP_POINTS = ['92%'];
 const KEYBOARD_BEHAVIOR = Platform.select({ ios: 'padding' as const, default: 'height' as const });

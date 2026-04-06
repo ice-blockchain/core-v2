@@ -82,6 +82,7 @@ export type { IconProps, IconName } from "./icons/Icon";
 
 export { BottomNavBar } from "./components/BottomNavBar";
 export { BottomNavBarSheet } from "./components/BottomNavBarSheet";
+export { SheetBackdrop, SheetBackground, SheetHandle } from "./components/sheet-parts";
 export type {
   BottomNavBarProps,
   BottomNavBarTabConfig,
