@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useSheetScroll } from "@ion/navigation";
+import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasswordIcon } from "./register-password-icon";
@@ -78,7 +78,10 @@ function RegisterFormFields({ identity, passwordForm, contentStyles }: {
   passwordForm: ReturnType<typeof usePasswordForm>;
   contentStyles: ReturnType<typeof useContentStyles>;
 }) {
-  const handleInfoPress = useCallback(() => {}, []);
+  const appNavigation = useAppNavigation();
+  const handleInfoPress = useCallback(() => {
+    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
+  }, [appNavigation]);
   const { focusedField, handlePasswordFocus, handleConfirmFocus } = useFocusedField();
   const rules = focusedField === "confirm" ? passwordForm.confirmPasswordRules : passwordForm.passwordRules;
 
