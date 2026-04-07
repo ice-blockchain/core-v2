@@ -21,15 +21,22 @@ on:
       - "**/go.mod"
       - "**/go.sum"
 
+concurrency:
+  group: ci-backend-go-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   discover:
     if: github.event_name == 'push' || !github.event.pull_request.draft
-    runs-on: ubuntu-latest
+    runs-on: ion-runner
     outputs:
       modules: ${{ steps.find.outputs.modules }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Discover Go modules
         id: find
@@ -41,7 +48,7 @@ jobs:
   test:
     needs: discover
     if: needs.discover.outputs.modules != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ion-runner
     strategy:
       fail-fast: true
       matrix:
@@ -52,6 +59,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup GO
         uses: actions/setup-go@v6
