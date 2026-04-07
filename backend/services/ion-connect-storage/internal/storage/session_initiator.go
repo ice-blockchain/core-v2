@@ -33,27 +33,33 @@ type sessionKey struct {
 }
 
 // NewSessionInitiator creates a session initiator.
-func NewSessionInitiator(handler *Handler, logger *slog.Logger) *SessionInitiator {
-	cache, _ := lru.New[sessionKey, struct{}](maxTrackedSessions)
+func NewSessionInitiator(handler *Handler, logger *slog.Logger) (*SessionInitiator, error) {
+	cache, err := lru.New[sessionKey, struct{}](maxTrackedSessions)
+	if err != nil {
+		return nil, fmt.Errorf("create session cache: %w", err)
+	}
 	return &SessionInitiator{
 		handler:   handler,
 		logger:    logger,
 		initiated: cache,
 		sem:       make(chan struct{}, maxConcurrentInits),
-	}
+	}, nil
 }
 
 // OnNewSession is the callback for OverlayManager.SetSessionCallback.
 // Sends UpdateInit back to the peer in a goroutine.
 func (s *SessionInitiator) OnNewSession(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID [32]byte, sessionID int64) {
 	key := sessionKey{bagID: bagID, sessionID: sessionID}
-	if _, ok := s.initiated.Get(key); ok {
-		return
-	}
-	s.initiated.Add(key, struct{}{})
 
 	select {
 	case s.sem <- struct{}{}:
+		// Check inside semaphore to prevent duplicate goroutines from the
+		// TOCTOU race where two callers both pass a pre-semaphore Get check.
+		if _, ok := s.initiated.Get(key); ok {
+			<-s.sem
+			return
+		}
+		s.initiated.Add(key, struct{}{})
 		go func() {
 			defer func() { <-s.sem }()
 			s.sendUpdateInit(rldp, overlayIDBytes, bagID, sessionID)

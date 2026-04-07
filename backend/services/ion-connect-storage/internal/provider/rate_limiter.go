@@ -48,16 +48,15 @@ func (rl *PeerRateLimiter) Middleware() gin.HandlerFunc {
 		if peerID == "" {
 			peerID = "ip:" + c.ClientIP()
 		}
-		if rl.peerCount.Load() >= maxTrackedPeers {
-			if _, exists := rl.peers.Load(peerID); !exists {
-				c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "too many peers"})
-				return
-			}
-		}
 		now := time.Now().Unix()
 		val, loaded := rl.peers.LoadOrStore(peerID, rl.newEntry(now))
 		if !loaded {
-			rl.peerCount.Add(1)
+			if rl.peerCount.Add(1) > maxTrackedPeers {
+				rl.peers.Delete(peerID)
+				rl.peerCount.Add(-1)
+				c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "too many peers"})
+				return
+			}
 		}
 		entry := val.(*peerEntry)
 		entry.lastAccess.Store(now)

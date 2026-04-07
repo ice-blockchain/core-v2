@@ -126,7 +126,8 @@ func (c *Coordinator) reconcileOwnedCount(ctx context.Context) {
 	}
 
 	c.ownedCountMu.Lock()
-	old := c.ownedCount.Swap(validCount)
+	old := c.ownedCount
+	c.ownedCount = validCount
 	if c.metrics != nil && old != validCount {
 		c.metrics.BagsOwned.Set(float64(validCount))
 	}

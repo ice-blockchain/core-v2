@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -80,10 +81,12 @@ func main() {
 	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
 	segmentCache := cache.NewSegmentCache(cfg.CacheDir, cfg.CacheTTL, func(bagID [32]byte) {
 		server.DHTRegistrar().Deregister(bagID)
-		_ = server.OverlayManager().Leave(bagID)
+		if err := server.OverlayManager().Leave(bagID); err != nil {
+			logger.Warn("failed to leave overlay on cache eviction", "bag", fmt.Sprintf("%x", bagID[:4]), "error", err)
+		}
 	}, logger)
 
-	storageHandler := storage.NewHandler(storage.HandlerConfig{
+	storageHandler, err := storage.NewHandler(storage.HandlerConfig{
 		MetadataStore:      metadataStore,
 		SegmentCache:       segmentCache,
 		Fetcher:            fetcher,
@@ -93,8 +96,16 @@ func main() {
 		OverlayNodeBuilder: server.NewOverlayNode,
 		Logger:             logger,
 	})
+	if err != nil {
+		logger.Error("create storage handler failed", "error", err)
+		os.Exit(1)
+	}
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
-	sessionInit := storage.NewSessionInitiator(storageHandler, logger)
+	sessionInit, err := storage.NewSessionInitiator(storageHandler, logger)
+	if err != nil {
+		logger.Error("create session initiator failed", "error", err)
+		os.Exit(1)
+	}
 	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
 
 	// Wire piece handler for cluster forwarding (needs storage handler to be created first).
@@ -134,6 +145,7 @@ func main() {
 	bridge.Stop()
 	rateLimiter.Close()
 	subscriberWg.Wait()
+	coord.Stop()
 	shutdownServer(server, logger)
 	httpWg.Wait()
 	logger.Info("ion-connect-storage stopped")
@@ -196,6 +208,7 @@ type coordinatorInterface interface {
 	storage.PieceForwarder
 	provider.OwnerResolver
 	health.ClusterChecker
+	Stop()
 }
 
 func openBagIndex(cfg config.Config, logger *slog.Logger) (*pebble.DB, greenfieldclient.Client, error) {

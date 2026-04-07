@@ -2,6 +2,7 @@ package boc
 
 import (
 	"encoding/binary"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -120,7 +121,9 @@ func TestParseTorrentHeaderOverflowTotalSize(t *testing.T) {
 
 	_, err := ParseTorrentHeader(data)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "overflow")
+	// May be caught by size limit or by overflow check depending on order.
+	require.True(t, strings.Contains(err.Error(), "overflow") || strings.Contains(err.Error(), "exceeds maximum"),
+		"unexpected error: %s", err)
 }
 
 func TestParseTorrentHeaderWithDirName(t *testing.T) {

@@ -52,12 +52,13 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 	logger := storage.E2ELogger()
 
 	coordDB := openTestPebble(t)
-	nodeID := randomNodeID()
-	overlayID := cluster.ComputeClusterOverlayID(clusterOverlayName)
 
 	// Generate ADNL key upfront so both the server and coordinator share the same identity.
+	// NodeID must be hex(pubKey) to pass nodeinfo signature verification.
 	_, adnlKey, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
+	nodeID := hex.EncodeToString(adnlKey.Public().(ed25519.PublicKey))
+	overlayID := cluster.ComputeClusterOverlayID(clusterOverlayName)
 	adnlKeyHex := hex.EncodeToString(adnlKey.Seed())
 
 	coord, err := cluster.NewCoordinator(cluster.CoordinatorConfig{
@@ -185,12 +186,6 @@ func openTestPebble(t *testing.T) *pebble.DB {
 	require.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 	return db
-}
-
-func randomNodeID() string {
-	b := make([]byte, 32)
-	_, _ = rand.Read(b)
-	return hex.EncodeToString(b)
 }
 
 // waitForClusterConvergence polls until every node sees all nodes as active

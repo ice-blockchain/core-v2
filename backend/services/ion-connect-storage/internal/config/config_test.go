@@ -14,7 +14,7 @@ func setRequiredEnv(t *testing.T) {
 	t.Setenv("ADNL_EXTERNAL_ADDR", "1.2.3.4:3278")
 	t.Setenv("GLOBAL_CONFIG_URL", "https://67.29.155.42/testnet-global.config.json")
 	t.Setenv("GREENFIELD_RPC_URLS", "https://93.184.216.34")
-	t.Setenv("GREENFIELD_PRIVATE_KEY", "deadbeef")
+	t.Setenv("GREENFIELD_PRIVATE_KEY", "b1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1b2")
 	t.Setenv("ONLINEIO_ENV", "dev")
 }
 

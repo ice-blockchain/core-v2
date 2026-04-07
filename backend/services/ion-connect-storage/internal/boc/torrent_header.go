@@ -10,7 +10,8 @@ const (
 	headerMinSize     = 32 // TLConstructor(4) + FilesCount(4) + TotalNameSize(8) + TotalDataSize(8) + FEC(4) + DirNameSize(4)
 	torrentHeaderTLID = 0x9128aab7
 	fecInfoNoneID     = 0xc82a1964
-	maxFilesCount     = 1_000_000 // safety limit to prevent integer overflow in index arithmetic
+	maxFilesCount     = 1_000_000         // safety limit to prevent integer overflow in index arithmetic
+	maxTotalNameSize  = 100 * 1024 * 1024 // 100MB safety limit on file name data
 )
 
 // FileEntry describes a single file within a torrent bag.
@@ -112,6 +113,9 @@ func (h *TorrentHeader) parse(data []byte) ([]byte, error) {
 
 	if filesCount > maxFilesCount {
 		return nil, fmt.Errorf("files count %d exceeds maximum %d", filesCount, maxFilesCount)
+	}
+	if totalNameSize > maxTotalNameSize {
+		return nil, fmt.Errorf("total name size %d exceeds maximum %d", totalNameSize, maxTotalNameSize)
 	}
 
 	// Overflow-safe addition: check each term before accumulating.

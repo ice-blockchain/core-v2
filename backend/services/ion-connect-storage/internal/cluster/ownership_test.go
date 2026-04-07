@@ -119,6 +119,69 @@ func TestMultipleBagsClaimed(t *testing.T) {
 	}
 }
 
+func TestOwnerRejectsStaleTimestamp(t *testing.T) {
+	coord := newTestCoordinator(t, "")
+	ctx, cancel := context.WithCancel(context.Background())
+	require.NoError(t, coord.Start(ctx))
+	defer func() { cancel(); coord.Stop() }()
+
+	bagID := [32]byte{0x10}
+	bagHex := hexEncode(bagID[:])
+
+	// Write ownership claim with a timestamp older than StaleHeartbeatTimeout.
+	staleTS := time.Now().Unix() - int64(coord.cfg.StaleHeartbeatTimeout.Seconds()) - 60
+	val := FormatSignedOwnership(bagHex, coord.nodeID, staleTS, coord.cfg.PrivateKey)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), val))
+
+	// Owner() must reject the stale claim.
+	require.Equal(t, "", coord.Owner(bagID))
+}
+
+func TestOwnerAcceptsFreshTimestamp(t *testing.T) {
+	coord := newTestCoordinator(t, "")
+	ctx, cancel := context.WithCancel(context.Background())
+	require.NoError(t, coord.Start(ctx))
+	defer func() { cancel(); coord.Stop() }()
+
+	bagID := [32]byte{0x11}
+	// ClaimBag uses time.Now(), which is within the freshness window.
+	require.NoError(t, coord.ClaimBag(ctx, bagID))
+	require.Equal(t, coord.nodeID, coord.Owner(bagID))
+}
+
+func TestOwnedCountConsistencyUnderConcurrency(t *testing.T) {
+	coord := newTestCoordinator(t, "")
+	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
+	// Use a long stale timeout so ownership claims remain valid during the test.
+	coord.cfg.StaleHeartbeatTimeout = 5 * time.Minute
+	ctx, cancel := context.WithCancel(context.Background())
+	require.NoError(t, coord.Start(ctx))
+	defer func() { cancel(); coord.Stop() }()
+
+	// Claim several bags so reconciliation has work.
+	const bagCount = 5
+	for i := range bagCount {
+		bagID := [32]byte{byte(0x20 + i)}
+		owned, err := coord.OwnsOrClaim(ctx, bagID)
+		require.NoError(t, err)
+		require.True(t, owned)
+	}
+
+	// Run reconciliation concurrently with a release.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		coord.reconcileOwnedCount(ctx)
+	}()
+	releaseBag := [32]byte{byte(0x20)}
+	require.NoError(t, coord.ReleaseBag(ctx, releaseBag))
+	<-done
+
+	// After reconciliation + release, run one more reconciliation to converge.
+	coord.reconcileOwnedCount(ctx)
+	require.Equal(t, bagCount-1, coord.OwnedCount())
+}
+
 func dsKeyFromString(s string) ds.Key {
 	return ds.NewKey(s)
 }

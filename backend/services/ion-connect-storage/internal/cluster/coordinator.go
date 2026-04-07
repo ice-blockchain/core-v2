@@ -32,7 +32,7 @@ type CoordinatorConfig struct {
 	ReclamationStartDelay      time.Duration
 	ClaimVerifyDelay           time.Duration
 	PrivateKey                 ed25519.PrivateKey
-	HeartbeatSignatureRequired bool
+	HeartbeatSignatureRequired *bool
 }
 
 func (c *CoordinatorConfig) applyDefaults() {
@@ -49,9 +49,10 @@ func (c *CoordinatorConfig) applyDefaults() {
 		c.ReclamationStartDelay = c.StaleHeartbeatTimeout
 	}
 	// Secure by default: require signed heartbeats when a private key is configured.
-	// Callers must explicitly set HeartbeatSignatureRequired=false for rolling upgrades.
-	if c.PrivateKey != nil && !c.HeartbeatSignatureRequired {
-		c.HeartbeatSignatureRequired = true
+	// Callers can explicitly set HeartbeatSignatureRequired to false for rolling upgrades.
+	if c.PrivateKey != nil && c.HeartbeatSignatureRequired == nil {
+		t := true
+		c.HeartbeatSignatureRequired = &t
 	}
 }
 
@@ -67,8 +68,9 @@ type Coordinator struct {
 	transport      atomic.Pointer[ClusterTransport]
 	nodeID         string
 	ownedCountMu   sync.Mutex
-	ownedCount     atomic.Int64
+	ownedCount     int64
 	nodeInfoMu     sync.RWMutex
+	started        atomic.Bool
 	metrics        *ClusterMetrics
 	logger         *slog.Logger
 	cfg            CoordinatorConfig
@@ -156,6 +158,7 @@ func NewCoordinator(cfg CoordinatorConfig) (*Coordinator, error) {
 func (c *Coordinator) Start(ctx context.Context) error {
 	ctx, c.cancel = context.WithCancel(ctx)
 	c.ctx = ctx
+	c.started.Store(true)
 	c.logger.Info("cluster coordinator starting", "node_id", c.nodeID)
 
 	if err := c.publishNodeInfo(ctx); err != nil {
@@ -172,21 +175,22 @@ func (c *Coordinator) Start(ctx context.Context) error {
 // Stop shuts down the coordinator and closes CRDT. Safe to call multiple times.
 func (c *Coordinator) Stop() {
 	c.stopOnce.Do(func() {
+		c.started.Store(false)
 		if c.cancel != nil {
 			c.cancel()
 		}
+		c.wg.Wait()
+		if err := c.crdt.Close(); err != nil {
+			c.logger.Error("close crdt", "error", err)
+		}
+		c.broadcaster.Close()
+		c.logger.Info("cluster coordinator stopped")
 	})
-	c.wg.Wait()
-	if err := c.crdt.Close(); err != nil {
-		c.logger.Error("close crdt", "error", err)
-	}
-	c.broadcaster.Close()
-	c.logger.Info("cluster coordinator stopped")
 }
 
-// IsConnected returns whether the CRDT datastore is active.
+// IsConnected returns whether the coordinator has been started and not stopped.
 func (c *Coordinator) IsConnected() bool {
-	return c.crdt != nil
+	return c.started.Load() && c.crdt != nil
 }
 
 // ActiveNodeCount returns the count of nodes with fresh heartbeats.

@@ -66,6 +66,7 @@ type ClusterTransport struct {
 	handlers      atomic.Pointer[handlerBundle]
 	overlayID     []byte
 	mu            sync.RWMutex
+	reconnectWg   sync.WaitGroup
 	peers         map[[32]byte]*clusterPeer
 	logger        *slog.Logger
 }
@@ -227,9 +228,11 @@ func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) 
 	return nil
 }
 
-// FetchBlockFromPeers fetches an IPLD block from cluster peers.
-// Tracks consecutive failures per peer and triggers reconnection for
-// persistently dead connections.
+const fetchBlockPeerTimeout = 500 * time.Millisecond
+
+// FetchBlockFromPeers fetches an IPLD block from cluster peers concurrently.
+// Cancels remaining queries on first success. Tracks consecutive failures
+// per peer and triggers reconnection for persistently dead connections.
 func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []byte) ([]byte, error) {
 	t.mu.RLock()
 	peers := make(map[[32]byte]*clusterPeer, len(t.peers))
@@ -238,28 +241,50 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 	}
 	t.mu.RUnlock()
 
+	if len(peers) == 0 {
+		return nil, fmt.Errorf("block not found on 0 peers")
+	}
+
+	type fetchResult struct {
+		data []byte
+		addr [32]byte
+		err  error
+	}
+
+	fetchCtx, fetchCancel := context.WithCancel(ctx)
+	defer fetchCancel()
+
+	results := make(chan fetchResult, len(peers))
 	msg := GetBlockMsg{CID: cidBytes}
-	var toReconnect [][32]byte
+
 	for addr, cp := range peers {
-		fetchCtx, fetchCancel := context.WithTimeout(ctx, 3*time.Second)
-		var resp BlockMsg
-		err := cp.adnlWrapper.Query(fetchCtx, overlay.WrapQuery(t.overlayID, msg), &resp)
-		fetchCancel()
-		if err != nil {
-			t.logger.Debug("fetch block failed", "peer", addr[:4], "error", err)
-			if t.trackPeerFailure(addr) {
-				toReconnect = append(toReconnect, addr)
+		go func(addr [32]byte, cp *clusterPeer) {
+			peerCtx, peerCancel := context.WithTimeout(fetchCtx, fetchBlockPeerTimeout)
+			defer peerCancel()
+			var resp BlockMsg
+			err := cp.adnlWrapper.Query(peerCtx, overlay.WrapQuery(t.overlayID, msg), &resp)
+			results <- fetchResult{data: resp.Data, addr: addr, err: err}
+		}(addr, cp)
+	}
+
+	var toReconnect [][32]byte
+	for range len(peers) {
+		r := <-results
+		if r.err != nil {
+			t.logger.Debug("fetch block failed", "peer", r.addr[:4], "error", r.err)
+			if t.trackPeerFailure(r.addr) {
+				toReconnect = append(toReconnect, r.addr)
 			}
 			continue
 		}
-		t.resetPeerFailures(addr)
-		if len(resp.Data) > 0 {
-			return resp.Data, nil
+		t.resetPeerFailures(r.addr)
+		if len(r.data) > 0 {
+			fetchCancel()
+			t.reconnectFailedPeers(toReconnect)
+			return r.data, nil
 		}
 	}
-	for _, addr := range toReconnect {
-		t.reconnectPeer(addr)
-	}
+	t.reconnectFailedPeers(toReconnect)
 	return nil, fmt.Errorf("block not found on %d peers", len(peers))
 }
 

@@ -14,6 +14,9 @@ func (h *Handler) handleGetRandomPeers(bagID [32]byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("build overlay node: %w", err)
 	}
+	if node == nil {
+		return nil, fmt.Errorf("build overlay node: returned nil node")
+	}
 
 	response := overlay.NodesList{List: []overlay.Node{*node}}
 	data, err := tl.Serialize(response, true)

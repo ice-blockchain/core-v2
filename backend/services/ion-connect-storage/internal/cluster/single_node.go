@@ -63,3 +63,6 @@ func (c *SingleNodeCoordinator) IsConnected() bool {
 func (c *SingleNodeCoordinator) ActiveNodeCount() int {
 	return 1
 }
+
+// Stop is a no-op for single-node mode.
+func (c *SingleNodeCoordinator) Stop() {}

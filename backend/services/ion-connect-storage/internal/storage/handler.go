@@ -54,7 +54,23 @@ type HandlerConfig struct {
 }
 
 // NewHandler creates a storage protocol handler.
-func NewHandler(cfg HandlerConfig) *Handler {
+// Returns an error if required dependencies are nil.
+func NewHandler(cfg HandlerConfig) (*Handler, error) {
+	if cfg.OwnershipChecker == nil {
+		return nil, fmt.Errorf("handler: OwnershipChecker is required")
+	}
+	if cfg.PieceForwarder == nil {
+		return nil, fmt.Errorf("handler: PieceForwarder is required")
+	}
+	if cfg.MetadataStore == nil {
+		return nil, fmt.Errorf("handler: MetadataStore is required")
+	}
+	if cfg.OverlayNodeBuilder == nil {
+		return nil, fmt.Errorf("handler: OverlayNodeBuilder is required")
+	}
+	if cfg.Logger == nil {
+		return nil, fmt.Errorf("handler: Logger is required")
+	}
 	return &Handler{
 		metadataStore:      cfg.MetadataStore,
 		segmentCache:       cfg.SegmentCache,
@@ -64,7 +80,7 @@ func NewHandler(cfg HandlerConfig) *Handler {
 		pieceForwarder:     cfg.PieceForwarder,
 		overlayNodeBuilder: cfg.OverlayNodeBuilder,
 		logger:             cfg.Logger,
-	}
+	}, nil
 }
 
 // HandleOverlayQuery dispatches a TL-encoded query to the appropriate handler.

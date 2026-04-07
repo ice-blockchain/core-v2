@@ -5,7 +5,8 @@ import "time"
 const maxPeerFailures = 3
 
 // trackPeerFailure increments the fail counter for a peer and returns
-// true if the peer should be reconnected.
+// true if the peer should be reconnected. Resets the counter and updates
+// lastReconnect atomically under the lock so only one caller wins.
 func (t *ClusterTransport) trackPeerFailure(addr [32]byte) bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -14,7 +15,12 @@ func (t *ClusterTransport) trackPeerFailure(addr [32]byte) bool {
 		return false
 	}
 	p.failCount++
-	return p.failCount >= maxPeerFailures && time.Since(p.lastReconnect) > 5*time.Second
+	if p.failCount >= maxPeerFailures && time.Since(p.lastReconnect) > 5*time.Second {
+		p.failCount = 0
+		p.lastReconnect = time.Now()
+		return true
+	}
+	return false
 }
 
 // resetPeerFailures clears the fail counter for a responsive peer.
@@ -41,23 +47,39 @@ func (t *ClusterTransport) reconnectPeer(addr [32]byte) {
 	}
 	peerAddr := cp.addr
 	peerPubKey := cp.pubKey
-	// Reset fail count to prevent concurrent reconnect attempts.
-	cp.failCount = 0
-	cp.lastReconnect = time.Now()
 	t.mu.Unlock()
 
 	if peerAddr == "" || peerPubKey == nil {
 		return
 	}
 	t.logger.Info("reconnecting dead peer", "addr", peerAddr)
-	_, err := t.ConnectToPeer(peerAddr, peerPubKey)
+	newPeer, err := t.ConnectToPeer(peerAddr, peerPubKey)
 
-	// Always remove old entry -- ConnectToPeer inserts at the new ADNL addr key.
-	t.mu.Lock()
-	delete(t.peers, addr)
-	t.mu.Unlock()
-
+	// Only remove old entry when reconnect succeeded and the ADNL addr changed.
+	if err == nil && newPeer != nil {
+		var newAddr [32]byte
+		copy(newAddr[:], newPeer.GetID())
+		if newAddr != addr {
+			t.mu.Lock()
+			delete(t.peers, addr)
+			t.mu.Unlock()
+		}
+	}
 	if err != nil {
 		t.logger.Warn("peer reconnect failed", "addr", peerAddr, "error", err)
 	}
+}
+
+// reconnectFailedPeers spawns reconnections in a tracked goroutine.
+func (t *ClusterTransport) reconnectFailedPeers(addrs [][32]byte) {
+	if len(addrs) == 0 {
+		return
+	}
+	t.reconnectWg.Add(1)
+	go func() {
+		defer t.reconnectWg.Done()
+		for _, a := range addrs {
+			t.reconnectPeer(a)
+		}
+	}()
 }

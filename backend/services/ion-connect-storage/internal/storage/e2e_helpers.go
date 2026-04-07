@@ -93,10 +93,12 @@ func setupSeederServerInternal(
 ) *SeederEnv {
 	t.Helper()
 
-	port := AllocatePort(t)
+	port, portConn := AllocatePort(t)
 	externalAddr := fmt.Sprintf("127.0.0.1:%d", port)
 
 	ctx := context.Background()
+	// Release the port reservation just before binding the real server.
+	_ = portConn.Close()
 	server, err := ionadnl.NewServer(ctx, ionadnl.ServerConfig{
 		AdnlPrivateKey:  adnlKeyHex,
 		GlobalConfigURL: E2EGlobalConfigURL(),
@@ -106,11 +108,14 @@ func setupSeederServerInternal(
 	}, logger)
 	require.NoError(t, err)
 	require.NoError(t, server.Start(ctx))
+	t.Cleanup(func() { _ = server.Stop(context.Background()) })
 
 	db, err := pebble.Open(t.TempDir(), &pebble.Options{})
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	gfClient := greenfield.CreateE2EClient(t, greenfieldPrivKey)
+	t.Cleanup(func() { gfClient.Close() })
 
 	persister := index.NewPersister(db)
 	fetcher := greenfield.NewFetcher(gfClient, logger)
@@ -146,14 +151,19 @@ func setupSeederServerInternal(
 			logger.Error("subscriber failed", "error", sErr)
 		}
 	}()
+	t.Cleanup(func() {
+		subCancel()
+		subWg.Wait()
+	})
 
 	gin.SetMode(gin.ReleaseMode)
 	publicEngine := gin.New()
 	provider.RegisterRoutes(publicEngine, providerIndex, nil)
 	bridge := ionadnl.NewRLDPHTTPBridge(ctx, publicEngine, logger)
 	server.SetHTTPBridge(bridge)
+	t.Cleanup(func() { bridge.Stop() })
 
-	storageHandler := NewHandler(HandlerConfig{
+	storageHandler, hErr := NewHandler(HandlerConfig{
 		MetadataStore:      metadataStore,
 		SegmentCache:       segmentCache,
 		Fetcher:            fetcher,
@@ -163,21 +173,14 @@ func setupSeederServerInternal(
 		OverlayNodeBuilder: server.NewOverlayNode,
 		Logger:             logger,
 	})
+	require.NoError(t, hErr)
 	server.OverlayManager().SetQueryHandler(storageHandler.HandleOverlayQuery)
-	sessionInit := NewSessionInitiator(storageHandler, logger)
+	sessionInit, sErr := NewSessionInitiator(storageHandler, logger)
+	require.NoError(t, sErr)
 	server.OverlayManager().SetSessionCallback(sessionInit.OnNewSession)
 
 	// All handlers wired -- mark server ready for incoming connections.
 	server.MarkReady()
-
-	t.Cleanup(func() {
-		bridge.Stop()
-		subCancel()
-		subWg.Wait()
-		_ = server.Stop(context.Background())
-		db.Close()
-		gfClient.Close()
-	})
 
 	return &SeederEnv{
 		Server:         server,
@@ -213,12 +216,13 @@ func SetupDownloader(t *testing.T, bagID [32]byte, dhtClient *dht.Client) (*tons
 
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
-	port := AllocatePort(t)
+	port, portConn := AllocatePort(t)
 	gate := adnl.NewGateway(key)
 	gate.SetAddressList([]*adnladdr.UDP{{
 		IP:   net.ParseIP("127.0.0.1"),
 		Port: int32(port),
 	}})
+	_ = portConn.Close()
 	require.NoError(t, gate.StartServer(fmt.Sprintf("127.0.0.1:%d", port), 1))
 	t.Cleanup(func() { gate.Close() })
 
@@ -269,14 +273,14 @@ func ConnectDownloaderToNode(t *testing.T, torrent *tonstorage.Torrent, srv *ton
 	require.NoError(t, err)
 }
 
-// AllocatePort finds an available UDP port.
-func AllocatePort(t *testing.T) int {
+// AllocatePort finds an available UDP port. The returned conn holds the port
+// reservation; callers must close it only after the real server has bound.
+func AllocatePort(t *testing.T) (int, net.PacketConn) {
 	t.Helper()
 	conn, err := net.ListenPacket("udp4", ":0")
 	require.NoError(t, err)
 	port := conn.LocalAddr().(*net.UDPAddr).Port
-	_ = conn.Close()
-	return port
+	return port, conn
 }
 
 // E2EGlobalConfigURL returns the TON global config URL for e2e tests.

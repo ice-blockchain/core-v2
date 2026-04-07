@@ -8,7 +8,7 @@ import (
 	"math"
 	"net/http"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,8 +32,9 @@ type RLDPHTTPBridge struct {
 	engine            *gin.Engine
 	logger            *slog.Logger
 	payloads          *xsync.Map[string, *pendingPayload]
-	payloadCount      atomic.Int64
-	totalPayloadBytes atomic.Int64
+	payloadMu         sync.Mutex
+	payloadCount      int64
+	totalPayloadBytes int64
 	cancel            context.CancelFunc
 }
 
@@ -64,24 +65,25 @@ func (b *RLDPHTTPBridge) Stop() {
 
 // MakeRLDPQueryHandler returns a handler for the overlay
 // RLDPWrapper rootQueryHandler slot (non-overlay RLDP queries).
+// connCtx is cancelled when the peer disconnects, preventing zombie handlers.
 // peerID is the connecting peer's ADNL ID, used to namespace payload keys
 // so that one peer cannot retrieve another peer's pending response payloads.
-func (b *RLDPHTTPBridge) MakeRLDPQueryHandler(rl *overlay.RLDPWrapper, peerID []byte) func([]byte, *rldp.Query) error {
+func (b *RLDPHTTPBridge) MakeRLDPQueryHandler(connCtx context.Context, rl *overlay.RLDPWrapper, peerID []byte) func([]byte, *rldp.Query) error {
 	peerPrefix := hex.EncodeToString(peerID)
 	return func(transferID []byte, query *rldp.Query) (retErr error) {
 		defer recoverPanic(b.logger, &retErr)
 		switch req := query.Data.(type) {
 		case Request:
-			return b.handleHTTPRequest(rl, query, transferID, req, peerPrefix)
+			return b.handleHTTPRequest(connCtx, rl, query, transferID, req, peerPrefix)
 		case GetNextPayloadPart:
-			return b.handlePayloadPart(rl, query, transferID, req, peerPrefix)
+			return b.handlePayloadPart(connCtx, rl, query, transferID, req, peerPrefix)
 		}
 		return nil
 	}
 }
 
 func (b *RLDPHTTPBridge) handleHTTPRequest(
-	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req Request, peerPrefix string,
+	connCtx context.Context, rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req Request, peerPrefix string,
 ) error {
 	httpReq, err := buildHTTPRequest(req)
 	if err != nil {
@@ -105,7 +107,8 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 		resp.NoPayload = false
 	}
 
-	answerCtx, answerCancel := context.WithDeadline(context.Background(), clampDeadline(query.Timeout))
+	deadline := clampDeadline(query.Timeout)
+	answerCtx, answerCancel := context.WithDeadline(connCtx, deadline)
 	defer answerCancel()
 	return rl.SendAnswer(
 		answerCtx,
@@ -115,9 +118,10 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 }
 
 func (b *RLDPHTTPBridge) handlePayloadPart(
-	rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart, peerPrefix string,
+	connCtx context.Context, rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart, peerPrefix string,
 ) error {
-	answerCtx, answerCancel := context.WithDeadline(context.Background(), clampDeadline(query.Timeout))
+	deadline := clampDeadline(query.Timeout)
+	answerCtx, answerCancel := context.WithDeadline(connCtx, deadline)
 	defer answerCancel()
 
 	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
@@ -147,29 +151,29 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	)
 }
 
-// tryReservePayloadSlot atomically increments the payload counter and byte
-// tracker if both are below their limits.
+// tryReservePayloadSlot increments the payload counter and byte tracker
+// under a single lock so both limits are enforced atomically.
 func (b *RLDPHTTPBridge) tryReservePayloadSlot(size int64) bool {
-	for {
-		current := b.payloadCount.Load()
-		if current >= maxPendingPayloads {
-			return false
-		}
-		if b.totalPayloadBytes.Load()+size > maxTotalPayloadBytes {
-			return false
-		}
-		if b.payloadCount.CompareAndSwap(current, current+1) {
-			b.totalPayloadBytes.Add(size)
-			return true
-		}
+	b.payloadMu.Lock()
+	defer b.payloadMu.Unlock()
+	if b.payloadCount >= maxPendingPayloads {
+		return false
 	}
+	if b.totalPayloadBytes+size > maxTotalPayloadBytes {
+		return false
+	}
+	b.payloadCount++
+	b.totalPayloadBytes += size
+	return true
 }
 
-// deletePayload atomically removes a payload and decrements both counters.
+// deletePayload removes a payload and decrements both counters under lock.
 func (b *RLDPHTTPBridge) deletePayload(reqID string) {
 	if p, loaded := b.payloads.LoadAndDelete(reqID); loaded {
-		b.payloadCount.Add(-1)
-		b.totalPayloadBytes.Add(-p.size)
+		b.payloadMu.Lock()
+		b.payloadCount--
+		b.totalPayloadBytes -= p.size
+		b.payloadMu.Unlock()
 	}
 }
 

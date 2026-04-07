@@ -136,11 +136,13 @@ func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {
 	// Create bynode key for this node, but ownership points to another node.
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)), nil))
 	writeSignedOwnershipAsNode(t, coord, "", bagID)
-	coord.ownedCount.Store(1)
+	coord.ownedCountMu.Lock()
+	coord.ownedCount = 1
+	coord.ownedCountMu.Unlock()
 
 	coord.reconcileOwnedCount(ctx)
 
-	require.Equal(t, int64(0), coord.ownedCount.Load())
+	require.Equal(t, 0, coord.OwnedCount())
 
 	// Verify stale bynode key was cleaned up.
 	_, err := coord.crdt.Get(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)))

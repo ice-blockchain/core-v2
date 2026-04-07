@@ -18,6 +18,7 @@ import (
 const (
 	tlPingConstructor   uint32 = 0x44f3f211
 	queryHandlerTimeout        = 30 * time.Second
+	maxQuerySize               = 256 * 1024 // 256KB per-query payload limit
 )
 
 // handleNewConnection is called when a new ADNL peer connects.
@@ -32,15 +33,17 @@ func (s *Server) handleNewConnection(client adnl.Peer) error {
 		s.logger.Warn("rejecting connection: max connections reached", "max", s.maxConnections)
 		return fmt.Errorf("max connections reached")
 	}
+	connCtx, connCancel := context.WithCancel(context.Background())
 	client.SetDisconnectHandler(func(_ string, _ ed25519.PublicKey) {
+		connCancel()
 		s.activeConnections.Add(-1)
 	})
 	cc := s.loadClusterConfig()
-	setupOverlayRLDP(client, s.overlays, s.httpBridge, cc.overlayID, cc.queryHandler, cc.memberChecker, s.querySemaphore, s.logger)
+	setupOverlayRLDP(client, s.overlays, s.httpBridge, connCtx, cc.overlayID, cc.queryHandler, cc.memberChecker, s.querySemaphore, s.logger)
 	return nil
 }
 
-func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, querySem chan struct{}, logger *slog.Logger) {
+func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, connCtx context.Context, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, querySem chan struct{}, logger *slog.Logger) {
 	peerID := client.GetID()
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
@@ -67,6 +70,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 				return nil
 			}
 			rawQuery := extractRawTL(query.Data)
+			if rawQuery != nil && len(rawQuery) > maxQuerySize {
+				return fmt.Errorf("query too large: %d bytes", len(rawQuery))
+			}
 			if rawQuery != nil && len(rawQuery) >= 4 {
 				resp, err := clusterHandler(ctx, rawQuery)
 				if err != nil {
@@ -85,7 +91,7 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, querySem, logger))
 
 	if bridge != nil {
-		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl, client.GetID()))
+		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(connCtx, rl, client.GetID()))
 	}
 
 	logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
@@ -118,6 +124,9 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 		rawQuery := extractRawTL(req)
 		if rawQuery == nil {
 			return nil
+		}
+		if len(rawQuery) > maxQuerySize {
+			return fmt.Errorf("query too large: %d bytes", len(rawQuery))
 		}
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
@@ -172,6 +181,9 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 		rawQuery := extractRawTL(req)
 		if rawQuery == nil {
 			return nil
+		}
+		if len(rawQuery) > maxQuerySize {
+			return fmt.Errorf("query too large: %d bytes", len(rawQuery))
 		}
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {

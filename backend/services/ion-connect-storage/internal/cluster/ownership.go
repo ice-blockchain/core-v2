@@ -50,9 +50,9 @@ func (c *Coordinator) ReleaseBag(ctx context.Context, bagID [32]byte) error {
 	}
 
 	c.ownedCountMu.Lock()
-	c.ownedCount.Add(-1)
+	c.ownedCount--
 	if c.metrics != nil {
-		c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
+		c.metrics.BagsOwned.Set(float64(c.ownedCount))
 	}
 	c.ownedCountMu.Unlock()
 	return nil
@@ -87,13 +87,19 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 		return c.getNodePublicKey(ctx, nid)
 	})
 	if parseErr != nil {
-		c.logger.Debug("ownership signature invalid, rejecting", "error", parseErr)
+		c.logger.Warn("ownership signature invalid, rejecting", "bag", bagHex[:8], "error", parseErr)
 		return ""
 	}
 	now := time.Now().Unix()
 	if ts > now+maxClockSkew {
 		c.logger.Debug("ownership claim timestamp in the future",
 			"node", nodeID, "ts", ts, "now", now)
+		return ""
+	}
+	staleThreshold := now - int64(c.cfg.StaleHeartbeatTimeout.Seconds())
+	if ts < staleThreshold {
+		c.logger.Debug("ownership claim too old",
+			"node", nodeID, "ts", ts, "threshold", staleThreshold)
 		return ""
 	}
 	return nodeID
@@ -153,9 +159,9 @@ func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, er
 
 		if c.verifyClaim(ctx, bagID) {
 			c.ownedCountMu.Lock()
-			c.ownedCount.Add(1)
+			c.ownedCount++
 			if c.metrics != nil {
-				c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
+				c.metrics.BagsOwned.Set(float64(c.ownedCount))
 			}
 			c.ownedCountMu.Unlock()
 			return true, nil
@@ -168,7 +174,9 @@ func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, er
 // OwnedCount returns the number of bags this node owns.
 // Uses an atomic counter -- never iterates the CRDT.
 func (c *Coordinator) OwnedCount() int {
-	return int(c.ownedCount.Load())
+	c.ownedCountMu.Lock()
+	defer c.ownedCountMu.Unlock()
+	return int(c.ownedCount)
 }
 
 // NodeADNLAddress reads a node's network info from CRDT key nodeinfo/<nodeID>.

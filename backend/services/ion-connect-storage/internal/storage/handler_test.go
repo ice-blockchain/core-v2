@@ -166,7 +166,7 @@ func TestHandlerRejectsForwardedPieceWithTamperedProof(t *testing.T) {
 	// OwnershipChecker that says we do NOT own the bag (forces forwarding path)
 	nonOwner := &mockNonOwner{}
 
-	h := storage.NewHandler(storage.HandlerConfig{
+	h, hErr := storage.NewHandler(storage.HandlerConfig{
 		MetadataStore:      metadataStore,
 		SegmentCache:       segmentCache,
 		Fetcher:            fetcher,
@@ -176,6 +176,7 @@ func TestHandlerRejectsForwardedPieceWithTamperedProof(t *testing.T) {
 		OverlayNodeBuilder: nodeBuilder,
 		Logger:             logger,
 	})
+	require.NoError(t, hErr)
 
 	req := buildTestGetPieceRequest(0)
 	_, err = h.HandleOverlayQuery(context.Background(), bagID, req)
@@ -251,7 +252,7 @@ func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Ha
 	}
 
 	singleNode := cluster.NewSingleNodeCoordinator("test-node", [32]byte{}, "127.0.0.1", 0)
-	h := storage.NewHandler(storage.HandlerConfig{
+	h, hErr := storage.NewHandler(storage.HandlerConfig{
 		MetadataStore:      metadataStore,
 		SegmentCache:       segmentCache,
 		Fetcher:            fetcher,
@@ -261,6 +262,7 @@ func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Ha
 		OverlayNodeBuilder: nodeBuilder,
 		Logger:             logger,
 	})
+	require.NoError(t, hErr)
 	return h, bagID, meta
 }
 

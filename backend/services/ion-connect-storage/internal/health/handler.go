@@ -1,7 +1,9 @@
 package health
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/gin-gonic/gin"
@@ -46,7 +48,7 @@ func makeHealthHandler(deps Deps) gin.HandlerFunc {
 			isHealthy = false
 		}
 
-		if err := probePebbleDB(deps.DB); err != nil {
+		if err := probePebbleDBWithTimeout(deps.DB, 2*time.Second); err != nil {
 			status.Components["pebbledb"] = "unhealthy"
 			isHealthy = false
 		} else {
@@ -74,6 +76,21 @@ func makeHealthHandler(deps Deps) gin.HandlerFunc {
 			status.Status = "degraded"
 			c.JSON(http.StatusServiceUnavailable, status)
 		}
+	}
+}
+
+// probePebbleDBWithTimeout runs the PebbleDB probe with a timeout to prevent
+// a hung disk I/O from blocking the health endpoint indefinitely.
+func probePebbleDBWithTimeout(db *pebble.DB, timeout time.Duration) error {
+	done := make(chan error, 1)
+	go func() {
+		done <- probePebbleDB(db)
+	}()
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(timeout):
+		return fmt.Errorf("pebbledb probe timed out after %v", timeout)
 	}
 }
 

@@ -119,18 +119,26 @@ func (d *PebbleDatastore) makeIteratorNext(prefix string, keysOnly bool, iterPtr
 				UpperBound: prefixUpperBound([]byte(prefix)),
 			})
 			if err != nil {
-				return dsq.Result{Error: err}, false
+				return dsq.Result{Error: err}, true
 			}
 			if !(*iterPtr).First() {
+				iterErr := (*iterPtr).Error()
 				(*iterPtr).Close()
 				*iterPtr = nil
+				if iterErr != nil {
+					return dsq.Result{Error: iterErr}, true
+				}
 				return dsq.Result{}, false
 			}
 		} else {
 			if *iterPtr == nil || !(*iterPtr).Next() {
 				if *iterPtr != nil {
+					iterErr := (*iterPtr).Error()
 					(*iterPtr).Close()
 					*iterPtr = nil
+					if iterErr != nil {
+						return dsq.Result{Error: iterErr}, true
+					}
 				}
 				return dsq.Result{}, false
 			}

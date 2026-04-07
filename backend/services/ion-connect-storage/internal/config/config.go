@@ -69,6 +69,9 @@ func Load() (Config, error) {
 	if greenfieldPrivKey == "" {
 		return Config{}, fmt.Errorf("GREENFIELD_PRIVATE_KEY is required (set env var or GREENFIELD_PRIVATE_KEY_FILE)")
 	}
+	if err := validateHexKey(greenfieldPrivKey, "GREENFIELD_PRIVATE_KEY"); err != nil {
+		return Config{}, err
+	}
 
 	adnlPort, err := parseRequiredPort("PORT")
 	if err != nil {
@@ -128,11 +131,15 @@ func validateAdnlKey(key string) error {
 	if key == "" {
 		return fmt.Errorf("ADNL_PRIVATE_KEY is required")
 	}
+	return validateHexKey(key, "ADNL_PRIVATE_KEY")
+}
+
+func validateHexKey(key, name string) error {
 	if len(key) != 64 {
-		return fmt.Errorf("ADNL_PRIVATE_KEY must be 64 hex characters (32 bytes), got %d", len(key))
+		return fmt.Errorf("%s must be 64 hex characters (32 bytes), got %d", name, len(key))
 	}
 	if _, err := hex.DecodeString(key); err != nil {
-		return fmt.Errorf("ADNL_PRIVATE_KEY is not valid hex: %w", err)
+		return fmt.Errorf("%s is not valid hex: %w", name, err)
 	}
 	return nil
 }
@@ -242,8 +249,13 @@ func parseDuration(key string, fallback time.Duration) time.Duration {
 // secretFromEnvOrFile reads a secret from environment variable KEY, or from
 // the file path in KEY_FILE. File takes precedence when both are set.
 // This supports Docker secrets (mounted as files) without breaking env-var usage.
+// Warns if the file has group/other permission bits set.
 func secretFromEnvOrFile(key string) string {
 	if filePath := os.Getenv(key + "_FILE"); filePath != "" {
+		info, statErr := os.Stat(filePath)
+		if statErr == nil && info.Mode().Perm()&0o077 != 0 {
+			fmt.Fprintf(os.Stderr, "WARNING: secret file %s has unsafe permissions %04o (group/other bits set)\n", filePath, info.Mode().Perm())
+		}
 		data, err := os.ReadFile(filePath)
 		if err == nil {
 			return strings.TrimSpace(string(data))

@@ -12,7 +12,7 @@ import (
 
 // maxClockSkew is the maximum allowed difference between a timestamp and
 // the current time. Prevents future-dated heartbeats and ownership claims.
-const maxClockSkew = 60 // seconds
+const maxClockSkew = 10 // seconds
 
 // NodeInfo holds a cluster node's network address for direct ADNL dialing.
 // Stored in CRDT under key `nodeinfo/<nodeID>`.

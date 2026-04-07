@@ -30,7 +30,7 @@
       "Bash(ls*)"
     ]
   },
-  "skipDangerousModePermissionPrompt": true,
+  "skipDangerousModePermissionPrompt": false,
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true
   }

@@ -199,7 +199,7 @@ func TestPayloadCountAtomicUnderConcurrency(t *testing.T) {
 
 	// All should succeed since goroutines < maxPendingPayloads
 	require.Equal(t, int64(goroutines), reserved.Load())
-	require.Equal(t, int64(goroutines), bridge.payloadCount.Load())
+	require.Equal(t, int64(goroutines), bridge.payloadCount)
 }
 
 func TestPayloadCountNeverExceedsLimit(t *testing.T) {
@@ -210,7 +210,9 @@ func TestPayloadCountNeverExceedsLimit(t *testing.T) {
 	defer bridge.Stop()
 
 	// Fill to the limit
-	bridge.payloadCount.Store(maxPendingPayloads - 1)
+	bridge.payloadMu.Lock()
+	bridge.payloadCount = maxPendingPayloads - 1
+	bridge.payloadMu.Unlock()
 
 	const goroutines = 100
 	var reserved atomic.Int64
@@ -229,7 +231,9 @@ func TestPayloadCountNeverExceedsLimit(t *testing.T) {
 
 	// Exactly 1 slot was available
 	require.Equal(t, int64(1), reserved.Load())
-	require.Equal(t, int64(maxPendingPayloads), bridge.payloadCount.Load())
+	bridge.payloadMu.Lock()
+	require.Equal(t, int64(maxPendingPayloads), bridge.payloadCount)
+	bridge.payloadMu.Unlock()
 }
 
 func TestPayloadIsolationBetweenPeers(t *testing.T) {
@@ -254,7 +258,9 @@ func TestPayloadIsolationBetweenPeers(t *testing.T) {
 
 	// Peer A stores a payload
 	bridge.payloads.Store(keyA, &pendingPayload{data: []byte("secret-A"), size: 8, createdAt: time.Now()})
-	bridge.payloadCount.Store(1)
+	bridge.payloadMu.Lock()
+	bridge.payloadCount = 1
+	bridge.payloadMu.Unlock()
 
 	// Peer B cannot load peer A's payload using the same reqID
 	_, ok := bridge.payloads.Load(keyB)
@@ -274,17 +280,23 @@ func TestDeletePayloadDecrementsSafely(t *testing.T) {
 	defer bridge.Stop()
 
 	bridge.payloads.Store("key1", &pendingPayload{data: []byte("x"), size: 1, createdAt: time.Now()})
-	bridge.payloadCount.Store(1)
-	bridge.totalPayloadBytes.Store(1)
+	bridge.payloadMu.Lock()
+	bridge.payloadCount = 1
+	bridge.totalPayloadBytes = 1
+	bridge.payloadMu.Unlock()
 
 	// First delete decrements
 	bridge.deletePayload("key1")
-	require.Equal(t, int64(0), bridge.payloadCount.Load())
-	require.Equal(t, int64(0), bridge.totalPayloadBytes.Load())
+	bridge.payloadMu.Lock()
+	require.Equal(t, int64(0), bridge.payloadCount)
+	require.Equal(t, int64(0), bridge.totalPayloadBytes)
+	bridge.payloadMu.Unlock()
 
 	// Second delete on same key is a no-op (no double decrement)
 	bridge.deletePayload("key1")
-	require.Equal(t, int64(0), bridge.payloadCount.Load())
+	bridge.payloadMu.Lock()
+	require.Equal(t, int64(0), bridge.payloadCount)
+	bridge.payloadMu.Unlock()
 }
 
 func TestPayloadByteLimitEnforced(t *testing.T) {
@@ -295,11 +307,15 @@ func TestPayloadByteLimitEnforced(t *testing.T) {
 	defer bridge.Stop()
 
 	// Set totalPayloadBytes just below the limit.
-	bridge.totalPayloadBytes.Store(maxTotalPayloadBytes - 100)
+	bridge.payloadMu.Lock()
+	bridge.totalPayloadBytes = maxTotalPayloadBytes - 100
+	bridge.payloadMu.Unlock()
 
 	// A small payload should succeed.
 	require.True(t, bridge.tryReservePayloadSlot(50))
-	require.Equal(t, int64(maxTotalPayloadBytes-50), bridge.totalPayloadBytes.Load())
+	bridge.payloadMu.Lock()
+	require.Equal(t, int64(maxTotalPayloadBytes-50), bridge.totalPayloadBytes)
+	bridge.payloadMu.Unlock()
 
 	// A payload that would exceed the limit should be rejected.
 	require.False(t, bridge.tryReservePayloadSlot(100))

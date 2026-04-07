@@ -36,6 +36,9 @@ func slicePieceData(headerBytes, segmentData []byte, pieceIndex int, pieceSize u
 
 // sliceFromPayload extracts data from a segment buffer for a payload-only piece.
 func sliceFromPayload(segmentData []byte, pieceStart, pieceEnd, headerSize uint64) ([]byte, error) {
+	if pieceStart < headerSize {
+		return nil, fmt.Errorf("pieceStart %d < headerSize %d", pieceStart, headerSize)
+	}
 	payloadStart := pieceStart - headerSize
 	segOffset := payloadStart % boc.SegmentSize
 	length := pieceEnd - pieceStart
