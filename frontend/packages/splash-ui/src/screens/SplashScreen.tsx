@@ -29,7 +29,7 @@ export function SplashScreen({ videoSource, onComplete }: SplashScreenProps) {
     if (hasAdvanced.current) return;
     hasAdvanced.current = true;
     if (timerRef.current) clearTimeout(timerRef.current);
-    onComplete();
+    if (onComplete) onComplete();
   }, [onComplete]);
 
   useEffect(() => {
