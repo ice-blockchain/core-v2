@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { View } from "react-native";
 import { Button, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
@@ -18,6 +18,14 @@ export function ProfilePlaceholder() {
   const navigation = useAppNavigation();
   const username = useCurrentUser();
 
+  const containerStyle = useMemo(() => ({
+    flex: 1 as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: theme.colors.primaryBackground,
+    gap: theme.scale.scaleSize(24),
+  }), [theme]);
+
   const handleLogout = useCallback(async () => {
     if (!username) return;
     await identityClient.logout(username);
@@ -25,7 +33,7 @@ export function ProfilePlaceholder() {
   }, [username, navigation]);
 
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.primaryBackground, gap: 24 }}>
+    <View style={containerStyle}>
       <Text variant="headline2">{translate("mainShell:profileTab")}</Text>
       {username && (
         <Button label={translate("mainShell:logOutButton")} color="primary" height={44} onPress={handleLogout} />

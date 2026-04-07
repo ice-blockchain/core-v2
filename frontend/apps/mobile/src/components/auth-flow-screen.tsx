@@ -94,10 +94,17 @@ function VerifyPasswordPhase({ screenProps }: { screenProps: ReturnType<typeof u
 }
 
 function AuthFlowError({ error }: { error?: string }) {
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
+  const bannerStyle = useMemo(() => ({
+    ...styles.errorBanner,
+    bottom: scale.scaleSize(80),
+    paddingHorizontal: scale.scaleSize(16),
+    paddingVertical: scale.scaleSize(8),
+  }), [scale]);
+
   if (!error) return null;
   return (
-    <View style={styles.errorBanner}>
+    <View style={bannerStyle}>
       <Text variant="caption" color={colors.attentionRed}>{error}</Text>
     </View>
   );
@@ -105,5 +112,5 @@ function AuthFlowError({ error }: { error?: string }) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  errorBanner: { position: "absolute", bottom: 80, alignSelf: "center", paddingHorizontal: 16, paddingVertical: 8 },
+  errorBanner: { position: "absolute", alignSelf: "center" },
 });
