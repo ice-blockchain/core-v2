@@ -7,10 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AppError is the standard error response body.
+// @Description Structured error response with a machine-readable code and a human-readable message.
 type AppError struct {
 	StatusCode int    `json:"-"`
-	Code       string `json:"code"`
-	Message    string `json:"error"`
+	Code       string `json:"code" example:"INVALID_TARGET_SP"`
+	Message    string `json:"error" example:"invalid URL in target SP"`
 }
 
 func (e *AppError) Error() string {

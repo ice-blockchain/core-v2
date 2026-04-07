@@ -1,7 +1,7 @@
 MODULE   := ion-greenfield-proxy
 BINARY   := ion-greenfield-proxy
 
-.PHONY: build test clean fmt vet up
+.PHONY: build test clean fmt vet up swagger
 
 build:
 	CGO_ENABLED=1 go build -ldflags="-linkmode external -extldflags '-static'" -v -o $(BINARY) ./cmd/server
@@ -17,6 +17,9 @@ fmt:
 
 clean:
 	rm -f $(BINARY)
+
+swagger:
+	go tool swag init -g ./cmd/server/main.go -o ./internal/router/docs --outputTypes go,json --parseDependency --parseInternal
 
 up:
 	go get -v -u ./...

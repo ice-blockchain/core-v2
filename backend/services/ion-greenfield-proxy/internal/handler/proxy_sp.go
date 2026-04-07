@@ -18,6 +18,19 @@ import (
 // ProxySP handles requests at /sp/{base64Target}[/subpath...].
 // It decodes the base64-encoded original SP URL and forwards the request.
 // Only HTTPS SP origins that belong to known storage providers are accepted.
+//
+//	@Summary		Proxy to Storage Provider
+//	@Description	Decodes the base64url-encoded SP origin from the path, validates it against the known SP allowlist, and reverse-proxies the request. The Host header may carry a bucket subdomain for virtual-hosted style access.
+//	@Tags			Storage Provider Proxy
+//	@Param			path	path	string	true	"Base64url-encoded SP origin optionally followed by /subpath"
+//	@Success		200		"Proxied response from the storage provider"
+//	@Failure		400		{object}	apperror.AppError	"MISSING_TARGET_SP / INVALID_TARGET_SP"
+//	@Failure		403		{object}	apperror.AppError	"INVALID_SP_SCHEME / SP_VALIDATION_UNAVAILABLE / UNKNOWN_SP / INVALID_SP_HOST"
+//	@Failure		503		{object}	apperror.AppError	"SP_LIST_UNAVAILABLE"
+//	@Router			/sp/{path} [get]
+//	@Router			/sp/{path} [put]
+//	@Router			/sp/{path} [post]
+//	@Router			/sp/{path} [delete]
 func ProxySP(
 	logger *slog.Logger,
 	adnlAddress string,

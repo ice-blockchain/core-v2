@@ -11,14 +11,16 @@ import (
 	"time"
 
 	"ion-greenfield-proxy/internal/adnl"
-	"ion-greenfield-proxy/internal/apperror"
 	"ion-greenfield-proxy/internal/config"
 	gf "ion-greenfield-proxy/internal/greenfield"
 	"ion-greenfield-proxy/internal/handler"
 	"ion-greenfield-proxy/internal/middleware"
+	_ "ion-greenfield-proxy/internal/router/docs"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/fx"
 )
 
@@ -100,20 +102,13 @@ func New(p Params) (*gin.Engine, error) {
 		middleware.Logger(logger),
 	)
 
+	r.GET("/doc/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/docs", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, "/doc/index.html") })
 	r.GET("/health-check", handler.Health)
 	if p.Config.MetricsPort == 0 && p.Registry != nil {
 		r.GET("/metrics", handler.MetricsHandler(p.Registry))
 	}
-	r.GET("/guarantor", func(ctx *gin.Context) {
-		if p.Provisioner == nil {
-			apperror.WriteError(ctx, apperror.New(http.StatusForbidden, "PROVISIONER_UNAVAILABLE", "bucket provisioning not configured"))
-			return
-		}
-		ctx.JSON(http.StatusOK, gin.H{
-			"address": proxyAddr,
-			"amount":  p.Config.GreenfieldFeeGrantAmount,
-		})
-	})
+	r.GET("/guarantor", handler.Guarantor(proxyAddr, p.Config.GreenfieldFeeGrantAmount))
 
 	logger.Info("Starting proxy",
 		"upstream_rpc", rpcURL.String(),
