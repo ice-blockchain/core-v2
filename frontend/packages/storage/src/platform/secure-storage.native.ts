@@ -36,12 +36,15 @@ async function getKeyRegistry(keychain: KeychainBackend): Promise<string[]> {
   }
 }
 
-async function setWithAccessibilityFallback(
-  keychain: KeychainBackend,
-  username: string,
-  password: string,
-  service: string,
-): Promise<void> {
+interface FallbackWriteOptions {
+  keychain: KeychainBackend;
+  username: string;
+  password: string;
+  service: string;
+}
+
+async function setWithAccessibilityFallback(options: FallbackWriteOptions): Promise<void> {
+  const { keychain, username, password, service } = options;
   try {
     await keychain.setGenericPassword(username, password, {
       service,
@@ -62,9 +65,9 @@ async function setWithAccessibilityFallback(
 }
 
 async function saveKeyRegistry(keychain: KeychainBackend, keys: string[]): Promise<void> {
-  await setWithAccessibilityFallback(
-    keychain, "registry", JSON.stringify(keys), KEY_REGISTRY_SERVICE,
-  );
+  await setWithAccessibilityFallback({
+    keychain, username: "registry", password: JSON.stringify(keys), service: KEY_REGISTRY_SERVICE,
+  });
 }
 
 function serviceFor(key: string): string {
@@ -72,7 +75,7 @@ function serviceFor(key: string): string {
 }
 
 async function setSecureItem(keychain: KeychainBackend, key: string, value: string): Promise<void> {
-  await setWithAccessibilityFallback(keychain, key, value, serviceFor(key));
+  await setWithAccessibilityFallback({ keychain, username: key, password: value, service: serviceFor(key) });
   const keys = await getKeyRegistry(keychain);
   if (!keys.includes(key)) {
     keys.push(key);
