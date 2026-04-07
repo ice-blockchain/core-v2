@@ -43,7 +43,7 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
-function AppScreens({ screens, AuthScreen }: { screens: AppNavigatorProps['screens']; AuthScreen: ComponentType }) {
+function renderAppScreens(screens: AppNavigatorProps['screens'], AuthScreen: ComponentType) {
   return (
     <>
       <Stack.Screen name={Routes.Splash} component={screens.Splash} />
@@ -69,7 +69,7 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-      <AppScreens screens={screens} AuthScreen={AuthScreen} />
+      {renderAppScreens(screens, AuthScreen)}
     </Stack.Navigator>
   );
 }
