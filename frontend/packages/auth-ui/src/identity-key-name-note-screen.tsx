@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
-import { Icon, Text, useTheme } from "@ion/ui";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { DynamicSheet, InformationSheetContent } from "@ion/navigation";
+import { InfoSheetScreen } from "@ion/navigation";
 import { IdentityBrand } from "./identity-brand";
 
 function IdentityKeyNameNoteDescription() {
@@ -23,17 +23,13 @@ function IdentityKeyNameNoteDescription() {
 }
 
 export function IdentityKeyNameNoteScreen() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-
   return (
-    <DynamicSheet title={translate("auth:identityKeyNameNoteModalTitle")}>
-      <InformationSheetContent
-        icon={<Icon name="identity-key-note" size={scale(80)} />}
-        title={translate("auth:identityKeyNameNoteTitle")}
-        description={<IdentityKeyNameNoteDescription />}
-      />
-    </DynamicSheet>
+    <InfoSheetScreen
+      headerTitle={translate("auth:identityKeyNameNoteModalTitle")}
+      iconName="identity-key-note"
+      title={translate("auth:identityKeyNameNoteTitle")}
+      description={<IdentityKeyNameNoteDescription />}
+    />
   );
 }
 

@@ -11,7 +11,7 @@ export async function registerAccount(
   data: { identityKeyName: string; password?: string },
 ): Promise<RegisterResult> {
   if (!isValidIdentityKeyName(data.identityKeyName)) {
-    return { outcome: 'error', error: { code: 'UNKNOWN', userMessage: translate('auth:errorInvalidIdentityKeyName') } };
+    return { outcome: 'error', error: { code: 'UNKNOWN', numericCode: '600', userMessage: translate('auth:errorInvalidIdentityKeyName') } };
   }
   try {
     return await executeRegistration(identityClient, data);

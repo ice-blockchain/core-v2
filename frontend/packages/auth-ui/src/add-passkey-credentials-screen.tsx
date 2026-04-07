@@ -1,9 +1,8 @@
-import { useCallback, useMemo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import type { ViewStyle } from "react-native";
-import { Icon, Text, useTheme } from "@ion/ui";
+import { useCallback } from "react";
+import { StyleSheet } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { DynamicSheet, InformationSheetContent, Routes, useAppNavigation } from "@ion/navigation";
+import { DoubleActionSheetScreen, Routes, useAppNavigation } from "@ion/navigation";
 
 function AddPasskeyCredentialsDescription() {
   const { colors } = useTheme();
@@ -13,39 +12,6 @@ function AddPasskeyCredentialsDescription() {
       {translate("auth:addPasskeyCredentialsDescription")}
     </Text>
   );
-}
-
-function buildButtonRowStyle(scale: (n: number) => number): ViewStyle {
-  return {
-    flexDirection: "row",
-    gap: scale(15),
-    paddingHorizontal: scale(16),
-    paddingBottom: scale(20),
-    paddingTop: scale(28),
-  };
-}
-
-function buildSkipButtonStyle(scale: (n: number) => number, borderColor: string): ViewStyle {
-  return {
-    flex: 1,
-    height: scale(56),
-    borderRadius: scale(16),
-    borderWidth: 1,
-    borderColor,
-    alignItems: "center",
-    justifyContent: "center",
-  };
-}
-
-function buildContinueButtonStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
-  return {
-    flex: 1,
-    height: scale(56),
-    borderRadius: scale(16),
-    backgroundColor,
-    alignItems: "center",
-    justifyContent: "center",
-  };
 }
 
 function useNavigateToVerify() {
@@ -61,47 +27,25 @@ function useNavigateToVerify() {
   }, [appNavigation]);
 }
 
-function ActionButtons() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-  const { colors } = theme;
-  const navigateToVerifyPasskey = useNavigateToVerify();
-
-  const rowStyle = useMemo(() => buildButtonRowStyle(scale), [scale]);
-  const skipStyle = useMemo(() => buildSkipButtonStyle(scale, colors.strokeElements), [scale, colors.strokeElements]);
-  const continueStyle = useMemo(() => buildContinueButtonStyle(scale, colors.primaryAccent), [scale, colors.primaryAccent]);
-
-  return (
-    <View style={rowStyle}>
-      <Pressable style={skipStyle} onPress={navigateToVerifyPasskey}>
-        <Text variant="body" color={colors.secondaryText}>{translate("auth:skipButton")}</Text>
-      </Pressable>
-      <Pressable style={continueStyle} onPress={navigateToVerifyPasskey}>
-        <Text variant="body" color={colors.onPrimaryAccent}>{translate("auth:continueButton")}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 export function AddPasskeyCredentialsScreen() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
   const navigation = useAppNavigation();
+  const navigateToVerifyPasskey = useNavigateToVerify();
 
   const handleDismiss = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
   }, [navigation]);
 
   return (
-    <DynamicSheet showClose={false} onDismiss={handleDismiss}>
-      <InformationSheetContent
-        icon={<Icon name="action-wallet-addpasskey" size={scale(80)} />}
-        title={translate("auth:addPasskeyCredentialsTitle")}
-        description={<AddPasskeyCredentialsDescription />}
-        topPadding={30}
-      />
-      <ActionButtons />
-    </DynamicSheet>
+    <DoubleActionSheetScreen
+      iconName="action-wallet-addpasskey"
+      title={translate("auth:addPasskeyCredentialsTitle")}
+      description={<AddPasskeyCredentialsDescription />}
+      secondaryLabel={translate("auth:skipButton")}
+      primaryLabel={translate("auth:continueButton")}
+      onSecondaryPress={navigateToVerifyPasskey}
+      onPrimaryPress={navigateToVerifyPasskey}
+      onDismiss={handleDismiss}
+    />
   );
 }
 

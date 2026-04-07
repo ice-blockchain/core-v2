@@ -19,12 +19,17 @@ export const Routes = {
     CreatePost: 'Sheet/CreatePost',
     InvalidCredentials: 'Sheet/InvalidCredentials',
     ConfirmPassword: 'Sheet/ConfirmPassword',
+    RestoreSuccess: 'Sheet/RestoreSuccess',
+    GeneralError: 'Sheet/GeneralError',
   },
 
   Auth: {
     GetStarted: 'GetStarted',
     PasswordRegister: 'PasswordRegister',
     PasskeyRegister: 'PasskeyRegister',
+    RestoreIdentity: 'RestoreIdentity',
+    RestoreWithRecoveryCreds: 'RestoreWithRecoveryCreds',
+    RestoreSetNewPassword: 'RestoreSetNewPassword',
     ProfileSetup: 'ProfileSetup',
     SelectLanguages: 'SelectLanguages',
     DiscoverCreators: 'DiscoverCreators',

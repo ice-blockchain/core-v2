@@ -101,6 +101,7 @@ export const authFR: Record<keyof typeof authEN, string> = {
   errorInvalidEmail: 'Adresse e-mail invalide.',
   errorPasswordFlowNotAvailable: 'La connexion par mot de passe n\'est pas disponible pour ce compte.',
   errorWalletNotFound: 'Portefeuille introuvable.',
+  errorServerError: 'Erreur du serveur. Veuillez réessayer plus tard.',
   errorUnknown: 'Une erreur est survenue. Veuillez réessayer.',
   identityKeyNameNoteModalTitle: 'Information',
   identityKeyNameNoteTitle: 'Nom de la clé d\'identité',

@@ -9,8 +9,7 @@ Authentication UI component library. Provides pre-built screens for registration
 - `PasswordRegisterScreen` -- Password-based registration with identity key name, password + confirm, strength checklist
 - `PasskeyRegisterScreen` -- Passkey-based registration
 - `IdentityKeyNameNoteScreen` -- Identity key name informational screen
-- `RestoreMenuScreen` -- Restore method selection (cloud or credential)
-- `RestoreCredentialsScreen` -- Credential-based account restore form
+- `RestoreWithRecoveryCredsScreen` -- Credential-based identity key restore (recovery key ID + recovery code)
 - `RestoreCloudScreen` -- Cloud-based account restore
 - `SetNewPasswordScreen` -- Set new password after credential recovery
 - `RestoreSuccessModal` -- Success confirmation after restore
@@ -45,8 +44,8 @@ Authentication UI component library. Provides pre-built screens for registration
 GetStarted -> Register (new user, password or passkey)
            -> VerifyPasskey (existing user)
            -> VerifyPassword (fallback)
-           -> RestoreMenu -> RestoreCredentials -> SetNewPassword
-                          -> RestoreCloud
+           -> RestoreIdentity -> RestoreWithRecoveryCreds
+                            -> RestoreCloud
 ```
 
 ## Validation Rules
@@ -63,7 +62,7 @@ GetStarted -> Register (new user, password or passkey)
 
 ## Design Decisions
 
-- **Callback-driven navigation**: Screens receive `onNavigateToX`, `onContinue`, `onBack` callbacks. No router dependency.
+- **Navigator-driven navigation**: Screens use `useAuthNavigation()` from `@ion/navigation` for routing within the auth flow.
 - **Self-contained icons**: 21 custom SVG components rather than using `@ion/ui` icon registry (auth-specific visuals).
 - **Hook-based forms**: `useRegisterPasswordForm()` and `useIdentityKeyValidation()` encapsulate form state.
 - **Hardcoded styling**: Uses direct hex colors rather than `@ion/ui` tokens (predates token system).
@@ -84,8 +83,9 @@ src/
   password-register-screen.tsx
   passkey-register-screen.tsx
   identity-key-name-note-screen.tsx
-  restore-menu-screen.tsx
-  restore-credentials-screen.tsx
+  restore-with-recovery-creds-screen.tsx
+  recovery-key-id-input.tsx
+  recovery-code-input.tsx
   restore-cloud-screen.tsx
   set-new-password-screen.tsx
   restore-success-modal.tsx

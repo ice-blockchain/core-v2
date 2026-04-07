@@ -29,6 +29,8 @@ interface AppNavigatorScreens {
   AddPasskeyCredentials: ComponentType;
   InvalidCredentials: ComponentType;
   ConfirmPassword: ComponentType;
+  RestoreSuccess: ComponentType;
+  GeneralError: ComponentType;
   CreatePost?: ComponentType;
 }
 
@@ -70,6 +72,8 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={s.AddPasskeyCredentials} options={MODAL} />
       <Stack.Screen name={Routes.Sheet.InvalidCredentials} component={s.InvalidCredentials} options={MODAL} />
       <Stack.Screen name={Routes.Sheet.ConfirmPassword} component={s.ConfirmPassword} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.RestoreSuccess} component={s.RestoreSuccess} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.GeneralError} component={s.GeneralError} options={MODAL} />
       {s.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={s.CreatePost} options={MODAL} />}
     </Stack.Navigator>
   );

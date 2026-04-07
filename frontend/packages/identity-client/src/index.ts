@@ -58,6 +58,8 @@ export type { KeyResponse, ListKeysResponse, CreateKeyInput, DeriveKeyInput } fr
 
 export { IdentityError, IdentityErrorCode } from './errors';
 
+export { mapNetworkError } from './map-network-error';
+
 export { createIdentityClient } from './create-identity-client';
 
 export { createDefaultIdentityClient } from './create-default-identity-client';

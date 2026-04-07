@@ -6,9 +6,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProvider } from '@ion/ui';
 import type { ColorMode } from '@ion/ui';
 import { getFeatureFlag } from '@ion/config';
-import { AppNavigator, useNavigationTheme, BottomSheetModalProvider } from '@ion/navigation';
+import { AppNavigator, useNavigationTheme, BottomSheetModalProvider, GeneralErrorScreen, navigationTranslations } from '@ion/navigation';
 import { createLocalization, registerTranslations } from '@ion/localization';
-import { AuthActionsProvider } from '@ion/auth';
+import { AuthActionsProvider, createAuthFlowStore, setAuthFlowStore } from '@ion/auth';
 import {
   ProfileSetupScreen,
   SelectLanguagesScreen,
@@ -17,7 +17,7 @@ import {
   NicknameReservedScreen,
   onboardingTranslations,
 } from '@ion/onboarding-ui';
-import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
+import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
 import { splashTranslations } from '@ion/splash-ui';
 import { chatTranslations } from '@ion/chat';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
@@ -40,6 +40,7 @@ registerTranslations(i18n, feedTranslations);
 registerTranslations(i18n, walletUiTranslations);
 registerTranslations(i18n, profileTranslations);
 registerTranslations(i18n, homeTranslations);
+registerTranslations(i18n, navigationTranslations);
 
 const screens = {
   Splash: SplashScreen,
@@ -55,28 +56,33 @@ const screens = {
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
   InvalidCredentials: InvalidCredentialsModal,
   ConfirmPassword: ConfirmPasswordScreen,
+  RestoreSuccess: RestoreSuccessScreen,
+  GeneralError: GeneralErrorScreen,
 };
 
 const authScreens = {
   GetStarted: GetStartedScreen,
   PasswordRegister: PasswordRegisterScreen,
   PasskeyRegister: PasskeyRegisterScreen,
+  RestoreIdentity: RestoreIdentityScreen,
+  RestoreWithRecoveryCreds: RestoreWithRecoveryCredsScreen,
+  RestoreSetNewPassword: RestoreSetNewPasswordScreen,
   ProfileSetup: ProfileSetupScreen,
   SelectLanguages: SelectLanguagesScreen,
   DiscoverCreators: DiscoverCreatorsScreen,
   Notifications: NotificationsScreen,
 };
 
-function handleAuthSuccess(_username: string) {
-  // Navigation to Main is handled by screens via onAuthSuccess + navigation hooks
-}
+const authFlowStore = createAuthFlowStore({ identityClient, onAuthSuccess: () => {} });
+setAuthFlowStore(authFlowStore);
 
 function AppContent() {
   const navigationTheme = useNavigationTheme();
+
   return (
     <NavigationContainer theme={navigationTheme}>
       <BottomSheetModalProvider>
-        <AuthActionsProvider identityClient={identityClient} onAuthSuccess={handleAuthSuccess}>
+        <AuthActionsProvider store={authFlowStore} onAuthSuccess={() => {}}>
           <AppNavigator screens={screens} authScreens={authScreens} />
         </AuthActionsProvider>
       </BottomSheetModalProvider>

@@ -1,73 +1,88 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
-import type { IdentityClient } from '@ion/identity-client';
 import { AuthActionsContext } from '@ion/auth-ui';
 import type { AuthActions, LoginAttemptResult, RegisterResult, PasswordLoginResult } from '@ion/auth-ui';
-import { attemptLogin } from './attempt-login';
-import { registerAccount } from './register-account';
-import { loginWithPassword } from './login-with-password';
+import type { AuthFlowStore } from './auth-flow-store-types';
 
 interface AuthActionsProviderProps {
-  identityClient: IdentityClient;
+  store: AuthFlowStore;
   onAuthSuccess: (username: string) => void;
   children: ReactNode;
 }
 
-function useInFlightGuard() {
-  const ref = useRef(false);
-  return { ref };
+function useStoreOperations(store: AuthFlowStore) {
+  const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
+  return state.operations;
 }
 
-async function guardedCall<TResult>(
-  ref: React.RefObject<boolean>,
-  action: () => Promise<TResult>,
-): Promise<TResult | null> {
-  if (ref.current) return null;
-  ref.current = true;
-  try {
-    return await action();
-  } finally {
-    ref.current = false;
-  }
-}
-
-function useAuthActionsValue(
-  identityClient: IdentityClient,
-  onAuthSuccess: (username: string) => void,
-): AuthActions {
-  const { ref } = useInFlightGuard();
-
+function useWrappedOperations(store: AuthFlowStore) {
   const wrappedAttemptLogin = useCallback(
-    (name: string) => guardedCall(ref, () => attemptLogin(identityClient, name)) as Promise<LoginAttemptResult>,
-    [identityClient, ref],
+    async (identityKeyName: string): Promise<LoginAttemptResult> => {
+      await store.attemptLogin(identityKeyName);
+      return readLoginResult(store, identityKeyName);
+    },
+    [store],
   );
 
   const wrappedRegister = useCallback(
-    (data: { identityKeyName: string; password?: string }) =>
-      guardedCall(ref, () => registerAccount(identityClient, data)) as Promise<RegisterResult>,
-    [identityClient, ref],
+    async (data: { identityKeyName: string; password?: string }): Promise<RegisterResult> => {
+      await store.register(data);
+      return readRegisterResult(store);
+    },
+    [store],
   );
 
   const wrappedPasswordLogin = useCallback(
-    (name: string, password: string) =>
-      guardedCall(ref, () => loginWithPassword(identityClient, name, password)) as Promise<PasswordLoginResult>,
-    [identityClient, ref],
+    async (identityKeyName: string, password: string): Promise<PasswordLoginResult> => {
+      await store.loginWithPassword(identityKeyName, password);
+      return readPasswordLoginResult(store);
+    },
+    [store],
   );
+
+  return { wrappedAttemptLogin, wrappedRegister, wrappedPasswordLogin };
+}
+
+function useAuthActionsValue(store: AuthFlowStore, onAuthSuccess: (username: string) => void): AuthActions {
+  const operations = useStoreOperations(store);
+  const { wrappedAttemptLogin, wrappedRegister, wrappedPasswordLogin } = useWrappedOperations(store);
 
   return useMemo(() => ({
     attemptLogin: wrappedAttemptLogin,
     registerAccount: wrappedRegister,
     loginWithPassword: wrappedPasswordLogin,
+    isPasskeyAvailable: () => store.isPasskeyAvailable,
     onAuthSuccess,
-  }), [wrappedAttemptLogin, wrappedRegister, wrappedPasswordLogin, onAuthSuccess]);
+    isLoginAttemptLoading: operations.loginAttempt.status === 'loading',
+    isRegisterLoading: operations.register.status === 'loading',
+    isPasswordLoginLoading: operations.passwordLogin.status === 'loading',
+  }), [wrappedAttemptLogin, wrappedRegister, wrappedPasswordLogin, onAuthSuccess, store, operations]);
 }
 
-export function AuthActionsProvider({ identityClient, onAuthSuccess, children }: AuthActionsProviderProps) {
-  const actions = useAuthActionsValue(identityClient, onAuthSuccess);
+export function AuthActionsProvider({ store, onAuthSuccess, children }: AuthActionsProviderProps) {
+  const actions = useAuthActionsValue(store, onAuthSuccess);
+  return <AuthActionsContext.Provider value={actions}>{children}</AuthActionsContext.Provider>;
+}
 
-  return (
-    <AuthActionsContext.Provider value={actions}>
-      {children}
-    </AuthActionsContext.Provider>
-  );
+function readLoginResult(store: AuthFlowStore, identityKeyName: string): LoginAttemptResult {
+  const { operations, phase } = store.getSnapshot();
+  const op = operations.loginAttempt;
+  if (op.status === 'success') return { outcome: 'authenticated' };
+  if (op.status === 'error' && op.error) return { outcome: 'error', error: op.error };
+  if (phase === 'verify-password') return { outcome: 'needs-password', identityKeyName };
+  return { outcome: 'authenticated' };
+}
+
+function readRegisterResult(store: AuthFlowStore): RegisterResult {
+  const op = store.getSnapshot().operations.register;
+  if (op.status === 'success') return { outcome: 'authenticated' };
+  if (op.status === 'error' && op.error) return { outcome: 'error', error: op.error };
+  return { outcome: 'cancelled' };
+}
+
+function readPasswordLoginResult(store: AuthFlowStore): PasswordLoginResult {
+  const op = store.getSnapshot().operations.passwordLogin;
+  if (op.status === 'success') return { outcome: 'authenticated' };
+  if (op.status === 'error' && op.error) return { outcome: 'error', error: op.error };
+  return { outcome: 'authenticated' };
 }

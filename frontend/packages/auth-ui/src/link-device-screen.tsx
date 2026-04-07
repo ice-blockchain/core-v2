@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import type { ViewStyle } from "react-native";
-import { Button, Icon, Text, useTheme } from "@ion/ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { StyleSheet } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { DynamicSheet, InformationSheetContent, useAppNavigation } from "@ion/navigation";
+import { SingleActionSheetScreen, useAppNavigation } from "@ion/navigation";
 
 let linkDeviceShown = false;
 
@@ -25,17 +24,7 @@ function LinkDeviceDescription() {
   );
 }
 
-function buildButtonContainerStyle(scale: (n: number) => number): ViewStyle {
-  return {
-    paddingHorizontal: scale(16),
-    paddingBottom: scale(16),
-    paddingTop: scale(28),
-  };
-}
-
-function ContinueButton() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
+export function LinkDeviceScreen() {
   const navigation = useAppNavigation();
   const [isLoading, setIsLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,8 +32,6 @@ function ContinueButton() {
   useEffect(() => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, []);
-
-  const containerStyle = useMemo(() => buildButtonContainerStyle(scale), [scale]);
 
   const handleContinue = useCallback(() => {
     if (timerRef.current) return;
@@ -57,30 +44,16 @@ function ContinueButton() {
   }, [navigation]);
 
   return (
-    <View style={containerStyle}>
-      <Button
-        label={translate("auth:continueButton")}
-        isLoading={isLoading}
-        onPress={handleContinue}
-      />
-    </View>
-  );
-}
-
-export function LinkDeviceScreen() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-
-  return (
-    <DynamicSheet showClose={false} isDismissable={false}>
-      <InformationSheetContent
-        icon={<Icon name="action-login-linkaccount" size={scale(80)} color="white" />}
-        title={translate("auth:linkDeviceTitle")}
-        description={<LinkDeviceDescription />}
-        topPadding={30}
-      />
-      <ContinueButton />
-    </DynamicSheet>
+    <SingleActionSheetScreen
+      iconName="action-login-linkaccount"
+      iconColor="white"
+      title={translate("auth:linkDeviceTitle")}
+      description={<LinkDeviceDescription />}
+      buttonLabel={translate("auth:continueButton")}
+      onPress={handleContinue}
+      isLoading={isLoading}
+      isDismissable={false}
+    />
   );
 }
 

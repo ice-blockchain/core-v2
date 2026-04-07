@@ -22,6 +22,9 @@ export interface AuthScreens {
   GetStarted: ComponentType;
   PasswordRegister: ComponentType;
   PasskeyRegister: ComponentType;
+  RestoreIdentity: ComponentType;
+  RestoreWithRecoveryCreds: ComponentType;
+  RestoreSetNewPassword: ComponentType;
   ProfileSetup: ComponentType;
   SelectLanguages: ComponentType;
   DiscoverCreators: ComponentType;
@@ -32,6 +35,9 @@ const TITLE_KEYS: Record<string, string> = {
   [Routes.Auth.GetStarted]: 'auth:getStartedTitle',
   [Routes.Auth.PasswordRegister]: 'auth:registerTitle',
   [Routes.Auth.PasskeyRegister]: 'auth:passkeyRegisterTitle',
+  [Routes.Auth.RestoreIdentity]: 'auth:restoreMenuTitle',
+  [Routes.Auth.RestoreWithRecoveryCreds]: 'auth:restoreMenuTitle',
+  [Routes.Auth.RestoreSetNewPassword]: 'auth:setNewPasswordTitle',
   [Routes.Auth.ProfileSetup]: 'onboarding:yourProfileTitle',
   [Routes.Auth.SelectLanguages]: 'onboarding:selectLanguagesTitle',
   [Routes.Auth.DiscoverCreators]: 'onboarding:discoverCreatorsTitle',
@@ -70,6 +76,9 @@ function AuthStack({ screens, navRef, setTitle }: { screens: AuthScreens; navRef
       <Stack.Screen name={Routes.Auth.GetStarted} component={screens.GetStarted} />
       <Stack.Screen name={Routes.Auth.PasswordRegister} component={screens.PasswordRegister} />
       <Stack.Screen name={Routes.Auth.PasskeyRegister} component={screens.PasskeyRegister} />
+      <Stack.Screen name={Routes.Auth.RestoreIdentity} component={screens.RestoreIdentity} />
+      <Stack.Screen name={Routes.Auth.RestoreWithRecoveryCreds} component={screens.RestoreWithRecoveryCreds} />
+      <Stack.Screen name={Routes.Auth.RestoreSetNewPassword} component={screens.RestoreSetNewPassword} />
       <Stack.Screen name={Routes.Auth.ProfileSetup} component={screens.ProfileSetup} />
       <Stack.Screen name={Routes.Auth.SelectLanguages} component={screens.SelectLanguages} />
       <Stack.Screen name={Routes.Auth.DiscoverCreators} component={screens.DiscoverCreators} />

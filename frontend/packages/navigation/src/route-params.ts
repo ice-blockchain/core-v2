@@ -28,12 +28,17 @@ export type RootStackParamList = {
   'Sheet/CreatePost': undefined;
   'Sheet/InvalidCredentials': undefined;
   'Sheet/ConfirmPassword': undefined;
+  'Sheet/RestoreSuccess': undefined;
+  'Sheet/GeneralError': { errorCode: string };
 };
 
 export type AuthStackParamList = {
   GetStarted: undefined;
   PasswordRegister: undefined;
   PasskeyRegister: undefined;
+  RestoreIdentity: undefined;
+  RestoreWithRecoveryCreds: undefined;
+  RestoreSetNewPassword: undefined;
   ProfileSetup: undefined;
   SelectLanguages: undefined;
   DiscoverCreators: undefined;

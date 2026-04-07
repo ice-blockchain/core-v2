@@ -60,8 +60,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   options: {
+    width: "100%",
     marginTop: 70,
     gap: 44,
+    paddingHorizontal: 38,
   },
   footer: {
     marginTop: "auto",

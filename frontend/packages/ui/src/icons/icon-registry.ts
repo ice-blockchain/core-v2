@@ -58,6 +58,7 @@ import { KeysErrorIcon } from "./generated/KeysErrorIcon";
 import { KeysSuccessIcon } from "./generated/KeysSuccessIcon";
 import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
 import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
+import { LoginPasswordIcon } from "./generated/LoginPasswordIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { MorePopupIcon } from "./generated/MorePopupIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
@@ -163,6 +164,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "keys-success": KeysSuccessIcon,
   "login-ice-logo": LoginIceLogoIcon,
   "login-identity": LoginIdentityIcon,
+  "login-password": LoginPasswordIcon,
   "manage": ManageIcon,
   "more-popup": MorePopupIcon,
   "name-reserved": NameReservedIcon,

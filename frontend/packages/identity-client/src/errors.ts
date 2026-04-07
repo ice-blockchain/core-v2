@@ -22,6 +22,7 @@ export enum IdentityErrorCode {
   INVALID_EMAIL = 'INVALID_EMAIL',
   PASSWORD_FLOW_NOT_AVAILABLE = 'PASSWORD_FLOW_NOT_AVAILABLE',
   WALLET_NOT_FOUND = 'WALLET_NOT_FOUND',
+  SERVER_ERROR = 'SERVER_ERROR',
 }
 
 export class IdentityError extends Error {

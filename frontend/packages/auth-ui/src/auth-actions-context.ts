@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 
 export interface AuthError {
   code: string;
+  numericCode: string;
   userMessage: string;
 }
 
@@ -23,7 +24,11 @@ export interface AuthActions {
   attemptLogin: (identityKeyName: string) => Promise<LoginAttemptResult>;
   registerAccount: (data: { identityKeyName: string; password?: string }) => Promise<RegisterResult>;
   loginWithPassword: (identityKeyName: string, password: string) => Promise<PasswordLoginResult>;
+  isPasskeyAvailable: () => boolean;
   onAuthSuccess: (username: string) => void;
+  isLoginAttemptLoading: boolean;
+  isRegisterLoading: boolean;
+  isPasswordLoginLoading: boolean;
 }
 
 export const AuthActionsContext = createContext<AuthActions | null>(null);

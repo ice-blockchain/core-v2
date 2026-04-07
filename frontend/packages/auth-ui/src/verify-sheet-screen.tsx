@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { CommonActions, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
-import { IONLoader, Text, useTheme } from "@ion/ui";
+import { IONLoader, useTheme } from "@ion/ui";
 import { Routes, Sheet, useAppNavigation } from "@ion/navigation";
 import type { RootStackParamList } from "@ion/navigation";
 import { VerifyScreen } from "./verify-screen";
@@ -72,7 +72,6 @@ function usePasswordLoginOnConfirm(config: PasswordFlowConfig) {
   const { isPasswordMethod, identityKeyName, handlers, leftScreenRef } = config;
   const appNavigation = useAppNavigation();
   const { loginWithPassword, onAuthSuccess } = useAuthActions();
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isPasswordMethod) return;
@@ -85,18 +84,16 @@ function usePasswordLoginOnConfirm(config: PasswordFlowConfig) {
       if (!identityKeyName || !password) { handlers.handleDismiss(); return; }
       loginWithPassword(identityKeyName, password).then((result) => {
         if (result.outcome === 'authenticated') { onAuthSuccess(identityKeyName); handlers.handleDismiss(); }
-        else { setError(result.error.userMessage); handlers.handleClose(); }
+        else { appNavigation.navigate(Routes.Sheet.GeneralError, { errorCode: result.error.numericCode }); handlers.handleClose(); }
       });
     });
     return unsubscribe;
   }, [isPasswordMethod, identityKeyName, appNavigation, loginWithPassword, onAuthSuccess, handlers, leftScreenRef]);
-
-  return error;
 }
 
 function usePasswordFlow(config: { isPasswordMethod: boolean; identityKeyName: string | undefined; handlers: PasswordFlowHandlers }) {
   const leftScreenRef = useOpenConfirmPassword(config.isPasswordMethod);
-  return usePasswordLoginOnConfirm({ ...config, leftScreenRef });
+  usePasswordLoginOnConfirm({ ...config, leftScreenRef });
 }
 
 export function VerifySheetScreen() {
@@ -113,7 +110,7 @@ export function VerifySheetScreen() {
   }, [appNavigation]);
 
   const handlers = useMemo(() => ({ handleDismiss, handleClose }), [handleDismiss, handleClose]);
-  const loginError = usePasswordFlow({ isPasswordMethod, identityKeyName, handlers });
+  usePasswordFlow({ isPasswordMethod, identityKeyName, handlers });
 
   const loader = useMemo(
     () => <IONLoader variant="light" size={scale.scaleSize(30)} />,
@@ -128,17 +125,6 @@ export function VerifySheetScreen() {
         method={method}
         disableAutoDismiss={isPasswordMethod}
       />
-      {loginError ? <PasswordLoginError message={loginError} /> : null}
     </Sheet>
   );
-}
-
-function PasswordLoginError({ message }: { message: string }) {
-  const { colors, scale } = useTheme();
-  const style = useMemo(() => ({
-    position: "absolute" as const, bottom: scale.scaleSize(80), alignSelf: "center" as const,
-    paddingHorizontal: scale.scaleSize(16), paddingVertical: scale.scaleSize(8),
-  }), [scale]);
-
-  return <Text variant="caption" color={colors.attentionRed} style={style}>{message}</Text>;
 }
