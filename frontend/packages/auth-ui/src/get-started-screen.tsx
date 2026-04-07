@@ -75,26 +75,22 @@ function useActionStyles() {
   }), [scale]);
 }
 
+function useActionHandlers(identity: ReturnType<typeof useIdentityKeyValidation>, callbacks: GetStartedScreenCallbacks | undefined) {
+  const handleContinue = useCallback(() => {
+    if (identity.validate()) { callbacks?.onNavigateToVerifyPassword(identity.value); }
+  }, [identity, callbacks]);
+  const handleRegister = useCallback(() => { callbacks?.onNavigateToRegister(); }, [callbacks]);
+  const handleRestore = useCallback(() => { callbacks?.onNavigateToRestore(); }, [callbacks]);
+  return { handleContinue, handleRegister, handleRestore };
+}
+
 function GetStartedActions({ identity, callbacks }: {
   identity: ReturnType<typeof useIdentityKeyValidation>;
   callbacks: GetStartedScreenCallbacks | undefined;
 }) {
   const { colors } = useTheme();
   const actionStyles = useActionStyles();
-
-  const handleContinue = useCallback(() => {
-    if (identity.validate()) {
-      callbacks?.onNavigateToVerifyPassword(identity.value);
-    }
-  }, [identity, callbacks]);
-
-  const handleRegister = useCallback(() => {
-    callbacks?.onNavigateToRegister();
-  }, [callbacks]);
-
-  const handleRestore = useCallback(() => {
-    callbacks?.onNavigateToRestore();
-  }, [callbacks]);
+  const { handleContinue, handleRegister, handleRestore } = useActionHandlers(identity, callbacks);
 
   return (
     <>
