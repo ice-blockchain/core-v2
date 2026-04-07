@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Icon, Text, useTheme } from '@ion/ui';
 import { translate } from '@ion/localization';
 
-export function CreatePostVisibilityBar() {
+function useVisibilityBarStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -20,23 +20,24 @@ export function CreatePostVisibilityBar() {
     [theme, scale],
   );
 
+  const leftSectionStyle = useMemo(
+    () => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: scale(4) }),
+    [scale],
+  );
+
+  return { containerStyle, leftSectionStyle, scale, accentColor: theme.colors.primaryAccent };
+}
+
+export function CreatePostVisibilityBar() {
+  const { containerStyle, leftSectionStyle, scale, accentColor } = useVisibilityBarStyles();
+
   return (
     <View style={containerStyle}>
-      <View style={styles.leftSection}>
-        <Icon name="post-everyone" size={scale(24)} color={theme.colors.primaryAccent} />
-        <Text variant="caption" color={theme.colors.primaryAccent}>
-          {translate('feed:everyoneLabel')}
-        </Text>
+      <View style={leftSectionStyle}>
+        <Icon name="post-everyone" size={scale(24)} color={accentColor} />
+        <Text variant="caption" color={accentColor}>{translate('feed:everyoneLabel')}</Text>
       </View>
-      <Icon name="chevron-right" size={scale(16)} color={theme.colors.primaryAccent} />
+      <Icon name="chevron-right" size={scale(16)} color={accentColor} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  leftSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-});

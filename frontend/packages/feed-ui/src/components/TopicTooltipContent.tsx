@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Icon, Text, useTheme } from '@ion/ui';
 import { translate } from '@ion/localization';
 
-export function TopicTooltipContent() {
+function useTooltipStyles() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -19,25 +19,24 @@ export function TopicTooltipContent() {
     [theme, scale],
   );
 
+  const titleRowStyle = useMemo(
+    () => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: scale(2) }),
+    [scale],
+  );
+
+  return { containerStyle, titleRowStyle, scale, textColor: theme.colors.primaryText };
+}
+
+export function TopicTooltipContent() {
+  const { containerStyle, titleRowStyle, scale, textColor } = useTooltipStyles();
+
   return (
     <View style={containerStyle}>
-      <View style={styles.titleRow}>
-        <Icon name="post-topic" size={scale(20)} color={theme.colors.primaryText} />
-        <Text variant="subtitle3" color={theme.colors.primaryText}>
-          {translate('feed:topicTooltipTitle')}
-        </Text>
+      <View style={titleRowStyle}>
+        <Icon name="post-topic" size={scale(20)} color={textColor} />
+        <Text variant="subtitle3" color={textColor}>{translate('feed:topicTooltipTitle')}</Text>
       </View>
-      <Text variant="caption2" color={theme.colors.primaryText}>
-        {translate('feed:topicTooltipDescription')}
-      </Text>
+      <Text variant="caption2" color={textColor}>{translate('feed:topicTooltipDescription')}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-});
