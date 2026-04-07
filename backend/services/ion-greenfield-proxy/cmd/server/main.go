@@ -14,11 +14,9 @@ import (
 
 func main() {
 	adnlKey := flag.String("adnl-key", "", "ADNL Ed25519 private key (overrides ADNL_PRIVATE_KEY)")
-	dnsKey := flag.String("dns-key", "", "DNS wallet private key (overrides DNS_PRIVATE_KEY)")
-	dnsName := flag.String("dns-name", "", ".ion domain name (overrides DNS_NAME)")
 	flag.Parse()
 
-	cfg, err := config.Load(*adnlKey, *dnsKey, *dnsName)
+	cfg, err := config.Load(*adnlKey)
 	if err != nil {
 		log.Fatal(err)
 	}

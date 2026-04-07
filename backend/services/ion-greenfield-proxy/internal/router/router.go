@@ -32,7 +32,7 @@ type Params struct {
 	Key               *adnl.Key
 	Provisioner       gf.BucketProvisioner
 	Lifecycle         fx.Lifecycle
-	AllowInsecureSP   bool
+	AllowInsecureSP   bool `optional:"true"`
 }
 
 func New(p Params) (*gin.Engine, error) {
