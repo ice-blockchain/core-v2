@@ -5,8 +5,13 @@ interface KeychainOptions {
   accessible?: number;
 }
 
+interface KeychainAccessible {
+  WHEN_PASSCODE_SET_THIS_DEVICE_ONLY: number;
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: number;
+}
+
 interface KeychainBackend {
-  ACCESSIBLE: { WHEN_PASSCODE_SET_THIS_DEVICE_ONLY: number };
+  ACCESSIBLE: KeychainAccessible;
   getGenericPassword(options: { service: string }): Promise<false | { password: string }>;
   setGenericPassword(username: string, password: string, options: KeychainOptions): Promise<boolean>;
   resetGenericPassword(options: { service: string }): Promise<boolean>;
@@ -31,11 +36,35 @@ async function getKeyRegistry(keychain: KeychainBackend): Promise<string[]> {
   }
 }
 
+async function setWithAccessibilityFallback(
+  keychain: KeychainBackend,
+  username: string,
+  password: string,
+  service: string,
+): Promise<void> {
+  try {
+    await keychain.setGenericPassword(username, password, {
+      service,
+      accessible: keychain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[SecureStorage] setGenericPassword failed for service "${service}" ` +
+      `with WHEN_PASSCODE_SET_THIS_DEVICE_ONLY (device may lack passcode): ${detail}. ` +
+      'Retrying with WHEN_UNLOCKED_THIS_DEVICE_ONLY.',
+    );
+    await keychain.setGenericPassword(username, password, {
+      service,
+      accessible: keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
+  }
+}
+
 async function saveKeyRegistry(keychain: KeychainBackend, keys: string[]): Promise<void> {
-  await keychain.setGenericPassword("registry", JSON.stringify(keys), {
-    service: KEY_REGISTRY_SERVICE,
-    accessible: keychain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
-  });
+  await setWithAccessibilityFallback(
+    keychain, "registry", JSON.stringify(keys), KEY_REGISTRY_SERVICE,
+  );
 }
 
 function serviceFor(key: string): string {
@@ -43,10 +72,7 @@ function serviceFor(key: string): string {
 }
 
 async function setSecureItem(keychain: KeychainBackend, key: string, value: string): Promise<void> {
-  await keychain.setGenericPassword(key, value, {
-    service: serviceFor(key),
-    accessible: keychain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
-  });
+  await setWithAccessibilityFallback(keychain, key, value, serviceFor(key));
   const keys = await getKeyRegistry(keychain);
   if (!keys.includes(key)) {
     keys.push(key);
