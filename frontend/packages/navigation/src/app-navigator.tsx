@@ -44,26 +44,16 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
-export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
-  const AuthScreen = useAuthScreen(authScreens);
-
+function AppScreens({ screens, AuthScreen }: { screens: AppNavigatorProps['screens']; AuthScreen: ComponentType }) {
   return (
-    <Stack.Navigator
-      screenOptions={{ headerShown: false, animation: 'fade' }}
-    >
+    <>
       <Stack.Screen name={Routes.Splash} component={screens.Splash} />
       <Stack.Screen name={Routes.GetStarted} component={screens.GetStarted} />
-      {screens.Main && (
-        <Stack.Screen name={Routes.Main} component={screens.Main} />
-      )}
+      {screens.Main && <Stack.Screen name={Routes.Main} component={screens.Main} />}
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
       <Stack.Screen name={Routes.ChatPreview} component={screens.ChatPreview} />
-      {screens.ProxyTest && (
-        <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />
-      )}
-      {screens.StorageTest && (
-        <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />
-      )}
+      {screens.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />}
+      {screens.StorageTest && <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />}
       <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={screens.IdentityKeyNameNote} options={TRANSPARENT_MODAL_OPTIONS} />
@@ -71,9 +61,17 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
       <Stack.Screen name={Routes.Sheet.LinkDevice} component={screens.LinkDevice} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.VerifyOnOtherDevice} component={screens.VerifyOnOtherDevice} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={screens.AddPasskeyCredentials} options={TRANSPARENT_MODAL_OPTIONS} />
-      {screens.CreatePost && (
-        <Stack.Screen name={Routes.Sheet.CreatePost} component={screens.CreatePost} options={TRANSPARENT_MODAL_OPTIONS} />
-      )}
+      {screens.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={screens.CreatePost} options={TRANSPARENT_MODAL_OPTIONS} />}
+    </>
+  );
+}
+
+export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
+  const AuthScreen = useAuthScreen(authScreens);
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+      <AppScreens screens={screens} AuthScreen={AuthScreen} />
     </Stack.Navigator>
   );
 }
