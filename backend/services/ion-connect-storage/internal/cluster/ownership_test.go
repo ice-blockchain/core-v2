@@ -22,7 +22,8 @@ func TestClaimAndOwnsBag(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, coord.OwnsBag(bagID))
 	require.Equal(t, "owner-node", coord.Owner(bagID))
-	require.Equal(t, 1, coord.OwnedCount())
+	// ClaimBag no longer increments counter; only OwnsOrClaim does after verification.
+	require.Equal(t, 0, coord.OwnedCount())
 }
 
 func TestReleaseBag(t *testing.T) {
@@ -37,11 +38,11 @@ func TestReleaseBag(t *testing.T) {
 
 	require.NoError(t, coord.ReleaseBag(ctx, bagID))
 	require.False(t, coord.OwnsBag(bagID))
-	require.Equal(t, 0, coord.OwnedCount())
 }
 
 func TestOwnsOrClaimUnclaimed(t *testing.T) {
 	coord := newTestCoordinator(t, "claimer")
+	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
@@ -55,6 +56,7 @@ func TestOwnsOrClaimUnclaimed(t *testing.T) {
 
 func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
 	coord := newTestCoordinator(t, "node-a")
+	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
@@ -101,14 +103,19 @@ func TestMultipleBagsClaimed(t *testing.T) {
 		bagID := [32]byte{byte(i)}
 		require.NoError(t, coord.ClaimBag(ctx, bagID))
 	}
-	require.Equal(t, 10, coord.OwnedCount())
+	// ClaimBag no longer increments counter; verify bags are owned.
+	for i := 0; i < 10; i++ {
+		require.True(t, coord.OwnsBag([32]byte{byte(i)}))
+	}
 
 	// Release 3.
 	for i := 0; i < 3; i++ {
 		bagID := [32]byte{byte(i)}
 		require.NoError(t, coord.ReleaseBag(ctx, bagID))
 	}
-	require.Equal(t, 7, coord.OwnedCount())
+	for i := 0; i < 3; i++ {
+		require.False(t, coord.OwnsBag([32]byte{byte(i)}))
+	}
 }
 
 func dsKeyFromString(s string) ds.Key {

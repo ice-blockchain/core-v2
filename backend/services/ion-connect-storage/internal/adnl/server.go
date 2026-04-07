@@ -33,24 +33,30 @@ type ServerConfig struct {
 // ClusterQueryHandler processes raw TL queries for the cluster overlay.
 type ClusterQueryHandler func(ctx context.Context, rawQuery []byte) ([]byte, error)
 
+// ClusterMemberChecker verifies whether a peer is an authorized cluster member.
+type ClusterMemberChecker interface {
+	IsClusterMember(adnlAddr []byte) bool
+}
+
 type Server struct {
-	gateway             *adnl.Gateway
-	dhtClient           *dht.Client
-	registrar           *DHTRegistrar
-	overlays            *OverlayManager
-	httpBridge          *RLDPHTTPBridge
-	clusterOverlayID    [32]byte
-	clusterQueryHandler ClusterQueryHandler
-	privateKey          ed25519.PrivateKey
-	port                int
-	externalIP          net.IP
-	externalPort        int
-	maxConnections      int
-	querySemaphore      chan struct{}
-	activeConnections   atomic.Int64
-	running             atomic.Bool
-	ready               atomic.Bool
-	logger              *slog.Logger
+	gateway              *adnl.Gateway
+	dhtClient            *dht.Client
+	registrar            *DHTRegistrar
+	overlays             *OverlayManager
+	httpBridge           *RLDPHTTPBridge
+	clusterOverlayID     [32]byte
+	clusterQueryHandler  ClusterQueryHandler
+	clusterMemberChecker ClusterMemberChecker
+	privateKey           ed25519.PrivateKey
+	port                 int
+	externalIP           net.IP
+	externalPort         int
+	maxConnections       int
+	querySemaphore       chan struct{}
+	activeConnections    atomic.Int64
+	running              atomic.Bool
+	ready                atomic.Bool
+	logger               *slog.Logger
 }
 
 func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*Server, error) {
@@ -182,6 +188,9 @@ func (s *Server) NewOverlayNode(overlayID []byte) (*overlay.Node, error) {
 	return overlay.NewNode(overlayID, s.privateKey)
 }
 
+// PrivateKey returns the server's ed25519 private key for cluster operations.
+func (s *Server) PrivateKey() ed25519.PrivateKey { return s.privateKey }
+
 // Sign signs the given data using the server's private key.
 func (s *Server) Sign(data []byte) []byte { return ed25519.Sign(s.privateKey, data) }
 func (s *Server) IsRunning() bool         { return s.running.Load() }
@@ -200,6 +209,12 @@ func (s *Server) SetHTTPBridge(b *RLDPHTTPBridge) { s.httpBridge = b }
 func (s *Server) SetClusterOverlay(overlayID [32]byte, handler ClusterQueryHandler) {
 	s.clusterOverlayID = overlayID
 	s.clusterQueryHandler = handler
+}
+
+// SetClusterMemberChecker registers a checker that verifies whether
+// a peer is an authorized cluster member before routing cluster queries.
+func (s *Server) SetClusterMemberChecker(checker ClusterMemberChecker) {
+	s.clusterMemberChecker = checker
 }
 
 // ExternalIP returns the advertised IP address.

@@ -132,7 +132,7 @@ func startTestServerWithBridge(
 	copy(adnlAddr[:], server.Gateway().GetID())
 	singleNode := cluster.NewSingleNodeCoordinator("test-node", adnlAddr, "127.0.0.1", 0)
 	providerIndex := provider.NewProviderIndex(db, adnlAddr, singleNode, logger)
-	provider.RegisterRoutes(engine, providerIndex)
+	provider.RegisterRoutes(engine, providerIndex, nil)
 
 	bridge := ionadnl.NewRLDPHTTPBridge(ctx, engine, logger)
 	server.SetHTTPBridge(bridge)

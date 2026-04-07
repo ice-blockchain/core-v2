@@ -162,6 +162,7 @@ func createCoordinator(ctx context.Context, cfg config.Config, db *pebble.DB, se
 		ReclamationInterval:   cfg.ReclamationInterval,
 		StaleHeartbeatTimeout: cfg.StaleHeartbeatTimeout,
 		ReclamationStartDelay: cfg.ReclamationStartDelay,
+		PrivateKey:            server.PrivateKey(),
 	})
 	if err != nil {
 		logger.Error("create coordinator failed", "error", err)
@@ -261,7 +262,8 @@ func createPublicEngine(providerIndex *provider.ProviderIndex) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	engine.Use(gin.Recovery())
-	provider.RegisterRoutes(engine, providerIndex)
+	rateLimiter := provider.NewPeerRateLimiter(10, 20) // 10 req/s per peer, burst 20
+	provider.RegisterRoutes(engine, providerIndex, rateLimiter)
 	return engine
 }
 

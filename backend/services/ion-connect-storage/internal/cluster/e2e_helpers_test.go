@@ -63,6 +63,7 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 		HeartbeatInterval:     500 * time.Millisecond,
 		ReclamationInterval:   3 * time.Second,
 		StaleHeartbeatTimeout: 5 * time.Second,
+		ClaimVerifyDelay:      200 * time.Millisecond, // fast for e2e tests
 	})
 	require.NoError(t, err)
 

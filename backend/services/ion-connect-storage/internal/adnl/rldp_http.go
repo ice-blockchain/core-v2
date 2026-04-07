@@ -84,6 +84,7 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 	if err != nil {
 		return fmt.Errorf("build http request: %w", err)
 	}
+	httpReq.Header.Set("X-RLDP-Peer-ID", peerPrefix)
 
 	w := newResponseWriter()
 	b.engine.ServeHTTP(w, httpReq)

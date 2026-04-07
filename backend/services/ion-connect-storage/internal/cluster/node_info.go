@@ -1,10 +1,13 @@
 package cluster
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // NodeInfo holds a cluster node's network address for direct ADNL dialing.
@@ -13,6 +16,7 @@ type NodeInfo struct {
 	ADNLAddress string `json:"adnlAddr"`
 	IP          string `json:"ip"`
 	Port        int    `json:"port"`
+	PublicKey   string `json:"publicKey,omitempty"`
 }
 
 // MarshalNodeInfo serializes NodeInfo to JSON bytes.
@@ -83,14 +87,45 @@ func BlockKey(cidBytes []byte) string {
 	return prefixBlock + hexEncode(cidBytes)
 }
 
-// FormatHeartbeat encodes a unix timestamp as a heartbeat value.
+// FormatHeartbeat encodes a unix timestamp as a heartbeat value (unsigned).
 func FormatHeartbeat(unixSeconds int64) []byte {
 	return []byte(strconv.FormatInt(unixSeconds, 10))
 }
 
-// ParseHeartbeat decodes a heartbeat value to a unix timestamp.
+// ParseHeartbeat decodes an unsigned heartbeat value to a unix timestamp.
 func ParseHeartbeat(data []byte) (int64, error) {
 	return strconv.ParseInt(string(data), 10, 64)
+}
+
+// FormatSignedHeartbeat encodes a heartbeat with an ed25519 signature.
+// Format: "<timestamp>:<hex_signature>" where the signed message is
+// "heartbeat:<nodeID>:<timestamp>".
+func FormatSignedHeartbeat(unixSeconds int64, nodeID string, privKey ed25519.PrivateKey) []byte {
+	tsStr := strconv.FormatInt(unixSeconds, 10)
+	msg := []byte("heartbeat:" + nodeID + ":" + tsStr)
+	sig := ed25519.Sign(privKey, msg)
+	return []byte(tsStr + ":" + hex.EncodeToString(sig))
+}
+
+// ParseSignedHeartbeat decodes a signed heartbeat, verifying the ed25519 signature.
+func ParseSignedHeartbeat(data []byte, nodeID string, pubKey ed25519.PublicKey) (int64, error) {
+	parts := strings.SplitN(string(data), ":", 2)
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid signed heartbeat format")
+	}
+	ts, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse timestamp: %w", err)
+	}
+	sig, err := hex.DecodeString(parts[1])
+	if err != nil {
+		return 0, fmt.Errorf("decode signature: %w", err)
+	}
+	msg := []byte("heartbeat:" + nodeID + ":" + parts[0])
+	if !ed25519.Verify(pubKey, msg, sig) {
+		return 0, fmt.Errorf("heartbeat signature verification failed")
+	}
+	return ts, nil
 }
 
 // ComputeClusterOverlayID derives a 32-byte overlay ID from the cluster config string.

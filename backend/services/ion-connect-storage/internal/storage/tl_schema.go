@@ -147,6 +147,9 @@ func appendTLBytes(buf, data []byte) []byte {
 		return buf
 	}
 	buf = append(buf, 254)
+	if len(data) > 0xFFFFFF {
+		panic(fmt.Sprintf("appendTLBytes: data length %d exceeds TL bytes maximum (16777215)", len(data)))
+	}
 	lenBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lenBytes, uint32(len(data)))
 	buf = append(buf, lenBytes[:3]...)

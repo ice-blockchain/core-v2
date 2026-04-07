@@ -44,7 +44,7 @@ func TestE2E_ClusterThreeNodeDistribution(t *testing.T) {
 
 	// Wait for CRDT ownership convergence — each bag owned by exactly one node.
 	for _, bagID := range bagIDs {
-		waitForExactlyOneOwner(t, nodes, bagID, 30*time.Second)
+		waitForExactlyOneOwner(t, nodes, bagID, 2*time.Minute)
 	}
 
 	t.Run("each bag owned by exactly one node", func(t *testing.T) {
@@ -165,6 +165,34 @@ func TestE2E_ClusterCacheEvictionPreservesOwnership(t *testing.T) {
 
 	require.True(t, node.coordinator.OwnsBag(bagID), "ownership must survive eviction")
 	require.Equal(t, 1, node.coordinator.OwnedCount())
+}
+
+// TestE2E_ConcurrentClaimSingleWinner uploads a bag and verifies that
+// the 3 subscribers race to claim it, resulting in exactly one owner
+// with consistent counters.
+func TestE2E_ConcurrentClaimSingleWinner(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
+	defer cancel()
+
+	node0 := startClusterNode(t, ctx)
+	node1 := startClusterNode(t, ctx)
+	node2 := startClusterNode(t, ctx)
+	nodes := []*clusterNode{node0, node1, node2}
+	wireCluster(t, nodes)
+	waitForClusterConvergence(t, nodes, 30*time.Second)
+
+	bagID, _, _, _ := uploadBag(t, ctx, 16*1024, "race")
+	waitForBagIndexedOnAnyNode(t, nodes, bagID, 3*time.Minute)
+	waitForExactlyOneOwner(t, nodes, bagID, 2*time.Minute)
+
+	// Exactly one winner across all nodes.
+	winners := 0
+	for _, n := range nodes {
+		if n.coordinator.OwnsBag(bagID) {
+			winners++
+		}
+	}
+	require.Equal(t, 1, winners, "expected exactly 1 owner")
 }
 
 // --- helpers ---

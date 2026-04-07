@@ -13,9 +13,6 @@ import (
 const (
 	ownerQueryTimeout = 5 * time.Second
 	maxClaimAttempts  = 3
-	// claimSlotInterval is the delay between consecutive claim slots.
-	// Must be >= verifyClaim total duration (500ms + 1s + 2s = 3.5s).
-	claimSlotInterval = 4 * time.Second
 )
 
 // ClaimBag adds this node's ownership claim for a bag.
@@ -33,13 +30,6 @@ func (c *Coordinator) ClaimBag(ctx context.Context, bagID [32]byte) error {
 		_ = c.crdt.Delete(ctx, byNodeKey) // best-effort cleanup
 		return fmt.Errorf("put ownership key: %w", err)
 	}
-
-	c.ownedCountMu.Lock()
-	c.ownedCount.Add(1)
-	if c.metrics != nil {
-		c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
-	}
-	c.ownedCountMu.Unlock()
 	return nil
 }
 
@@ -92,9 +82,18 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error) {
 	// Deterministic per-node delay so different nodes stagger their claims.
 	// Uses a slot based on hash(nodeID+bagID) mod activeNodes, multiplied
-	// by the verifyClaim duration (~3.5s). This ensures the fastest node
+	// by the verifyClaim total duration. This ensures the fastest node
 	// completes its claim before the next node even starts, eliminating
 	// CRDT write collisions that cause all claimants to roll back.
+	//
+	// claimSlotInterval = sum of exponential delays (base * (1+2+4) = base*7)
+	// plus quorum overhead (~5s). Must be >= verifyClaim total duration.
+	baseDelay := c.cfg.ClaimVerifyDelay
+	if baseDelay == 0 {
+		baseDelay = defaultClaimDelay
+	}
+	claimSlotInterval := baseDelay*7 + 5*time.Second
+
 	bagHex := fmt.Sprintf("%x", bagID)
 	claimSlot := simpleHash(c.nodeID+bagHex) % uint64(max(c.ActiveNodeCount(), 2))
 	nodeDelay := time.Duration(claimSlot) * claimSlotInterval
@@ -125,6 +124,12 @@ func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, er
 		}
 
 		if c.verifyClaim(ctx, bagID) {
+			c.ownedCountMu.Lock()
+			c.ownedCount.Add(1)
+			if c.metrics != nil {
+				c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
+			}
+			c.ownedCountMu.Unlock()
 			return true, nil
 		}
 		c.rollbackClaim(ctx, bagID)

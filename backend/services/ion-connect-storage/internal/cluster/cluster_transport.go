@@ -24,9 +24,16 @@ const (
 	rldpMaxRawQueryAnswer uint64 = 256 * 1024
 )
 
-// BagOwnershipChecker checks if this node owns a given bag.
+// BagOwnershipChecker checks bag ownership state.
 type BagOwnershipChecker interface {
 	OwnsBag(bagID [32]byte) bool
+	Owner(bagID [32]byte) string
+}
+
+// ClusterMemberResolver checks whether an ADNL address belongs to a
+// registered cluster member (via CRDT nodeinfo entries).
+type ClusterMemberResolver interface {
+	IsRegisteredNode(adnlAddr [32]byte) bool
 }
 
 // PieceHandler serves a local piece request (used for forwarded pieces).
@@ -49,6 +56,7 @@ type ClusterTransport struct {
 	pieceHandler    PieceHandler
 	rawQueryHandler RawQueryHandler
 	ownerChecker    BagOwnershipChecker
+	memberResolver  ClusterMemberResolver
 	overlayID       []byte
 	mu              sync.RWMutex
 	peers           map[[32]byte]*clusterPeer
@@ -100,11 +108,40 @@ func (t *ClusterTransport) SetOwnershipChecker(c BagOwnershipChecker) {
 	t.ownerChecker = c
 }
 
-// RegisterWithServer registers the cluster overlay query handler.
+// SetMemberResolver registers a resolver for checking cluster membership
+// via CRDT nodeinfo entries. Used as a fallback when a peer is not in
+// the local connected peers map (e.g., inbound connection before
+// bidirectional setup completes).
+func (t *ClusterTransport) SetMemberResolver(r ClusterMemberResolver) {
+	t.memberResolver = r
+}
+
+// RegisterWithServer registers the cluster overlay query handler
+// and the cluster member checker for peer authentication.
 func (t *ClusterTransport) RegisterWithServer() {
 	var oid [32]byte
 	copy(oid[:], t.overlayID)
 	t.server.SetClusterOverlay(oid, t.handleClusterQuery)
+	t.server.SetClusterMemberChecker(t)
+}
+
+// IsClusterMember returns true if the peer identified by adnlAddr is
+// a known cluster member. Checks the local connected peers map first,
+// then falls back to CRDT nodeinfo entries for inbound connections
+// that haven't been bidirectionally established yet.
+func (t *ClusterTransport) IsClusterMember(adnlAddr []byte) bool {
+	var addr [32]byte
+	copy(addr[:], adnlAddr)
+	t.mu.RLock()
+	_, ok := t.peers[addr]
+	t.mu.RUnlock()
+	if ok {
+		return true
+	}
+	if t.memberResolver != nil {
+		return t.memberResolver.IsRegisteredNode(addr)
+	}
+	return false
 }
 
 func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []byte) ([]byte, error) {
@@ -163,6 +200,17 @@ func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []by
 			return tl.Serialize(PieceNotFoundMsg{}, true)
 		}
 		return tl.Serialize(PieceResponseMsg{Data: data, Proof: proof}, true)
+	}
+
+	var ownerCheck OwnerCheckMsg
+	if _, err := tl.Parse(&ownerCheck, rawQuery, true); err == nil {
+		var bagID [32]byte
+		copy(bagID[:], ownerCheck.BagID)
+		owner := ""
+		if t.ownerChecker != nil {
+			owner = t.ownerChecker.Owner(bagID)
+		}
+		return tl.Serialize(OwnerCheckResponseMsg{Owner: owner}, true)
 	}
 
 	return nil, fmt.Errorf("unknown cluster query")
@@ -273,6 +321,47 @@ func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [3
 	}
 	t.logger.Debug("forward raw query success", "resp_len", len(resp.Data))
 	return resp.Data, nil
+}
+
+const ownerCheckTimeout = 5 * time.Second
+
+// QueryPeerOwnership asks all connected cluster peers who they believe
+// owns a bag. Returns a slice of owner nodeIDs (one per responding peer).
+func (t *ClusterTransport) QueryPeerOwnership(ctx context.Context, bagID [32]byte) []string {
+	t.mu.RLock()
+	peers := make([]*clusterPeer, 0, len(t.peers))
+	for _, p := range t.peers {
+		peers = append(peers, p)
+	}
+	t.mu.RUnlock()
+
+	if len(peers) == 0 {
+		return nil
+	}
+
+	qCtx, cancel := context.WithTimeout(ctx, ownerCheckTimeout)
+	defer cancel()
+
+	msg := OwnerCheckMsg{BagID: bagID[:]}
+
+	var mu sync.Mutex
+	var results []string
+	var wg sync.WaitGroup
+	for _, cp := range peers {
+		wg.Add(1)
+		go func(cp *clusterPeer) {
+			defer wg.Done()
+			var resp OwnerCheckResponseMsg
+			if err := cp.adnlWrapper.Query(qCtx, overlay.WrapQuery(t.overlayID, msg), &resp); err != nil {
+				return
+			}
+			mu.Lock()
+			results = append(results, resp.Owner)
+			mu.Unlock()
+		}(cp)
+	}
+	wg.Wait()
+	return results
 }
 
 // ConnectToPeer establishes an ADNL connection to the remote peer using

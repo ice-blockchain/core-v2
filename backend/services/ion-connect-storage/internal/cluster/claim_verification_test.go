@@ -51,15 +51,57 @@ func TestRollbackClaimDeletesBynodeKey(t *testing.T) {
 	bagID := [32]byte{0x04}
 
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
-	require.Equal(t, int64(1), coord.ownedCount.Load())
 
 	coord.rollbackClaim(ctx, bagID)
-
-	require.Equal(t, int64(0), coord.ownedCount.Load())
 
 	// Verify bynode key was deleted.
 	_, err := coord.crdt.Get(ctx, ds.NewKey(ByNodeKey("rollback-node", bagID)))
 	require.Error(t, err, "bynode key should be deleted after rollback")
+
+	// Verify ownership key was deleted (this node still owned it at rollback time).
+	_, err = coord.crdt.Get(ctx, ds.NewKey(OwnershipKey(bagID)))
+	require.Error(t, err, "ownership key should be deleted after rollback")
+}
+
+func TestRollbackDoesNotDeleteWinnerOwnership(t *testing.T) {
+	coord := newTestCoordinator(t, "loser-node")
+	ctx := context.Background()
+	bagID := [32]byte{0x06}
+
+	// Loser claims the bag.
+	require.NoError(t, coord.ClaimBag(ctx, bagID))
+
+	// Simulate the winner overwriting ownership.
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("winner-node")))
+
+	// Loser rolls back -- must NOT delete the winner's ownership.
+	coord.rollbackClaim(ctx, bagID)
+
+	require.Equal(t, "winner-node", coord.Owner(bagID))
+}
+
+func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
+	coord := newTestCoordinator(t, "counter-node")
+	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
+	ctx, cancel := context.WithCancel(context.Background())
+	require.NoError(t, coord.Start(ctx))
+	defer func() { cancel(); coord.Stop() }()
+
+	bagID := [32]byte{0x07}
+
+	// Bare ClaimBag should NOT increment counter.
+	require.NoError(t, coord.ClaimBag(ctx, bagID))
+	require.Equal(t, 0, coord.OwnedCount())
+
+	// Clean up for OwnsOrClaim test.
+	_ = coord.crdt.Delete(ctx, ds.NewKey(OwnershipKey(bagID)))
+	_ = coord.crdt.Delete(ctx, ds.NewKey(ByNodeKey("counter-node", bagID)))
+
+	// OwnsOrClaim with successful verification should increment counter.
+	owned, err := coord.OwnsOrClaim(ctx, bagID)
+	require.NoError(t, err)
+	require.True(t, owned)
+	require.Equal(t, 1, coord.OwnedCount())
 }
 
 func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {

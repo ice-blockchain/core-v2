@@ -35,11 +35,12 @@ func (s *Server) handleNewConnection(client adnl.Peer) error {
 	client.SetDisconnectHandler(func(_ string, _ ed25519.PublicKey) {
 		s.activeConnections.Add(-1)
 	})
-	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.querySemaphore, s.logger)
+	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.clusterMemberChecker, s.querySemaphore, s.logger)
 	return nil
 }
 
-func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, querySem chan struct{}, logger *slog.Logger) {
+func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, querySem chan struct{}, logger *slog.Logger) {
+	peerID := client.GetID()
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
@@ -60,6 +61,10 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 		}
 		// Handle cluster queries sent without overlay wrapping (block exchange).
 		if clusterHandler != nil {
+			if memberChecker != nil && !memberChecker.IsClusterMember(peerID) {
+				logger.Debug("rejected cluster query from non-member peer", "peer", hex.EncodeToString(peerID[:8]))
+				return nil
+			}
 			rawQuery := extractRawTL(query.Data)
 			if rawQuery != nil && len(rawQuery) >= 4 {
 				resp, err := clusterHandler(ctx, rawQuery)
@@ -75,8 +80,8 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 		logger.Debug("unhandled root ADNL query", "type", fmt.Sprintf("%T", query.Data))
 		return nil
 	})
-	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, client, logger))
-	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, logger))
+	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, logger))
+	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, logger))
 
 	if bridge != nil {
 		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl, client.GetID()))
@@ -87,7 +92,7 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 
 // makeADNLHandler routes overlay queries. Cluster overlay goes to clusterHandler;
 // storage overlays go to OverlayManager.
-func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, rawPeer adnl.Peer, logger *slog.Logger) func(query *adnl.MessageQuery) error {
+func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, logger *slog.Logger) func(query *adnl.MessageQuery) error {
 	return func(query *adnl.MessageQuery) (retErr error) {
 		defer recoverPanic(logger, &retErr)
 
@@ -108,13 +113,15 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 		}
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
+			if memberChecker != nil && !memberChecker.IsClusterMember(peerID) {
+				logger.Debug("rejected overlay cluster query from non-member")
+				return nil
+			}
 			resp, err := clusterHandler(ctx, rawQuery)
 			if err != nil {
 				return err
 			}
 			if resp != nil {
-				// Answer via the overlay wrapper (not raw peer) so the
-				// sender's adnlWrapper.Query receives the response.
 				return peer.Answer(ctx, query.ID, tl.Raw(resp))
 			}
 			return nil
@@ -131,7 +138,7 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 	}
 }
 
-func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
+func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
 	return func(transferID []byte, query *rldp.Query) (retErr error) {
 		defer recoverPanic(logger, &retErr)
 
@@ -153,6 +160,10 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 		}
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
+			if memberChecker != nil && !memberChecker.IsClusterMember(peerID) {
+				logger.Debug("rejected RLDP cluster query from non-member")
+				return nil
+			}
 			resp, err := clusterHandler(ctx, rawQuery)
 			if err != nil {
 				return err

@@ -124,7 +124,7 @@ func SetupSeederServer(
 
 	gin.SetMode(gin.ReleaseMode)
 	publicEngine := gin.New()
-	provider.RegisterRoutes(publicEngine, providerIndex)
+	provider.RegisterRoutes(publicEngine, providerIndex, nil)
 	bridge := ionadnl.NewRLDPHTTPBridge(ctx, publicEngine, logger)
 	server.SetHTTPBridge(bridge)
 

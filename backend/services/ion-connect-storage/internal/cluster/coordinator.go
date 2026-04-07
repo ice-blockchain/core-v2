@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -10,24 +11,27 @@ import (
 
 	"github.com/cockroachdb/pebble/v2"
 	ds "github.com/ipfs/go-datastore"
+	dsq "github.com/ipfs/go-datastore/query"
 	crdt "github.com/ipfs/go-ds-crdt"
 )
 
 // CoordinatorConfig holds configuration for the CRDT cluster coordinator.
 type CoordinatorConfig struct {
-	NodeID                string
-	ClusterOverlayID      string
-	ADNLAddress           string // hex-encoded ADNL address
-	ExternalIP            string
-	ExternalPort          int
-	DB                    *pebble.DB
-	Metrics               *ClusterMetrics
-	Logger                *slog.Logger
-	HeartbeatInterval     time.Duration
-	ReclamationInterval   time.Duration
-	StaleHeartbeatTimeout time.Duration
-	ReclamationStartDelay time.Duration
-	ClaimVerifyDelay      time.Duration
+	NodeID                     string
+	ClusterOverlayID           string
+	ADNLAddress                string // hex-encoded ADNL address
+	ExternalIP                 string
+	ExternalPort               int
+	DB                         *pebble.DB
+	Metrics                    *ClusterMetrics
+	Logger                     *slog.Logger
+	HeartbeatInterval          time.Duration
+	ReclamationInterval        time.Duration
+	StaleHeartbeatTimeout      time.Duration
+	ReclamationStartDelay      time.Duration
+	ClaimVerifyDelay           time.Duration
+	PrivateKey                 ed25519.PrivateKey
+	HeartbeatSignatureRequired bool
 }
 
 func (c *CoordinatorConfig) applyDefaults() {
@@ -93,6 +97,7 @@ func (c *Coordinator) SetTransport(transport *ClusterTransport) {
 	c.transport = transport
 	c.broadcaster.peer = transport
 	c.dagService.fetcher = transport
+	transport.SetMemberResolver(c)
 }
 
 // Transport returns the cluster transport (for adding peers, etc).
@@ -184,6 +189,33 @@ func (c *Coordinator) NodeID() string {
 	return c.nodeID
 }
 
+// IsRegisteredNode checks if an ADNL address belongs to a registered cluster
+// member by scanning CRDT nodeinfo entries. This is the fallback for peer
+// authentication when the peer isn't in the local connected peers map.
+func (c *Coordinator) IsRegisteredNode(adnlAddr [32]byte) bool {
+	adnlHex := hexEncode(adnlAddr[:])
+	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	defer cancel()
+	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefixNodeInfo})
+	if err != nil {
+		return false
+	}
+	defer results.Close()
+	for r := range results.Next() {
+		if r.Error != nil {
+			continue
+		}
+		info, err := UnmarshalNodeInfo(r.Value)
+		if err != nil {
+			continue
+		}
+		if info.ADNLAddress == adnlHex {
+			return true
+		}
+	}
+	return false
+}
+
 // UpdateNodeInfo updates the ADNL address info used in publishNodeInfo.
 func (c *Coordinator) UpdateNodeInfo(adnlAddress, ip string, port int) {
 	c.cfg.ADNLAddress = adnlAddress
@@ -206,6 +238,9 @@ func (c *Coordinator) publishNodeInfo(ctx context.Context) error {
 		ADNLAddress: c.cfg.ADNLAddress,
 		IP:          c.cfg.ExternalIP,
 		Port:        c.cfg.ExternalPort,
+	}
+	if c.cfg.PrivateKey != nil {
+		info.PublicKey = hexEncode(c.cfg.PrivateKey.Public().(ed25519.PublicKey))
 	}
 	data, err := MarshalNodeInfo(info)
 	if err != nil {
@@ -233,7 +268,13 @@ func (c *Coordinator) writeHeartbeat(ctx context.Context) {
 	if ctx.Err() != nil {
 		return
 	}
-	val := FormatHeartbeat(time.Now().Unix())
+	ts := time.Now().Unix()
+	var val []byte
+	if c.cfg.PrivateKey != nil {
+		val = FormatSignedHeartbeat(ts, c.nodeID, c.cfg.PrivateKey)
+	} else {
+		val = FormatHeartbeat(ts)
+	}
 	if err := c.crdt.Put(ctx, ds.NewKey(HeartbeatKey(c.nodeID)), val); err != nil {
 		if ctx.Err() == nil {
 			c.logger.Warn("write heartbeat", "error", err)

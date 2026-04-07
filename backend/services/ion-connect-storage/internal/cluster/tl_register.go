@@ -46,6 +46,16 @@ type ForwardRawResponseMsg struct {
 	Data []byte `tl:"bytes"`
 }
 
+// OwnerCheckMsg asks a peer who currently owns a bag in their local CRDT view.
+type OwnerCheckMsg struct {
+	BagID []byte `tl:"int256"`
+}
+
+// OwnerCheckResponseMsg returns the owner nodeID for a bag.
+type OwnerCheckResponseMsg struct {
+	Owner string `tl:"string"`
+}
+
 func init() {
 	tl.Register(CRDTHeadMsg{}, "cluster.crdtHead data:bytes = cluster.CRDTHead")
 	tl.Register(GetBlockMsg{}, "cluster.getBlock cid:bytes = cluster.Block")
@@ -56,4 +66,6 @@ func init() {
 	tl.Register(PieceNotFoundMsg{}, "cluster.pieceNotFound = cluster.PieceResponse")
 	tl.Register(ForwardRawQueryMsg{}, "cluster.forwardRawQuery bag_id:int256 raw_query:bytes = cluster.ForwardRawResponse")
 	tl.Register(ForwardRawResponseMsg{}, "cluster.forwardRawResponse data:bytes = cluster.ForwardRawResponse")
+	tl.Register(OwnerCheckMsg{}, "cluster.ownerCheck bag_id:int256 = cluster.OwnerCheckResponse")
+	tl.Register(OwnerCheckResponseMsg{}, "cluster.ownerCheckResponse owner:string = cluster.OwnerCheckResponse")
 }
