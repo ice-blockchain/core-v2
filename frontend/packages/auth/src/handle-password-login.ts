@@ -18,7 +18,6 @@ export async function handlePasswordLogin(
   dispatch({ type: 'SET_LOADING', isLoading: true });
   try {
     await identityClient.loginWithPassword({ username: identityKeyName, password });
-    Logger.info('Password login succeeded', { tag: 'auth' });
     onAuthSuccess(identityKeyName);
   } catch (error) {
     Logger.error('Password login failed', { tag: 'auth', error: error instanceof Error ? error : new Error(String(error)), data: { identityKeyName } });

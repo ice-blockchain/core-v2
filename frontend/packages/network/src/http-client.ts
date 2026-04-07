@@ -113,19 +113,14 @@ async function buildInterceptedRequest(context: RequestContext): Promise<Interce
   const { internals, method, url, options } = context;
   const fullUrl = internals.baseUrl ? `${internals.baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}` : url;
   const request: InterceptedRequest = { url: fullUrl, method, headers: { ...internals.defaultHeaders, ...options?.headers }, body: options?.body };
-  if (!internals.interceptors?.length) {
-    Logger.info('HTTP request', { tag: 'network', data: { method: request.method, url: request.url } });
-    return request;
-  }
-  const intercepted = await runRequestInterceptors({ request, interceptors: internals.interceptors });
-  Logger.info('HTTP request', { tag: 'network', data: { method: intercepted.method, url: intercepted.url } });
-  return intercepted;
+  if (!internals.interceptors?.length) return request;
+  return runRequestInterceptors({ request, interceptors: internals.interceptors });
 }
 
 function throwOnErrorStatus(status: number, response: InterceptedResponse): void {
   if (status >= 200 && status < 300) return;
   if (status >= 400) Logger.warning('HTTP error response', { tag: 'network', data: { status, url: response.url } });
-  if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, requestUrl: response.url, responseBody: response.body });
+  if (status === 401) throw new NetworkError({ code: 'AUTH_EXPIRED', message: 'Unauthorized', status, responseBody: response.body, requestUrl: response.url });
   if (status === 403) throw new NetworkError({ code: 'FORBIDDEN', message: 'Forbidden', status, responseBody: response.body });
   if (status >= 400 && status < 500) throw new NetworkError({ code: 'CLIENT_ERROR', message: `Client error: ${status}`, status, responseBody: response.body });
   if (status >= 500) throw new NetworkError({ code: 'SERVER_ERROR', message: `Server error: ${status}`, status, responseBody: response.body });
