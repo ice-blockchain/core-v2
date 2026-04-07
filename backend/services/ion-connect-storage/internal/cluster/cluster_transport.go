@@ -12,7 +12,6 @@ import (
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/adnl/rldp"
-	"github.com/xssnick/tonutils-go/tl"
 )
 
 const (
@@ -64,8 +63,12 @@ type ClusterTransport struct {
 }
 
 type clusterPeer struct {
-	adnlWrapper *overlay.ADNLWrapper
-	rldpWrapper *overlay.RLDPWrapper
+	adnlWrapper   *overlay.ADNLWrapper
+	rldpWrapper   *overlay.RLDPWrapper
+	addr          string
+	pubKey        ed25519.PublicKey
+	failCount     int
+	lastReconnect time.Time
 }
 
 // NewClusterTransport creates a transport using overlay-wrapped queries.
@@ -144,82 +147,11 @@ func (t *ClusterTransport) IsClusterMember(adnlAddr []byte) bool {
 	return false
 }
 
-func (t *ClusterTransport) handleClusterQuery(ctx context.Context, rawQuery []byte) ([]byte, error) {
-	if len(rawQuery) < 4 {
-		return nil, fmt.Errorf("cluster query too short")
-	}
-
-	var headMsg CRDTHeadMsg
-	if _, err := tl.Parse(&headMsg, rawQuery, true); err == nil {
-		t.broadcaster.HandleIncomingRaw(headMsg.Data)
-		return tl.Serialize(BlockMsg{}, true)
-	}
-
-	var getBlock GetBlockMsg
-	if _, err := tl.Parse(&getBlock, rawQuery, true); err == nil {
-		blockResp := t.dagService.HandleGetBlock(getBlock.CID)
-		data, found, parseErr := ParseBlockResponse(blockResp)
-		if parseErr != nil || !found {
-			return tl.Serialize(BlockMsg{Data: nil}, true)
-		}
-		return tl.Serialize(BlockMsg{Data: data}, true)
-	}
-
-	var fwdRaw ForwardRawQueryMsg
-	if _, err := tl.Parse(&fwdRaw, rawQuery, true); err == nil {
-		if t.rawQueryHandler == nil {
-			return tl.Serialize(ForwardRawResponseMsg{}, true)
-		}
-		var bagID [32]byte
-		copy(bagID[:], fwdRaw.BagID)
-		if t.ownerChecker == nil || !t.ownerChecker.OwnsBag(bagID) {
-			t.logger.Debug("rejected forwarded raw query for non-owned bag", "bag", bagID[:4])
-			return tl.Serialize(ForwardRawResponseMsg{}, true)
-		}
-		resp, qErr := t.rawQueryHandler(ctx, bagID, fwdRaw.RawQuery)
-		if qErr != nil {
-			return tl.Serialize(ForwardRawResponseMsg{}, true)
-		}
-		return tl.Serialize(ForwardRawResponseMsg{Data: resp}, true)
-	}
-
-	var fwdReq ForwardPieceRequestMsg
-	if _, err := tl.Parse(&fwdReq, rawQuery, true); err == nil {
-		if t.pieceHandler == nil {
-			return tl.Serialize(PieceNotFoundMsg{}, true)
-		}
-		var bagID [32]byte
-		copy(bagID[:], fwdReq.BagID)
-		if t.ownerChecker == nil || !t.ownerChecker.OwnsBag(bagID) {
-			t.logger.Debug("rejected forwarded piece request for non-owned bag", "bag", bagID[:4])
-			return tl.Serialize(PieceNotFoundMsg{}, true)
-		}
-		data, proof, pErr := t.pieceHandler(ctx, bagID, int(fwdReq.PieceID))
-		if pErr != nil {
-			t.logger.Debug("forward piece handler error", "error", pErr)
-			return tl.Serialize(PieceNotFoundMsg{}, true)
-		}
-		return tl.Serialize(PieceResponseMsg{Data: data, Proof: proof}, true)
-	}
-
-	var ownerCheck OwnerCheckMsg
-	if _, err := tl.Parse(&ownerCheck, rawQuery, true); err == nil {
-		var bagID [32]byte
-		copy(bagID[:], ownerCheck.BagID)
-		owner := ""
-		if t.ownerChecker != nil {
-			owner = t.ownerChecker.Owner(bagID)
-		}
-		return tl.Serialize(OwnerCheckResponseMsg{Owner: owner}, true)
-	}
-
-	return nil, fmt.Errorf("unknown cluster query")
-}
-
 const broadcastPeerTimeout = 3 * time.Second
 
 // BroadcastToCluster sends a CRDT head notification to all cluster peers.
 // Uses ADNL overlay query with per-peer timeout to prevent goroutine leaks.
+// Tracks consecutive failures per peer and triggers reconnection for dead connections.
 func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) error {
 	t.mu.RLock()
 	peers := make(map[[32]byte]*clusterPeer, len(t.peers))
@@ -229,6 +161,8 @@ func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) 
 	t.mu.RUnlock()
 
 	var wg sync.WaitGroup
+	var reconnectMu sync.Mutex
+	var toReconnect [][32]byte
 	msg := CRDTHeadMsg{Data: data}
 	for addr, cp := range peers {
 		wg.Add(1)
@@ -244,131 +178,57 @@ func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) 
 			var ack BlockMsg
 			if err := cp.adnlWrapper.Query(peerCtx, overlay.WrapQuery(t.overlayID, msg), &ack); err != nil {
 				t.logger.Debug("broadcast failed", "peer", addr[:4], "error", err)
+				if t.trackPeerFailure(addr) {
+					reconnectMu.Lock()
+					toReconnect = append(toReconnect, addr)
+					reconnectMu.Unlock()
+				}
+			} else {
+				t.resetPeerFailures(addr)
 			}
 		}(addr, cp)
 	}
 	wg.Wait()
+	for _, addr := range toReconnect {
+		t.reconnectPeer(addr)
+	}
 	return nil
 }
 
 // FetchBlockFromPeers fetches an IPLD block from cluster peers.
-// Uses ADNL overlay query (same as tonutils-storage GetRandomPeers).
+// Tracks consecutive failures per peer and triggers reconnection for
+// persistently dead connections.
 func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []byte) ([]byte, error) {
 	t.mu.RLock()
-	defer t.mu.RUnlock()
+	peers := make(map[[32]byte]*clusterPeer, len(t.peers))
+	for k, v := range t.peers {
+		peers[k] = v
+	}
+	t.mu.RUnlock()
 
 	msg := GetBlockMsg{CID: cidBytes}
-	for addr, cp := range t.peers {
+	var toReconnect [][32]byte
+	for addr, cp := range peers {
 		fetchCtx, fetchCancel := context.WithTimeout(ctx, 3*time.Second)
 		var resp BlockMsg
 		err := cp.adnlWrapper.Query(fetchCtx, overlay.WrapQuery(t.overlayID, msg), &resp)
 		fetchCancel()
 		if err != nil {
 			t.logger.Debug("fetch block failed", "peer", addr[:4], "error", err)
+			if t.trackPeerFailure(addr) {
+				toReconnect = append(toReconnect, addr)
+			}
 			continue
 		}
+		t.resetPeerFailures(addr)
 		if len(resp.Data) > 0 {
 			return resp.Data, nil
 		}
 	}
-	return nil, fmt.Errorf("block not found on %d peers", len(t.peers))
-}
-
-// ForwardPieceViaPeer sends a ForwardPieceRequest to a specific peer
-// using RLDP over the cluster overlay. RLDP is required because piece
-// payloads (128KB) exceed the ADNL message size limit.
-func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	cp, ok := t.peers[adnlAddr]
-	if !ok {
-		return nil, nil, fmt.Errorf("peer %x not connected", adnlAddr[:4])
+	for _, addr := range toReconnect {
+		t.reconnectPeer(addr)
 	}
-
-	msg := ForwardPieceRequestMsg{BagID: bagID[:], PieceID: int32(pieceID)}
-	var resp PieceResponseMsg
-	err := cp.rldpWrapper.DoQuery(ctx, rldpMaxPieceAnswer, overlay.WrapQuery(t.overlayID, msg), &resp)
-	if err != nil {
-		return nil, nil, fmt.Errorf("forward piece query: %w", err)
-	}
-	if len(resp.Data) == 0 {
-		return nil, nil, fmt.Errorf("piece not found on owner")
-	}
-	return resp.Data, resp.Proof, nil
-}
-
-// maxForwardQuerySize is the maximum raw query payload that will be forwarded
-// to a cluster peer. Prevents amplification attacks via oversized queries.
-const maxForwardQuerySize = 64 * 1024
-
-// ForwardRawQuery forwards a raw storage query to the bag owner via the
-// cluster overlay. Uses ADNL (responses are small control messages).
-func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error) {
-	if len(rawQuery) > maxForwardQuerySize {
-		return nil, fmt.Errorf("raw query too large: %d bytes (max %d)", len(rawQuery), maxForwardQuerySize)
-	}
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-	cp, ok := t.peers[ownerADNLAddr]
-	if !ok {
-		return nil, fmt.Errorf("owner peer %x not connected", ownerADNLAddr[:4])
-	}
-
-	t.logger.Debug("forwarding raw query to owner", "owner", ownerADNLAddr[:4], "query_len", len(rawQuery))
-	msg := ForwardRawQueryMsg{BagID: bagID[:], RawQuery: rawQuery}
-
-	queryCtx, queryCancel := context.WithTimeout(ctx, 15*time.Second)
-	defer queryCancel()
-
-	var resp ForwardRawResponseMsg
-	err := cp.adnlWrapper.Query(queryCtx, overlay.WrapQuery(t.overlayID, msg), &resp)
-	if err != nil {
-		t.logger.Debug("forward raw query failed", "error", err)
-		return nil, fmt.Errorf("forward raw query: %w", err)
-	}
-	t.logger.Debug("forward raw query success", "resp_len", len(resp.Data))
-	return resp.Data, nil
-}
-
-const ownerCheckTimeout = 5 * time.Second
-
-// QueryPeerOwnership asks all connected cluster peers who they believe
-// owns a bag. Returns a slice of owner nodeIDs (one per responding peer).
-func (t *ClusterTransport) QueryPeerOwnership(ctx context.Context, bagID [32]byte) []string {
-	t.mu.RLock()
-	peers := make([]*clusterPeer, 0, len(t.peers))
-	for _, p := range t.peers {
-		peers = append(peers, p)
-	}
-	t.mu.RUnlock()
-
-	if len(peers) == 0 {
-		return nil
-	}
-
-	qCtx, cancel := context.WithTimeout(ctx, ownerCheckTimeout)
-	defer cancel()
-
-	msg := OwnerCheckMsg{BagID: bagID[:]}
-
-	var mu sync.Mutex
-	var results []string
-	var wg sync.WaitGroup
-	for _, cp := range peers {
-		wg.Add(1)
-		go func(cp *clusterPeer) {
-			defer wg.Done()
-			var resp OwnerCheckResponseMsg
-			if err := cp.adnlWrapper.Query(qCtx, overlay.WrapQuery(t.overlayID, msg), &resp); err != nil {
-				return
-			}
-			mu.Lock()
-			results = append(results, resp.Owner)
-			mu.Unlock()
-		}(cp)
-	}
-	wg.Wait()
-	return results
+	return nil, fmt.Errorf("block not found on %d peers", len(peers))
 }
 
 // ConnectToPeer establishes an ADNL connection to the remote peer using
@@ -390,6 +250,8 @@ func (t *ClusterTransport) ConnectToPeer(addr string, pubKey ed25519.PublicKey) 
 	t.peers[adnlAddr] = &clusterPeer{
 		adnlWrapper: extADNL,
 		rldpWrapper: extRLDP,
+		addr:        addr,
+		pubKey:      pubKey,
 	}
 	peerCount := len(t.peers)
 	t.mu.Unlock()

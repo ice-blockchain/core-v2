@@ -91,9 +91,8 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 		return ""
 	}
 	now := time.Now().Unix()
-	staleThreshold := now - int64(c.cfg.StaleHeartbeatTimeout.Seconds())
-	if ts < staleThreshold || ts > now+maxClockSkew {
-		c.logger.Debug("ownership claim timestamp out of bounds",
+	if ts > now+maxClockSkew {
+		c.logger.Debug("ownership claim timestamp in the future",
 			"node", nodeID, "ts", ts, "now", now)
 		return ""
 	}
