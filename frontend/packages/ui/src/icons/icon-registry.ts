@@ -2,16 +2,21 @@
 
 import type { ComponentType } from "react";
 
+import { ActionLoginLinkaccountIcon } from "./generated/ActionLoginLinkaccountIcon";
+import { ActionWalletAddpasskeyIcon } from "./generated/ActionWalletAddpasskeyIcon";
 import { ActionWalletPasskeyIcon } from "./generated/ActionWalletPasskeyIcon";
 import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
+import { BlockEyeOffIcon } from "./generated/BlockEyeOffIcon";
+import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
 import { ChannelPrivateIcon } from "./generated/ChannelPrivateIcon";
 import { ChatBubbleIcon } from "./generated/ChatBubbleIcon";
+import { ChatCreatenewIcon } from "./generated/ChatCreatenewIcon";
 import { ChatOffIcon } from "./generated/ChatOffIcon";
 import { CheckGreenIcon } from "./generated/CheckGreenIcon";
 import { CheckboxOffIcon } from "./generated/CheckboxOffIcon";
@@ -24,12 +29,16 @@ import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
+import { FeedPostIcon } from "./generated/FeedPostIcon";
+import { FeedStoriesIcon } from "./generated/FeedStoriesIcon";
 import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
+import { FieldPassIcon } from "./generated/FieldPassIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
 import { GalleryOpenIcon } from "./generated/GalleryOpenIcon";
+import { HomeOffIcon } from "./generated/HomeOffIcon";
 import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
 import { IdentityKeyNoteIcon } from "./generated/IdentityKeyNoteIcon";
 import { KeysErrorIcon } from "./generated/KeysErrorIcon";
@@ -39,6 +48,8 @@ import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
+import { PasswordCheckFailIcon } from "./generated/PasswordCheckFailIcon";
+import { PasswordCheckPassIcon } from "./generated/PasswordCheckPassIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
 import { PersonFollowingIcon } from "./generated/PersonFollowingIcon";
 import { PlusCreatechannelIcon } from "./generated/PlusCreatechannelIcon";
@@ -56,10 +67,15 @@ import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
 import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
 import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
 import { RestoreKeyIcon } from "./generated/RestoreKeyIcon";
+import { SearchChannelIcon } from "./generated/SearchChannelIcon";
+import { SearchGroupsIcon } from "./generated/SearchGroupsIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SendIcon } from "./generated/SendIcon";
 import { SheetCloseIcon } from "./generated/SheetCloseIcon";
+import { SwapIcon } from "./generated/SwapIcon";
 import { TrashIcon } from "./generated/TrashIcon";
+import { VideosTradingIcon } from "./generated/VideosTradingIcon";
+import { WalletOffIcon } from "./generated/WalletOffIcon";
 
 interface IconComponentProps {
   size?: number;
@@ -67,16 +83,21 @@ interface IconComponentProps {
 }
 
 export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
+  "action-login-linkaccount": ActionLoginLinkaccountIcon,
+  "action-wallet-addpasskey": ActionWalletAddpasskeyIcon,
   "action-wallet-passkey": ActionWalletPasskeyIcon,
   "articles": ArticlesIcon,
   "at-sign": AtSignIcon,
   "back-arrow": BackArrowIcon,
   "badge-verify": BadgeVerifyIcon,
+  "block-eye-off": BlockEyeOffIcon,
+  "block-eye-on": BlockEyeOnIcon,
   "button-next": ButtonNextIcon,
   "button-receive": ButtonReceiveIcon,
   "camera": CameraIcon,
   "channel-private": ChannelPrivateIcon,
   "chat-bubble": ChatBubbleIcon,
+  "chat-createnew": ChatCreatenewIcon,
   "chat-off": ChatOffIcon,
   "check_green": CheckGreenIcon,
   "checkbox-off": CheckboxOffIcon,
@@ -89,12 +110,16 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "close": CloseIcon,
   "danger_triangle": DangerTriangleIcon,
   "edit-link": EditLinkIcon,
+  "feed-post": FeedPostIcon,
+  "feed-stories": FeedStoriesIcon,
   "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
+  "field-pass": FieldPassIcon,
   "field-search": FieldSearchIcon,
   "gallery-open": GalleryOpenIcon,
+  "home-off": HomeOffIcon,
   "icon-identitykey": IconIdentitykeyIcon,
   "identity-key-note": IdentityKeyNoteIcon,
   "keys-error": KeysErrorIcon,
@@ -104,6 +129,8 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "manage": ManageIcon,
   "name-reserved": NameReservedIcon,
   "news": NewsIcon,
+  "password-check-fail": PasswordCheckFailIcon,
+  "password-check-pass": PasswordCheckPassIcon,
   "person-add": PersonAddIcon,
   "person-following": PersonFollowingIcon,
   "plus-createchannel": PlusCreatechannelIcon,
@@ -121,8 +148,13 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "restore-cloud": RestoreCloudIcon,
   "restore-credentials": RestoreCredentialsIcon,
   "restore-key": RestoreKeyIcon,
+  "search-channel": SearchChannelIcon,
+  "search-groups": SearchGroupsIcon,
   "search": SearchIcon,
   "send": SendIcon,
   "sheet-close": SheetCloseIcon,
+  "swap": SwapIcon,
   "trash": TrashIcon,
+  "videos-trading": VideosTradingIcon,
+  "wallet-off": WalletOffIcon,
 };

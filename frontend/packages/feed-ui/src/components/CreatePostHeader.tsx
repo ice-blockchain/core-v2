@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Icon, Text, Tooltip, useTheme } from '@ion/ui';
 import type { IconName } from '@ion/ui';
 import { translate } from '@ion/localization';
@@ -29,9 +29,14 @@ function TagPill({ iconName, label, onPress, pillRef }: TagPillProps) {
     [theme, scale],
   );
 
+  const pillContentStyle = useMemo(
+    () => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: scale(2) }),
+    [scale],
+  );
+
   return (
     <Pressable ref={pillRef} style={pillStyle} onPress={onPress} accessibilityRole="button">
-      <View style={styles.pillContent}>
+      <View style={pillContentStyle}>
         <Icon name={iconName} size={scale(16)} color={theme.colors.primaryAccent} />
         <Text variant="caption2" color={theme.colors.primaryAccent}>{label}</Text>
       </View>
@@ -74,11 +79,3 @@ export function CreatePostHeader() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  pillContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-});

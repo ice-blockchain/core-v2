@@ -9,6 +9,9 @@ const DEFAULT_AUTO_DISMISS_MS = 1500;
 const GAP = 8;
 const SCREEN_PADDING = 8;
 const HIGHLIGHT_PADDING = 4;
+const POINTER_HALF_WIDTH = 6;
+const POINTER_RIGHT_MARGIN = 25;
+const POINTER_MIN_MARGIN = 12;
 
 function useTargetMeasurement(props: Pick<TooltipProps, 'targetRef' | 'isVisible'>) {
   const [layout, setLayout] = useState<TargetLayout | null>(null);
@@ -16,7 +19,9 @@ function useTargetMeasurement(props: Pick<TooltipProps, 'targetRef' | 'isVisible
   useEffect(() => {
     if (!props.isVisible || !props.targetRef.current) return;
     // eslint-disable-next-line max-params -- measureInWindow native API requires 4 params
-    props.targetRef.current.measureInWindow((x, y, w, h) => setLayout({ x, y, width: w, height: h }));
+    props.targetRef.current.measureInWindow((x, y, w, h) => {
+      if (w > 0 && h > 0) setLayout({ x, y, width: w, height: h });
+    });
   }, [props.isVisible, props.targetRef]);
 
   return layout;
@@ -51,9 +56,9 @@ function computeTooltipPosition(layout: TargetLayout, position: 'top' | 'bottom'
 
 function computePointerOffset(layout: TargetLayout, pointerAlign: 'left' | 'center' | 'right') {
   const targetCenter = layout.x - SCREEN_PADDING + layout.width / 2;
-  if (pointerAlign === 'center') return { marginLeft: targetCenter - 6 };
-  if (pointerAlign === 'right') return { alignSelf: 'flex-end' as const, marginRight: 25 };
-  return { marginLeft: Math.max(12, targetCenter - 6) };
+  if (pointerAlign === 'center') return { marginLeft: targetCenter - POINTER_HALF_WIDTH };
+  if (pointerAlign === 'right') return { alignSelf: 'flex-end' as const, marginRight: POINTER_RIGHT_MARGIN };
+  return { marginLeft: Math.max(POINTER_MIN_MARGIN, targetCenter - POINTER_HALF_WIDTH) };
 }
 
 function TargetHighlight({ layout, children }: { layout: TargetLayout; children?: React.ReactNode }) {
@@ -65,7 +70,7 @@ function TargetHighlight({ layout, children }: { layout: TargetLayout; children?
       left: layout.x - HIGHLIGHT_PADDING,
       paddingHorizontal: HIGHLIGHT_PADDING,
       paddingVertical: HIGHLIGHT_PADDING,
-      borderRadius: 18,
+      borderRadius: theme.scale.scaleRadius(18),
       backgroundColor: theme.colors.secondaryBackground,
     }),
     [layout, theme],
