@@ -21,7 +21,6 @@ interface AppNavigatorProps {
     GetStarted: ComponentType;
     Main?: ComponentType;
     Catalog: ComponentType;
-    ChatPreview: ComponentType;
     ProxyTest?: ComponentType;
     StorageTest?: ComponentType;
     NicknameReserved: ComponentType;
@@ -44,14 +43,13 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
-function AppScreens({ screens, AuthScreen }: { screens: AppNavigatorProps['screens']; AuthScreen: ComponentType }) {
+function renderAppScreens(screens: AppNavigatorProps['screens'], AuthScreen: ComponentType) {
   return (
     <>
       <Stack.Screen name={Routes.Splash} component={screens.Splash} />
       <Stack.Screen name={Routes.GetStarted} component={screens.GetStarted} />
       {screens.Main && <Stack.Screen name={Routes.Main} component={screens.Main} />}
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
-      <Stack.Screen name={Routes.ChatPreview} component={screens.ChatPreview} />
       {screens.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />}
       {screens.StorageTest && <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />}
       <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} options={TRANSPARENT_MODAL_OPTIONS} />
@@ -71,7 +69,7 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-      <AppScreens screens={screens} AuthScreen={AuthScreen} />
+      {renderAppScreens(screens, AuthScreen)}
     </Stack.Navigator>
   );
 }

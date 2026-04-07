@@ -3,13 +3,13 @@ import { MainScreen as MainScreenCore } from "@ion/main-tabs-ui";
 import type { SheetActionHandlers } from "@ion/main-tabs-ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
 import { FeedPlaceholder } from "./placeholders/feed-placeholder";
-import { ChatPlaceholder } from "./placeholders/chat-placeholder";
+import { ChatTabScreen } from "./chat-tab-screen";
 import { WalletPlaceholder } from "./placeholders/wallet-placeholder";
 import { ProfilePlaceholder } from "./placeholders/profile-placeholder";
 
 const SCREENS = {
   Feed: FeedPlaceholder,
-  Chat: ChatPlaceholder,
+  Chat: ChatTabScreen,
   Wallet: WalletPlaceholder,
   Profile: ProfilePlaceholder,
 };

@@ -13,7 +13,7 @@ import {
   buildEmptyStateImageStyle,
   buildCenteredTextStyle,
 } from "./empty-conversations-styles";
-import { chatEmptyStateImage } from "./chat-images";
+import { chatEmptyStateImage, chatEmptyStateDarkImage } from "./chat-images";
 
 function useScreenStyles() {
   const theme = useTheme();
@@ -56,11 +56,12 @@ function ScreenHeader({ onEdit, onCompose }: HeaderProps) {
 function EmptyState({ onNewMessage }: { readonly onNewMessage?: () => void }) {
   const theme = useTheme();
   const styles = useScreenStyles();
+  const emptyStateImage = theme.colorMode === "dark" ? chatEmptyStateDarkImage : chatEmptyStateImage;
 
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyStateInner}>
-        <Image source={chatEmptyStateImage} style={styles.emptyStateImage} />
+        <Image source={emptyStateImage} style={styles.emptyStateImage} />
         <Text variant="caption2" color={theme.colors.onTertiaryBackground} style={styles.centeredText}>
           {translate("chat:emptyStateMessage")}
         </Text>

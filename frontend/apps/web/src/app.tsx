@@ -22,7 +22,6 @@ import { chatTranslations } from '@ion/chat';
 import { SplashScreen } from './components/splash-screen';
 import { IntroScreen } from './components/intro-screen';
 import { CatalogScreen } from './components/catalog-screen';
-import { ChatPreviewScreen } from './components/chat-preview-screen';
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -34,7 +33,6 @@ const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
   Catalog: CatalogScreen,
-  ChatPreview: ChatPreviewScreen,
   LinkDevice: LinkDeviceScreen,
   NicknameReserved: NicknameReservedScreen,
   VerifyPasskey: VerifyPasskeySheetScreen,

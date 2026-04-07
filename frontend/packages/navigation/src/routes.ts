@@ -3,7 +3,6 @@ export const Routes = {
   GetStarted: 'GetStarted',
   Main: 'Main',
   Catalog: 'Catalog',
-  ChatPreview: 'ChatPreview',
   ProxyTest: 'ProxyTest',
   StorageTest: 'StorageTest',
 
