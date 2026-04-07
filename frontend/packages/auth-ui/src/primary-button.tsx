@@ -13,13 +13,17 @@ interface PrimaryButtonProps {
 }
 
 export function PrimaryButton({ label, onPress, style, disabled, showArrow = true }: PrimaryButtonProps) {
-  const theme = useTheme();
-  const { colors } = theme;
+  const { colors, scale } = useTheme();
 
   const buttonStyle = useMemo(() => ({
     ...styles.button,
     backgroundColor: colors.primaryAccent,
-  }), [colors.primaryAccent]);
+    gap: scale.scaleSize(9),
+    width: scale.scaleSize(287),
+    height: scale.scaleSize(56),
+    borderRadius: scale.scaleRadius(16),
+    paddingHorizontal: scale.scaleSize(24),
+  }), [colors.primaryAccent, scale]);
 
   return (
     <Pressable
@@ -28,7 +32,7 @@ export function PrimaryButton({ label, onPress, style, disabled, showArrow = tru
       disabled={disabled}
     >
       <Text variant="body" color={colors.onPrimaryAccent}>{label}</Text>
-      {showArrow && <ArrowIcon size={15} color={colors.onPrimaryAccent} />}
+      {showArrow && <ArrowIcon size={scale.scaleSize(15)} color={colors.onPrimaryAccent} />}
     </Pressable>
   );
 }
@@ -38,11 +42,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 9,
-    width: 287,
-    height: 56,
-    borderRadius: 16,
-    paddingHorizontal: 24,
   },
   disabled: {
     opacity: 0.4,

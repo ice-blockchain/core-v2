@@ -66,11 +66,13 @@ function patchGeneratedCode(code, componentName) {
   const hasCircleImport = patched.includes("<Circle");
   const hasRectImport = patched.includes("<Rect");
   const hasGImport = patched.includes("<G");
+  const hasMaskImport = patched.includes("<Mask");
 
   const svgImports = ["Svg", "Path"]
     .concat(hasCircleImport ? ["Circle"] : [])
     .concat(hasRectImport ? ["Rect"] : [])
-    .concat(hasGImport ? ["G"] : []);
+    .concat(hasGImport ? ["G"] : [])
+    .concat(hasMaskImport ? ["Mask"] : []);
 
   const importLine = `import Svg, { ${svgImports.filter((s) => s !== "Svg").join(", ")} } from "react-native-svg";`;
 

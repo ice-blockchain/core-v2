@@ -2,20 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { DynamicSheet, InformationSheetContent } from "@ion/navigation";
-
-function SecuredByLine({ color, accentColor }: { color: string; accentColor: string }) {
-  return (
-    <View style={styles.securedByWrapper}>
-      <Text variant="body2" color={color}>
-        {translate("auth:identityKeyNameNoteSecuredBy")}
-      </Text>
-      <View style={styles.securedByBrand}>
-        <Icon name="login-identity" size={20} color={accentColor} />
-        <Text variant="caption" color={accentColor}>Identity.io</Text>
-      </View>
-    </View>
-  );
-}
+import { IdentityBrand } from "./identity-brand";
 
 function IdentityKeyNameNoteDescription() {
   const { colors } = useTheme();
@@ -25,7 +12,12 @@ function IdentityKeyNameNoteDescription() {
       <Text variant="body2" color={colors.secondaryText}>
         {translate("auth:identityKeyNameNoteDescription")}
       </Text>
-      <SecuredByLine color={colors.secondaryText} accentColor={colors.primaryAccent} />
+      <View style={styles.securedByWrapper}>
+        <Text variant="body2" color={colors.secondaryText}>
+          {translate("auth:identityKeyNameNoteSecuredBy")}
+        </Text>
+        <IdentityBrand />
+      </View>
     </View>
   );
 }
@@ -54,10 +46,5 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     alignItems: "center",
     gap: 8,
-  },
-  securedByBrand: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
   },
 });

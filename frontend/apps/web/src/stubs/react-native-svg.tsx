@@ -12,8 +12,9 @@ function Circle(props: React.SVGProps<SVGCircleElement>) { return <circle {...pr
 function G(props: React.SVGProps<SVGGElement> & { children?: React.ReactNode }) { return <g {...props} />; }
 function Defs(props: React.SVGProps<SVGDefsElement> & { children?: React.ReactNode }) { return <defs {...props} />; }
 function ClipPath(props: React.SVGProps<SVGClipPathElement> & { children?: React.ReactNode }) { return <clipPath {...props} />; }
+function Mask(props: React.SVGProps<SVGMaskElement> & { children?: React.ReactNode }) { return <mask {...props} />; }
 function Stop(props: React.SVGProps<SVGStopElement>) { return <stop {...props} />; }
 function LinearGradient(props: React.SVGProps<SVGLinearGradientElement> & { children?: React.ReactNode }) { return <linearGradient {...props} />; }
 
 export default Svg;
-export { Svg, Path, Rect, Circle, G, Defs, ClipPath, Stop, LinearGradient };
+export { Svg, Path, Rect, Circle, G, Defs, ClipPath, Mask, Stop, LinearGradient };

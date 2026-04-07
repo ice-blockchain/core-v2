@@ -16,6 +16,7 @@ export const authDE: Record<keyof typeof authEN, string> = {
   registerSubtitle:
     'Wähle ein starkes Passwort, um ein Konto zu erstellen',
   passwordsMatchLabel: 'Passwörter stimmen überein',
+  passwordMismatchError: 'Passwörter stimmen nicht überein',
   verifyPasskeyTitle: 'Mit Passkey verifizieren',
   verifyPasskeySubtitle:
     'Dein Gerät wird dich auffordern, diese Aktion mit deinem Fingerabdruck, Gesicht oder Bildschirmsperre zu bestätigen',
@@ -106,4 +107,17 @@ export const authDE: Record<keyof typeof authEN, string> = {
   identityKeyNameNoteSecuredBy:
     'Verwende ihn, um dich bei jeder App anzumelden, die gesichert ist durch',
   errorInvalidIdentityKeyName: 'Ungültiger Identitätsschlüsselname.',
+  verifyOnOtherDeviceTitle: 'Identitätsschlüssel-Verifizierung erforderlich',
+  verifyOnOtherDeviceDescription:
+    'Verifiziere den Besitz dieses Kontos, indem du im nächsten Schritt einen QR-Code mit dem Gerät scannst, auf dem dein Schlüssel gespeichert ist.',
+  cancelButton: 'Abbrechen',
+  skipButton: 'Überspringen',
+  addPasskeyCredentialsTitle: 'Passkey-Anmeldedaten hinzufügen',
+  addPasskeyCredentialsDescription:
+    'Möchtest du neue Anmeldedaten auf diesem Gerät erstellen?',
+  linkDeviceTitle: 'Neues Gerät verknüpfen',
+  linkDeviceDescription:
+    'Du greifst von einem neuen Gerät auf dein Konto zu. Um die App weiter zu nutzen, verknüpfe es bitte mit deinem Konto',
+  showPassword: 'Passwort anzeigen',
+  hidePassword: 'Passwort ausblenden',
 };

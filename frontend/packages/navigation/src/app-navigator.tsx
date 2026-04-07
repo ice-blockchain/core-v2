@@ -27,6 +27,9 @@ interface AppNavigatorProps {
     NicknameReserved: ComponentType;
     IdentityKeyNameNote: ComponentType;
     VerifyPasskey: ComponentType;
+    LinkDevice: ComponentType;
+    VerifyOnOtherDevice: ComponentType;
+    AddPasskeyCredentials: ComponentType;
   };
   authScreens: AuthScreens;
 }
@@ -64,6 +67,9 @@ export function AppNavigator({ screens, authScreens }: AppNavigatorProps) {
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={screens.IdentityKeyNameNote} options={TRANSPARENT_MODAL_OPTIONS} />
       <Stack.Screen name={Routes.Sheet.VerifyPasskey} component={screens.VerifyPasskey} options={TRANSPARENT_MODAL_OPTIONS} />
+      <Stack.Screen name={Routes.Sheet.LinkDevice} component={screens.LinkDevice} options={TRANSPARENT_MODAL_OPTIONS} />
+      <Stack.Screen name={Routes.Sheet.VerifyOnOtherDevice} component={screens.VerifyOnOtherDevice} options={TRANSPARENT_MODAL_OPTIONS} />
+      <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={screens.AddPasskeyCredentials} options={TRANSPARENT_MODAL_OPTIONS} />
     </Stack.Navigator>
   );
 }

@@ -10,14 +10,18 @@ interface SecondaryButtonProps {
 }
 
 export function SecondaryButton({ label, onPress, leftIcon }: SecondaryButtonProps) {
-  const theme = useTheme();
-  const { colors } = theme;
+  const { colors, scale } = useTheme();
 
   const buttonStyle = useMemo(() => ({
     ...styles.button,
     backgroundColor: colors.secondaryBackground,
     borderColor: colors.strokeElements,
-  }), [colors.secondaryBackground, colors.strokeElements]);
+    gap: scale.scaleSize(9),
+    width: scale.scaleSize(287),
+    height: scale.scaleSize(56),
+    borderRadius: scale.scaleRadius(16),
+    paddingHorizontal: scale.scaleSize(24),
+  }), [colors.secondaryBackground, colors.strokeElements, scale]);
 
   return (
     <Pressable style={buttonStyle} onPress={onPress}>
@@ -32,11 +36,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 9,
-    width: 287,
-    height: 56,
     borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 24,
   },
 });

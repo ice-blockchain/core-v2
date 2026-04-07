@@ -1,15 +1,21 @@
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
-import { Icon, Text, useTheme } from "@ion/ui";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
+import { IdentityBrand } from "./identity-brand";
 
 export function SecuredByFooter() {
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
+
+  const containerStyle = useMemo(() => ({
+    ...styles.container,
+    gap: scale.scaleSize(6),
+  }), [scale]);
 
   return (
-    <View style={styles.container}>
+    <View style={containerStyle}>
       <Text variant="caption" color={colors.secondaryText}>{translate("auth:securedByLabel")}</Text>
-      <Icon name="login-identity" size={20} color={colors.primaryAccent} />
-      <Text variant="caption" color={colors.primaryAccent}>Identity.io</Text>
+      <IdentityBrand />
     </View>
   );
 }
@@ -19,6 +25,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
   },
 });

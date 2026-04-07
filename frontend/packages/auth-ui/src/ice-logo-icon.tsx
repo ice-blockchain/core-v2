@@ -10,12 +10,17 @@ const ICE_LOGO_PATHS = [
   "m40.88 34.314.019.007-.035-.021-9.918-9.553-7.383-.895-.016-.01.006.009-.011-.002.017.01 4.072 6.023 13.23 4.426.032.02z",
 ] as const;
 
-export function IceLogoIcon() {
+interface IceLogoIconProps {
+  width?: number;
+  height?: number;
+}
+
+export function IceLogoIcon({ width = 44, height = 45 }: IceLogoIconProps) {
   const { colors } = useTheme();
   const fill = colors.onPrimaryAccent;
 
   return (
-    <Svg width={44} height={45} viewBox="0 0 44 45" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 44 45" fill="none">
       {ICE_LOGO_PATHS.map((d) => (
         <Path key={d.slice(0, 12)} d={d} fill={fill} />
       ))}
