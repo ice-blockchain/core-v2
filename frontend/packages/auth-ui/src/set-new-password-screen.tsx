@@ -1,8 +1,6 @@
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { translate } from "@ion/localization";
-import { useSheetScroll } from "@ion/navigation";
 import { TextField } from "@ion/ui";
 import { SheetHeader } from "./sheet-header";
 import { PrimaryButton } from "./primary-button";
@@ -108,9 +106,8 @@ function ScreenContent({ form, identityKeyName, onContinue }: {
   identityKeyName: string;
   onContinue: () => void;
 }) {
-  const sheetScroll = useSheetScroll();
   return (
-    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
       <RegisterHeader
         icon={<RegisterPasswordIcon />}
         title={translate("auth:setNewPasswordTitle")}
@@ -125,7 +122,7 @@ function ScreenContent({ form, identityKeyName, onContinue }: {
       <View style={styles.continueWrapper}>
         <PrimaryButton label={translate("auth:continueButton")} onPress={onContinue} disabled={!form.isFormValid} />
       </View>
-    </BottomSheetScrollView>
+    </ScrollView>
   );
 }
 

@@ -7,5 +7,5 @@ const splashSource: MediaViewerSource = {
 };
 
 export function SplashScreen() {
-  return <SplashScreenCore videoSource={splashSource} onComplete={() => {}} />;
+  return <SplashScreenCore videoSource={splashSource} />;
 }

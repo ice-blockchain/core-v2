@@ -9,7 +9,7 @@ import { SplashVideo } from "./splash-video";
 
 export interface SplashScreenProps {
   videoSource: MediaViewerSource;
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 function SplashFallback() {

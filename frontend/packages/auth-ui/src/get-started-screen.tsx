@@ -2,86 +2,53 @@ import { useCallback, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Icon, Text, useTheme } from "@ion/ui";
-import { useSheetScroll } from "@ion/navigation";
 import { translate } from "@ion/localization";
+import { useSheetScroll } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
-import { SecuredByFooter } from "./secured-by-footer";
-import { TermsFooter } from "./terms-footer";
+import { AuthFooter } from "./auth-footer";
 import { IceLogoIcon } from "./ice-logo-icon";
 import { CreateAccountIcon } from "./create-account-icon";
 import { IdentityKeyNameInput } from "./identity-key-name-input";
 import { useIdentityKeyValidation } from "./identity-key-rules";
 
-function useScaledHeaderStyles() {
+function useHeaderStyles() {
   const { colors, scale } = useTheme();
+
   return useMemo(() => ({
     iconCircle: {
+      ...styles.iconCircle,
       width: scale.scaleSize(65),
       height: scale.scaleSize(65),
       borderRadius: scale.scaleRadius(32.5),
-      alignItems: "center" as const,
-      justifyContent: "center" as const,
       marginBottom: scale.scaleSize(20),
       backgroundColor: colors.primaryAccent,
     },
     subtitle: {
-      textAlign: "center" as const,
+      ...styles.subtitle,
       maxWidth: scale.scaleSize(320),
-      marginBottom: scale.scaleSize(40),
+      marginTop: scale.scaleSize(8),
+      marginBottom: scale.scaleSize(56),
     },
+    logoWidth: scale.scaleSize(44),
+    logoHeight: scale.scaleSize(45),
   }), [colors.primaryAccent, scale]);
 }
 
 function GetStartedHeader() {
   const { colors } = useTheme();
-  const scaled = useScaledHeaderStyles();
+  const headerStyles = useHeaderStyles();
 
   return (
     <>
-      <View style={scaled.iconCircle}>
-        <IceLogoIcon />
+      <View style={headerStyles.iconCircle}>
+        <IceLogoIcon width={headerStyles.logoWidth} height={headerStyles.logoHeight} />
       </View>
       <Text variant="headline1" color={colors.primaryText}>{translate("auth:getStartedTitle")}</Text>
-      <Text variant="body2" color={colors.tertiaryText} style={scaled.subtitle}>
+      <Text variant="body2" color={colors.tertiaryText} style={headerStyles.subtitle}>
         {translate("auth:getStartedSubtitle")}
       </Text>
-    </>
-  );
-}
-
-interface GetStartedActionsProps {
-  identity: ReturnType<typeof useIdentityKeyValidation>;
-  onContinue: () => void;
-  onRegister: () => void;
-  onRestore: () => void;
-}
-
-function useScaledActionStyles() {
-  const { scale } = useTheme();
-  return useMemo(() => ({
-    continueWrapper: { marginTop: scale.scaleSize(16) },
-    orText: { marginVertical: scale.scaleSize(16) },
-    iconSize: scale.scaleSize(24),
-  }), [scale]);
-}
-
-function GetStartedActions({ identity, onContinue, onRegister, onRestore }: GetStartedActionsProps) {
-  const { colors } = useTheme();
-  const scaled = useScaledActionStyles();
-  const handleContinue = useCallback(() => {
-    if (identity.validate()) { onContinue(); }
-  }, [identity, onContinue]);
-
-  return (
-    <>
-      <View style={scaled.continueWrapper}>
-        <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} />
-      </View>
-      <Text variant="caption" color={colors.tertiaryText} style={scaled.orText}>{translate("auth:orDivider")}</Text>
-      <SecondaryButton label={translate("auth:registerButton")} onPress={onRegister} leftIcon={<CreateAccountIcon />} />
-      <TextButton label={translate("auth:restoreIdentityKeyButton")} leftIcon={<Icon name="restore-key" size={scaled.iconSize} />} onPress={onRestore} />
     </>
   );
 }
@@ -97,10 +64,29 @@ export interface GetStartedScreenProps {
   callbacks?: GetStartedScreenCallbacks;
 }
 
-function useGetStartedHandlers(callbacks: GetStartedScreenCallbacks | undefined, identity: ReturnType<typeof useIdentityKeyValidation>) {
+function useActionStyles() {
+  const { scale } = useTheme();
+
+  return useMemo(() => ({
+    continueWrapper: { marginTop: scale.scaleSize(16) },
+    orText: { marginVertical: scale.scaleSize(14) },
+    restoreWrapper: { marginTop: scale.scaleSize(16) },
+    iconSize: scale.scaleSize(24),
+  }), [scale]);
+}
+
+function GetStartedActions({ identity, callbacks }: {
+  identity: ReturnType<typeof useIdentityKeyValidation>;
+  callbacks: GetStartedScreenCallbacks | undefined;
+}) {
+  const { colors } = useTheme();
+  const actionStyles = useActionStyles();
+
   const handleContinue = useCallback(() => {
-    callbacks?.onNavigateToVerifyPassword(identity.value);
-  }, [callbacks, identity.value]);
+    if (identity.validate()) {
+      callbacks?.onNavigateToVerifyPassword(identity.value);
+    }
+  }, [identity, callbacks]);
 
   const handleRegister = useCallback(() => {
     callbacks?.onNavigateToRegister();
@@ -110,58 +96,89 @@ function useGetStartedHandlers(callbacks: GetStartedScreenCallbacks | undefined,
     callbacks?.onNavigateToRestore();
   }, [callbacks]);
 
-  return { handleContinue, handleRegister, handleRestore };
+  return (
+    <>
+      <View style={actionStyles.continueWrapper}>
+        <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} />
+      </View>
+      <Text variant="caption" color={colors.tertiaryText} style={actionStyles.orText}>
+        {translate("auth:orDivider")}
+      </Text>
+      <SecondaryButton
+        label={translate("auth:registerButton")} onPress={handleRegister}
+        leftIcon={<CreateAccountIcon color={colors.secondaryText} size={actionStyles.iconSize} />}
+      />
+      <View style={actionStyles.restoreWrapper}>
+        <TextButton
+          label={translate("auth:restoreIdentityKeyButton")} onPress={handleRestore}
+          leftIcon={<Icon name="restore-key" size={actionStyles.iconSize} color={colors.secondaryText} />}
+        />
+      </View>
+    </>
+  );
+}
+
+function useContentStyles() {
+  const { scale } = useTheme();
+
+  return useMemo(() => ({
+    page: { ...styles.page, paddingTop: scale.scaleSize(5) },
+    field: { width: scale.scaleSize(287) },
+  }), [scale]);
+}
+
+function GetStartedContent({ identity, callbacks }: {
+  identity: ReturnType<typeof useIdentityKeyValidation>;
+  callbacks: GetStartedScreenCallbacks | undefined;
+}) {
+  const sheetScroll = useSheetScroll();
+  const contentStyles = useContentStyles();
+
+  return (
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
+      <View style={contentStyles.page}>
+        <GetStartedHeader />
+        <IdentityKeyNameInput identity={identity} style={contentStyles.field} />
+        <GetStartedActions identity={identity} callbacks={callbacks} />
+        <AuthFooter />
+      </View>
+    </BottomSheetScrollView>
+  );
 }
 
 function useContainerStyle() {
-  const { colors } = useTheme();
-  return useMemo(() => ({ flex: 1 as const, backgroundColor: colors.secondaryBackground }), [colors]);
-}
-
-function useScaledLayoutStyles() {
-  const { scale } = useTheme();
-  return useMemo(() => ({
-    page: { ...styles.page, paddingTop: scale.scaleSize(50) },
-    field: { width: scale.scaleSize(287) },
-    footer: { ...styles.footer, gap: scale.scaleSize(12), paddingBottom: scale.scaleSize(40) },
-  }), [scale]);
+  const theme = useTheme();
+  return useMemo(
+    () => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }),
+    [theme.colors],
+  );
 }
 
 export function GetStartedScreen({ callbacks }: GetStartedScreenProps) {
   const identity = useIdentityKeyValidation(callbacks?.initialIdentityKeyName);
-  const handlers = useGetStartedHandlers(callbacks, identity);
   const containerStyle = useContainerStyle();
-  const scaled = useScaledLayoutStyles();
-  const sheetScroll = useSheetScroll();
 
   return (
     <View style={containerStyle}>
-      <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} contentContainerStyle={scaled.page} keyboardShouldPersistTaps="handled">
-        <GetStartedHeader />
-        <IdentityKeyNameInput identity={identity} style={scaled.field} />
-        <GetStartedActions
-          identity={identity}
-          onContinue={handlers.handleContinue}
-          onRegister={handlers.handleRegister}
-          onRestore={handlers.handleRestore}
-        />
-        <View style={scaled.footer}>
-          <SecuredByFooter />
-          <TermsFooter />
-        </View>
-      </BottomSheetScrollView>
+      <GetStartedContent identity={identity} callbacks={callbacks} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   page: {
     flexGrow: 1,
     alignItems: "center",
     width: "100%",
   },
-  footer: {
-    marginTop: "auto",
+  iconCircle: {
     alignItems: "center",
+    justifyContent: "center",
+  },
+  subtitle: {
+    textAlign: "center",
   },
 });
