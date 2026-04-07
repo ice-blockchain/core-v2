@@ -7,6 +7,7 @@ import type { MainShellScreens } from "./types";
 import { TabContentLayer } from "./tab-content-layer";
 import { useMainTabState } from "./use-main-tab-state";
 import { buildSheetConfigs } from "./sheet-action-configs";
+import type { SheetActionHandlers } from "./sheet-action-configs";
 import { MAIN_SHELL_NAMESPACE } from "./translations";
 
 const NS = MAIN_SHELL_NAMESPACE;
@@ -20,10 +21,15 @@ function buildTabConfigs(): readonly [BottomNavBarTabConfig, BottomNavBarTabConf
   ];
 }
 
-export function MainScreen({ screens }: { screens: MainShellScreens }) {
+interface MainScreenProps {
+  screens: MainShellScreens;
+  actionHandlers?: SheetActionHandlers;
+}
+
+export function MainScreen({ screens, actionHandlers }: MainScreenProps) {
   const theme = useTheme();
   const { activeTab, isSheetOpen, handleTabPress, handleCenterPress, handleSheetClose } = useMainTabState();
-  const sheetConfigs = useMemo(() => buildSheetConfigs(theme.colors.success), [theme.colors.success]);
+  const sheetConfigs = useMemo(() => buildSheetConfigs(theme.colors.success, actionHandlers), [theme.colors.success, actionHandlers]);
   const sheetConfig = sheetConfigs[activeTab];
   const tabConfigs = buildTabConfigs();
 

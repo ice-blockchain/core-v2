@@ -76,6 +76,9 @@ export { useNotificationBar } from "./components/useNotificationBar";
 export { notificationBarRef } from "./components/notificationBarRef";
 export type { NotificationBarItem, NotificationBarActions } from "./components/NotificationBarTypes";
 
+export { Tooltip } from "./components/Tooltip";
+export type { TooltipProps } from "./components/tooltip-types";
+
 // Icons
 export { Icon } from "./icons/Icon";
 export type { IconProps, IconName } from "./icons/Icon";

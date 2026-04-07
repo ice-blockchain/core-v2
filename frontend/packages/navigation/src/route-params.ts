@@ -22,6 +22,7 @@ export type RootStackParamList = {
   'Sheet/LinkDevice': undefined;
   'Sheet/VerifyOnOtherDevice': undefined;
   'Sheet/AddPasskeyCredentials': undefined;
+  'Sheet/CreatePost': undefined;
 };
 
 export type AuthStackParamList = {

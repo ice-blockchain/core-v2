@@ -23,6 +23,7 @@ import { CheckboxOffIcon } from "./generated/CheckboxOffIcon";
 import { CheckboxOnIcon } from "./generated/CheckboxOnIcon";
 import { CheckmarkIcon } from "./generated/CheckmarkIcon";
 import { ChevronDownIcon } from "./generated/ChevronDownIcon";
+import { ChevronRightIcon } from "./generated/ChevronRightIcon";
 import { ChevronUpIcon } from "./generated/ChevronUpIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
@@ -36,6 +37,7 @@ import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
 import { FieldPassIcon } from "./generated/FieldPassIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
+import { GalleryOpenIcon } from "./generated/GalleryOpenIcon";
 import { HomeOffIcon } from "./generated/HomeOffIcon";
 import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
 import { IdentityKeyNoteIcon } from "./generated/IdentityKeyNoteIcon";
@@ -51,6 +53,13 @@ import { PasswordCheckPassIcon } from "./generated/PasswordCheckPassIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
 import { PersonFollowingIcon } from "./generated/PersonFollowingIcon";
 import { PlusCreatechannelIcon } from "./generated/PlusCreatechannelIcon";
+import { PostBoldIcon } from "./generated/PostBoldIcon";
+import { PostEveryoneIcon } from "./generated/PostEveryoneIcon";
+import { PostItalicIcon } from "./generated/PostItalicIcon";
+import { PostLanguageIcon } from "./generated/PostLanguageIcon";
+import { PostPollIcon } from "./generated/PostPollIcon";
+import { PostSendIcon } from "./generated/PostSendIcon";
+import { PostTopicIcon } from "./generated/PostTopicIcon";
 import { ProfileCameraIcon } from "./generated/ProfileCameraIcon";
 import { ProfileNoimageIcon } from "./generated/ProfileNoimageIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
@@ -95,6 +104,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "checkbox-on": CheckboxOnIcon,
   "checkmark": CheckmarkIcon,
   "chevron-down": ChevronDownIcon,
+  "chevron-right": ChevronRightIcon,
   "chevron-up": ChevronUpIcon,
   "clock": ClockIcon,
   "close": CloseIcon,
@@ -108,6 +118,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "field-nickname": FieldNicknameIcon,
   "field-pass": FieldPassIcon,
   "field-search": FieldSearchIcon,
+  "gallery-open": GalleryOpenIcon,
   "home-off": HomeOffIcon,
   "icon-identitykey": IconIdentitykeyIcon,
   "identity-key-note": IdentityKeyNoteIcon,
@@ -123,6 +134,13 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "person-add": PersonAddIcon,
   "person-following": PersonFollowingIcon,
   "plus-createchannel": PlusCreatechannelIcon,
+  "post-bold": PostBoldIcon,
+  "post-everyone": PostEveryoneIcon,
+  "post-italic": PostItalicIcon,
+  "post-language": PostLanguageIcon,
+  "post-poll": PostPollIcon,
+  "post-send": PostSendIcon,
+  "post-topic": PostTopicIcon,
   "profile-camera": ProfileCameraIcon,
   "profile-noimage": ProfileNoimageIcon,
   "profile-save": ProfileSaveIcon,

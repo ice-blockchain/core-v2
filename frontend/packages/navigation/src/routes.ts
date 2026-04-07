@@ -15,6 +15,7 @@ export const Routes = {
     LinkDevice: 'Sheet/LinkDevice',
     VerifyOnOtherDevice: 'Sheet/VerifyOnOtherDevice',
     AddPasskeyCredentials: 'Sheet/AddPasskeyCredentials',
+    CreatePost: 'Sheet/CreatePost',
   },
 
   Auth: {

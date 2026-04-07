@@ -1,4 +1,7 @@
+import { useCallback, useMemo } from "react";
 import { MainScreen as MainScreenCore } from "@ion/main-tabs-ui";
+import type { SheetActionHandlers } from "@ion/main-tabs-ui";
+import { useAppNavigation, Routes } from "@ion/navigation";
 import { FeedPlaceholder } from "./placeholders/feed-placeholder";
 import { ChatPlaceholder } from "./placeholders/chat-placeholder";
 import { WalletPlaceholder } from "./placeholders/wallet-placeholder";
@@ -12,5 +15,16 @@ const SCREENS = {
 };
 
 export function MainScreen() {
-  return <MainScreenCore screens={SCREENS} />;
+  const navigation = useAppNavigation();
+
+  const handleCreatePost = useCallback(() => {
+    navigation.navigate(Routes.Sheet.CreatePost);
+  }, [navigation]);
+
+  const actionHandlers: SheetActionHandlers = useMemo(
+    () => ({ onCreatePost: handleCreatePost }),
+    [handleCreatePost],
+  );
+
+  return <MainScreenCore screens={SCREENS} actionHandlers={actionHandlers} />;
 }
