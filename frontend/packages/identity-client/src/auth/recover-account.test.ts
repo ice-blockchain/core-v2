@@ -83,7 +83,7 @@ function createMockDeps(challenge?: ReturnType<typeof createMockChallenge>) {
       ),
       completeRecovery: vi.fn(() =>
         Promise.resolve({
-          authentication: { token: 'new-tok', refreshToken: 'new-ref' },
+          credential: { uuid: 'cr-1', kind: 'PasswordProtectedKey', name: 'Default Credential' },
           user: { id: 'u1' },
         }),
       ),

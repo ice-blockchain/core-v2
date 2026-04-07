@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
+import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasswordIcon } from "./register-password-icon";
@@ -33,11 +33,14 @@ function usePasswordForm() {
   };
 }
 
-function useInfoPress() {
-  const appNavigation = useAppNavigation();
-  return useCallback(() => {
-    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
-  }, [appNavigation]);
+export interface RegisterScreenCallbacks {
+  onContinue: (data: { identityKeyName: string; password?: string }) => void;
+  onBack: () => void;
+  isPasskeyAvailable?: boolean;
+}
+
+export interface PasswordRegisterScreenProps {
+  callbacks?: RegisterScreenCallbacks;
 }
 
 function buildConfirmErrorProps(hasConfirmMismatch: boolean) {
@@ -75,7 +78,10 @@ function RegisterFormFields({ identity, passwordForm, contentStyles }: {
   passwordForm: ReturnType<typeof usePasswordForm>;
   contentStyles: ReturnType<typeof useContentStyles>;
 }) {
-  const handleInfoPress = useInfoPress();
+  const appNavigation = useAppNavigation();
+  const handleInfoPress = useCallback(() => {
+    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
+  }, [appNavigation]);
   const { focusedField, handlePasswordFocus, handleConfirmFocus } = useFocusedField();
   const rules = focusedField === "confirm" ? passwordForm.confirmPasswordRules : passwordForm.passwordRules;
 
@@ -136,8 +142,7 @@ function useContainerStyle() {
   );
 }
 
-export function PasswordRegisterScreen() {
-  const navigation = useAuthNavigation();
+export function PasswordRegisterScreen({ callbacks }: PasswordRegisterScreenProps) {
   const identity = useIdentityKeyValidation();
   const passwordForm = usePasswordForm();
   const containerStyle = useContainerStyle();
@@ -146,8 +151,8 @@ export function PasswordRegisterScreen() {
     const isValid = identity.value.trim().length > 0 && !identity.errorMessage;
     const canSubmit = isValid && (passwordForm.isPasswordFormValid || passwordForm.isPasswordEmpty);
     if (!canSubmit) return;
-    navigation.navigate(Routes.Auth.ProfileSetup);
-  }, [identity.value, identity.errorMessage, passwordForm.isPasswordFormValid, passwordForm.isPasswordEmpty, navigation]);
+    callbacks?.onContinue({ identityKeyName: identity.value, password: passwordForm.password });
+  }, [identity.value, identity.errorMessage, passwordForm.isPasswordFormValid, passwordForm.isPasswordEmpty, passwordForm.password, callbacks]);
 
   return (
     <View style={containerStyle}>

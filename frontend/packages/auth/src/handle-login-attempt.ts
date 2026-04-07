@@ -40,7 +40,6 @@ async function resolveLoginRoute(
     return;
   }
   if (capabilities.supportsPasskey) {
-    deps.dispatch({ type: 'GO_TO_VERIFY_PASSKEY', identityKeyName });
     await attemptPasskeyLogin(deps, identityKeyName, capabilities.supportsPassword);
     return;
   }
@@ -61,10 +60,11 @@ async function attemptPasskeyLogin(
   const { identityClient, dispatch, onAuthSuccess } = deps;
   try {
     await identityClient.loginWithPasskey(identityKeyName);
+    Logger.info('Passkey login succeeded', { tag: 'auth' });
     onAuthSuccess(identityKeyName);
   } catch (error) {
     if (isPasskeyFallbackError(error) && supportsPassword) {
-      Logger.info('Passkey login failed, falling back to password', { tag: 'auth', data: { identityKeyName } });
+      Logger.info('Passkey login failed, falling back to password', { tag: 'auth' });
       dispatch({ type: 'GO_TO_VERIFY_PASSWORD', identityKeyName });
       return;
     }

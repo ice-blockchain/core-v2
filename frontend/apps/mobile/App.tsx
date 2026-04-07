@@ -1,5 +1,7 @@
+import 'react-native-get-random-values';
+import 'fast-text-encoding';
 import type { ReactNode } from "react";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -17,7 +19,7 @@ import {
   NicknameReservedScreen,
   onboardingTranslations,
 } from "@ion/onboarding-ui";
-import { authTranslations, AddPasskeyCredentialsScreen, GetStartedScreen, IdentityKeyNameNoteScreen, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifyPasskeySheetScreen } from "@ion/auth-ui";
+import { authTranslations, GetStartedScreen, IdentityKeyNameNoteScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyPasskeySheetScreen, LinkDeviceScreen, VerifyOnOtherDeviceScreen, AddPasskeyCredentialsScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
@@ -28,6 +30,8 @@ import { CatalogScreen } from "./src/components/catalog-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
 import { MainScreen } from "./src/components/main-screen";
+import { AuthFlowScreen } from "./src/components/auth-flow-screen";
+import { identityClient } from "./src/identity-client";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -42,7 +46,6 @@ const screens = {
   GetStarted: IntroScreen,
   Main: MainScreen,
   Catalog: CatalogScreen,
-  LinkDevice: LinkDeviceScreen,
   NicknameReserved: NicknameReservedScreen,
   ProxyTest: ProxyTestScreen,
   IdentityKeyNameNote: IdentityKeyNameNoteScreen,
@@ -51,6 +54,8 @@ const screens = {
   VerifyOnOtherDevice: VerifyOnOtherDeviceScreen,
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
   CreatePost: CreatePostSheetScreen,
+  AuthFlow: AuthFlowScreen,
+  LinkDevice: LinkDeviceScreen,
 };
 
 const authScreens = {
@@ -75,11 +80,14 @@ function ThemedRoot({ children }: { children: ReactNode }) {
 
 function AppContent() {
   const navigationTheme = useNavigationTheme();
+  const users = useSyncExternalStore(identityClient.authStore.subscribe, identityClient.authStore.getSnapshot);
+  const isAuthenticated = users.length > 0;
+
   return (
     <ThemedRoot>
       <NavigationContainer theme={navigationTheme}>
         <BottomSheetModalProvider>
-          <AppNavigator screens={screens} authScreens={authScreens} />
+          <AppNavigator screens={screens} authScreens={authScreens} isAuthenticated={isAuthenticated} />
         </BottomSheetModalProvider>
       </NavigationContainer>
     </ThemedRoot>

@@ -15,31 +15,17 @@ vi.mock('@ion/auth-ui', () => ({
   isValidIdentityKeyName: (v: string) => /^[a-z0-9._-]+$/.test(v) && v.length > 0 && v.length <= 64,
 }));
 
+const CLIENT_METHODS = [
+  'getLoginCapabilities', 'loginWithPasskey', 'loginWithPassword', 'registerWithPassword',
+  'registerWithPasskey', 'logout', 'refreshToken', 'isAuthenticated', 'restoreAuth', 'getUser',
+  'verifyEarlyAccessEmail', 'listCredentials', 'createRecoveryCredentials', 'requestTwoFACode',
+  'verifyTwoFACode', 'deleteTwoFAMethod', 'deleteAccount', 'recoverAccount',
+  'getSocialProfile', 'updateSocialProfile', 'verifyNickname',
+] as const;
+
 function createMockClient(): IdentityClient {
-  return {
-    getLoginCapabilities: vi.fn(),
-    loginWithPasskey: vi.fn(),
-    loginWithPassword: vi.fn(),
-    registerWithPassword: vi.fn(),
-    registerWithPasskey: vi.fn(),
-    logout: vi.fn(),
-    refreshToken: vi.fn(),
-    isAuthenticated: vi.fn(),
-    restoreAuth: vi.fn(),
-    getUser: vi.fn(),
-    verifyEarlyAccessEmail: vi.fn(),
-    listCredentials: vi.fn(),
-    createRecoveryCredentials: vi.fn(),
-    requestTwoFACode: vi.fn(),
-    verifyTwoFACode: vi.fn(),
-    deleteTwoFAMethod: vi.fn(),
-    deleteAccount: vi.fn(),
-    recoverAccount: vi.fn(),
-    getSocialProfile: vi.fn(),
-    updateSocialProfile: vi.fn(),
-    verifyNickname: vi.fn(),
-    authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} },
-  };
+  const stubs = Object.fromEntries(CLIENT_METHODS.map((m) => [m, vi.fn()]));
+  return { ...stubs, authStore: { getSnapshot: () => [] as readonly string[], subscribe: () => () => {} } } as unknown as IdentityClient;
 }
 
 function createConfig(overrides?: Partial<AuthFlowConfig>): AuthFlowConfig {
@@ -95,7 +81,6 @@ describe('useAuthFlow', () => {
 
     await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('bob'));
 
-    expect(result.current.state.phase).toBe('verify-passkey');
     expect(config.onAuthSuccess).toHaveBeenCalledWith('bob');
   });
 
@@ -175,22 +160,6 @@ describe('useAuthFlow', () => {
     expect(config.identityClient.isAuthenticated).toHaveBeenCalledWith('alice');
   });
 
-  it('provides correct verifyPasskey props', async () => {
-    const config = createConfig();
-    vi.mocked(config.identityClient.getLoginCapabilities).mockResolvedValue({
-      identityFound: true, supportsPasskey: true, supportsPassword: false, twoFAOptionsCount: null,
-    });
-    vi.mocked(config.identityClient.loginWithPasskey).mockResolvedValue('token');
-    const { result } = renderHook(() => useAuthFlow(config));
-
-    await act(() => result.current.screenProps.getStarted.onNavigateToVerifyPassword('eve'));
-
-    expect(result.current.screenProps.verifyPasskey.identityKeyName).toBe('eve');
-    expect(result.current.screenProps.verifyPasskey.loadingElement).toBe(config.loadingElement);
-    expect(typeof result.current.screenProps.verifyPasskey.onBack).toBe('function');
-    expect(typeof result.current.screenProps.verifyPasskey.onDismiss).toBe('function');
-  });
-
   it('blocks concurrent registration calls', async () => {
     const config = createConfig();
     let resolveRegister: () => void;
@@ -227,5 +196,115 @@ describe('useAuthFlow', () => {
     await first;
 
     expect(config.identityClient.getLoginCapabilities).toHaveBeenCalledTimes(1);
+  });
+
+  it('onNavigateToRestore transitions to restore-menu phase', () => {
+    const { result } = renderHook(() => useAuthFlow(createConfig()));
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    expect(result.current.state.phase).toBe('restore-menu');
+  });
+
+  it('completes full restore flow end-to-end', async () => {
+    const config = createConfig();
+    vi.mocked(config.identityClient.recoverAccount).mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    expect(result.current.state.phase).toBe('restore-menu');
+
+    act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
+    expect(result.current.state.phase).toBe('restore-credentials');
+
+    await act(() => result.current.screenProps.restoreCredentials.onRestore({
+      identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
+    }));
+    expect(result.current.state.phase).toBe('set-new-password');
+
+    await act(() => result.current.screenProps.setNewPassword.onContinue('NewP@ss1'));
+    expect(result.current.state.isRestoreSuccessVisible).toBe(true);
+
+    act(() => result.current.screenProps.restoreSuccessModal.onLogin());
+    expect(result.current.state.phase).toBe('get-started');
+    expect(result.current.state.isRestoreSuccessVisible).toBe(false);
+    expect(result.current.state.identityKeyName).toBe('alice');
+    expect(result.current.screenProps.getStarted.initialIdentityKeyName).toBe('alice');
+  });
+
+  it('restore success onClose does not preserve identityKeyName', async () => {
+    const config = createConfig();
+    vi.mocked(config.identityClient.recoverAccount).mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
+    await act(() => result.current.screenProps.restoreCredentials.onRestore({
+      identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
+    }));
+    await act(() => result.current.screenProps.setNewPassword.onContinue('NewP@ss1'));
+
+    act(() => result.current.screenProps.restoreSuccessModal.onClose());
+    expect(result.current.state.phase).toBe('get-started');
+    expect(result.current.state.identityKeyName).toBe('');
+  });
+
+  it('shows identity key not found modal on invalid recovery credentials', async () => {
+    const config = createConfig();
+    vi.mocked(config.identityClient.recoverAccount).mockRejectedValue(
+      new IdentityError(IdentityErrorCode.INVALID_RECOVERY_CREDENTIALS, 'bad creds'),
+    );
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
+    await act(() => result.current.screenProps.restoreCredentials.onRestore({
+      identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
+    }));
+    await act(() => result.current.screenProps.setNewPassword.onContinue('NewP@ss1'));
+
+    expect(result.current.state.isIdentityKeyNotFoundVisible).toBe(true);
+  });
+
+  it('onSelectCloudRestore does not throw', () => {
+    const { result } = renderHook(() => useAuthFlow(createConfig()));
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    expect(() => result.current.screenProps.restoreMenu.onSelectCloudRestore()).not.toThrow();
+  });
+
+  it('blocks concurrent restore calls', async () => {
+    const config = createConfig();
+    let resolveRecover: () => void;
+    const pending = new Promise<void>((r) => { resolveRecover = r; });
+    vi.mocked(config.identityClient.recoverAccount).mockReturnValue(pending);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
+    await act(() => result.current.screenProps.restoreCredentials.onRestore({
+      identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
+    }));
+
+    const first = act(() => result.current.screenProps.setNewPassword.onContinue('NewP@ss1'));
+    await act(() => result.current.screenProps.setNewPassword.onContinue('NewP@ss1'));
+
+    resolveRecover!();
+    await first;
+
+    expect(config.identityClient.recoverAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it('setNewPassword.onBack navigates back to restore-credentials', async () => {
+    const config = createConfig();
+    vi.mocked(config.identityClient.recoverAccount).mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAuthFlow(config));
+
+    act(() => result.current.screenProps.getStarted.onNavigateToRestore());
+    act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
+    await act(() => result.current.screenProps.restoreCredentials.onRestore({
+      identityKeyName: 'alice', recoveryKeyId: 'key-1', recoveryCode: 'code-1',
+    }));
+    expect(result.current.state.phase).toBe('set-new-password');
+
+    act(() => result.current.screenProps.setNewPassword.onBack());
+    expect(result.current.state.phase).toBe('restore-credentials');
   });
 });

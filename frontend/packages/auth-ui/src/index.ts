@@ -1,9 +1,11 @@
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
+export type { GetStartedScreenProps, GetStartedScreenCallbacks } from "./get-started-screen";
 export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { PasskeyRegisterScreen } from "./passkey-register-screen";
 export { PasswordRegisterScreen } from "./password-register-screen";
+export type { PasswordRegisterScreenProps, RegisterScreenCallbacks } from "./password-register-screen";
 export { RestoreCloudScreen } from "./restore-cloud-screen";
 export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";

@@ -23,7 +23,7 @@ export type {
 | Type | Sync/Async | Native | Web | Use Case |
 |------|-----------|--------|-----|----------|
 | Key-Value | Sync | MMKV (encrypted) | localStorage (prefixed) | Preferences, flags, small data |
-| Secure | Async | expo-secure-store + key registry | Web Crypto AES-GCM | Tokens, keys, secrets |
+| Secure | Async | react-native-keychain + key registry | Web Crypto AES-GCM | Tokens, keys, secrets |
 | Database | Async | op-sqlite (WAL mode) | wa-sqlite (WASM) | Structured data, events, migrations |
 | Memory | Sync | Pure JS | Pure JS | Caches, short-lived data |
 
@@ -42,6 +42,7 @@ Shared logic (e.g., `run-migrations.ts`) is platform-agnostic.
 - **Namespace isolation**: Key-value storage prefixes keys with `@ion/{id}/` on web.
 - **Migration system**: Database tracks applied versions in `__migrations` table. Runs on open.
 - **Pending database (web)**: Returns a proxy that buffers operations while WASM SQLite loads.
+- **Secure storage (native)**: Uses `WHEN_PASSCODE_SET_THIS_DEVICE_ONLY` accessibility level. Registry mutations serialized via async mutex to prevent race conditions.
 - **Secure storage (web)**: AES-GCM encryption with PBKDF2-derived keys (100k iterations, SHA-256).
 - **LRU eviction**: Prefers expired entries, then lowest priority, then least recently accessed.
 - **WAL mode + foreign keys**: Enabled automatically on database open.
@@ -67,7 +68,7 @@ interface CacheOptions {
 ## Dependencies
 
 - **Downstream**: None (foundation layer)
-- **Peer deps**: `react-native-mmkv`, `expo-secure-store`, `@op-engineering/op-sqlite` (all optional)
+- **Peer deps**: `react-native-mmkv`, `react-native-keychain`, `@op-engineering/op-sqlite` (all optional)
 - **Dev deps**: `@journeyapps/wa-sqlite` (web SQLite)
 - **Upstream consumers**: `@ion/ion-connect-client`, actions, app shells
 

@@ -1,3 +1,4 @@
+import { Logger } from '@ion/diagnostics';
 import type { TokenManager } from '../token/token-manager';
 import type { InternalAuthStore } from '../auth-store';
 
@@ -12,10 +13,17 @@ export async function restoreAuth(deps: RestoreAuthDeps): Promise<void> {
 
   for (const username of trackedUsers) {
     const tokens = await deps.tokenManager.getTokens(username);
-    if (tokens) {
-      deps.authStore.addUser(username);
-    } else {
+    if (!tokens) {
+      Logger.info('Clearing tracked user with missing tokens', { tag: 'auth' });
       await deps.tokenManager.clearTokens(username);
+      continue;
     }
+    const isExpired = await deps.tokenManager.isTokenExpired(username);
+    if (isExpired) {
+      Logger.info('Clearing tracked user with expired tokens', { tag: 'auth' });
+      await deps.tokenManager.clearTokens(username);
+      continue;
+    }
+    deps.authStore.addUser(username);
   }
 }

@@ -1,61 +1,131 @@
-import type * as ExpoSecureStoreType from "expo-secure-store";
 import type { ISecureStorage } from "../types";
 
-type SecureStoreModule = typeof ExpoSecureStoreType;
+interface KeychainOptions {
+  service: string;
+  accessible?: number;
+}
 
-function getSecureStore(): SecureStoreModule {
+interface KeychainAccessible {
+  WHEN_PASSCODE_SET_THIS_DEVICE_ONLY: number;
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: number;
+}
+
+interface KeychainBackend {
+  ACCESSIBLE: KeychainAccessible;
+  getGenericPassword(options: { service: string }): Promise<false | { password: string }>;
+  setGenericPassword(username: string, password: string, options: KeychainOptions): Promise<boolean>;
+  resetGenericPassword(options: { service: string }): Promise<boolean>;
+}
+
+function loadKeychainBackend(): KeychainBackend {
   // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-  return require("expo-secure-store") as SecureStoreModule;
+  return require("react-native-keychain") as KeychainBackend;
 }
 
-const KEY_REGISTRY = "__secure_storage_keys__";
+const SERVICE_PREFIX = "ion.secure.";
+const KEY_REGISTRY_SERVICE = "ion.secure.__keys__";
 
-async function getKeyRegistry(): Promise<string[]> {
-  const raw = await getSecureStore().getItemAsync(KEY_REGISTRY);
-  if (!raw) return [];
-  return JSON.parse(raw) as string[];
+async function getKeyRegistry(keychain: KeychainBackend): Promise<string[]> {
+  const result = await keychain.getGenericPassword({ service: KEY_REGISTRY_SERVICE });
+  if (!result) return [];
+  try {
+    const parsed: unknown = JSON.parse(result.password);
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
-async function addToRegistry(key: string): Promise<void> {
-  const keys = await getKeyRegistry();
-  if (keys.includes(key)) return;
-  keys.push(key);
-  await getSecureStore().setItemAsync(KEY_REGISTRY, JSON.stringify(keys));
+interface FallbackWriteOptions {
+  keychain: KeychainBackend;
+  username: string;
+  password: string;
+  service: string;
 }
 
-async function removeFromRegistry(key: string): Promise<void> {
-  const keys = await getKeyRegistry();
+async function setWithAccessibilityFallback(options: FallbackWriteOptions): Promise<void> {
+  const { keychain, username, password, service } = options;
+  try {
+    await keychain.setGenericPassword(username, password, {
+      service,
+      accessible: keychain.ACCESSIBLE.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[SecureStorage] setGenericPassword failed for service "${service}" ` +
+      `with WHEN_PASSCODE_SET_THIS_DEVICE_ONLY (device may lack passcode): ${detail}. ` +
+      'Retrying with WHEN_UNLOCKED_THIS_DEVICE_ONLY.',
+    );
+    await keychain.setGenericPassword(username, password, {
+      service,
+      accessible: keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
+  }
+}
+
+async function saveKeyRegistry(keychain: KeychainBackend, keys: string[]): Promise<void> {
+  await setWithAccessibilityFallback({
+    keychain, username: "registry", password: JSON.stringify(keys), service: KEY_REGISTRY_SERVICE,
+  });
+}
+
+function serviceFor(key: string): string {
+  return SERVICE_PREFIX + key;
+}
+
+async function setSecureItem(keychain: KeychainBackend, key: string, value: string): Promise<void> {
+  await setWithAccessibilityFallback({ keychain, username: key, password: value, service: serviceFor(key) });
+  const keys = await getKeyRegistry(keychain);
+  if (!keys.includes(key)) {
+    keys.push(key);
+    try {
+      await saveKeyRegistry(keychain, keys);
+    } catch (registryError) {
+      await keychain.resetGenericPassword({ service: serviceFor(key) });
+      throw registryError;
+    }
+  }
+}
+
+async function removeSecureItem(keychain: KeychainBackend, key: string): Promise<void> {
+  await keychain.resetGenericPassword({ service: serviceFor(key) });
+  const keys = await getKeyRegistry(keychain);
   const filtered = keys.filter((k) => k !== key);
-  await getSecureStore().setItemAsync(KEY_REGISTRY, JSON.stringify(filtered));
+  await saveKeyRegistry(keychain, filtered);
+}
+
+async function clearSecureStorage(keychain: KeychainBackend): Promise<void> {
+  const keys = await getKeyRegistry(keychain);
+  for (const key of keys) {
+    await keychain.resetGenericPassword({ service: serviceFor(key) });
+  }
+  await keychain.resetGenericPassword({ service: KEY_REGISTRY_SERVICE });
+}
+
+function createMutex() {
+  let pending = Promise.resolve();
+  return (fn: () => Promise<void>): Promise<void> => {
+    const run = pending.then(fn, fn);
+    pending = run;
+    return run;
+  };
 }
 
 export function createSecureStorage(): ISecureStorage {
+  const keychain = loadKeychainBackend();
+  const withLock = createMutex();
   return {
     async getItem(key: string): Promise<string | null> {
-      return getSecureStore().getItemAsync(key);
+      const result = await keychain.getGenericPassword({ service: serviceFor(key) });
+      return result ? result.password : null;
     },
-
-    async setItem(key: string, value: string): Promise<void> {
-      await getSecureStore().setItemAsync(key, value);
-      await addToRegistry(key);
-    },
-
-    async removeItem(key: string): Promise<void> {
-      await getSecureStore().deleteItemAsync(key);
-      await removeFromRegistry(key);
-    },
-
+    setItem: (key: string, value: string) => withLock(() => setSecureItem(keychain, key, value)),
+    removeItem: (key: string) => withLock(() => removeSecureItem(keychain, key)),
     async hasItem(key: string): Promise<boolean> {
-      const value = await getSecureStore().getItemAsync(key);
-      return value !== null;
+      const result = await keychain.getGenericPassword({ service: serviceFor(key) });
+      return result !== false;
     },
-
-    async clear(): Promise<void> {
-      const keys = await getKeyRegistry();
-      for (const key of keys) {
-        await getSecureStore().deleteItemAsync(key);
-      }
-      await getSecureStore().deleteItemAsync(KEY_REGISTRY);
-    },
+    clear: () => withLock(() => clearSecureStorage(keychain)),
   };
 }

@@ -26,6 +26,7 @@ const mainShellEN = {
   receiveDescription: "Securely receive funds with one tap",
   swapAction: "Swap",
   swapDescription: "Swapping is even easier than it seems",
+  logOutButton: "Log out",
 };
 
 const mainShellFR = {
@@ -52,6 +53,7 @@ const mainShellFR = {
   receiveDescription: "Recevez des fonds en un seul clic",
   swapAction: "Echanger",
   swapDescription: "Echanger est encore plus simple qu'il n'y parait",
+  logOutButton: "Se deconnecter",
 };
 
 const mainShellDE = {
@@ -78,6 +80,7 @@ const mainShellDE = {
   receiveDescription: "Empfange Geld mit einem Fingertipp",
   swapAction: "Tauschen",
   swapDescription: "Tauschen ist einfacher als gedacht",
+  logOutButton: "Abmelden",
 };
 
 export const mainShellTranslations: readonly TranslationResource[] = [

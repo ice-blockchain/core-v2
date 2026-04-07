@@ -64,14 +64,14 @@ describe('handleLoginAttempt', () => {
     expect(onAuthSuccess).not.toHaveBeenCalled();
   });
 
-  it('navigates to verify-passkey and calls onAuthSuccess on passkey login', async () => {
+  it('calls onAuthSuccess on passkey login without navigating away', async () => {
     vi.mocked(client.getLoginCapabilities).mockResolvedValue({
       identityFound: true, supportsPasskey: true, supportsPassword: false, twoFAOptionsCount: null,
     });
     vi.mocked(client.loginWithPasskey).mockResolvedValue('token');
     await handleLoginAttempt(deps(), 'bob');
-    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_VERIFY_PASSKEY', identityKeyName: 'bob' });
     expect(onAuthSuccess).toHaveBeenCalledWith('bob');
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_VERIFY_PASSWORD' }));
   });
 
   it('falls back to verify-password when passkey is cancelled and password is supported', async () => {
@@ -82,7 +82,6 @@ describe('handleLoginAttempt', () => {
       new IdentityError(IdentityErrorCode.PASSKEY_CANCELLED, 'cancelled'),
     );
     await handleLoginAttempt(deps(), 'carol');
-    expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_VERIFY_PASSKEY', identityKeyName: 'carol' });
     expect(dispatch).toHaveBeenCalledWith({ type: 'GO_TO_VERIFY_PASSWORD', identityKeyName: 'carol' });
     expect(onAuthSuccess).not.toHaveBeenCalled();
   });

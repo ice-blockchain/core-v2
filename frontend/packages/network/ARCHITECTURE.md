@@ -35,6 +35,8 @@ export type { HttpClient, RequestOptions, Interceptor, TokenStorage, ... }
 10. Offline detection -> enqueue to RequestQueue (if enabled)
 ```
 
+**Logging**: Request logging records method and URL only (`Logger.info`). Headers and body are never logged to prevent credential/PII leakage. Error responses (4xx+) are logged at `Logger.warning` level.
+
 ## Architecture
 
 | Module | Responsibility |

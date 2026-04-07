@@ -1,6 +1,6 @@
 import type { HttpClient } from '@ion/network';
-import type { UserRegistrationChallenge, RegistrationResult } from '../types';
-import { validateRegistrationChallengeResponse, validateRegistrationResultResponse } from './validate-response';
+import type { UserRegistrationChallenge, RecoveryResult } from '../types';
+import { validateRegistrationChallengeResponse, validateRecoveryResultResponse } from './validate-response';
 
 interface InitRecoveryInput {
   username: string;
@@ -32,7 +32,7 @@ interface CompleteRecoveryInput {
 
 export interface RecoveryDataSource {
   initRecovery(input: InitRecoveryInput): Promise<UserRegistrationChallenge>;
-  completeRecovery(input: CompleteRecoveryInput, temporaryToken: string): Promise<RegistrationResult>;
+  completeRecovery(input: CompleteRecoveryInput, temporaryToken: string): Promise<RecoveryResult>;
 }
 
 export function createRecoveryDataSource(httpClient: HttpClient): RecoveryDataSource {
@@ -47,14 +47,14 @@ export function createRecoveryDataSource(httpClient: HttpClient): RecoveryDataSo
     },
 
     async completeRecovery(input, temporaryToken) {
-      const { body } = await httpClient.post<RegistrationResult>(
+      const { body } = await httpClient.post<RecoveryResult>(
         '/auth/recover/user',
         {
           body: input,
           headers: { Authorization: `Bearer ${temporaryToken}` },
         },
       );
-      validateRegistrationResultResponse(body);
+      validateRecoveryResultResponse(body);
       return body;
     },
   };
