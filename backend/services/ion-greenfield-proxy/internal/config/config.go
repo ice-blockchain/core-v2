@@ -35,7 +35,7 @@ const (
 	DefaultADNLConfigURL = "https://cdn.ice.io/testnet/global.config.json"
 )
 
-func Load(adnlKey, dnsKey, dnsName string) (*Config, error) {
+func Load(adnlKey string) (*Config, error) {
 	if _, err := os.Stat(".env"); err == nil {
 		_ = godotenv.Load()
 		slog.Info("loaded .env file")
