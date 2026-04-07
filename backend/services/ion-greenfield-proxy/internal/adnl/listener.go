@@ -53,7 +53,7 @@ func NewListener(cfg *config.Config, key *Key, engine *gin.Engine, logger *slog.
 		engine:         engine,
 		logger:         logger,
 		payloads:       xsync.NewMap[string, *spooledPayload](),
-		pool:           pond.NewPool(runtime.NumCPU() * 5),
+		pool:           pond.NewPool(runtime.NumCPU()*5, pond.WithQueueSize(100)),
 		maxPendingSize: defaultMaxPendingSize,
 	}
 }
@@ -194,7 +194,12 @@ func (l *Listener) handlePeer(peer adnl.Peer) error {
 						l.logger.Error("adnl: handle request", "error", err)
 					}
 				}) {
-					l.logger.Warn("worker pool full, rejecting request", "peer", peerAddr)
+					l.logger.Warn("rejecting request: submit failed", "peer", peerAddr,
+							"ctx_err", l.ctx.Err(),
+							"pool_stopped", l.pool.Stopped(),
+							"running_workers", l.pool.RunningWorkers(),
+							"waiting_tasks", l.pool.WaitingTasks(),
+						)
 					resp := Response{
 						Version:    "HTTP/1.1",
 						StatusCode: int32(http.StatusServiceUnavailable),
@@ -394,6 +399,7 @@ func (l *Listener) submitRequest(task func()) bool {
 
 	for attempt := range maxAttempts {
 		if l.ctx.Err() != nil {
+			l.logger.Debug("submitRequest: context cancelled", "error", l.ctx.Err())
 			return false
 		}
 
@@ -401,8 +407,18 @@ func (l *Listener) submitRequest(task func()) bool {
 			return true
 		}
 
+		if attempt == 0 {
+			l.logger.Warn("submitRequest: pool rejected task, retrying",
+				"running_workers", l.pool.RunningWorkers(),
+				"waiting_tasks", l.pool.WaitingTasks(),
+				"max_concurrency", l.pool.MaxConcurrency(),
+				"pool_stopped", l.pool.Stopped(),
+			)
+		}
+
 		select {
 		case <-l.ctx.Done():
+			l.logger.Debug("submitRequest: context cancelled during backoff", "error", l.ctx.Err())
 			return false
 		case <-time.After(time.Duration(50*(attempt+1)) * time.Millisecond):
 		}
