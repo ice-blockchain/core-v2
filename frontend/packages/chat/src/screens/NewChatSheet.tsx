@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -12,10 +12,19 @@ interface NewChatSheetProps {
   readonly onClose: () => void;
 }
 
-export function NewChatSheet({ isVisible, onClose }: NewChatSheetProps) {
+function useContainerStyle() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  return useMemo(() => ({
+    flex: 1,
+    paddingBottom: insets.bottom,
+    backgroundColor: theme.colors.secondaryBackground,
+  }), [insets.bottom, theme.colors.secondaryBackground]);
+}
+
+export function NewChatSheet({ isVisible, onClose }: NewChatSheetProps) {
   const modalRef = useRef<BottomSheetModal>(null);
+  const containerStyle = useContainerStyle();
 
   useEffect(() => {
     if (!isVisible) return undefined;
@@ -23,13 +32,8 @@ export function NewChatSheet({ isVisible, onClose }: NewChatSheetProps) {
     return () => cancelAnimationFrame(frame);
   }, [isVisible]);
 
-  const handleDismiss = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  const handleContentClose = useCallback(() => {
-    modalRef.current?.dismiss();
-  }, []);
+  const handleDismiss = useCallback(() => onClose(), [onClose]);
+  const handleContentClose = useCallback(() => modalRef.current?.dismiss(), []);
 
   if (!isVisible) return null;
 
@@ -44,7 +48,7 @@ export function NewChatSheet({ isVisible, onClose }: NewChatSheetProps) {
       backgroundComponent={SheetBackground}
       handleComponent={SheetHandle}
     >
-      <View style={{ flex: 1, paddingBottom: insets.bottom, backgroundColor: theme.colors.secondaryBackground }}>
+      <View style={containerStyle}>
         <NewChatSheetContent onClose={handleContentClose} />
       </View>
     </BottomSheetModal>
