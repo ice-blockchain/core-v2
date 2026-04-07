@@ -23,7 +23,12 @@ const KEY_REGISTRY_SERVICE = "ion.secure.__keys__";
 async function getKeyRegistry(keychain: KeychainBackend): Promise<string[]> {
   const result = await keychain.getGenericPassword({ service: KEY_REGISTRY_SERVICE });
   if (!result) return [];
-  return JSON.parse(result.password) as string[];
+  try {
+    const parsed: unknown = JSON.parse(result.password);
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
 async function saveKeyRegistry(keychain: KeychainBackend, keys: string[]): Promise<void> {
@@ -64,19 +69,29 @@ async function clearSecureStorage(keychain: KeychainBackend): Promise<void> {
   await keychain.resetGenericPassword({ service: KEY_REGISTRY_SERVICE });
 }
 
+function createMutex() {
+  let pending = Promise.resolve();
+  return (fn: () => Promise<void>): Promise<void> => {
+    const run = pending.then(fn, fn);
+    pending = run;
+    return run;
+  };
+}
+
 export function createSecureStorage(): ISecureStorage {
   const keychain = loadKeychainBackend();
+  const withLock = createMutex();
   return {
     async getItem(key: string): Promise<string | null> {
       const result = await keychain.getGenericPassword({ service: serviceFor(key) });
       return result ? result.password : null;
     },
-    setItem: (key: string, value: string) => setSecureItem(keychain, key, value),
-    removeItem: (key: string) => removeSecureItem(keychain, key),
+    setItem: (key: string, value: string) => withLock(() => setSecureItem(keychain, key, value)),
+    removeItem: (key: string) => withLock(() => removeSecureItem(keychain, key)),
     async hasItem(key: string): Promise<boolean> {
       const result = await keychain.getGenericPassword({ service: serviceFor(key) });
       return result !== false;
     },
-    clear: () => clearSecureStorage(keychain),
+    clear: () => withLock(() => clearSecureStorage(keychain)),
   };
 }

@@ -6,8 +6,17 @@ Authentication UI component library. Provides pre-built screens for registration
 
 ### Screens
 - `GetStartedScreen` -- Initial login with identity key entry
-- `RegisterScreen` -- Registration with password + identity key
+- `PasswordRegisterScreen` -- Password-based registration with identity key name, password + confirm, strength checklist
+- `PasskeyRegisterScreen` -- Passkey-based registration
+- `IdentityKeyNameNoteScreen` -- Identity key name informational screen
+- `RestoreMenuScreen` -- Restore method selection (cloud or credential)
+- `RestoreCredentialsScreen` -- Credential-based account restore form
+- `RestoreCloudScreen` -- Cloud-based account restore
+- `SetNewPasswordScreen` -- Set new password after credential recovery
+- `RestoreSuccessModal` -- Success confirmation after restore
+- `IdentityKeyNotFoundModal` -- Error modal for unrecognized identity key
 - `VerifyPasskeyScreen` -- Passkey verification loading state (auto-dismisses after 3s)
+- `VerifyPasskeySheetScreen` -- Passkey verification in bottom sheet
 - `VerifyPasswordBackground`, `VerifyPasswordOverlay` -- Password verification modal
 
 ### Components
@@ -30,9 +39,11 @@ Authentication UI component library. Provides pre-built screens for registration
 ## Authentication Flows
 
 ```
-GetStarted -> Register (new user)
+GetStarted -> Register (new user, password or passkey)
            -> VerifyPasskey (existing user)
            -> VerifyPassword (fallback)
+           -> RestoreMenu -> RestoreCredentials -> SetNewPassword
+                          -> RestoreCloud
 ```
 
 ## Validation Rules
@@ -66,25 +77,24 @@ GetStarted -> Register (new user)
 ```
 src/
   index.ts                          # All exports
-  Screens/
-    get-started-screen.tsx
-    register-screen.tsx
-    verify-passkey-screen.tsx
-    verify-password-screen.tsx
-  Forms/
-    register-form.tsx
-    form-input.tsx
-    password-strength-checklist.tsx
-    passkey-benefit-list.tsx
-  Buttons/
-    primary-button.tsx, secondary-button.tsx, text-button.tsx
-  Headers/
-    register-header.tsx, sheet-header.tsx
-  Footers/
-    secured-by-footer.tsx, terms-footer.tsx
-  Validation/
-    identity-key-rules.ts (+test)
-    password-rules.tsx (+test)
-  Icons/
-    [21 SVG icon components]
+  get-started-screen.tsx
+  password-register-screen.tsx
+  passkey-register-screen.tsx
+  identity-key-name-note-screen.tsx
+  restore-menu-screen.tsx
+  restore-credentials-screen.tsx
+  restore-cloud-screen.tsx
+  set-new-password-screen.tsx
+  restore-success-modal.tsx
+  identity-key-not-found-modal.tsx
+  verify-passkey-screen.tsx
+  verify-passkey-sheet-screen.tsx
+  verify-password-screen.tsx
+  primary-button.tsx, secondary-button.tsx, text-button.tsx
+  register-header.tsx, sheet-header.tsx
+  secured-by-footer.tsx, terms-footer.tsx
+  password-strength-checklist.tsx
+  identity-key-rules.ts (+test)
+  password-rules.tsx (+test)
+  [SVG icon components]
 ```

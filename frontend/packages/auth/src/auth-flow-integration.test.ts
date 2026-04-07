@@ -48,12 +48,12 @@ describe('auth flow integration: back navigation', () => {
     expect(result.current.state.phase).toBe('get-started');
   });
 
-  it('restore-credentials back is blocked by reducer guard (stays on restore-credentials)', () => {
+  it('restore-credentials back returns to restore-menu', () => {
     const { result } = renderHook(() => useAuthFlow(createConfig()));
     act(() => result.current.screenProps.getStarted.onNavigateToRestore());
     act(() => result.current.screenProps.restoreMenu.onSelectCredentialRestore());
     act(() => result.current.screenProps.restoreCredentials.onBack());
-    expect(result.current.state.phase).toBe('restore-credentials');
+    expect(result.current.state.phase).toBe('restore-menu');
   });
 
   it('set-new-password back returns to restore-credentials', async () => {

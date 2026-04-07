@@ -164,10 +164,16 @@ describe('authFlowReducer', () => {
     expect(next.isRestoreSuccessVisible).toBe(true);
   });
 
-  it('SHOW_RESTORE_SUCCESS sets flag from restore-credentials phase', () => {
-    const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials' };
+  it('SHOW_RESTORE_SUCCESS sets flag from restore-credentials phase when loading', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials', isLoading: true };
     const next = authFlowReducer(state, { type: 'SHOW_RESTORE_SUCCESS' });
     expect(next.isRestoreSuccessVisible).toBe(true);
+  });
+
+  it('SHOW_RESTORE_SUCCESS is ignored from restore-credentials when not loading', () => {
+    const state: AuthFlowState = { ...createInitialState(), phase: 'restore-credentials', isLoading: false };
+    const next = authFlowReducer(state, { type: 'SHOW_RESTORE_SUCCESS' });
+    expect(next.isRestoreSuccessVisible).toBe(false);
   });
 
   it('SHOW_RESTORE_SUCCESS is ignored from unrelated phase', () => {

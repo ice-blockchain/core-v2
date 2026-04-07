@@ -26,30 +26,10 @@ export async function handleRestoreCredentials(
       return;
     }
     await callPasskeyRecovery(identityClient, data);
-    Logger.warning('Passkey recovery succeeded', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
+    Logger.info('Passkey recovery succeeded', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
     dispatch({ type: 'SHOW_RESTORE_SUCCESS' });
   } catch (error) {
     handlePasskeyRecoveryError(dispatch, error, data);
-  } finally {
-    dispatch({ type: 'SET_LOADING', isLoading: false });
-  }
-}
-
-export interface SetNewPasswordInput {
-  identityClient: IdentityClient;
-  dispatch: (action: AuthFlowAction) => void;
-  recoveryData: { identityKeyName: string; recoveryKeyId: string; recoveryCode: string };
-}
-
-export async function handleSetNewPassword(input: SetNewPasswordInput, newPassword: string): Promise<void> {
-  const { identityClient, dispatch, recoveryData } = input;
-  dispatch({ type: 'SET_LOADING', isLoading: true });
-  try {
-    await callRecoverAccount(identityClient, recoveryData, newPassword);
-    Logger.warning('Password recovery succeeded', { tag: 'auth', data: { identityKeyName: recoveryData.identityKeyName } });
-    dispatch({ type: 'SHOW_RESTORE_SUCCESS' });
-  } catch (error) {
-    handleRecoveryError(dispatch, error, recoveryData.identityKeyName);
   } finally {
     dispatch({ type: 'SET_LOADING', isLoading: false });
   }
@@ -66,30 +46,11 @@ function callPasskeyRecovery(client: IdentityClient, data: RecoveryData): Promis
 
 function handlePasskeyRecoveryError(dispatch: Dispatch, error: unknown, data: RecoveryData): void {
   if (isPasskeyPlatformError(error)) {
-    Logger.warning('Passkey cancelled, falling back to password', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
+    Logger.info('Passkey cancelled, falling back to password', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
     dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: data.identityKeyName });
     return;
   }
   logRecoveryError(error, data.identityKeyName);
-  if (isInvalidRecoveryCredentials(error)) {
-    dispatch({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
-  } else {
-    dispatch({ type: 'SET_ERROR', error: mapIdentityError(error) });
-  }
-}
-
-function callRecoverAccount(client: IdentityClient, data: RecoveryData, newPassword: string): Promise<void> {
-  return client.recoverAccount({
-    username: data.identityKeyName,
-    recoveryCode: data.recoveryCode,
-    credentialId: data.recoveryKeyId,
-    newCredentialKind: 'PasswordProtectedKey',
-    newPassword,
-  });
-}
-
-function handleRecoveryError(dispatch: Dispatch, error: unknown, identityKeyName: string): void {
-  logRecoveryError(error, identityKeyName);
   if (isInvalidRecoveryCredentials(error)) {
     dispatch({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
   } else {

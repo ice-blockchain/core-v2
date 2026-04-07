@@ -37,7 +37,7 @@ export function authFlowReducer(state: AuthFlowState, action: AuthFlowAction): A
 function reduceRestoreActions(state: AuthFlowState, action: AuthFlowAction): AuthFlowState {
   switch (action.type) {
     case 'GO_TO_RESTORE_MENU':
-      if (state.phase !== 'get-started') return state;
+      if (state.phase !== 'get-started' && state.phase !== 'restore-credentials') return state;
       return { ...state, phase: 'restore-menu', error: null };
     case 'GO_TO_RESTORE_CREDENTIALS':
       if (state.phase !== 'restore-menu') return state;
@@ -50,6 +50,7 @@ function reduceRestoreActions(state: AuthFlowState, action: AuthFlowAction): Aut
       return { ...state, phase: 'restore-credentials', error: null, isLoading: false };
     case 'SHOW_RESTORE_SUCCESS':
       if (state.phase !== 'set-new-password' && state.phase !== 'restore-credentials') return state;
+      if (state.phase === 'restore-credentials' && !state.isLoading) return state;
       return { ...state, isRestoreSuccessVisible: true };
     case 'HIDE_RESTORE_SUCCESS':
       return { ...state, isRestoreSuccessVisible: false };

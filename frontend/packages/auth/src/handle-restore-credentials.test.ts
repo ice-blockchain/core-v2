@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IdentityClient } from '@ion/identity-client';
 import { IdentityError, IdentityErrorCode, isPasskeyAvailable } from '@ion/identity-client';
-import { handleRestoreCredentials, handleSetNewPassword } from './handle-credential-restore';
+import { handleRestoreCredentials } from './handle-restore-credentials';
 import type { AuthFlowAction } from './types';
 
 vi.mock('@ion/identity-client', async (importOriginal) => {
@@ -135,89 +135,6 @@ describe('handleRestoreCredentials', () => {
   it('resets loading to false on error', async () => {
     vi.mocked(client.recoverAccount).mockRejectedValue(new Error('fail'));
     await handleRestoreCredentials(input(), RECOVERY_DATA);
-    const lastLoadingCall = dispatch.mock.calls
-      .filter((call: unknown[]) => (call[0] as AuthFlowAction).type === 'SET_LOADING')
-      .pop();
-    expect(lastLoadingCall?.[0]).toEqual({ type: 'SET_LOADING', isLoading: false });
-  });
-});
-
-describe('handleSetNewPassword', () => {
-  let client: IdentityClient;
-  let dispatch: ReturnType<typeof vi.fn>;
-
-  beforeEach(() => {
-    client = createMockClient();
-    dispatch = vi.fn();
-  });
-
-  it('calls recoverAccount with correctly mapped input', async () => {
-    vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    expect(client.recoverAccount).toHaveBeenCalledWith({
-      username: 'alice',
-      recoveryCode: 'code-1',
-      credentialId: 'key-1',
-      newCredentialKind: 'PasswordProtectedKey',
-      newPassword: 'NewP@ss1',
-    });
-  });
-
-  it('dispatches SHOW_RESTORE_SUCCESS on success', async () => {
-    vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SHOW_RESTORE_SUCCESS' });
-  });
-
-  it('dispatches SHOW_IDENTITY_KEY_NOT_FOUND on INVALID_RECOVERY_CREDENTIALS', async () => {
-    vi.mocked(client.recoverAccount).mockRejectedValue(
-      new IdentityError(IdentityErrorCode.INVALID_RECOVERY_CREDENTIALS, 'bad creds'),
-    );
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
-  });
-
-  it('dispatches SHOW_IDENTITY_KEY_NOT_FOUND on USER_NOT_FOUND', async () => {
-    vi.mocked(client.recoverAccount).mockRejectedValue(
-      new IdentityError(IdentityErrorCode.USER_NOT_FOUND, 'not found'),
-    );
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
-  });
-
-  it('dispatches SET_ERROR on network error', async () => {
-    vi.mocked(client.recoverAccount).mockRejectedValue(
-      new IdentityError(IdentityErrorCode.NETWORK_ERROR, 'offline'),
-    );
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'SET_ERROR',
-      error: expect.objectContaining({ code: IdentityErrorCode.NETWORK_ERROR }),
-    }));
-  });
-
-  it('maps unknown errors to UNKNOWN code', async () => {
-    vi.mocked(client.recoverAccount).mockRejectedValue(new Error('unexpected'));
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'SET_ERROR',
-      error: expect.objectContaining({ code: 'UNKNOWN' }),
-    }));
-  });
-
-  it('toggles loading true then false', async () => {
-    vi.mocked(client.recoverAccount).mockResolvedValue(undefined);
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
-    const loadingCalls = dispatch.mock.calls.filter(
-      (call: unknown[]) => (call[0] as AuthFlowAction).type === 'SET_LOADING',
-    );
-    expect(loadingCalls[0]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: true });
-    expect(loadingCalls[loadingCalls.length - 1]?.[0]).toEqual({ type: 'SET_LOADING', isLoading: false });
-  });
-
-  it('resets loading to false on error', async () => {
-    vi.mocked(client.recoverAccount).mockRejectedValue(new Error('fail'));
-    await handleSetNewPassword({ identityClient: client, dispatch, recoveryData: RECOVERY_DATA }, 'NewP@ss1');
     const lastLoadingCall = dispatch.mock.calls
       .filter((call: unknown[]) => (call[0] as AuthFlowAction).type === 'SET_LOADING')
       .pop();

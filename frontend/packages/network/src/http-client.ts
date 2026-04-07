@@ -114,11 +114,11 @@ async function buildInterceptedRequest(context: RequestContext): Promise<Interce
   const fullUrl = internals.baseUrl ? `${internals.baseUrl.replace(/\/$/, '')}/${url.replace(/^\//, '')}` : url;
   const request: InterceptedRequest = { url: fullUrl, method, headers: { ...internals.defaultHeaders, ...options?.headers }, body: options?.body };
   if (!internals.interceptors?.length) {
-    Logger.warning('HTTP request', { tag: 'network', data: { method: request.method, url: request.url } });
+    Logger.info('HTTP request', { tag: 'network', data: { method: request.method, url: request.url } });
     return request;
   }
   const intercepted = await runRequestInterceptors({ request, interceptors: internals.interceptors });
-  Logger.warning('HTTP request', { tag: 'network', data: { method: intercepted.method, url: intercepted.url } });
+  Logger.info('HTTP request', { tag: 'network', data: { method: intercepted.method, url: intercepted.url } });
   return intercepted;
 }
 

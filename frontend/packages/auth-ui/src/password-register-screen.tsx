@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import type { ViewStyle } from "react-native";
 import { Pressable, StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { TextField, useTheme } from "@ion/ui";
@@ -44,6 +45,17 @@ function useRegisterPasswordForm() {
 }
 
 type FormState = ReturnType<typeof useRegisterPasswordForm>;
+type ScaledStyles = ReturnType<typeof useScaledStyles>;
+
+function useScaledStyles(scaleSize: (n: number) => number) {
+  return useMemo(() => ({
+    formContainer: { marginTop: scaleSize(24), gap: scaleSize(16) } as ViewStyle,
+    field: { width: scaleSize(287) } as ViewStyle,
+    checklist: { marginTop: scaleSize(16), width: scaleSize(287) } as ViewStyle,
+    continueWrapper: { marginTop: scaleSize(24) } as ViewStyle,
+    footer: { marginTop: scaleSize(40), alignItems: "center" as const, gap: scaleSize(12), paddingBottom: scaleSize(40) } as ViewStyle,
+  }), [scaleSize]);
+}
 
 interface PasswordFieldProps {
   label: string;
@@ -51,9 +63,10 @@ interface PasswordFieldProps {
   onChangeText: (v: string) => void;
   show: boolean;
   onToggle: () => void;
+  fieldStyle: ViewStyle;
 }
 
-function PasswordField({ label, value, onChangeText, show, onToggle }: PasswordFieldProps) {
+function PasswordField({ label, value, onChangeText, show, onToggle, fieldStyle }: PasswordFieldProps) {
   return (
     <TextField
       label={label}
@@ -64,12 +77,12 @@ function PasswordField({ label, value, onChangeText, show, onToggle }: PasswordF
       suffixIcon={<Pressable onPress={onToggle}><EyeIcon isOff={!show} /></Pressable>}
       isSecureTextEntry={!show}
       textInputProps={{ textContentType: "oneTimeCode", autoComplete: "off", autoCorrect: false }}
-      style={styles.field}
+      style={fieldStyle}
     />
   );
 }
 
-function IdentityKeyField({ form }: { form: FormState }) {
+function IdentityKeyField({ form, fieldStyle }: { form: FormState; fieldStyle: ViewStyle }) {
   const errorProps = form.identityKeyError
     ? { state: "error" as const, errorMessage: form.identityKeyError }
     : {};
@@ -82,21 +95,22 @@ function IdentityKeyField({ form }: { form: FormState }) {
       hasPrefixDivider
       suffixIcon={<InfoIcon />}
       {...errorProps}
-      style={styles.field}
+      style={fieldStyle}
     />
   );
 }
 
-function RegisterFormFields({ form }: { form: FormState }) {
+function RegisterFormFields({ form, scaled }: { form: FormState; scaled: ScaledStyles }) {
   return (
-    <View style={styles.formContainer}>
-      <IdentityKeyField form={form} />
+    <View style={scaled.formContainer}>
+      <IdentityKeyField form={form} fieldStyle={scaled.field} />
       <PasswordField
         label={translate("auth:passwordLabel")}
         value={form.password}
         onChangeText={form.setPassword}
         show={form.showPassword}
         onToggle={form.toggleShowPassword}
+        fieldStyle={scaled.field}
       />
       <PasswordField
         label={translate("auth:confirmPasswordLabel")}
@@ -104,12 +118,13 @@ function RegisterFormFields({ form }: { form: FormState }) {
         onChangeText={form.setConfirmPassword}
         show={form.showConfirm}
         onToggle={form.toggleShowConfirm}
+        fieldStyle={scaled.field}
       />
     </View>
   );
 }
 
-function RegisterContent({ form, onContinue }: { form: FormState; onContinue: () => void }) {
+function RegisterContent({ form, onContinue, scaled }: { form: FormState; onContinue: () => void; scaled: ScaledStyles }) {
   const sheetScroll = useSheetScroll();
   return (
     <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
@@ -118,16 +133,16 @@ function RegisterContent({ form, onContinue }: { form: FormState; onContinue: ()
         title={translate("auth:registerTitle")}
         subtitle={translate("auth:registerSubtitle")}
       />
-      <RegisterFormFields form={form} />
-      <View style={styles.checklist}>
+      <RegisterFormFields form={form} scaled={scaled} />
+      <View style={scaled.checklist}>
         <PasswordStrengthChecklist
           rules={[...form.passwordRules, { label: translate("auth:passwordsMatchLabel"), isMet: form.isPasswordMatch }]}
         />
       </View>
-      <View style={styles.continueWrapper}>
+      <View style={scaled.continueWrapper}>
         <PrimaryButton label={translate("auth:continueButton")} onPress={onContinue} disabled={!form.isFormValid} />
       </View>
-      <View style={styles.footer}>
+      <View style={scaled.footer}>
         <SecuredByFooter />
         <TermsFooter />
       </View>
@@ -147,7 +162,8 @@ export interface PasswordRegisterScreenProps {
 
 export function PasswordRegisterScreen({ callbacks }: PasswordRegisterScreenProps) {
   const form = useRegisterPasswordForm();
-  const { colors } = useTheme();
+  const { colors, scale } = useTheme();
+  const scaled = useScaledStyles(scale.scaleSize);
 
   const containerStyle = useMemo(
     () => ({ flex: 1 as const, backgroundColor: colors.secondaryBackground }),
@@ -161,7 +177,7 @@ export function PasswordRegisterScreen({ callbacks }: PasswordRegisterScreenProp
 
   return (
     <View style={containerStyle}>
-      <RegisterContent form={form} onContinue={handleContinue} />
+      <RegisterContent form={form} onContinue={handleContinue} scaled={scaled} />
     </View>
   );
 }
@@ -171,25 +187,5 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     width: "100%",
-  },
-  formContainer: {
-    marginTop: 24,
-    gap: 16,
-  },
-  field: {
-    width: 287,
-  },
-  checklist: {
-    marginTop: 16,
-    width: 287,
-  },
-  continueWrapper: {
-    marginTop: 24,
-  },
-  footer: {
-    marginTop: 40,
-    alignItems: "center",
-    gap: 12,
-    paddingBottom: 40,
   },
 });

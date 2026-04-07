@@ -5,7 +5,8 @@ import { authFlowReducer, createInitialState } from './auth-flow-reducer';
 import { handleLoginAttempt } from './handle-login-attempt';
 import { handleRegister } from './handle-register';
 import { handlePasswordLogin } from './handle-password-login';
-import { handleRestoreCredentials, handleSetNewPassword } from './handle-credential-restore';
+import { handleRestoreCredentials } from './handle-restore-credentials';
+import { handleSetNewPassword } from './handle-set-new-password';
 
 interface UseAuthFlowResult {
   state: AuthFlowState;
@@ -134,7 +135,11 @@ function buildSetNewPasswordProps(input: RestorePropsInput) {
     },
     onContinue: (password: string) => restoreGuard(() => {
       const rd = recoveryDataRef.current;
-      if (!rd) return Promise.resolve();
+      if (!rd) {
+        deps.dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', userMessage: 'Recovery session expired. Please try again.' } });
+        deps.dispatch({ type: 'GO_TO_GET_STARTED' });
+        return Promise.resolve();
+      }
       return handleSetNewPassword({ identityClient: deps.identityClient, dispatch: deps.dispatch, recoveryData: rd }, password);
     }),
   };
