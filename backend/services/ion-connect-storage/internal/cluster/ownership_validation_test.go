@@ -172,6 +172,36 @@ func TestOwnerRejectsFutureTimestampOwnership(t *testing.T) {
 	require.Equal(t, "", coord.Owner(bagID))
 }
 
+func TestNodeADNLAddressRejectsForgedNodeInfo(t *testing.T) {
+	coord := newTestCoordinator(t, "local")
+	ctx := context.Background()
+
+	// Write unsigned/forged nodeinfo for a victim node.
+	forgedInfo := NodeInfo{ADNLAddress: "aaaa", IP: "6.6.6.6", Port: 9999}
+	raw, err := MarshalNodeInfo(forgedInfo)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("victim")), raw))
+
+	// NodeADNLAddress must reject forged (unsigned) nodeinfo.
+	_, _, _, found := coord.NodeADNLAddress("victim")
+	require.False(t, found, "forged nodeinfo must be rejected")
+}
+
+func TestIsRegisteredNodeRejectsForgedNodeInfo(t *testing.T) {
+	coord := newTestCoordinator(t, "local")
+	ctx := context.Background()
+
+	// Write unsigned nodeinfo with attacker's ADNL address.
+	forgedInfo := NodeInfo{ADNLAddress: hexEncode([]byte{0xde, 0xad}), IP: "6.6.6.6"}
+	raw, err := MarshalNodeInfo(forgedInfo)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("attacker")), raw))
+
+	var adnlAddr [32]byte
+	copy(adnlAddr[:2], []byte{0xde, 0xad})
+	require.False(t, coord.IsRegisteredNode(adnlAddr), "forged nodeinfo must not pass membership check")
+}
+
 func TestNodeInfoRejectsOverwrittenPublicKey(t *testing.T) {
 	_, victimPriv, _ := ed25519.GenerateKey(rand.Reader)
 	_, attackerPriv, _ := ed25519.GenerateKey(rand.Reader)

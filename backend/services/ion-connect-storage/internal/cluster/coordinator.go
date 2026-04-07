@@ -62,11 +62,12 @@ type Coordinator struct {
 	broadcaster    *ADNLBroadcaster
 	dagService     *ADNLDAGService
 	pebbleDS       *PebbleDatastore
-	pieceForwarder *PieceForwarder
-	transport      *ClusterTransport
+	pieceForwarder atomic.Pointer[PieceForwarder]
+	transport      atomic.Pointer[ClusterTransport]
 	nodeID         string
 	ownedCountMu   sync.Mutex
 	ownedCount     atomic.Int64
+	nodeInfoMu     sync.RWMutex
 	metrics        *ClusterMetrics
 	logger         *slog.Logger
 	cfg            CoordinatorConfig
@@ -78,29 +79,30 @@ type Coordinator struct {
 
 // ForwardGetPiece delegates to the piece forwarder.
 func (c *Coordinator) ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
-	if c.pieceForwarder == nil {
+	f := c.pieceForwarder.Load()
+	if f == nil {
 		return nil, nil, fmt.Errorf("piece forwarder not configured")
 	}
-	return c.pieceForwarder.ForwardGetPiece(ctx, bagID, pieceID)
+	return f.ForwardGetPiece(ctx, bagID, pieceID)
 }
 
 // ForwardRawQuery delegates to the piece forwarder.
 func (c *Coordinator) ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error) {
-	if c.pieceForwarder == nil {
+	f := c.pieceForwarder.Load()
+	if f == nil {
 		return nil, fmt.Errorf("piece forwarder not configured")
 	}
-	return c.pieceForwarder.ForwardRawQuery(ctx, bagID, rawQuery)
+	return f.ForwardRawQuery(ctx, bagID, rawQuery)
 }
 
 // SetPieceForwarder configures the piece forwarder for this coordinator.
 func (c *Coordinator) SetPieceForwarder(forwarder *PieceForwarder) {
-	c.pieceForwarder = forwarder
+	c.pieceForwarder.Store(forwarder)
 }
 
 // SetTransport wires the cluster transport for CRDT broadcast and block exchange.
-// Must be called before Start().
 func (c *Coordinator) SetTransport(transport *ClusterTransport) {
-	c.transport = transport
+	c.transport.Store(transport)
 	c.broadcaster.peer = transport
 	c.dagService.fetcher = transport
 	transport.SetMemberResolver(c)
@@ -108,7 +110,7 @@ func (c *Coordinator) SetTransport(transport *ClusterTransport) {
 
 // Transport returns the cluster transport (for adding peers, etc).
 func (c *Coordinator) Transport() *ClusterTransport {
-	return c.transport
+	return c.transport.Load()
 }
 
 // NewCoordinator creates a cluster coordinator. Call Start() to begin operation.
@@ -219,6 +221,9 @@ func (c *Coordinator) IsRegisteredNode(adnlAddr [32]byte) bool {
 		if r.Error != nil {
 			continue
 		}
+		if _, verifyErr := VerifyNodeInfo(r.Value); verifyErr != nil {
+			continue
+		}
 		info, err := UnmarshalNodeInfo(r.Value)
 		if err != nil {
 			continue
@@ -232,6 +237,8 @@ func (c *Coordinator) IsRegisteredNode(adnlAddr [32]byte) bool {
 
 // UpdateNodeInfo updates the ADNL address info used in publishNodeInfo.
 func (c *Coordinator) UpdateNodeInfo(adnlAddress, ip string, port int) {
+	c.nodeInfoMu.Lock()
+	defer c.nodeInfoMu.Unlock()
 	c.cfg.ADNLAddress = adnlAddress
 	c.cfg.ExternalIP = ip
 	c.cfg.ExternalPort = port
@@ -248,11 +255,13 @@ func (c *Coordinator) DAGService() *ADNLDAGService {
 }
 
 func (c *Coordinator) publishNodeInfo(ctx context.Context) error {
+	c.nodeInfoMu.RLock()
 	info := NodeInfo{
 		ADNLAddress: c.cfg.ADNLAddress,
 		IP:          c.cfg.ExternalIP,
 		Port:        c.cfg.ExternalPort,
 	}
+	c.nodeInfoMu.RUnlock()
 	data, err := MarshalSignedNodeInfo(info, c.cfg.PrivateKey)
 	if err != nil {
 		return err

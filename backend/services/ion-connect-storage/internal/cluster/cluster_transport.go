@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
@@ -41,25 +42,32 @@ type PieceHandler func(ctx context.Context, bagID [32]byte, pieceID int) (data [
 // RawQueryHandler handles a raw storage overlay query locally.
 type RawQueryHandler func(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
 
+// handlerBundle holds all handler references that are set before the server
+// starts accepting queries. Stored as a single atomic.Pointer to avoid
+// data races between setter goroutines and query handler goroutines.
+type handlerBundle struct {
+	pieceHandler    PieceHandler
+	rawQueryHandler RawQueryHandler
+	ownerChecker    BagOwnershipChecker
+	memberResolver  ClusterMemberResolver
+}
+
 // ClusterTransport handles ADNL communication for the cluster.
 // Uses a dedicated client gateway to avoid handler conflicts with
 // the server-side connection handler (both create overlay/RLDP stacks
 // on ADNL peers, and creating two stacks on the same peer overwrites
 // the custom message handler, breaking RLDP).
 type ClusterTransport struct {
-	serverGateway   *adnl.Gateway
-	clientGateway   *adnl.Gateway
-	server          *ionadnl.Server
-	broadcaster     *ADNLBroadcaster
-	dagService      *ADNLDAGService
-	pieceHandler    PieceHandler
-	rawQueryHandler RawQueryHandler
-	ownerChecker    BagOwnershipChecker
-	memberResolver  ClusterMemberResolver
-	overlayID       []byte
-	mu              sync.RWMutex
-	peers           map[[32]byte]*clusterPeer
-	logger          *slog.Logger
+	serverGateway *adnl.Gateway
+	clientGateway *adnl.Gateway
+	server        *ionadnl.Server
+	broadcaster   *ADNLBroadcaster
+	dagService    *ADNLDAGService
+	handlers      atomic.Pointer[handlerBundle]
+	overlayID     []byte
+	mu            sync.RWMutex
+	peers         map[[32]byte]*clusterPeer
+	logger        *slog.Logger
 }
 
 type clusterPeer struct {
@@ -96,19 +104,42 @@ func NewClusterTransport(
 	}, nil
 }
 
+// loadHandlers returns the current handler bundle, never nil.
+func (t *ClusterTransport) loadHandlers() handlerBundle {
+	if h := t.handlers.Load(); h != nil {
+		return *h
+	}
+	return handlerBundle{}
+}
+
+// updateHandlers applies a mutation to the handler bundle atomically.
+func (t *ClusterTransport) updateHandlers(fn func(*handlerBundle)) {
+	for {
+		old := t.handlers.Load()
+		var b handlerBundle
+		if old != nil {
+			b = *old
+		}
+		fn(&b)
+		if t.handlers.CompareAndSwap(old, &b) {
+			return
+		}
+	}
+}
+
 // SetPieceHandler registers the handler for forwarded piece requests.
 func (t *ClusterTransport) SetPieceHandler(h PieceHandler) {
-	t.pieceHandler = h
+	t.updateHandlers(func(b *handlerBundle) { b.pieceHandler = h })
 }
 
 // SetRawQueryHandler registers the handler for forwarded raw storage queries.
 func (t *ClusterTransport) SetRawQueryHandler(h RawQueryHandler) {
-	t.rawQueryHandler = h
+	t.updateHandlers(func(b *handlerBundle) { b.rawQueryHandler = h })
 }
 
 // SetOwnershipChecker registers the checker used to validate forwarded queries.
 func (t *ClusterTransport) SetOwnershipChecker(c BagOwnershipChecker) {
-	t.ownerChecker = c
+	t.updateHandlers(func(b *handlerBundle) { b.ownerChecker = c })
 }
 
 // SetMemberResolver registers a resolver for checking cluster membership
@@ -116,7 +147,7 @@ func (t *ClusterTransport) SetOwnershipChecker(c BagOwnershipChecker) {
 // the local connected peers map (e.g., inbound connection before
 // bidirectional setup completes).
 func (t *ClusterTransport) SetMemberResolver(r ClusterMemberResolver) {
-	t.memberResolver = r
+	t.updateHandlers(func(b *handlerBundle) { b.memberResolver = r })
 }
 
 // RegisterWithServer registers the cluster overlay query handler
@@ -141,8 +172,9 @@ func (t *ClusterTransport) IsClusterMember(adnlAddr []byte) bool {
 	if ok {
 		return true
 	}
-	if t.memberResolver != nil {
-		return t.memberResolver.IsRegisteredNode(addr)
+	h := t.loadHandlers()
+	if h.memberResolver != nil {
+		return h.memberResolver.IsRegisteredNode(addr)
 	}
 	return false
 }

@@ -179,6 +179,10 @@ func (c *Coordinator) NodeADNLAddress(nodeID string) ([32]byte, string, int, boo
 	if err != nil {
 		return [32]byte{}, "", 0, false
 	}
+	if _, verifyErr := VerifyNodeInfo(val); verifyErr != nil {
+		c.logger.Debug("nodeinfo verification failed in NodeADNLAddress", "node", nodeID, "error", verifyErr)
+		return [32]byte{}, "", 0, false
+	}
 	info, err := UnmarshalNodeInfo(val)
 	if err != nil {
 		return [32]byte{}, "", 0, false

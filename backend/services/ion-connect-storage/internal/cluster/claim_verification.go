@@ -31,8 +31,8 @@ func (c *Coordinator) verifyClaim(ctx context.Context, bagID [32]byte) bool {
 			return false
 		}
 	}
-	if c.transport != nil && c.ActiveNodeCount() > 1 {
-		if !c.quorumConfirmOwnership(ctx, bagID) {
+	if t := c.transport.Load(); t != nil && c.ActiveNodeCount() > 1 {
+		if !c.quorumConfirmOwnership(ctx, t, bagID) {
 			return false
 		}
 	}
@@ -41,8 +41,8 @@ func (c *Coordinator) verifyClaim(ctx context.Context, bagID [32]byte) bool {
 
 // quorumConfirmOwnership asks connected peers who they believe owns a bag.
 // Returns true only if a majority of responding peers agree this node owns it.
-func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, bagID [32]byte) bool {
-	results := c.transport.QueryPeerOwnership(ctx, bagID)
+func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, t *ClusterTransport, bagID [32]byte) bool {
+	results := t.QueryPeerOwnership(ctx, bagID)
 	if len(results) == 0 {
 		c.logger.Warn("quorum check: no peers responded", "bag", bagID[:4])
 		return false
