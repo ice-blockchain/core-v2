@@ -1,0 +1,94 @@
+name: Go Test
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "**/go.mod"
+      - "**/go.sum"
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "**/go.mod"
+      - "**/go.sum"
+
+concurrency:
+  group: ci-backend-go-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    if: github.event_name == 'push' || !github.event.pull_request.draft
+    runs-on: ion-runner
+    outputs:
+      modules: ${{ steps.find.outputs.modules }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Discover Go modules
+        id: find
+        run: |
+          modules=$(find . -name 'go.mod' -type f -exec dirname {} \; | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "modules=$modules" >> "$GITHUB_OUTPUT"
+          echo "Discovered modules: $modules"
+
+  test:
+    needs: discover
+    if: needs.discover.outputs.modules != '[]'
+    runs-on: ion-runner
+    strategy:
+      fail-fast: true
+      matrix:
+        module: ${{ fromJson(needs.discover.outputs.modules) }}
+
+    name: "test (${{ matrix.module }})"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup GO
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          cache: false
+
+      - name: Cache Go modules and build
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: go-${{ hashFiles(format('{0}/go.sum', matrix.module)) }}
+          restore-keys: |
+            go-
+
+      - name: Run tests
+        working-directory: ${{ matrix.module }}
+        run: |
+          if grep -q 'gotestsum' go.mod; then
+            echo "→ gotestsum found in go.mod, using go tool gotestsum"
+            go tool gotestsum -f testname \
+              --packages="./..." \
+              --rerun-fails-run-root-test \
+              -- -timeout 20m -cover -covermode atomic
+          else
+            echo "→ gotestsum not found, falling back to go test"
+            go test ./... -v
+          fi

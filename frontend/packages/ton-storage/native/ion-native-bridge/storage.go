@@ -9,8 +9,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"fmt"
-	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,11 +29,11 @@ import (
 var (
 	storageMu        sync.Mutex
 	storageApiServer *api.Server
-	storageHttpSrv   *http.Server
 	storageDatabase  *leveldb.DB
 	storageGateMain  *adnl.Gateway
 	storageGateDHT   *adnl.Gateway
 	storageRunning   bool
+	storageServeErr  chan error
 )
 
 //export StartStorage
@@ -94,7 +92,13 @@ func CheckStorage() (result *C.char) {
 	if !storageRunning {
 		return C.CString("ERR: Storage not running")
 	}
-	return C.CString("OK")
+	select {
+	case err := <-storageServeErr:
+		storageRunning = false
+		return C.CString(fmt.Sprintf("ERR: HTTP server stopped: %v", err))
+	default:
+		return C.CString("OK")
+	}
 }
 
 func validateDbPath(dbPath string) error {
@@ -170,13 +174,11 @@ func startStorageInternal(apiPort int, dbPath string, globalConfigJSON string) (
 
 	storageApiServer = api.NewServer(connector, store, cfg.DownloadsPath)
 	addr := fmt.Sprintf("127.0.0.1:%d", apiPort)
-	ln, err := net.Listen("tcp", addr)
-	if err != nil {
-		cleanupStorage()
-		return "", fmt.Errorf("listen %s: %w", addr, err)
-	}
-	storageHttpSrv = &http.Server{Handler: storageApiServer}
-	go storageHttpSrv.Serve(ln)
+
+	storageServeErr = make(chan error, 1)
+	go func() {
+		storageServeErr <- storageApiServer.Start(addr)
+	}()
 
 	storageRunning = true
 	return "OK", nil
@@ -191,12 +193,6 @@ func loadStorageConfig(dbPath string, jsonData string) (*liteclient.GlobalConfig
 }
 
 func cleanupStorage() {
-	if storageHttpSrv != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		storageHttpSrv.Shutdown(ctx)
-		storageHttpSrv = nil
-	}
 	storageApiServer = nil
 	if storageDatabase != nil {
 		storageDatabase.Close()
