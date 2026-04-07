@@ -52,15 +52,11 @@ export function AppNavigator({ screens, authScreens, isAuthenticated }: AppNavig
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
       <Stack.Screen name={Routes.Splash} component={screens.Splash} />
       <Stack.Screen name={Routes.GetStarted} component={screens.GetStarted} />
-      {screens.Main && isAuthenticated && (
-        <Stack.Screen name={Routes.Main} component={screens.Main} />
-      )}
+      {screens.Main && isAuthenticated && <Stack.Screen name={Routes.Main} component={screens.Main} />}
       <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
       {screens.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />}
       {screens.StorageTest && <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />}
-      {screens.AuthFlow && (
-        <Stack.Screen name={Routes.AuthFlow} component={screens.AuthFlow} options={TRANSPARENT_MODAL_OPTIONS} />
-      )}
+      {screens.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={screens.AuthFlow} options={TRANSPARENT_MODAL_OPTIONS} />}
       <Stack.Group screenOptions={TRANSPARENT_MODAL_OPTIONS}>
         <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} />
         <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} />

@@ -1,7 +1,7 @@
 import 'react-native-get-random-values';
 import 'fast-text-encoding';
 import type { ReactNode } from "react";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -31,6 +31,7 @@ import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
 import { MainScreen } from "./src/components/main-screen";
 import { AuthFlowScreen } from "./src/components/auth-flow-screen";
+import { identityClient } from "./src/identity-client";
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -79,11 +80,14 @@ function ThemedRoot({ children }: { children: ReactNode }) {
 
 function AppContent() {
   const navigationTheme = useNavigationTheme();
+  const users = useSyncExternalStore(identityClient.authStore.subscribe, identityClient.authStore.getSnapshot);
+  const isAuthenticated = users.length > 0;
+
   return (
     <ThemedRoot>
       <NavigationContainer theme={navigationTheme}>
         <BottomSheetModalProvider>
-          <AppNavigator screens={screens} authScreens={authScreens} />
+          <AppNavigator screens={screens} authScreens={authScreens} isAuthenticated={isAuthenticated} />
         </BottomSheetModalProvider>
       </NavigationContainer>
     </ThemedRoot>
