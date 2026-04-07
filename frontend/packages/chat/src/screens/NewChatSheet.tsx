@@ -27,6 +27,10 @@ export function NewChatSheet({ isVisible, onClose }: NewChatSheetProps) {
     onClose();
   }, [onClose]);
 
+  const handleContentClose = useCallback(() => {
+    modalRef.current?.dismiss();
+  }, []);
+
   if (!isVisible) return null;
 
   return (
@@ -41,7 +45,7 @@ export function NewChatSheet({ isVisible, onClose }: NewChatSheetProps) {
       handleComponent={SheetHandle}
     >
       <View style={{ flex: 1, paddingBottom: insets.bottom, backgroundColor: theme.colors.secondaryBackground }}>
-        <NewChatSheetContent onClose={() => modalRef.current?.dismiss()} />
+        <NewChatSheetContent onClose={handleContentClose} />
       </View>
     </BottomSheetModal>
   );

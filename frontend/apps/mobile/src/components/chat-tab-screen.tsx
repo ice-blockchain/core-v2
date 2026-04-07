@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ConversationsListScreen, ConversationsEditScreen, NewChatSheet } from "@ion/chat";
 import { useBottomNav } from "@ion/main-tabs-ui";
 
@@ -8,6 +8,10 @@ export function ChatTabScreen() {
   const [activeView, setActiveView] = useState<ChatView>("list");
   const [isNewChatVisible, setIsNewChatVisible] = useState(false);
   const { setBottomNavHidden } = useBottomNav();
+
+  useEffect(() => {
+    return () => setBottomNavHidden(false);
+  }, [setBottomNavHidden]);
 
   const handleEdit = useCallback(() => {
     setBottomNavHidden(true);
