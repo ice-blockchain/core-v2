@@ -83,11 +83,18 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 		return ""
 	}
 	bagHex := hexEncode(bagID[:])
-	nodeID, _, parseErr := ParseSignedOwnership(val, bagHex, func(nid string) ed25519.PublicKey {
+	nodeID, ts, parseErr := ParseSignedOwnership(val, bagHex, func(nid string) ed25519.PublicKey {
 		return c.getNodePublicKey(ctx, nid)
 	})
 	if parseErr != nil {
 		c.logger.Debug("ownership signature invalid, rejecting", "error", parseErr)
+		return ""
+	}
+	now := time.Now().Unix()
+	staleThreshold := now - int64(c.cfg.StaleHeartbeatTimeout.Seconds())
+	if ts < staleThreshold || ts > now+maxClockSkew {
+		c.logger.Debug("ownership claim timestamp out of bounds",
+			"node", nodeID, "ts", ts, "now", now)
 		return ""
 	}
 	return nodeID

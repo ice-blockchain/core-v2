@@ -3,7 +3,6 @@ package cluster
 import (
 	"context"
 	"crypto/ed25519"
-	"encoding/hex"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
@@ -52,23 +51,22 @@ func (c *Coordinator) isNodeAlive(nodeID string) bool {
 		return false
 	}
 
-	threshold := time.Now().Unix() - int64(c.cfg.StaleHeartbeatTimeout.Seconds())
-	return ts >= threshold
+	now := time.Now().Unix()
+	threshold := now - int64(c.cfg.StaleHeartbeatTimeout.Seconds())
+	return ts >= threshold && ts <= now+maxClockSkew
 }
 
 // getNodePublicKey fetches a node's ed25519 public key from its nodeinfo CRDT entry.
+// Verifies the self-certifying signature to prevent public key overwrites.
 func (c *Coordinator) getNodePublicKey(ctx context.Context, nodeID string) ed25519.PublicKey {
 	val, err := c.crdt.Get(ctx, ds.NewKey(NodeInfoKey(nodeID)))
 	if err != nil {
 		return nil
 	}
-	info, err := UnmarshalNodeInfo(val)
-	if err != nil || info.PublicKey == "" {
+	pubKey, err := VerifyNodeInfo(val)
+	if err != nil {
+		c.logger.Debug("nodeinfo verification failed", "node", nodeID, "error", err)
 		return nil
 	}
-	pubKeyBytes, err := hex.DecodeString(info.PublicKey)
-	if err != nil || len(pubKeyBytes) != ed25519.PublicKeySize {
-		return nil
-	}
-	return ed25519.PublicKey(pubKeyBytes)
+	return pubKey
 }

@@ -49,7 +49,7 @@ func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, resolver
 		if !ok {
 			continue
 		}
-		if ts >= threshold {
+		if ts >= threshold && ts <= now+maxClockSkew {
 			active = append(active, nodeID)
 		} else {
 			dead = append(dead, nodeID)

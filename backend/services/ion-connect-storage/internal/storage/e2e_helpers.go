@@ -55,6 +55,20 @@ type SeederEnv struct {
 	Port           int
 }
 
+// SetupSeederServerWithADNLKey creates a full storage node using the provided
+// ADNL key (hex-encoded seed). Use this when the coordinator needs to share
+// the same ed25519 identity as the ADNL server.
+func SetupSeederServerWithADNLKey(
+	t *testing.T,
+	greenfieldPrivKey string,
+	coord NodeCoordinator,
+	adnlKeyHex string,
+	logger *slog.Logger,
+) *SeederEnv {
+	t.Helper()
+	return setupSeederServerInternal(t, greenfieldPrivKey, coord, adnlKeyHex, logger)
+}
+
 // SetupSeederServer creates a full storage node: ADNL server, storage handler,
 // provider index, and subscriber (running). The subscriber is connected to
 // Greenfield websocket and processes events in a background goroutine.
@@ -65,15 +79,26 @@ func SetupSeederServer(
 	logger *slog.Logger,
 ) *SeederEnv {
 	t.Helper()
-
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	require.NoError(t, err)
+	return setupSeederServerInternal(t, greenfieldPrivKey, coord, hex.EncodeToString(key.Seed()), logger)
+}
+
+func setupSeederServerInternal(
+	t *testing.T,
+	greenfieldPrivKey string,
+	coord NodeCoordinator,
+	adnlKeyHex string,
+	logger *slog.Logger,
+) *SeederEnv {
+	t.Helper()
+
 	port := AllocatePort(t)
 	externalAddr := fmt.Sprintf("127.0.0.1:%d", port)
 
 	ctx := context.Background()
 	server, err := ionadnl.NewServer(ctx, ionadnl.ServerConfig{
-		AdnlPrivateKey:  hex.EncodeToString(key.Seed()),
+		AdnlPrivateKey:  adnlKeyHex,
 		GlobalConfigURL: E2EGlobalConfigURL(),
 		Port:            port,
 		ExternalAddr:    externalAddr,

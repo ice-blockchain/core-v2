@@ -253,10 +253,7 @@ func (c *Coordinator) publishNodeInfo(ctx context.Context) error {
 		IP:          c.cfg.ExternalIP,
 		Port:        c.cfg.ExternalPort,
 	}
-	if c.cfg.PrivateKey != nil {
-		info.PublicKey = hexEncode(c.cfg.PrivateKey.Public().(ed25519.PublicKey))
-	}
-	data, err := MarshalNodeInfo(info)
+	data, err := MarshalSignedNodeInfo(info, c.cfg.PrivateKey)
 	if err != nil {
 		return err
 	}

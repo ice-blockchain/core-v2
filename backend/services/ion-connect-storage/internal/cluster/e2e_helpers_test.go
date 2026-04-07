@@ -55,6 +55,11 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 	nodeID := randomNodeID()
 	overlayID := cluster.ComputeClusterOverlayID(clusterOverlayName)
 
+	// Generate ADNL key upfront so both the server and coordinator share the same identity.
+	_, adnlKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	adnlKeyHex := hex.EncodeToString(adnlKey.Seed())
+
 	coord, err := cluster.NewCoordinator(cluster.CoordinatorConfig{
 		NodeID:                nodeID,
 		ClusterOverlayID:      clusterOverlayName,
@@ -64,10 +69,11 @@ func startClusterNode(t *testing.T, ctx context.Context) *clusterNode {
 		ReclamationInterval:   3 * time.Second,
 		StaleHeartbeatTimeout: 5 * time.Second,
 		ClaimVerifyDelay:      200 * time.Millisecond, // fast for e2e tests
+		PrivateKey:            adnlKey,
 	})
 	require.NoError(t, err)
 
-	env := storage.SetupSeederServer(t, privKey, coord, logger)
+	env := storage.SetupSeederServerWithADNLKey(t, privKey, coord, adnlKeyHex, logger)
 
 	// Wire transport: broadcast + block exchange + piece forwarding over cluster overlay.
 	transport, err := cluster.NewClusterTransport(env.Server, overlayID, coord.Broadcaster(), coord.DAGService(), logger)

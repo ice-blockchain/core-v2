@@ -10,17 +10,41 @@ import (
 	"strings"
 )
 
+// maxClockSkew is the maximum allowed difference between a timestamp and
+// the current time. Prevents future-dated heartbeats and ownership claims.
+const maxClockSkew = 60 // seconds
+
 // NodeInfo holds a cluster node's network address for direct ADNL dialing.
 // Stored in CRDT under key `nodeinfo/<nodeID>`.
+// Self-certifying: the Signature field covers the payload, signed by
+// the private key corresponding to PublicKey. This prevents other nodes
+// from overwriting a node's public key in CRDT.
 type NodeInfo struct {
 	ADNLAddress string `json:"adnlAddr"`
 	IP          string `json:"ip"`
 	Port        int    `json:"port"`
 	PublicKey   string `json:"publicKey,omitempty"`
+	Signature   string `json:"signature,omitempty"`
 }
 
 // MarshalNodeInfo serializes NodeInfo to JSON bytes.
 func MarshalNodeInfo(info NodeInfo) ([]byte, error) {
+	return json.Marshal(info)
+}
+
+// MarshalSignedNodeInfo serializes NodeInfo with a self-certifying signature.
+// The signature covers the canonical payload (all fields except Signature),
+// preventing other nodes from forging nodeinfo entries.
+func MarshalSignedNodeInfo(info NodeInfo, privKey ed25519.PrivateKey) ([]byte, error) {
+	pubKey := privKey.Public().(ed25519.PublicKey)
+	info.PublicKey = hex.EncodeToString(pubKey)
+	info.Signature = "" // clear before signing
+	payload, err := json.Marshal(info)
+	if err != nil {
+		return nil, fmt.Errorf("marshal nodeinfo payload: %w", err)
+	}
+	sig := ed25519.Sign(privKey, payload)
+	info.Signature = hex.EncodeToString(sig)
 	return json.Marshal(info)
 }
 
@@ -31,6 +55,36 @@ func UnmarshalNodeInfo(data []byte) (NodeInfo, error) {
 		return NodeInfo{}, fmt.Errorf("unmarshal node info: %w", err)
 	}
 	return info, nil
+}
+
+// VerifyNodeInfo checks the self-certifying signature on a NodeInfo entry.
+// Returns the verified public key, or an error if verification fails.
+func VerifyNodeInfo(data []byte) (ed25519.PublicKey, error) {
+	info, err := UnmarshalNodeInfo(data)
+	if err != nil {
+		return nil, err
+	}
+	if info.PublicKey == "" || info.Signature == "" {
+		return nil, fmt.Errorf("nodeinfo missing public key or signature")
+	}
+	pubKeyBytes, err := hex.DecodeString(info.PublicKey)
+	if err != nil || len(pubKeyBytes) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("invalid public key in nodeinfo")
+	}
+	sig, err := hex.DecodeString(info.Signature)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signature in nodeinfo")
+	}
+	// Reconstruct the signed payload (all fields except Signature).
+	info.Signature = ""
+	payload, err := json.Marshal(info)
+	if err != nil {
+		return nil, fmt.Errorf("re-marshal nodeinfo for verification: %w", err)
+	}
+	if !ed25519.Verify(pubKeyBytes, payload, sig) {
+		return nil, fmt.Errorf("nodeinfo signature verification failed")
+	}
+	return ed25519.PublicKey(pubKeyBytes), nil
 }
 
 // ValidateNodeID rejects node IDs that could cause CRDT key injection.

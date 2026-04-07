@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	"encoding/hex"
 	"testing"
 	"time"
 
@@ -40,7 +39,6 @@ func TestValidatedOwnerAcceptsAliveNode(t *testing.T) {
 	bagID := [32]byte{0xee, 0xff}
 
 	// Foreign node claims ownership and has a fresh signed heartbeat.
-	// writeSignedOwnershipAsNode registers the key and ownership; use returned key for heartbeat.
 	foreignPriv := writeSignedOwnershipAsNode(t, coord, "alive-node", bagID)
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("alive-node")),
 		FormatSignedHeartbeat(time.Now().Unix(), "alive-node", foreignPriv)))
@@ -94,7 +92,7 @@ func TestSignedHeartbeatRejectsWrongNodeID(t *testing.T) {
 }
 
 func TestIsNodeAliveVerifiesSignedHeartbeat(t *testing.T) {
-	pub, priv, _ := ed25519.GenerateKey(rand.Reader)
+	_, priv, _ := ed25519.GenerateKey(rand.Reader)
 
 	coord := newTestCoordinator(t, "local")
 	ctx := context.Background()
@@ -104,16 +102,16 @@ func TestIsNodeAliveVerifiesSignedHeartbeat(t *testing.T) {
 	hb := FormatSignedHeartbeat(ts, "foreign-node", priv)
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("foreign-node")), hb))
 
-	// Write nodeinfo with public key.
-	info := NodeInfo{PublicKey: hex.EncodeToString(pub)}
-	data, _ := MarshalNodeInfo(info)
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("foreign-node")), data))
+	// Write self-certifying nodeinfo.
+	infoBytes, err := MarshalSignedNodeInfo(NodeInfo{}, priv)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("foreign-node")), infoBytes))
 
 	require.True(t, coord.isNodeAlive("foreign-node"))
 }
 
 func TestIsNodeAliveRejectsSpoofedHeartbeat(t *testing.T) {
-	pub, _, _ := ed25519.GenerateKey(rand.Reader)
+	_, victimPriv, _ := ed25519.GenerateKey(rand.Reader)
 	_, attackerPriv, _ := ed25519.GenerateKey(rand.Reader)
 
 	coord := newTestCoordinator(t, "local")
@@ -123,10 +121,10 @@ func TestIsNodeAliveRejectsSpoofedHeartbeat(t *testing.T) {
 	hb := FormatSignedHeartbeat(time.Now().Unix(), "victim-node", attackerPriv)
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("victim-node")), hb))
 
-	// Write victim's nodeinfo with their real public key.
-	info := NodeInfo{PublicKey: hex.EncodeToString(pub)}
-	data, _ := MarshalNodeInfo(info)
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("victim-node")), data))
+	// Write victim's self-certifying nodeinfo (signed with victim's key).
+	infoBytes, err := MarshalSignedNodeInfo(NodeInfo{}, victimPriv)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("victim-node")), infoBytes))
 
 	require.False(t, coord.isNodeAlive("victim-node"))
 }
@@ -140,4 +138,62 @@ func TestIsNodeAliveRejectsNodeWithoutPublicKey(t *testing.T) {
 		FormatHeartbeat(time.Now().Unix())))
 
 	require.False(t, coord.isNodeAlive("no-key-node"))
+}
+
+func TestIsNodeAliveRejectsFutureTimestamp(t *testing.T) {
+	_, priv, _ := ed25519.GenerateKey(rand.Reader)
+
+	coord := newTestCoordinator(t, "local")
+	ctx := context.Background()
+
+	// Write heartbeat with far-future timestamp.
+	futureTS := time.Now().Unix() + maxClockSkew + 100
+	hb := FormatSignedHeartbeat(futureTS, "future-node", priv)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("future-node")), hb))
+
+	infoBytes, err := MarshalSignedNodeInfo(NodeInfo{}, priv)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("future-node")), infoBytes))
+
+	require.False(t, coord.isNodeAlive("future-node"))
+}
+
+func TestOwnerRejectsFutureTimestampOwnership(t *testing.T) {
+	coord := newTestCoordinator(t, "local")
+	ctx := context.Background()
+	bagID := [32]byte{0xfa, 0xce}
+
+	// Write ownership claim with far-future timestamp.
+	futureTS := time.Now().Unix() + maxClockSkew + 100
+	bagHex := hexEncode(bagID[:])
+	val := FormatSignedOwnership(bagHex, coord.nodeID, futureTS, coord.cfg.PrivateKey)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), val))
+
+	require.Equal(t, "", coord.Owner(bagID))
+}
+
+func TestNodeInfoRejectsOverwrittenPublicKey(t *testing.T) {
+	_, victimPriv, _ := ed25519.GenerateKey(rand.Reader)
+	_, attackerPriv, _ := ed25519.GenerateKey(rand.Reader)
+
+	coord := newTestCoordinator(t, "local")
+	ctx := context.Background()
+
+	// Victim publishes self-certifying nodeinfo.
+	victimInfo, err := MarshalSignedNodeInfo(NodeInfo{IP: "1.2.3.4"}, victimPriv)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("victim")), victimInfo))
+
+	// Attacker overwrites with their own key (different signature).
+	attackerInfo, err := MarshalSignedNodeInfo(NodeInfo{IP: "6.6.6.6"}, attackerPriv)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("victim")), attackerInfo))
+
+	// Write heartbeat signed with victim's real key.
+	hb := FormatSignedHeartbeat(time.Now().Unix(), "victim", victimPriv)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("victim")), hb))
+
+	// isNodeAlive should fail because nodeinfo now has attacker's key,
+	// which doesn't match the heartbeat signed by victim's key.
+	require.False(t, coord.isNodeAlive("victim"))
 }

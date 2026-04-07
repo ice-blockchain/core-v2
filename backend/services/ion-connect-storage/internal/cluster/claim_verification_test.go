@@ -3,7 +3,6 @@ package cluster
 import (
 	"context"
 	"crypto/ed25519"
-	"encoding/hex"
 	"testing"
 	"time"
 
@@ -18,11 +17,10 @@ func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, nodeID string,
 	t.Helper()
 	_, privKey, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
-	pubKey := privKey.Public().(ed25519.PublicKey)
 
-	// Register node's public key in CRDT.
-	info := NodeInfo{PublicKey: hex.EncodeToString(pubKey)}
-	infoBytes, err := MarshalNodeInfo(info)
+	// Register node's self-certifying nodeinfo in CRDT.
+	info := NodeInfo{}
+	infoBytes, err := MarshalSignedNodeInfo(info, privKey)
 	require.NoError(t, err)
 	require.NoError(t, coord.crdt.Put(context.Background(), ds.NewKey(NodeInfoKey(nodeID)), infoBytes))
 
