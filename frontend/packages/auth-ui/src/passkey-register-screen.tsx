@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Button, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useSheetScroll } from "@ion/navigation";
+import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import type { RegisterScreenCallbacks } from "./password-register-screen";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasskeyIcon } from "./register-passkey-icon";
@@ -17,6 +17,10 @@ function PasskeyRegisterContent({ identity, onContinue }: {
   onContinue: () => void;
 }) {
   const sheetScroll = useSheetScroll();
+  const appNavigation = useAppNavigation();
+  const handleInfoPress = useCallback(() => {
+    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
+  }, [appNavigation]);
   const theme = useTheme();
   const { scaleSize } = theme.scale;
   const pageStyle = useMemo(() => ({ ...styles.page, paddingHorizontal: scaleSize(44) }), [scaleSize]);
@@ -30,7 +34,7 @@ function PasskeyRegisterContent({ identity, onContinue }: {
         <RegisterHeader icon={<RegisterPasskeyIcon />} title={translate("auth:passkeyRegisterTitle")} />
         <PasskeyBenefitList />
         <View style={inputStyle}>
-          <IdentityKeyNameInput identity={identity} />
+          <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} />
         </View>
         <View style={continueStyle}>
           <Button label={translate("auth:continueButton")} icon={arrowIcon} iconPosition="right" onPress={onContinue} />
