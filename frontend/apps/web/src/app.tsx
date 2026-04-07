@@ -8,6 +8,7 @@ import type { ColorMode } from '@ion/ui';
 import { getFeatureFlag } from '@ion/config';
 import { AppNavigator, useNavigationTheme, BottomSheetModalProvider } from '@ion/navigation';
 import { createLocalization, registerTranslations } from '@ion/localization';
+import { AuthActionsProvider } from '@ion/auth';
 import {
   ProfileSetupScreen,
   SelectLanguagesScreen,
@@ -27,6 +28,7 @@ import { HomeScreen, homeTranslations } from '@ion/home-ui';
 import { SplashScreen } from './components/splash-screen';
 import { IntroScreen } from './components/intro-screen';
 import { CatalogScreen } from './components/catalog-screen';
+import { identityClient } from './identity-client';
 
 const i18n = createLocalization();
 registerTranslations(i18n, onboardingTranslations);
@@ -65,12 +67,18 @@ const authScreens = {
   Notifications: NotificationsScreen,
 };
 
+function handleAuthSuccess(_username: string) {
+  // Navigation to Main is handled by screens via onAuthSuccess + navigation hooks
+}
+
 function AppContent() {
   const navigationTheme = useNavigationTheme();
   return (
     <NavigationContainer theme={navigationTheme}>
       <BottomSheetModalProvider>
-        <AppNavigator screens={screens} authScreens={authScreens} />
+        <AuthActionsProvider identityClient={identityClient} onAuthSuccess={handleAuthSuccess}>
+          <AppNavigator screens={screens} authScreens={authScreens} />
+        </AuthActionsProvider>
       </BottomSheetModalProvider>
     </NavigationContainer>
   );

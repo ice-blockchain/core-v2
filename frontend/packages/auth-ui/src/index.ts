@@ -1,3 +1,7 @@
+// Auth Actions Context
+export { AuthActionsContext, useAuthActions } from "./auth-actions-context";
+export type { AuthActions, AuthError, LoginAttemptResult, RegisterResult, PasswordLoginResult } from "./auth-actions-context";
+
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
 export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
@@ -5,7 +9,7 @@ export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { InvalidCredentialsModal } from "./invalid-credentials-modal";
 export { PasskeyRegisterScreen } from "./passkey-register-screen";
 export { PasswordRegisterScreen } from "./password-register-screen";
-export type { PasswordRegisterScreenProps, RegisterScreenCallbacks } from "./password-register-screen";
+export type { RegisterScreenCallbacks } from "./password-register-screen";
 export { RestoreCloudScreen } from "./restore-cloud-screen";
 export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";
@@ -18,7 +22,7 @@ export { VerifyOnOtherDeviceScreen } from "./verify-on-other-device-screen";
 export { VerifyScreen } from "./verify-screen";
 export { VerifySheetScreen } from "./verify-sheet-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
-export { ConfirmPasswordScreen } from "./confirm-password-screen";
+export { ConfirmPasswordScreen, getConfirmedPassword } from "./confirm-password-screen";
 
 // Buttons
 export { PrimaryButton } from "./primary-button";

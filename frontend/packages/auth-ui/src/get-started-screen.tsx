@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Icon, Text, useTheme } from "@ion/ui";
@@ -12,6 +12,7 @@ import { IceLogoIcon } from "./ice-logo-icon";
 import { CreateAccountIcon } from "./create-account-icon";
 import { IdentityKeyNameInput } from "./identity-key-name-input";
 import { useIdentityKeyValidation } from "./identity-key-rules";
+import { useAuthActions } from "./auth-actions-context";
 
 function useHeaderStyles() {
   const { colors, scale } = useTheme();
@@ -83,25 +84,42 @@ function useActionStyles() {
   }), [scale]);
 }
 
-function useHandleContinue(identity: ReturnType<typeof useIdentityKeyValidation>) {
+function useHandleContinue(
+  identity: ReturnType<typeof useIdentityKeyValidation>,
+  setError: (error: string | null) => void,
+) {
   const appNavigation = useAppNavigation();
-  return useCallback(() => {
-    if (!(identity.value.trim().length > 0 && !identity.errorMessage)) return;
-    requestAnimationFrame(() => {
+  const { attemptLogin, onAuthSuccess } = useAuthActions();
+
+  return useCallback(async () => {
+    if (!identity.validate()) return;
+    setError(null);
+    const result = await attemptLogin(identity.value);
+    if (!result) return;
+    if (result.outcome === 'authenticated') {
+      onAuthSuccess(identity.value);
+      return;
+    }
+    if (result.outcome === 'needs-password') {
       appNavigation.navigate(Routes.Sheet.Verify, {
         next: { name: Routes.Main, reset: true },
+        method: "Password",
+        identityKeyName: result.identityKeyName,
       });
-    });
-  }, [identity, appNavigation]);
+      return;
+    }
+    setError(result.error.userMessage);
+  }, [identity, appNavigation, attemptLogin, onAuthSuccess, setError]);
 }
 
-function GetStartedActions({ identity, nav }: {
+function GetStartedActions({ identity, nav, setError }: {
   identity: ReturnType<typeof useIdentityKeyValidation>;
   nav: ReturnType<typeof useGetStartedNavigation>;
+  setError: (error: string | null) => void;
 }) {
   const { colors } = useTheme();
   const actionStyles = useActionStyles();
-  const handleContinue = useHandleContinue(identity);
+  const handleContinue = useHandleContinue(identity, setError);
 
   return (
     <>
@@ -134,23 +152,28 @@ function useContentStyles() {
   }), [scale]);
 }
 
-function GetStartedContent({ identity, nav }: {
+function GetStartedContent({ identity, nav, setError, error }: {
   identity: ReturnType<typeof useIdentityKeyValidation>;
   nav: ReturnType<typeof useGetStartedNavigation>;
+  setError: (error: string | null) => void;
+  error: string | null;
 }) {
   const sheetScroll = useSheetScroll();
   const appNavigation = useAppNavigation();
+  const { colors, scale } = useTheme();
   const contentStyles = useContentStyles();
   const handleInfoPress = useCallback(() => {
     appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
   }, [appNavigation]);
+  const errorStyle = useMemo(() => ({ marginTop: scale.scaleSize(8) }), [scale]);
 
   return (
     <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
       <View style={contentStyles.page}>
         <GetStartedHeader />
         <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={contentStyles.field} />
-        <GetStartedActions identity={identity} nav={nav} />
+        {error ? <Text variant="caption" color={colors.attentionRed} style={errorStyle}>{error}</Text> : null}
+        <GetStartedActions identity={identity} nav={nav} setError={setError} />
         <AuthFooter />
       </View>
     </BottomSheetScrollView>
@@ -169,10 +192,11 @@ export function GetStartedScreen() {
   const nav = useGetStartedNavigation();
   const identity = useIdentityKeyValidation();
   const containerStyle = useContainerStyle();
+  const [error, setError] = useState<string | null>(null);
 
   return (
     <View style={containerStyle}>
-      <GetStartedContent identity={identity} nav={nav} />
+      <GetStartedContent identity={identity} nav={nav} setError={setError} error={error} />
     </View>
   );
 }

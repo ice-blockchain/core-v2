@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { useTheme } from "@ion/ui";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
+import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasswordIcon } from "./register-password-icon";
@@ -13,6 +13,7 @@ import { PasswordStrengthChecklist } from "./password-strength-checklist";
 import { AuthFooter } from "./auth-footer";
 import { useIdentityKeyValidation } from "./identity-key-rules";
 import { buildPasswordRules, areAllPasswordRulesMet } from "./password-rules";
+import { useAuthActions } from "./auth-actions-context";
 
 function usePasswordForm() {
   const [password, setPassword] = useState("");
@@ -37,10 +38,6 @@ export interface RegisterScreenCallbacks {
   onContinue: (data: { identityKeyName: string; password?: string }) => void;
   onBack: () => void;
   isPasskeyAvailable?: boolean;
-}
-
-export interface PasswordRegisterScreenProps {
-  callbacks?: RegisterScreenCallbacks;
 }
 
 function buildConfirmErrorProps(hasConfirmMismatch: boolean) {
@@ -142,23 +139,45 @@ function useContainerStyle() {
   );
 }
 
-export function PasswordRegisterScreen({ callbacks }: PasswordRegisterScreenProps) {
+export function PasswordRegisterScreen() {
+  const authNav = useAuthNavigation();
+  const { registerAccount, onAuthSuccess } = useAuthActions();
   const identity = useIdentityKeyValidation();
   const passwordForm = usePasswordForm();
   const containerStyle = useContainerStyle();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleContinue = useCallback(() => {
+  const handleContinue = useCallback(async () => {
     const isValid = identity.value.trim().length > 0 && !identity.errorMessage;
     const canSubmit = isValid && (passwordForm.isPasswordFormValid || passwordForm.isPasswordEmpty);
     if (!canSubmit) return;
-    callbacks?.onContinue({ identityKeyName: identity.value, password: passwordForm.password });
-  }, [identity.value, identity.errorMessage, passwordForm.isPasswordFormValid, passwordForm.isPasswordEmpty, passwordForm.password, callbacks]);
+    setError(null);
+    const result = await registerAccount({ identityKeyName: identity.value, password: passwordForm.password });
+    if (!result) return;
+    if (result.outcome === 'authenticated') {
+      onAuthSuccess(identity.value);
+      authNav.navigate(Routes.Auth.ProfileSetup);
+      return;
+    }
+    if (result.outcome === 'error') setError(result.error.userMessage);
+  }, [identity.value, identity.errorMessage, passwordForm.isPasswordFormValid, passwordForm.isPasswordEmpty, passwordForm.password, registerAccount, onAuthSuccess, authNav]);
 
   return (
     <View style={containerStyle}>
       <RegisterContent identity={identity} passwordForm={passwordForm} onContinue={handleContinue} />
+      {error ? <RegisterError message={error} /> : null}
     </View>
   );
+}
+
+function RegisterError({ message }: { message: string }) {
+  const { colors, scale } = useTheme();
+  const style = useMemo(() => ({
+    position: "absolute" as const, bottom: scale.scaleSize(80), alignSelf: "center" as const,
+    paddingHorizontal: scale.scaleSize(16), paddingVertical: scale.scaleSize(8),
+  }), [scale]);
+
+  return <Text variant="caption" color={colors.attentionRed} style={style}>{message}</Text>;
 }
 
 const styles = StyleSheet.create({

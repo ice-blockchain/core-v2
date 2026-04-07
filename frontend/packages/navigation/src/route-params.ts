@@ -20,7 +20,7 @@ export type RootStackParamList = {
   'Sheet/Auth': NavigatorScreenParams<AuthStackParamList> | undefined;
   'Sheet/NicknameReserved': undefined;
   'Sheet/IdentityKeyNameNote': undefined;
-  'Sheet/Verify': { next: VerifyNextRoute; method?: VerifyMethodType };
+  'Sheet/Verify': { next: VerifyNextRoute; method?: VerifyMethodType; identityKeyName?: string };
   'Sheet/LinkDevice': undefined;
   'Sheet/VerifyOnOtherDevice': undefined;
   'Sheet/AddBiometrics': undefined;

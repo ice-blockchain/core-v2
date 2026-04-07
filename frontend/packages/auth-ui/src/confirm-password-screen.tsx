@@ -7,13 +7,19 @@ import { PasswordInput } from "./password-input";
 import { VerifyPasswordIcon } from "./verify-password-icon";
 
 let passwordConfirmed = false;
+let confirmedPasswordValue: string | null = null;
 
 export function wasPasswordConfirmed(): boolean {
   return passwordConfirmed;
 }
 
+export function getConfirmedPassword(): string | null {
+  return confirmedPasswordValue;
+}
+
 export function resetPasswordConfirmed(): void {
   passwordConfirmed = false;
+  confirmedPasswordValue = null;
 }
 
 function ConfirmPasswordDescription() {
@@ -34,12 +40,12 @@ function useFormStyles() {
   }), [scale]);
 }
 
-function ConfirmPasswordForm({ onConfirm }: { onConfirm: () => void }) {
+function ConfirmPasswordForm({ onConfirm }: { onConfirm: (password: string) => void }) {
   const [password, setPassword] = useState("");
   const formStyles = useFormStyles();
 
   const handleConfirm = useCallback(() => {
-    if (password.trim()) onConfirm();
+    if (password.trim()) onConfirm(password);
   }, [password, onConfirm]);
 
   return (
@@ -68,8 +74,9 @@ export function ConfirmPasswordScreen() {
     if (navigation.canGoBack()) navigation.goBack();
   }, [navigation]);
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback((password: string) => {
     passwordConfirmed = true;
+    confirmedPasswordValue = password;
     if (navigation.canGoBack()) navigation.goBack();
   }, [navigation]);
 
