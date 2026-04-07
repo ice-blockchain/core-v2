@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useSheetScroll } from "@ion/navigation";
+import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
@@ -132,13 +132,17 @@ function GetStartedContent({ identity, callbacks }: {
   callbacks: GetStartedScreenCallbacks | undefined;
 }) {
   const sheetScroll = useSheetScroll();
+  const appNavigation = useAppNavigation();
   const contentStyles = useContentStyles();
+  const handleInfoPress = useCallback(() => {
+    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
+  }, [appNavigation]);
 
   return (
     <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
       <View style={contentStyles.page}>
         <GetStartedHeader />
-        <IdentityKeyNameInput identity={identity} style={contentStyles.field} />
+        <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={contentStyles.field} />
         <GetStartedActions identity={identity} callbacks={callbacks} />
         <AuthFooter />
       </View>
