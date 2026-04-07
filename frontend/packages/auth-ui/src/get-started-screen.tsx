@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useAppNavigation, useAuthNavigation, useSheetScroll, Routes } from "@ion/navigation";
+import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
 import { PrimaryButton } from "./primary-button";
 import { SecondaryButton } from "./secondary-button";
 import { TextButton } from "./text-button";
@@ -53,23 +53,15 @@ function GetStartedHeader() {
   );
 }
 
-function useGetStartedNavigation() {
-  const navigation = useAuthNavigation();
+export interface GetStartedScreenCallbacks {
+  initialIdentityKeyName: string;
+  onNavigateToRegister: () => void;
+  onNavigateToVerifyPassword: (identityKeyName: string) => void;
+  onNavigateToRestore: () => void;
+}
 
-  return {
-    handleRegister: useCallback(() => {
-      const route = Date.now() % 2 === 0
-        ? Routes.Auth.PasswordRegister
-        : Routes.Auth.PasskeyRegister;
-      navigation.navigate(route);
-    }, [navigation]),
-    handleVerifyPassword: useCallback(() => {
-      navigation.navigate(Routes.Auth.ProfileSetup);
-    }, [navigation]),
-    handleRestore: useCallback(() => {
-      navigation.navigate(Routes.Auth.ProfileSetup);
-    }, [navigation]),
-  };
+export interface GetStartedScreenProps {
+  callbacks?: GetStartedScreenCallbacks;
 }
 
 function useActionStyles() {
@@ -83,31 +75,22 @@ function useActionStyles() {
   }), [scale]);
 }
 
-function useHandleContinue(identity: ReturnType<typeof useIdentityKeyValidation>) {
-  const appNavigation = useAppNavigation();
-  return useCallback(() => {
-    if (!identity.validate()) return;
-    const name = identity.value;
-    if (name === "invalid") {
-      appNavigation.navigate(Routes.Sheet.InvalidCredentials);
-    } else if (name === "password") {
-      appNavigation.navigate(Routes.Sheet.Verify, {
-        next: { name: Routes.Sheet.AddBiometrics },
-        method: "Password",
-      });
-    } else {
-      appNavigation.navigate(Routes.Sheet.VerifyOnOtherDevice);
-    }
-  }, [identity, appNavigation]);
+function useActionHandlers(identity: ReturnType<typeof useIdentityKeyValidation>, callbacks: GetStartedScreenCallbacks | undefined) {
+  const handleContinue = useCallback(() => {
+    if (identity.validate()) { callbacks?.onNavigateToVerifyPassword(identity.value); }
+  }, [identity, callbacks]);
+  const handleRegister = useCallback(() => { callbacks?.onNavigateToRegister(); }, [callbacks]);
+  const handleRestore = useCallback(() => { callbacks?.onNavigateToRestore(); }, [callbacks]);
+  return { handleContinue, handleRegister, handleRestore };
 }
 
-function GetStartedActions({ identity, nav }: {
+function GetStartedActions({ identity, callbacks }: {
   identity: ReturnType<typeof useIdentityKeyValidation>;
-  nav: ReturnType<typeof useGetStartedNavigation>;
+  callbacks: GetStartedScreenCallbacks | undefined;
 }) {
   const { colors } = useTheme();
   const actionStyles = useActionStyles();
-  const handleContinue = useHandleContinue(identity);
+  const { handleContinue, handleRegister, handleRestore } = useActionHandlers(identity, callbacks);
 
   return (
     <>
@@ -118,12 +101,12 @@ function GetStartedActions({ identity, nav }: {
         {translate("auth:orDivider")}
       </Text>
       <SecondaryButton
-        label={translate("auth:registerButton")} onPress={nav.handleRegister}
+        label={translate("auth:registerButton")} onPress={handleRegister}
         leftIcon={<CreateAccountIcon color={colors.secondaryText} size={actionStyles.iconSize} />}
       />
       <View style={actionStyles.restoreWrapper}>
         <TextButton
-          label={translate("auth:restoreIdentityKeyButton")} onPress={nav.handleRestore}
+          label={translate("auth:restoreIdentityKeyButton")} onPress={handleRestore}
           leftIcon={<Icon name="restore-key" size={actionStyles.iconSize} color={colors.secondaryText} />}
         />
       </View>
@@ -140,9 +123,9 @@ function useContentStyles() {
   }), [scale]);
 }
 
-function GetStartedContent({ identity, nav }: {
+function GetStartedContent({ identity, callbacks }: {
   identity: ReturnType<typeof useIdentityKeyValidation>;
-  nav: ReturnType<typeof useGetStartedNavigation>;
+  callbacks: GetStartedScreenCallbacks | undefined;
 }) {
   const sheetScroll = useSheetScroll();
   const appNavigation = useAppNavigation();
@@ -156,7 +139,7 @@ function GetStartedContent({ identity, nav }: {
       <View style={contentStyles.page}>
         <GetStartedHeader />
         <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={contentStyles.field} />
-        <GetStartedActions identity={identity} nav={nav} />
+        <GetStartedActions identity={identity} callbacks={callbacks} />
         <AuthFooter />
       </View>
     </BottomSheetScrollView>
@@ -171,14 +154,13 @@ function useContainerStyle() {
   );
 }
 
-export function GetStartedScreen() {
-  const nav = useGetStartedNavigation();
-  const identity = useIdentityKeyValidation();
+export function GetStartedScreen({ callbacks }: GetStartedScreenProps) {
+  const identity = useIdentityKeyValidation(callbacks?.initialIdentityKeyName);
   const containerStyle = useContainerStyle();
 
   return (
     <View style={containerStyle}>
-      <GetStartedContent identity={identity} nav={nav} />
+      <GetStartedContent identity={identity} callbacks={callbacks} />
     </View>
   );
 }

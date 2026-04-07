@@ -4,6 +4,7 @@ import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Button, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useAppNavigation, useSheetScroll, Routes } from "@ion/navigation";
+import type { RegisterScreenCallbacks } from "./password-register-screen";
 import { RegisterHeader } from "./register-header";
 import { RegisterPasskeyIcon } from "./register-passkey-icon";
 import { PasskeyBenefitList } from "./passkey-benefit-list";
@@ -43,8 +44,11 @@ function PasskeyRegisterContent({ identity, onContinue }: {
   );
 }
 
-export function PasskeyRegisterScreen() {
-  const appNavigation = useAppNavigation();
+export interface PasskeyRegisterScreenProps {
+  callbacks?: RegisterScreenCallbacks;
+}
+
+export function PasskeyRegisterScreen({ callbacks }: PasskeyRegisterScreenProps) {
   const identity = useIdentityKeyValidation();
   const theme = useTheme();
 
@@ -55,11 +59,9 @@ export function PasskeyRegisterScreen() {
 
   const handleContinue = useCallback(() => {
     if (identity.validate()) {
-      appNavigation.navigate(Routes.Sheet.Verify, {
-        next: { name: Routes.Sheet.Auth, params: { screen: Routes.Auth.ProfileSetup } },
-      });
+      callbacks?.onContinue({ identityKeyName: identity.value });
     }
-  }, [identity, appNavigation]);
+  }, [identity, callbacks]);
 
   return (
     <View style={containerStyle}>

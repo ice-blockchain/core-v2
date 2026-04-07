@@ -1,5 +1,6 @@
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
+export type { GetStartedScreenProps, GetStartedScreenCallbacks } from "./get-started-screen";
 export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { InvalidCredentialsModal } from "./invalid-credentials-modal";

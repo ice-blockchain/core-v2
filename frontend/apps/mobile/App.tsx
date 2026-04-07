@@ -30,6 +30,7 @@ import { CatalogScreen } from "./src/components/catalog-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
 import { MainScreen } from "./src/components/main-screen";
+import { AuthFlowScreen } from "./src/components/auth-flow-screen";
 import { identityClient } from "./src/identity-client";
 
 const i18n = createLocalization();
@@ -54,6 +55,7 @@ const screens = {
   AddBiometrics: AddBiometricsScreen,
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
   CreatePost: CreatePostSheetScreen,
+  AuthFlow: AuthFlowScreen,
   LinkDevice: LinkDeviceScreen,
   InvalidCredentials: InvalidCredentialsModal,
   ConfirmPassword: ConfirmPasswordScreen,
