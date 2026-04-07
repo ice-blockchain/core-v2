@@ -1,3 +1,4 @@
+import type { Interceptor } from '@ion/network';
 import type { ISecureStorage } from '@ion/storage';
 import type {
   SocialProfile,
@@ -10,7 +11,7 @@ export interface IdentityClientConfig {
   baseUrl: string;
   appId: string;
   nativePbkdf2?: (password: string, salt: Uint8Array, iterations: number, keyLength: number, hash: string) => Uint8Array;
-  interceptors?: import('@ion/network').Interceptor[];
+  interceptors?: Interceptor[];
 }
 
 export interface PasswordRegistrationInput {
