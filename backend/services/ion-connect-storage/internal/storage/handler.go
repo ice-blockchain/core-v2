@@ -129,7 +129,7 @@ func (h *Handler) handleForwardedPiece(ctx context.Context, bagID [32]byte, piec
 	if err := h.verifyForwardedProof(ctx, bagID, proof); err != nil {
 		return nil, fmt.Errorf("forwarded piece %d proof invalid: %w", pieceID, err)
 	}
-	return serializePieceResponse(proof, data), nil
+	return serializePieceResponse(proof, data)
 }
 
 // verifyForwardedProof checks the Merkle proof received from a peer against

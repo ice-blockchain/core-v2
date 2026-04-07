@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 )
 
 // PeerBroadcaster defines how to send messages to all cluster peers.
@@ -20,6 +21,7 @@ type ADNLBroadcaster struct {
 	incoming chan []byte
 	closed   chan struct{}
 	once     sync.Once
+	dropped  atomic.Int64
 	logger   *slog.Logger
 }
 
@@ -85,9 +87,13 @@ func (b *ADNLBroadcaster) enqueueHead(headCID []byte) {
 	select {
 	case b.incoming <- headCID:
 	default:
-		b.logger.Warn("incoming crdt head channel full, dropping")
+		count := b.dropped.Add(1)
+		b.logger.Warn("incoming crdt head channel full, dropping", "total_dropped", count)
 	}
 }
+
+// DroppedCount returns the total number of CRDT head messages dropped.
+func (b *ADNLBroadcaster) DroppedCount() int64 { return b.dropped.Load() }
 
 // Close stops the broadcaster.
 func (b *ADNLBroadcaster) Close() {

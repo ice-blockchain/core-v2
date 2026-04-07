@@ -35,25 +35,38 @@ func parseTLConstructorID(data []byte) (uint32, []byte, error) {
 }
 
 // serializeTorrentInfoResponse encodes storage.torrentInfo { data:bytes }.
-func serializeTorrentInfoResponse(bocData []byte) []byte {
-	return appendTLBytes(appendUint32(nil, tlTorrentInfoData), bocData)
+func serializeTorrentInfoResponse(bocData []byte) ([]byte, error) {
+	buf, err := appendTLBytes(appendUint32(nil, tlTorrentInfoData), bocData)
+	if err != nil {
+		return nil, fmt.Errorf("serialize torrent info: %w", err)
+	}
+	return buf, nil
 }
 
 // serializePieceResponse encodes storage.piece { proof:bytes data:bytes }.
-func serializePieceResponse(proof, data []byte) []byte {
+func serializePieceResponse(proof, data []byte) ([]byte, error) {
 	buf := appendUint32(nil, tlPieceResponse)
-	buf = appendTLBytes(buf, proof)
-	buf = appendTLBytes(buf, data)
-	return buf
+	buf, err := appendTLBytes(buf, proof)
+	if err != nil {
+		return nil, fmt.Errorf("serialize piece proof: %w", err)
+	}
+	buf, err = appendTLBytes(buf, data)
+	if err != nil {
+		return nil, fmt.Errorf("serialize piece data: %w", err)
+	}
+	return buf, nil
 }
 
 // serializeUpdateInitResponse encodes storage.updateInit { have_pieces:bytes have_pieces_offset:int state:storage.State }.
-func serializeUpdateInitResponse(bitfield []byte) []byte {
+func serializeUpdateInitResponse(bitfield []byte) ([]byte, error) {
 	buf := appendUint32(nil, tlUpdateInit)
-	buf = appendTLBytes(buf, bitfield)
+	buf, err := appendTLBytes(buf, bitfield)
+	if err != nil {
+		return nil, fmt.Errorf("serialize update init bitfield: %w", err)
+	}
 	buf = appendInt32(buf, 0) // have_pieces_offset = 0
 	buf = serializeState(buf, true, false)
-	return buf
+	return buf, nil
 }
 
 // serializePongResponse encodes storage.pong.
@@ -136,7 +149,7 @@ func appendBool(buf []byte, v bool) []byte {
 }
 
 // appendTLBytes encodes a TL bytes field (length-prefixed with padding).
-func appendTLBytes(buf, data []byte) []byte {
+func appendTLBytes(buf, data []byte) ([]byte, error) {
 	if len(data) < 254 {
 		buf = append(buf, byte(len(data)))
 		buf = append(buf, data...)
@@ -144,12 +157,12 @@ func appendTLBytes(buf, data []byte) []byte {
 		for range padding {
 			buf = append(buf, 0)
 		}
-		return buf
+		return buf, nil
+	}
+	if len(data) > 0xFFFFFF {
+		return nil, fmt.Errorf("appendTLBytes: data length %d exceeds TL bytes maximum (16777215)", len(data))
 	}
 	buf = append(buf, 254)
-	if len(data) > 0xFFFFFF {
-		panic(fmt.Sprintf("appendTLBytes: data length %d exceeds TL bytes maximum (16777215)", len(data)))
-	}
 	lenBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lenBytes, uint32(len(data)))
 	buf = append(buf, lenBytes[:3]...)
@@ -158,5 +171,5 @@ func appendTLBytes(buf, data []byte) []byte {
 	for range padding {
 		buf = append(buf, 0)
 	}
-	return buf
+	return buf, nil
 }

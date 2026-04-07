@@ -20,6 +20,7 @@ func testRouter(rl *PeerRateLimiter) *gin.Engine {
 
 func TestRateLimiterAllowsNormalTraffic(t *testing.T) {
 	rl := NewPeerRateLimiter(100, 10)
+	defer rl.Close()
 	router := testRouter(rl)
 
 	for range 5 {
@@ -33,6 +34,7 @@ func TestRateLimiterAllowsNormalTraffic(t *testing.T) {
 
 func TestRateLimiterBlocksExcessiveRequests(t *testing.T) {
 	rl := NewPeerRateLimiter(1, 2) // 1 req/s, burst 2
+	defer rl.Close()
 	router := testRouter(rl)
 
 	// First 2 requests succeed (burst).
@@ -52,21 +54,29 @@ func TestRateLimiterBlocksExcessiveRequests(t *testing.T) {
 	require.Equal(t, http.StatusTooManyRequests, w.Code)
 }
 
-func TestRateLimiterAllowsWithoutPeerHeader(t *testing.T) {
-	rl := NewPeerRateLimiter(1, 1)
+func TestRateLimiterFallsBackToIPWithoutPeerHeader(t *testing.T) {
+	rl := NewPeerRateLimiter(1, 2) // 1 req/s, burst 2
+	defer rl.Close()
 	router := testRouter(rl)
 
-	// No peer header -- should pass through without rate limiting.
-	for range 5 {
+	// First 2 requests succeed (burst).
+	for range 2 {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/test", nil)
 		router.ServeHTTP(w, req)
 		require.Equal(t, http.StatusOK, w.Code)
 	}
+
+	// Third request exceeds burst -- rate limited by IP.
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusTooManyRequests, w.Code)
 }
 
 func TestRateLimiterIsolatesPeers(t *testing.T) {
 	rl := NewPeerRateLimiter(1, 1)
+	defer rl.Close()
 	router := testRouter(rl)
 
 	// Exhaust peer-A's budget.
@@ -88,4 +98,29 @@ func TestRateLimiterIsolatesPeers(t *testing.T) {
 	req.Header.Set("X-RLDP-Peer-ID", "peer-b")
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestRateLimiterRejectsWhenMaxPeersReached(t *testing.T) {
+	rl := NewPeerRateLimiter(100, 100)
+	defer rl.Close()
+	router := testRouter(rl)
+
+	// Set peerCount to max to simulate saturation.
+	rl.peerCount.Store(maxTrackedPeers)
+
+	// Existing peer should still work.
+	rl.peers.Store("ip:192.168.1.1", rl.newEntry(0))
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.RemoteAddr = "192.168.1.1:1234"
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code)
+
+	// New peer should be rejected.
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/test", nil)
+	req.RemoteAddr = "10.0.0.1:5678"
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusTooManyRequests, w.Code)
 }

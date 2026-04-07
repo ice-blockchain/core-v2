@@ -60,9 +60,18 @@ func (c *Coordinator) OwnsBag(bagID [32]byte) bool {
 	return owner == c.nodeID
 }
 
+// baseContext returns the coordinator's lifecycle context, falling back to
+// context.Background() if the coordinator has not been started yet (tests).
+func (c *Coordinator) baseContext() context.Context {
+	if c.ctx != nil {
+		return c.ctx
+	}
+	return context.Background()
+}
+
 // Owner returns the nodeID that owns a bag, or empty string if unclaimed.
 func (c *Coordinator) Owner(bagID [32]byte) string {
-	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
 	val, err := c.crdt.Get(ctx, ds.NewKey(OwnershipKey(bagID)))
 	if err != nil {
@@ -145,7 +154,7 @@ func (c *Coordinator) OwnedCount() int {
 
 // NodeADNLAddress reads a node's network info from CRDT key nodeinfo/<nodeID>.
 func (c *Coordinator) NodeADNLAddress(nodeID string) ([32]byte, string, int, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
 	val, err := c.crdt.Get(ctx, ds.NewKey(NodeInfoKey(nodeID)))
 	if err != nil {

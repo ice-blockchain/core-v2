@@ -297,9 +297,16 @@ func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32
 	return resp.Data, resp.Proof, nil
 }
 
+// maxForwardQuerySize is the maximum raw query payload that will be forwarded
+// to a cluster peer. Prevents amplification attacks via oversized queries.
+const maxForwardQuerySize = 64 * 1024
+
 // ForwardRawQuery forwards a raw storage query to the bag owner via the
 // cluster overlay. Uses ADNL (responses are small control messages).
 func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+	if len(rawQuery) > maxForwardQuerySize {
+		return nil, fmt.Errorf("raw query too large: %d bytes (max %d)", len(rawQuery), maxForwardQuerySize)
+	}
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	cp, ok := t.peers[ownerADNLAddr]

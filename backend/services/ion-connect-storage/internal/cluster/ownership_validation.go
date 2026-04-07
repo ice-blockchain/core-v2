@@ -34,7 +34,7 @@ func (c *Coordinator) ValidatedOwner(bagID [32]byte) string {
 // the heartbeat's ed25519 signature against the node's public key from nodeinfo.
 // Falls back to unsigned parsing if signature verification is not required.
 func (c *Coordinator) isNodeAlive(nodeID string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
 	val, err := c.crdt.Get(ctx, ds.NewKey(HeartbeatKey(nodeID)))
 	if err != nil {

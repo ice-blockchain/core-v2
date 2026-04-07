@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
@@ -80,7 +81,7 @@ func (h *Handler) handleGetPiece(ctx context.Context, bagID [32]byte, pieceIndex
 		return nil, fmt.Errorf("generate proof for piece %d: %w", pieceIndex, err)
 	}
 
-	return serializePieceResponse(proof, pieceData), nil
+	return serializePieceResponse(proof, pieceData)
 }
 
 // fetchSegmentForPiece retrieves the Greenfield segment containing data for the given piece.
@@ -105,7 +106,13 @@ func (h *Handler) getOrFetchSegment(ctx context.Context, bagID [32]byte, meta *b
 	return h.fetchAndCacheSegment(ctx, bagID, meta, segIdx)
 }
 
+const (
+	segmentFetchRetries  = 3
+	segmentFetchBaseWait = 200 * time.Millisecond
+)
+
 // fetchAndCacheSegment downloads a segment from Greenfield and caches it.
+// Retries transient failures with exponential backoff.
 func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta *boc.BagMetadata, segIdx int) ([]byte, error) {
 	loc, found, err := h.index.LookupBag(bagID)
 	if err != nil {
@@ -119,23 +126,38 @@ func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta
 		return nil, fmt.Errorf("open bag cache: %w", err)
 	}
 
-	wc, err := h.segmentCache.SegmentWriter(bagID, segIdx)
-	if err != nil {
-		return nil, fmt.Errorf("create segment writer: %w", err)
-	}
+	var lastErr error
+	for attempt := range segmentFetchRetries {
+		if attempt > 0 {
+			wait := segmentFetchBaseWait * time.Duration(1<<uint(attempt-1))
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(wait):
+			}
+		}
 
-	data, err := h.fetcher.FetchSegment(ctx, loc.BucketName, loc.ObjectName, segIdx, wc)
-	closeErr := wc.Close()
-	if err != nil {
-		return nil, fmt.Errorf("fetch segment %d: %w", segIdx, err)
-	}
-	if closeErr != nil {
-		h.logger.Warn("close segment writer", "error", closeErr)
-		return nil, fmt.Errorf("close segment writer for segment %d: %w", segIdx, closeErr)
-	}
+		wc, err := h.segmentCache.SegmentWriter(bagID, segIdx)
+		if err != nil {
+			return nil, fmt.Errorf("create segment writer: %w", err)
+		}
 
-	h.segmentCache.MarkSegmentWritten(bagID, segIdx)
-	return data, nil
+		data, err := h.fetcher.FetchSegment(ctx, loc.BucketName, loc.ObjectName, segIdx, wc)
+		closeErr := wc.Close()
+		if err != nil {
+			lastErr = err
+			h.logger.Debug("fetch segment retry", "segment", segIdx, "attempt", attempt+1, "error", err)
+			continue
+		}
+		if closeErr != nil {
+			h.logger.Warn("close segment writer", "error", closeErr)
+			return nil, fmt.Errorf("close segment writer for segment %d: %w", segIdx, closeErr)
+		}
+
+		h.segmentCache.MarkSegmentWritten(bagID, segIdx)
+		return data, nil
+	}
+	return nil, fmt.Errorf("fetch segment %d after %d retries: %w", segIdx, segmentFetchRetries, lastErr)
 }
 
 // ensureBagCacheOpen creates the cache directory if not already present.

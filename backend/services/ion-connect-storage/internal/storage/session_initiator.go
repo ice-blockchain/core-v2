@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -73,7 +74,11 @@ func (s *SessionInitiator) sendUpdateInit(rldp ionadnl.RLDPDoQueryer, overlayIDB
 	}
 
 	bitfield := buildFullBitfield(meta.PieceCount)
-	updatePayload := buildAddUpdateWithInit(sessionID, 0, bitfield)
+	updatePayload, err := buildAddUpdateWithInit(sessionID, 0, bitfield)
+	if err != nil {
+		s.logger.Debug("session init: build update payload failed", "error", err)
+		return
+	}
 
 	// Serialize overlay query manually: overlay.Query TL + inner payload
 	overlayQueryBytes, err := tl.Serialize(overlay.Query{Overlay: overlayIDBytes}, true)
@@ -89,12 +94,16 @@ func (s *SessionInitiator) sendUpdateInit(rldp ionadnl.RLDPDoQueryer, overlayIDB
 	}
 }
 
-func buildAddUpdateWithInit(sessionID int64, seqno int32, bitfield []byte) []byte {
+func buildAddUpdateWithInit(sessionID int64, seqno int32, bitfield []byte) ([]byte, error) {
 	buf := appendUint32(nil, tlAddUpdate)
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(sessionID))
 	buf = append(buf, b...)
 	buf = appendInt32(buf, seqno)
-	buf = append(buf, serializeUpdateInitResponse(bitfield)...)
-	return buf
+	initBuf, err := serializeUpdateInitResponse(bitfield)
+	if err != nil {
+		return nil, fmt.Errorf("build update init: %w", err)
+	}
+	buf = append(buf, initBuf...)
+	return buf, nil
 }

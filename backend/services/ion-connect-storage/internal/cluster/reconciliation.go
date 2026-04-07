@@ -22,7 +22,8 @@ func countActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger 
 
 // listActiveNodes returns nodeIDs with fresh heartbeats.
 func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *slog.Logger) ([]string, []string) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	results, err := store.Query(ctx, dsq.Query{Prefix: prefixHeartbeat})
 	if err != nil {
 		logger.Warn("query heartbeats", "error", err)

@@ -3,49 +3,63 @@ package provider
 import (
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"
 )
 
+const maxTrackedPeers = 100_000
+
 type peerEntry struct {
 	limiter    *rate.Limiter
-	lastAccess time.Time
+	lastAccess atomic.Int64
 }
 
 // PeerRateLimiter enforces per-peer request rate limits using token buckets.
 type PeerRateLimiter struct {
-	peers sync.Map
-	rps   rate.Limit
-	burst int
+	peers     sync.Map
+	peerCount atomic.Int64
+	rps       rate.Limit
+	burst     int
+	done      chan struct{}
 }
 
 // NewPeerRateLimiter creates a rate limiter that allows rps requests per
 // second per peer with the given burst size. Starts a background cleanup
 // goroutine that removes stale entries every 10 minutes.
 func NewPeerRateLimiter(rps float64, burst int) *PeerRateLimiter {
-	rl := &PeerRateLimiter{rps: rate.Limit(rps), burst: burst}
+	rl := &PeerRateLimiter{rps: rate.Limit(rps), burst: burst, done: make(chan struct{})}
 	go rl.cleanupLoop()
 	return rl
 }
 
+// Close stops the background cleanup goroutine.
+func (rl *PeerRateLimiter) Close() { close(rl.done) }
+
 // Middleware returns a gin middleware that rate-limits requests by peer ID.
 // Peers are identified by the X-RLDP-Peer-ID header set by the RLDP bridge.
+// Falls back to client IP when the header is absent.
 func (rl *PeerRateLimiter) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		peerID := c.GetHeader("X-RLDP-Peer-ID")
 		if peerID == "" {
-			c.Next()
-			return
+			peerID = "ip:" + c.ClientIP()
 		}
-		now := time.Now()
-		val, _ := rl.peers.LoadOrStore(peerID, &peerEntry{
-			limiter:    rate.NewLimiter(rl.rps, rl.burst),
-			lastAccess: now,
-		})
+		if rl.peerCount.Load() >= maxTrackedPeers {
+			if _, exists := rl.peers.Load(peerID); !exists {
+				c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "too many peers"})
+				return
+			}
+		}
+		now := time.Now().Unix()
+		val, loaded := rl.peers.LoadOrStore(peerID, rl.newEntry(now))
+		if !loaded {
+			rl.peerCount.Add(1)
+		}
 		entry := val.(*peerEntry)
-		entry.lastAccess = now
+		entry.lastAccess.Store(now)
 		if !entry.limiter.Allow() {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
 			return
@@ -54,16 +68,31 @@ func (rl *PeerRateLimiter) Middleware() gin.HandlerFunc {
 	}
 }
 
+func (rl *PeerRateLimiter) newEntry(nowUnix int64) *peerEntry {
+	e := &peerEntry{limiter: rate.NewLimiter(rl.rps, rl.burst)}
+	e.lastAccess.Store(nowUnix)
+	return e
+}
+
 func (rl *PeerRateLimiter) cleanupLoop() {
 	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
-		cutoff := time.Now().Add(-10 * time.Minute)
-		rl.peers.Range(func(key, value any) bool {
-			if value.(*peerEntry).lastAccess.Before(cutoff) {
-				rl.peers.Delete(key)
-			}
-			return true
-		})
+	for {
+		select {
+		case <-ticker.C:
+			cutoff := time.Now().Add(-10 * time.Minute).Unix()
+			var count int64
+			rl.peers.Range(func(key, value any) bool {
+				if value.(*peerEntry).lastAccess.Load() < cutoff {
+					rl.peers.Delete(key)
+				} else {
+					count++
+				}
+				return true
+			})
+			rl.peerCount.Store(count)
+		case <-rl.done:
+			return
+		}
 	}
 }

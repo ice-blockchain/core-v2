@@ -19,7 +19,7 @@ func (h *Handler) handleGetTorrentInfo(ctx context.Context, bagID [32]byte) ([]b
 		return nil, fmt.Errorf("extract torrent info BoC: %w", err)
 	}
 
-	return serializeTorrentInfoResponse(torrentInfoBoC), nil
+	return serializeTorrentInfoResponse(torrentInfoBoC)
 }
 
 const maxTorrentInfoBoCSize = 10 << 20 // 10 MB

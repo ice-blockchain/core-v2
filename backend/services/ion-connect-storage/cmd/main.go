@@ -71,7 +71,7 @@ func main() {
 		}
 	})
 
-	publicEngine := createPublicEngine(providerIndex)
+	publicEngine, rateLimiter := createPublicEngine(providerIndex)
 	bridge := ionadnl.NewRLDPHTTPBridge(ctx, publicEngine, logger)
 	server.SetHTTPBridge(bridge)
 
@@ -132,6 +132,7 @@ func main() {
 
 	logger.Info("shutdown signal received")
 	bridge.Stop()
+	rateLimiter.Close()
 	subscriberWg.Wait()
 	shutdownServer(server, logger)
 	httpWg.Wait()
@@ -258,13 +259,13 @@ func adnlAddrFromGateway(server *ionadnl.Server) [32]byte {
 	return addr
 }
 
-func createPublicEngine(providerIndex *provider.ProviderIndex) *gin.Engine {
+func createPublicEngine(providerIndex *provider.ProviderIndex) (*gin.Engine, *provider.PeerRateLimiter) {
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	rateLimiter := provider.NewPeerRateLimiter(10, 20) // 10 req/s per peer, burst 20
 	provider.RegisterRoutes(engine, providerIndex, rateLimiter)
-	return engine
+	return engine, rateLimiter
 }
 
 func createPrivateEngine(

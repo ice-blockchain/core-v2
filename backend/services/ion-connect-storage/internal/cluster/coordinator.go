@@ -65,6 +65,7 @@ type Coordinator struct {
 	metrics        *ClusterMetrics
 	logger         *slog.Logger
 	cfg            CoordinatorConfig
+	ctx            context.Context
 	cancel         context.CancelFunc
 	wg             sync.WaitGroup
 	stopOnce       sync.Once
@@ -146,6 +147,7 @@ func NewCoordinator(cfg CoordinatorConfig) (*Coordinator, error) {
 // Start begins CRDT synchronization, heartbeat writing, reclamation, and node info publishing.
 func (c *Coordinator) Start(ctx context.Context) error {
 	ctx, c.cancel = context.WithCancel(ctx)
+	c.ctx = ctx
 	c.logger.Info("cluster coordinator starting", "node_id", c.nodeID)
 
 	if err := c.publishNodeInfo(ctx); err != nil {
@@ -194,7 +196,7 @@ func (c *Coordinator) NodeID() string {
 // authentication when the peer isn't in the local connected peers map.
 func (c *Coordinator) IsRegisteredNode(adnlAddr [32]byte) bool {
 	adnlHex := hexEncode(adnlAddr[:])
-	ctx, cancel := context.WithTimeout(context.Background(), ownerQueryTimeout)
+	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
 	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefixNodeInfo})
 	if err != nil {

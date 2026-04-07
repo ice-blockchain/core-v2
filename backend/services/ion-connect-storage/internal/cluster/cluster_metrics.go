@@ -8,6 +8,7 @@ type ClusterMetrics struct {
 	BagsOwned             prometheus.Gauge
 	CRDTDeltasSent        prometheus.Counter
 	CRDTDeltasReceived    prometheus.Counter
+	CRDTHeadsDropped      prometheus.Counter
 	ConflictsResolved     prometheus.Counter
 	PieceForwardsTotal    *prometheus.CounterVec
 	PieceForwardDuration  prometheus.Histogram
@@ -29,6 +30,9 @@ func RegisterClusterMetrics(registry *prometheus.Registry) *ClusterMetrics {
 
 	m.CRDTDeltasReceived = registerClusterCounter(registry,
 		"cluster_crdt_deltas_received", "CRDT delta broadcasts received")
+
+	m.CRDTHeadsDropped = registerClusterCounter(registry,
+		"cluster_crdt_heads_dropped", "CRDT head messages dropped due to full channel")
 
 	m.ConflictsResolved = registerClusterCounter(registry,
 		"cluster_conflicts_resolved", "CRDT ownership conflict resolutions")
