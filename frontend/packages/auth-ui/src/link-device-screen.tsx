@@ -28,7 +28,7 @@ function LinkDeviceDescription() {
 function buildButtonContainerStyle(scale: (n: number) => number): ViewStyle {
   return {
     paddingHorizontal: scale(16),
-    paddingBottom: scale(20),
+    paddingBottom: scale(16),
     paddingTop: scale(28),
   };
 }
@@ -77,6 +77,7 @@ export function LinkDeviceScreen() {
         icon={<Icon name="action-login-linkaccount" size={scale(80)} color="white" />}
         title={translate("auth:linkDeviceTitle")}
         description={<LinkDeviceDescription />}
+        topPadding={30}
       />
       <ContinueButton />
     </DynamicSheet>

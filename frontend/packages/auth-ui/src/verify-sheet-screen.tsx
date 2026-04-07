@@ -1,12 +1,13 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { CommonActions, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { IONLoader, useTheme } from "@ion/ui";
-import { Sheet, useAppNavigation } from "@ion/navigation";
+import { Routes, Sheet, useAppNavigation } from "@ion/navigation";
 import type { RootStackParamList } from "@ion/navigation";
-import { VerifyPasskeyScreen } from "./verify-passkey-screen";
+import { VerifyScreen } from "./verify-screen";
+import { wasPasswordConfirmed, resetPasswordConfirmed } from "./confirm-password-screen";
 
-type VerifyPasskeyRoute = RouteProp<RootStackParamList, 'Sheet/VerifyPasskey'>;
+type VerifyRoute = RouteProp<RootStackParamList, 'Sheet/Verify'>;
 
 function buildNavigateAction(name: string, params?: Record<string, unknown>) {
   const action = params ? CommonActions.navigate(name, params) : CommonActions.navigate(name);
@@ -20,7 +21,7 @@ function buildResetAction(name: string, params?: Record<string, unknown>) {
 
 function useDismissHandler() {
   const appNavigation = useAppNavigation();
-  const route = useRoute<VerifyPasskeyRoute>();
+  const route = useRoute<VerifyRoute>();
   const dismissedRef = useRef(false);
 
   return useCallback(() => {
@@ -38,14 +39,48 @@ function useDismissHandler() {
   }, [appNavigation, route.params]);
 }
 
-export function VerifyPasskeySheetScreen() {
+function usePasswordFlow(isPasswordMethod: boolean, handleDismiss: () => void, handleClose: () => void) {
   const appNavigation = useAppNavigation();
+  const leftScreenRef = useRef(false);
+
+  useEffect(() => {
+    if (!isPasswordMethod || leftScreenRef.current) return;
+    resetPasswordConfirmed();
+    requestAnimationFrame(() => {
+      leftScreenRef.current = true;
+      appNavigation.navigate(Routes.Sheet.ConfirmPassword);
+    });
+  }, [isPasswordMethod, appNavigation]);
+
+  useEffect(() => {
+    if (!isPasswordMethod) return;
+    const unsubscribe = appNavigation.addListener("focus", () => {
+      if (!leftScreenRef.current) return;
+      leftScreenRef.current = false;
+      if (wasPasswordConfirmed()) {
+        resetPasswordConfirmed();
+        handleDismiss();
+      } else {
+        handleClose();
+      }
+    });
+    return unsubscribe;
+  }, [isPasswordMethod, appNavigation, handleDismiss, handleClose]);
+}
+
+export function VerifySheetScreen() {
+  const appNavigation = useAppNavigation();
+  const route = useRoute<VerifyRoute>();
   const { scale } = useTheme();
+  const method = route.params.method ?? "Passkey";
+  const isPasswordMethod = method === "Password";
   const handleDismiss = useDismissHandler();
 
   const handleClose = useCallback(() => {
     if (appNavigation.canGoBack()) appNavigation.goBack();
   }, [appNavigation]);
+
+  usePasswordFlow(isPasswordMethod, handleDismiss, handleClose);
 
   const loader = useMemo(
     () => <IONLoader variant="light" size={scale.scaleSize(30)} />,
@@ -54,9 +89,11 @@ export function VerifyPasskeySheetScreen() {
 
   return (
     <Sheet onClose={handleClose}>
-      <VerifyPasskeyScreen
+      <VerifyScreen
         onDismiss={handleDismiss}
         loadingElement={loader}
+        method={method}
+        disableAutoDismiss={isPasswordMethod}
       />
     </Sheet>
   );

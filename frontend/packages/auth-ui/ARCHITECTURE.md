@@ -15,8 +15,11 @@ Authentication UI component library. Provides pre-built screens for registration
 - `SetNewPasswordScreen` -- Set new password after credential recovery
 - `RestoreSuccessModal` -- Success confirmation after restore
 - `IdentityKeyNotFoundModal` -- Error modal for unrecognized identity key
-- `VerifyPasskeyScreen` -- Passkey verification loading state (auto-dismisses after 3s)
-- `VerifyPasskeySheetScreen` -- Passkey verification in bottom sheet
+- `VerifyScreen` -- Verification loading state with method variants: Passkey, Password, Biometrics (auto-dismisses after 3s)
+- `VerifySheetScreen` -- Verification in bottom sheet
+- `AddBiometricsScreen` -- Biometrics setup screen
+- `InvalidCredentialsModal` -- Error modal for invalid credentials
+- `ConfirmPasswordScreen` -- Password confirmation screen
 - `VerifyPasswordBackground`, `VerifyPasswordOverlay` -- Password verification modal
 
 ### Components

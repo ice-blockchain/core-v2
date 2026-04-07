@@ -3,13 +3,22 @@ import { useEffect, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
+import type { VerifyMethodType } from "@ion/navigation";
 import { SecuredByFooter } from "./secured-by-footer";
 
 const AUTO_DISMISS_DELAY = 3000;
 
-interface VerifyPasskeyScreenProps {
+const VERIFY_TEXT_KEYS: Record<VerifyMethodType, { title: string; subtitle: string }> = {
+  Passkey: { title: "auth:verifyPasskeyTitle", subtitle: "auth:verifyPasskeySubtitle" },
+  Password: { title: "auth:verifyPasswordTitle", subtitle: "auth:verifyPasswordSubtitle" },
+  Biometrics: { title: "auth:verifyBiometricsTitle", subtitle: "auth:verifyBiometricsSubtitle" },
+};
+
+interface VerifyScreenProps {
   onDismiss: () => void;
   loadingElement: ReactNode;
+  method?: VerifyMethodType;
+  disableAutoDismiss?: boolean;
 }
 
 function useScreenStyles() {
@@ -31,24 +40,26 @@ function useScreenStyles() {
   }), [scale]);
 }
 
-export function VerifyPasskeyScreen({ onDismiss, loadingElement }: VerifyPasskeyScreenProps) {
+export function VerifyScreen({ onDismiss, loadingElement, method = "Passkey", disableAutoDismiss = false }: VerifyScreenProps) {
   const { colors, scale } = useTheme();
   const screenStyles = useScreenStyles();
+  const textKeys = VERIFY_TEXT_KEYS[method];
 
   useEffect(() => {
+    if (disableAutoDismiss) return;
     const timer = setTimeout(onDismiss, AUTO_DISMISS_DELAY);
     return () => clearTimeout(timer);
-  }, [onDismiss]);
+  }, [onDismiss, disableAutoDismiss]);
 
   return (
     <View style={screenStyles.page}>
       <View style={screenStyles.iconContainer}>
         <Icon name="action-wallet-passkey" size={scale.scaleSize(80)} color={colors.tertiaryText} />
       </View>
-      <Text variant="headline1" color={colors.primaryText}>{translate("auth:verifyPasskeyTitle")}</Text>
+      <Text variant="headline1" color={colors.primaryText}>{translate(textKeys.title)}</Text>
       <View style={screenStyles.textGroup}>
         <Text variant="body2" color={colors.tertiaryText} style={styles.centerText}>
-          {translate("auth:verifyPasskeySubtitle")}
+          {translate(textKeys.subtitle)}
         </Text>
       </View>
       <View style={screenStyles.loader}>

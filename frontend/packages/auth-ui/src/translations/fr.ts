@@ -20,6 +20,9 @@ export const authFR: Record<keyof typeof authEN, string> = {
   verifyPasskeyTitle: 'Vérifier avec une clé d\'accès',
   verifyPasskeySubtitle:
     'Votre appareil vous demandera de confirmer cette action avec votre empreinte digitale, visage ou verrouillage d\'écran',
+  verifyBiometricsTitle: 'Vérifier avec la biométrie',
+  verifyBiometricsSubtitle:
+    'Votre appareil vous demandera de confirmer cette action avec votre empreinte digitale, visage ou verrouillage d\'écran',
   verifyPasswordTitle: 'Vérifier avec le mot de passe',
   verifyPasswordSubtitle:
     'Votre appareil vous demandera votre mot de passe pour confirmer',
@@ -114,9 +117,15 @@ export const authFR: Record<keyof typeof authEN, string> = {
   addPasskeyCredentialsTitle: 'Ajouter des identifiants de clé d\'accès',
   addPasskeyCredentialsDescription:
     'Souhaitez-vous créer de nouveaux identifiants sur cet appareil ?',
+  addBiometricsTitle: 'Ajouter l\'authentification biométrique',
+  addBiometricsDescription:
+    'Souhaitez-vous utiliser les données biométriques de votre appareil pour une authentification plus rapide ?',
   linkDeviceTitle: 'Lier un nouvel appareil',
   linkDeviceDescription:
     'Vous accédez à votre compte depuis un nouvel appareil. Pour continuer à utiliser l\'application, veuillez le lier à votre compte',
   showPassword: 'Afficher le mot de passe',
   hidePassword: 'Masquer le mot de passe',
+  invalidCredentialsTitle: 'Identifiants invalides',
+  invalidCredentialsDescription:
+    'Ce nom de clé d\'identité n\'est pas lié à cet appareil. Si vous en êtes le propriétaire, veuillez restaurer votre nom de clé d\'identité pour y accéder depuis cet appareil.',
 };

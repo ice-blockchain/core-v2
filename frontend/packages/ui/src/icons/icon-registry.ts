@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 
 import { ActionLoginLinkaccountIcon } from "./generated/ActionLoginLinkaccountIcon";
 import { ActionWalletAddpasskeyIcon } from "./generated/ActionWalletAddpasskeyIcon";
+import { ActionWalletFaceidIcon } from "./generated/ActionWalletFaceidIcon";
 import { ActionWalletPasskeyIcon } from "./generated/ActionWalletPasskeyIcon";
 import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
@@ -85,6 +86,7 @@ interface IconComponentProps {
 export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "action-login-linkaccount": ActionLoginLinkaccountIcon,
   "action-wallet-addpasskey": ActionWalletAddpasskeyIcon,
+  "action-wallet-faceid": ActionWalletFaceidIcon,
   "action-wallet-passkey": ActionWalletPasskeyIcon,
   "articles": ArticlesIcon,
   "at-sign": AtSignIcon,

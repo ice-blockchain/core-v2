@@ -19,7 +19,7 @@ import {
   NicknameReservedScreen,
   onboardingTranslations,
 } from "@ion/onboarding-ui";
-import { authTranslations, GetStartedScreen, IdentityKeyNameNoteScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyPasskeySheetScreen, LinkDeviceScreen, VerifyOnOtherDeviceScreen, AddPasskeyCredentialsScreen } from "@ion/auth-ui";
+import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
@@ -30,7 +30,6 @@ import { CatalogScreen } from "./src/components/catalog-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
 import { MainScreen } from "./src/components/main-screen";
-import { AuthFlowScreen } from "./src/components/auth-flow-screen";
 import { identityClient } from "./src/identity-client";
 
 const i18n = createLocalization();
@@ -49,13 +48,15 @@ const screens = {
   NicknameReserved: NicknameReservedScreen,
   ProxyTest: ProxyTestScreen,
   IdentityKeyNameNote: IdentityKeyNameNoteScreen,
-  VerifyPasskey: VerifyPasskeySheetScreen,
+  Verify: VerifySheetScreen,
   StorageTest: StorageTestScreen,
   VerifyOnOtherDevice: VerifyOnOtherDeviceScreen,
+  AddBiometrics: AddBiometricsScreen,
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
   CreatePost: CreatePostSheetScreen,
-  AuthFlow: AuthFlowScreen,
   LinkDevice: LinkDeviceScreen,
+  InvalidCredentials: InvalidCredentialsModal,
+  ConfirmPassword: ConfirmPasswordScreen,
 };
 
 const authScreens = {

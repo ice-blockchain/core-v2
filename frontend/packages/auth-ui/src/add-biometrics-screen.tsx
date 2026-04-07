@@ -5,12 +5,12 @@ import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { DynamicSheet, InformationSheetContent, Routes, useAppNavigation } from "@ion/navigation";
 
-function AddPasskeyCredentialsDescription() {
+function AddBiometricsDescription() {
   const { colors } = useTheme();
 
   return (
     <Text variant="body2" color={colors.secondaryText} style={styles.descriptionText}>
-      {translate("auth:addPasskeyCredentialsDescription")}
+      {translate("auth:addBiometricsDescription")}
     </Text>
   );
 }
@@ -25,7 +25,7 @@ function buildButtonRowStyle(scale: (n: number) => number): ViewStyle {
   };
 }
 
-function buildSkipButtonStyle(scale: (n: number) => number, borderColor: string): ViewStyle {
+function buildCancelButtonStyle(scale: (n: number) => number, borderColor: string): ViewStyle {
   return {
     flex: 1,
     height: scale(56),
@@ -48,7 +48,7 @@ function buildContinueButtonStyle(scale: (n: number) => number, backgroundColor:
   };
 }
 
-function useNavigateToVerify() {
+function useNavigateToVerify(method: "Password" | "Biometrics") {
   const appNavigation = useAppNavigation();
 
   return useCallback(() => {
@@ -56,34 +56,36 @@ function useNavigateToVerify() {
     requestAnimationFrame(() => {
       appNavigation.navigate(Routes.Sheet.Verify, {
         next: { name: Routes.Catalog, reset: true },
+        method,
       });
     });
-  }, [appNavigation]);
+  }, [appNavigation, method]);
 }
 
 function ActionButtons() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const { colors } = theme;
-  const navigateToVerifyPasskey = useNavigateToVerify();
+  const navigateToVerifyPassword = useNavigateToVerify("Password");
+  const navigateToVerifyBiometrics = useNavigateToVerify("Biometrics");
 
   const rowStyle = useMemo(() => buildButtonRowStyle(scale), [scale]);
-  const skipStyle = useMemo(() => buildSkipButtonStyle(scale, colors.strokeElements), [scale, colors.strokeElements]);
+  const cancelStyle = useMemo(() => buildCancelButtonStyle(scale, colors.strokeElements), [scale, colors.strokeElements]);
   const continueStyle = useMemo(() => buildContinueButtonStyle(scale, colors.primaryAccent), [scale, colors.primaryAccent]);
 
   return (
     <View style={rowStyle}>
-      <Pressable style={skipStyle} onPress={navigateToVerifyPasskey}>
-        <Text variant="body" color={colors.secondaryText}>{translate("auth:skipButton")}</Text>
+      <Pressable style={cancelStyle} onPress={navigateToVerifyPassword}>
+        <Text variant="body" color={colors.secondaryText}>{translate("auth:cancelButton")}</Text>
       </Pressable>
-      <Pressable style={continueStyle} onPress={navigateToVerifyPasskey}>
+      <Pressable style={continueStyle} onPress={navigateToVerifyBiometrics}>
         <Text variant="body" color={colors.onPrimaryAccent}>{translate("auth:continueButton")}</Text>
       </Pressable>
     </View>
   );
 }
 
-export function AddPasskeyCredentialsScreen() {
+export function AddBiometricsScreen() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const navigation = useAppNavigation();
@@ -95,9 +97,9 @@ export function AddPasskeyCredentialsScreen() {
   return (
     <DynamicSheet showClose={false} onDismiss={handleDismiss}>
       <InformationSheetContent
-        icon={<Icon name="action-wallet-addpasskey" size={scale(80)} />}
-        title={translate("auth:addPasskeyCredentialsTitle")}
-        description={<AddPasskeyCredentialsDescription />}
+        icon={<Icon name="action-wallet-faceid" size={scale(80)} />}
+        title={translate("auth:addBiometricsTitle")}
+        description={<AddBiometricsDescription />}
         topPadding={30}
       />
       <ActionButtons />

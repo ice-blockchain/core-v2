@@ -9,29 +9,31 @@ import { Routes } from './routes';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const TRANSPARENT_MODAL_OPTIONS = {
-  headerShown: false as const,
-  presentation: 'transparentModal' as const,
-  animation: 'none' as const,
-};
+const MODAL = { headerShown: false as const, presentation: 'transparentModal' as const, animation: 'none' as const };
+const NAV = { headerShown: false, animation: 'fade' } as const;
+
+interface AppNavigatorScreens {
+  Splash: ComponentType;
+  GetStarted: ComponentType;
+  Main?: ComponentType;
+  Catalog: ComponentType;
+  ProxyTest?: ComponentType;
+  StorageTest?: ComponentType;
+  AuthFlow?: ComponentType;
+  NicknameReserved: ComponentType;
+  IdentityKeyNameNote: ComponentType;
+  Verify: ComponentType;
+  LinkDevice: ComponentType;
+  VerifyOnOtherDevice: ComponentType;
+  AddBiometrics: ComponentType;
+  AddPasskeyCredentials: ComponentType;
+  InvalidCredentials: ComponentType;
+  ConfirmPassword: ComponentType;
+  CreatePost?: ComponentType;
+}
 
 interface AppNavigatorProps {
-  screens: {
-    Splash: ComponentType;
-    GetStarted: ComponentType;
-    Main?: ComponentType;
-    Catalog: ComponentType;
-    ProxyTest?: ComponentType;
-    StorageTest?: ComponentType;
-    AuthFlow?: ComponentType;
-    NicknameReserved: ComponentType;
-    IdentityKeyNameNote: ComponentType;
-    VerifyPasskey: ComponentType;
-    LinkDevice: ComponentType;
-    VerifyOnOtherDevice: ComponentType;
-    AddPasskeyCredentials: ComponentType;
-    CreatePost?: ComponentType;
-  };
+  screens: AppNavigatorScreens;
   authScreens: AuthScreens;
   isAuthenticated?: boolean;
 }
@@ -45,28 +47,28 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
-export function AppNavigator({ screens, authScreens, isAuthenticated }: AppNavigatorProps) {
-  const AuthScreen = useAuthScreen(authScreens);
-
+export function AppNavigator({ screens: s, authScreens, isAuthenticated }: AppNavigatorProps) {
+  const Auth = useAuthScreen(authScreens);
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-      <Stack.Screen name={Routes.Splash} component={screens.Splash} />
-      <Stack.Screen name={Routes.GetStarted} component={screens.GetStarted} />
-      {screens.Main && isAuthenticated && <Stack.Screen name={Routes.Main} component={screens.Main} />}
-      <Stack.Screen name={Routes.Catalog} component={screens.Catalog} />
-      {screens.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={screens.ProxyTest} />}
-      {screens.StorageTest && <Stack.Screen name={Routes.StorageTest} component={screens.StorageTest} />}
-      {screens.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={screens.AuthFlow} options={TRANSPARENT_MODAL_OPTIONS} />}
-      <Stack.Group screenOptions={TRANSPARENT_MODAL_OPTIONS}>
-        <Stack.Screen name={Routes.Sheet.Auth} component={AuthScreen} />
-        <Stack.Screen name={Routes.Sheet.NicknameReserved} component={screens.NicknameReserved} />
-        <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={screens.IdentityKeyNameNote} />
-        <Stack.Screen name={Routes.Sheet.VerifyPasskey} component={screens.VerifyPasskey} />
-        <Stack.Screen name={Routes.Sheet.LinkDevice} component={screens.LinkDevice} />
-        <Stack.Screen name={Routes.Sheet.VerifyOnOtherDevice} component={screens.VerifyOnOtherDevice} />
-        <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={screens.AddPasskeyCredentials} />
-        {screens.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={screens.CreatePost} />}
-      </Stack.Group>
+    <Stack.Navigator screenOptions={NAV}>
+      <Stack.Screen name={Routes.Splash} component={s.Splash} />
+      <Stack.Screen name={Routes.GetStarted} component={s.GetStarted} />
+      {s.Main && isAuthenticated && <Stack.Screen name={Routes.Main} component={s.Main} />}
+      <Stack.Screen name={Routes.Catalog} component={s.Catalog} />
+      {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
+      {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}
+      {s.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={s.AuthFlow} options={MODAL} />}
+      <Stack.Screen name={Routes.Sheet.Auth} component={Auth} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.NicknameReserved} component={s.NicknameReserved} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={s.IdentityKeyNameNote} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.Verify} component={s.Verify} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.LinkDevice} component={s.LinkDevice} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.VerifyOnOtherDevice} component={s.VerifyOnOtherDevice} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.AddBiometrics} component={s.AddBiometrics} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={s.AddPasskeyCredentials} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.InvalidCredentials} component={s.InvalidCredentials} options={MODAL} />
+      <Stack.Screen name={Routes.Sheet.ConfirmPassword} component={s.ConfirmPassword} options={MODAL} />
+      {s.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={s.CreatePost} options={MODAL} />}
     </Stack.Navigator>
   );
 }

@@ -20,6 +20,9 @@ export const authDE: Record<keyof typeof authEN, string> = {
   verifyPasskeyTitle: 'Mit Passkey verifizieren',
   verifyPasskeySubtitle:
     'Dein Gerät wird dich auffordern, diese Aktion mit deinem Fingerabdruck, Gesicht oder Bildschirmsperre zu bestätigen',
+  verifyBiometricsTitle: 'Mit Biometrie verifizieren',
+  verifyBiometricsSubtitle:
+    'Dein Gerät wird dich auffordern, diese Aktion mit deinem Fingerabdruck, Gesicht oder Bildschirmsperre zu bestätigen',
   verifyPasswordTitle: 'Mit Passwort verifizieren',
   verifyPasswordSubtitle:
     'Dein Gerät wird dein Passwort zur Bestätigung abfragen',
@@ -115,9 +118,15 @@ export const authDE: Record<keyof typeof authEN, string> = {
   addPasskeyCredentialsTitle: 'Passkey-Anmeldedaten hinzufügen',
   addPasskeyCredentialsDescription:
     'Möchtest du neue Anmeldedaten auf diesem Gerät erstellen?',
+  addBiometricsTitle: 'Biometrische Authentifizierung hinzufügen',
+  addBiometricsDescription:
+    'Möchtest du die biometrischen Daten deines Geräts für eine schnellere Authentifizierung verwenden?',
   linkDeviceTitle: 'Neues Gerät verknüpfen',
   linkDeviceDescription:
     'Du greifst von einem neuen Gerät auf dein Konto zu. Um die App weiter zu nutzen, verknüpfe es bitte mit deinem Konto',
   showPassword: 'Passwort anzeigen',
   hidePassword: 'Passwort ausblenden',
+  invalidCredentialsTitle: 'Ungültige Anmeldedaten',
+  invalidCredentialsDescription:
+    'Dieser Identitätsschlüsselname ist nicht mit diesem Gerät verknüpft. Wenn Sie der Eigentümer sind, stellen Sie bitte Ihren Identitätsschlüsselnamen wieder her, um von diesem Gerät darauf zuzugreifen.',
 };
