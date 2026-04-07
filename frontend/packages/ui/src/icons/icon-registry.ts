@@ -15,6 +15,8 @@ import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
+import { CategoriesFollowingIcon } from "./generated/CategoriesFollowingIcon";
+import { CategoriesForyouIcon } from "./generated/CategoriesForyouIcon";
 import { ChannelPrivateIcon } from "./generated/ChannelPrivateIcon";
 import { ChatBubbleIcon } from "./generated/ChatBubbleIcon";
 import { ChatCreatenewIcon } from "./generated/ChatCreatenewIcon";
@@ -29,6 +31,7 @@ import { ChevronUpIcon } from "./generated/ChevronUpIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
+import { DappCheckIcon } from "./generated/DappCheckIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
 import { FeedPostIcon } from "./generated/FeedPostIcon";
 import { FeedStoriesIcon } from "./generated/FeedStoriesIcon";
@@ -49,6 +52,7 @@ import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
+import { NotificationBellIcon } from "./generated/NotificationBellIcon";
 import { PasswordCheckFailIcon } from "./generated/PasswordCheckFailIcon";
 import { PasswordCheckPassIcon } from "./generated/PasswordCheckPassIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
@@ -62,6 +66,7 @@ import { PostPollIcon } from "./generated/PostPollIcon";
 import { PostSendIcon } from "./generated/PostSendIcon";
 import { PostTopicIcon } from "./generated/PostTopicIcon";
 import { ProfileCameraIcon } from "./generated/ProfileCameraIcon";
+import { ProfileFeedIcon } from "./generated/ProfileFeedIcon";
 import { ProfileNoimageIcon } from "./generated/ProfileNoimageIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
 import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
@@ -76,6 +81,7 @@ import { SheetCloseIcon } from "./generated/SheetCloseIcon";
 import { SwapIcon } from "./generated/SwapIcon";
 import { TrashIcon } from "./generated/TrashIcon";
 import { VideosTradingIcon } from "./generated/VideosTradingIcon";
+import { WalletIconProfileEmptypostsIcon } from "./generated/WalletIconProfileEmptypostsIcon";
 import { WalletOffIcon } from "./generated/WalletOffIcon";
 
 interface IconComponentProps {
@@ -97,6 +103,8 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "button-next": ButtonNextIcon,
   "button-receive": ButtonReceiveIcon,
   "camera": CameraIcon,
+  "categories-following": CategoriesFollowingIcon,
+  "categories-foryou": CategoriesForyouIcon,
   "channel-private": ChannelPrivateIcon,
   "chat-bubble": ChatBubbleIcon,
   "chat-createnew": ChatCreatenewIcon,
@@ -111,6 +119,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "clock": ClockIcon,
   "close": CloseIcon,
   "danger_triangle": DangerTriangleIcon,
+  "dapp-check": DappCheckIcon,
   "edit-link": EditLinkIcon,
   "feed-post": FeedPostIcon,
   "feed-stories": FeedStoriesIcon,
@@ -131,6 +140,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "manage": ManageIcon,
   "name-reserved": NameReservedIcon,
   "news": NewsIcon,
+  "notification-bell": NotificationBellIcon,
   "password-check-fail": PasswordCheckFailIcon,
   "password-check-pass": PasswordCheckPassIcon,
   "person-add": PersonAddIcon,
@@ -144,6 +154,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "post-send": PostSendIcon,
   "post-topic": PostTopicIcon,
   "profile-camera": ProfileCameraIcon,
+  "profile-feed": ProfileFeedIcon,
   "profile-noimage": ProfileNoimageIcon,
   "profile-save": ProfileSaveIcon,
   "recovery-code": RecoveryCodeIcon,
@@ -158,5 +169,6 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "swap": SwapIcon,
   "trash": TrashIcon,
   "videos-trading": VideosTradingIcon,
+  "wallet-icon-profile-emptyposts": WalletIconProfileEmptypostsIcon,
   "wallet-off": WalletOffIcon,
 };

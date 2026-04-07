@@ -6,7 +6,7 @@ import { StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { ThemeProvider, useTheme } from '@ion/ui';
+import { ThemeProvider, useTheme, FullscreenPortalHost } from '@ion/ui';
 import type { ColorMode } from '@ion/ui';
 import { getFeatureFlag } from '@ion/config';
 import { AppNavigator, useNavigationTheme, BottomSheetModalProvider } from '@ion/navigation';

@@ -3,7 +3,7 @@ import { Text } from "../components/Text";
 import { useTheme } from "../theme/ThemeProvider";
 import { Avatar } from "../components/Avatar";
 import { AvatarPicker } from "../components/AvatarPicker";
-import { PlusIconButton } from "../components/PlusIconButton";
+import { AddStoryAvatar } from "../components/AddStoryAvatar";
 import { CatalogSection } from "./CatalogSection";
 
 const SAMPLE_IMAGE = "https://i.pravatar.cc/200?img=3";
@@ -59,20 +59,9 @@ function AvatarCustomFallback() {
 }
 
 function AvatarWithPlusButton() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-  const avatarSize = 59;
-  const buttonSize = 24;
   return (
     <SubSection label="With plus button (add story)">
-      <View style={{ alignItems: "center", paddingBottom: scale(buttonSize / 2) }}>
-        <View>
-          <Avatar size={avatarSize} imageUrl={SAMPLE_IMAGE} />
-          <View style={{ position: "absolute", bottom: scale(-buttonSize / 2), alignSelf: "center", width: "100%", alignItems: "center" }}>
-            <PlusIconButton size={buttonSize} onPress={noop} />
-          </View>
-        </View>
-      </View>
+      <AddStoryAvatar imageUrl={SAMPLE_IMAGE} onPress={noop} />
     </SubSection>
   );
 }
