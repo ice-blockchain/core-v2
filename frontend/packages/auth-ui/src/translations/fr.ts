@@ -9,7 +9,6 @@ export const authFR: Record<keyof typeof authEN, string> = {
   orDivider: 'ou',
   registerButton: 'S\'inscrire',
   restoreIdentityKeyButton: 'Restaurer la clé d\'identité',
-  fullAuthFlowButton: 'Flux d\'authentification complet',
   passwordLabel: 'Mot de passe',
   confirmPasswordLabel: 'Confirmer le mot de passe',
   registerTitle: 'S\'inscrire',

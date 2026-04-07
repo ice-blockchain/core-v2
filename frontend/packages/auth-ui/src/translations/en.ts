@@ -7,7 +7,6 @@ export const authEN = {
   orDivider: 'or',
   registerButton: 'Register',
   restoreIdentityKeyButton: 'Restore identity key',
-  fullAuthFlowButton: 'Full auth flow',
   passwordLabel: 'Password',
   confirmPasswordLabel: 'Confirm password',
   registerTitle: 'Register',

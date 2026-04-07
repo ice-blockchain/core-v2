@@ -9,7 +9,6 @@ export const authDE: Record<keyof typeof authEN, string> = {
   orDivider: 'oder',
   registerButton: 'Registrieren',
   restoreIdentityKeyButton: 'Identitätsschlüssel wiederherstellen',
-  fullAuthFlowButton: 'Vollständiger Authentifizierungsablauf',
   passwordLabel: 'Passwort',
   confirmPasswordLabel: 'Passwort bestätigen',
   registerTitle: 'Registrieren',
