@@ -93,6 +93,7 @@ export function VerifyOnOtherDeviceScreen() {
         icon={<Icon name="action-login-linkaccount" size={scale(80)} color="white" />}
         title={translate("auth:verifyOnOtherDeviceTitle")}
         description={<VerifyOnOtherDeviceDescription />}
+        topPadding={30}
       />
       <ActionButtons onCancel={handleDismiss} />
     </DynamicSheet>

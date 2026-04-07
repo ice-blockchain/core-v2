@@ -16,7 +16,7 @@ import {
   NicknameReservedScreen,
   onboardingTranslations,
 } from '@ion/onboarding-ui';
-import { authTranslations, AddPasskeyCredentialsScreen, GetStartedScreen, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifyPasskeySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
+import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
 import { splashTranslations } from '@ion/splash-ui';
 import { chatTranslations } from '@ion/chat';
 import { SplashScreen } from './components/splash-screen';
@@ -35,10 +35,13 @@ const screens = {
   Catalog: CatalogScreen,
   LinkDevice: LinkDeviceScreen,
   NicknameReserved: NicknameReservedScreen,
-  VerifyPasskey: VerifyPasskeySheetScreen,
+  Verify: VerifySheetScreen,
   IdentityKeyNameNote: IdentityKeyNameNoteScreen,
   VerifyOnOtherDevice: VerifyOnOtherDeviceScreen,
+  AddBiometrics: AddBiometricsScreen,
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
+  InvalidCredentials: InvalidCredentialsModal,
+  ConfirmPassword: ConfirmPasswordScreen,
 };
 
 const authScreens = {

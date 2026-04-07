@@ -1,5 +1,5 @@
 export { Routes } from './routes';
-export type { RootStackParamList, AuthStackParamList, VerifyPasskeyNextRoute } from './route-params';
+export type { RootStackParamList, AuthStackParamList, VerifyNextRoute, VerifyMethodType } from './route-params';
 export { AppNavigator } from './app-navigator';
 export { useAppNavigation } from './use-app-navigation';
 export { Sheet } from './sheet-navigator';

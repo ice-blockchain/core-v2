@@ -1,8 +1,8 @@
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
-export type { GetStartedScreenProps, GetStartedScreenCallbacks } from "./get-started-screen";
 export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
 export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
+export { InvalidCredentialsModal } from "./invalid-credentials-modal";
 export { PasskeyRegisterScreen } from "./passkey-register-screen";
 export { PasswordRegisterScreen } from "./password-register-screen";
 export type { PasswordRegisterScreenProps, RegisterScreenCallbacks } from "./password-register-screen";
@@ -11,12 +11,14 @@ export { RestoreCredentialsScreen } from "./restore-credentials-screen";
 export { RestoreMenuScreen } from "./restore-menu-screen";
 export { RestoreSuccessModal } from "./restore-success-modal";
 export { SetNewPasswordScreen } from "./set-new-password-screen";
+export { AddBiometricsScreen } from "./add-biometrics-screen";
 export { AddPasskeyCredentialsScreen } from "./add-passkey-credentials-screen";
 export { LinkDeviceScreen, hasLinkDeviceBeenShown, markLinkDeviceShown } from "./link-device-screen";
 export { VerifyOnOtherDeviceScreen } from "./verify-on-other-device-screen";
-export { VerifyPasskeyScreen } from "./verify-passkey-screen";
-export { VerifyPasskeySheetScreen } from "./verify-passkey-sheet-screen";
+export { VerifyScreen } from "./verify-screen";
+export { VerifySheetScreen } from "./verify-sheet-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
+export { ConfirmPasswordScreen } from "./confirm-password-screen";
 
 // Buttons
 export { PrimaryButton } from "./primary-button";

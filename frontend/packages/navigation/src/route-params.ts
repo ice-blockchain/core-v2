@@ -1,6 +1,8 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
-export interface VerifyPasskeyNextRoute {
+export type VerifyMethodType = 'Passkey' | 'Password' | 'Biometrics';
+
+export interface VerifyNextRoute {
   name: string;
   params?: Record<string, unknown>;
   reset?: boolean;
@@ -18,11 +20,14 @@ export type RootStackParamList = {
   'Sheet/Auth': NavigatorScreenParams<AuthStackParamList> | undefined;
   'Sheet/NicknameReserved': undefined;
   'Sheet/IdentityKeyNameNote': undefined;
-  'Sheet/VerifyPasskey': { next: VerifyPasskeyNextRoute };
+  'Sheet/Verify': { next: VerifyNextRoute; method?: VerifyMethodType };
   'Sheet/LinkDevice': undefined;
   'Sheet/VerifyOnOtherDevice': undefined;
+  'Sheet/AddBiometrics': undefined;
   'Sheet/AddPasskeyCredentials': undefined;
   'Sheet/CreatePost': undefined;
+  'Sheet/InvalidCredentials': undefined;
+  'Sheet/ConfirmPassword': undefined;
 };
 
 export type AuthStackParamList = {

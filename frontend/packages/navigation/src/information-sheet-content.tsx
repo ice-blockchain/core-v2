@@ -10,12 +10,13 @@ interface InformationSheetContentProps {
   icon: ReactNode;
   title: string;
   description: ReactNode;
+  topPadding?: number;
 }
 
-export function InformationSheetContent({ icon, title, description }: InformationSheetContentProps) {
+export function InformationSheetContent({ icon, title, description, topPadding }: InformationSheetContentProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const contentStyle = useMemo(() => buildInformationContentStyle(scale), [scale]);
+  const contentStyle = useMemo(() => buildInformationContentStyle(scale, topPadding), [scale, topPadding]);
   const textGroupStyle = useMemo(() => buildInformationTextGroupStyle(scale), [scale]);
 
   return (

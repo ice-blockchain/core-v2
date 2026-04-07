@@ -1,7 +1,7 @@
 import type { ViewStyle } from "react-native";
 
-export function buildInformationContentStyle(scale: (n: number) => number): ViewStyle {
-  return { alignItems: "center", gap: scale(10), paddingTop: scale(16) };
+export function buildInformationContentStyle(scale: (n: number) => number, topPadding?: number): ViewStyle {
+  return { alignItems: "center", gap: scale(10), paddingTop: scale(topPadding ?? 16) };
 }
 
 export function buildInformationTextGroupStyle(scale: (n: number) => number): ViewStyle {

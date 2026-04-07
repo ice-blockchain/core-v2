@@ -5,8 +5,49 @@ import type { ViewStyle } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SheetBackdrop, SheetBackground, SheetHandle, SheetCloseHeader } from '@ion/ui';
+import { Icon, Text, useTheme, SheetBackdrop, SheetBackground, SheetHandle } from '@ion/ui';
 import { useAppNavigation } from './use-app-navigation';
+
+interface DynamicSheetHeaderProps {
+  title?: string;
+  showClose?: boolean;
+  onClose: () => void;
+}
+
+function buildHeaderStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
+  return {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: scale(16),
+    paddingTop: scale(20),
+    paddingBottom: scale(16),
+    borderTopLeftRadius: scale(30),
+    borderTopRightRadius: scale(30),
+    backgroundColor,
+  };
+}
+
+function DynamicSheetHeader({ title, showClose = true, onClose }: DynamicSheetHeaderProps) {
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
+  const headerStyle = useMemo(() => buildHeaderStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors.secondaryBackground]);
+  const spacerStyle = useMemo((): ViewStyle => ({ width: scale(24) }), [scale]);
+
+  if (!showClose && !title) return null;
+
+  return (
+    <View style={headerStyle}>
+      {showClose ? <View style={spacerStyle} /> : null}
+      {title ? <Text variant="subtitle">{title}</Text> : <View />}
+      {showClose ? (
+        <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button">
+          <Icon name="sheet-close" size={scale(24)} color={theme.colors.tertiaryText} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
 export interface DynamicSheetProps {
   title?: string;
@@ -56,7 +97,7 @@ export function DynamicSheet({ title, showClose = true, isDismissable = true, on
         onChange={handleChange}
       >
         <BottomSheetView style={bottomInsetStyle}>
-          <SheetCloseHeader {...(title ? { title } : {})} showClose={showClose} onClose={handleClose} />
+          <DynamicSheetHeader {...(title ? { title } : {})} showClose={showClose} onClose={handleClose} />
           {children}
         </BottomSheetView>
       </BottomSheet>

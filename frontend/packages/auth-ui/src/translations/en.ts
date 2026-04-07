@@ -17,6 +17,9 @@ export const authEN = {
   verifyPasskeyTitle: 'Verify with a passkey',
   verifyPasskeySubtitle:
     'Your device will prompt you to confirm this action using your fingerprint, face, or screen lock',
+  verifyBiometricsTitle: 'Verify with biometrics',
+  verifyBiometricsSubtitle:
+    'Your device will prompt you to confirm this action using your fingerprint, face, or screen lock',
   verifyPasswordTitle: 'Verify with password',
   verifyPasswordSubtitle:
     'Your device will ask your password to confirm',
@@ -109,9 +112,15 @@ export const authEN = {
   addPasskeyCredentialsTitle: 'Add passkey credentials',
   addPasskeyCredentialsDescription:
     'Do you want to create new credentials on this device?',
+  addBiometricsTitle: 'Add biometric authentication',
+  addBiometricsDescription:
+    'Do you want to use your device biometric data for a faster authentication?',
   linkDeviceTitle: 'Link new device',
   linkDeviceDescription:
     'You\'re accessing your account from a new device. To continue using the app, please link it to your account',
   showPassword: 'Show password',
   hidePassword: 'Hide password',
+  invalidCredentialsTitle: 'Invalid credentials',
+  invalidCredentialsDescription:
+    'This identity key name is not linked to this device. If you are the owner, please restore your identity key name to access it from this device.',
 } as const;
