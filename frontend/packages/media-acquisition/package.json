@@ -14,11 +14,13 @@
   },
   "peerDependencies": {
     "expo-camera": ">=15",
-    "expo-image-picker": ">=15"
+    "expo-image-picker": ">=15",
+    "expo-media-library": ">=16"
   },
   "peerDependenciesMeta": {
     "expo-camera": { "optional": true },
-    "expo-image-picker": { "optional": true }
+    "expo-image-picker": { "optional": true },
+    "expo-media-library": { "optional": true }
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

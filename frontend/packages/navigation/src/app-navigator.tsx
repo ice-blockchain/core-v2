@@ -32,11 +32,15 @@ interface AppNavigatorScreens {
   RestoreSuccess: ComponentType;
   GeneralError: ComponentType;
   CreatePost?: ComponentType;
+  MediaPicker?: ComponentType;
+  GalleryPermissionDenied?: ComponentType;
+  CameraPermissionDenied?: ComponentType;
 }
 
 interface AppNavigatorProps {
   screens: AppNavigatorScreens;
   authScreens: AuthScreens;
+  // TODO: restore isAuthenticated usage before release
   isAuthenticated?: boolean;
 }
 
@@ -49,14 +53,12 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
-// TODO: restore isAuthenticated usage before later
 export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
   const Auth = useAuthScreen(authScreens);
   return (
     <Stack.Navigator screenOptions={NAV}>
       <Stack.Screen name={Routes.Splash} component={s.Splash} />
       <Stack.Screen name={Routes.GetStarted} component={s.GetStarted} />
-      {/* TODO: restore isAuthenticated guard before release */}
       {s.Main && <Stack.Screen name={Routes.Main} component={s.Main} />}
       <Stack.Screen name={Routes.Catalog} component={s.Catalog} />
       {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
@@ -75,6 +77,9 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       <Stack.Screen name={Routes.Sheet.RestoreSuccess} component={s.RestoreSuccess} options={MODAL} />
       <Stack.Screen name={Routes.Sheet.GeneralError} component={s.GeneralError} options={MODAL} />
       {s.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={s.CreatePost} options={MODAL} />}
+      {s.MediaPicker && <Stack.Screen name={Routes.Sheet.MediaPicker} component={s.MediaPicker} options={MODAL} />}
+      {s.GalleryPermissionDenied && <Stack.Screen name={Routes.Sheet.GalleryPermissionDenied} component={s.GalleryPermissionDenied} options={MODAL} />}
+      {s.CameraPermissionDenied && <Stack.Screen name={Routes.Sheet.CameraPermissionDenied} component={s.CameraPermissionDenied} options={MODAL} />}
     </Stack.Navigator>
   );
 }

@@ -43,5 +43,40 @@ declare module "expo-media-library" {
     orientation?: number;
   }
 
+  export interface MediaLibraryAsset {
+    id: string;
+    uri: string;
+    filename: string;
+    mediaType: "photo" | "video" | "audio" | "unknown";
+    width: number;
+    height: number;
+    duration: number;
+    creationTime: number;
+    modificationTime: number;
+  }
+
+  export interface MediaLibraryAlbum {
+    id: string;
+    title: string;
+    assetCount: number;
+  }
+
+  export interface AssetsOptions {
+    first: number;
+    after?: string;
+    album?: string;
+    mediaType?: Array<"photo" | "video" | "audio" | "unknown">;
+    sortBy?: string[];
+  }
+
+  export interface PagedInfo {
+    assets: MediaLibraryAsset[];
+    endCursor: string;
+    hasNextPage: boolean;
+    totalCount: number;
+  }
+
   export function getAssetInfoAsync(uri: string): Promise<AssetInfo>;
+  export function getAlbumsAsync(): Promise<MediaLibraryAlbum[]>;
+  export function getAssetsAsync(options: AssetsOptions): Promise<PagedInfo>;
 }

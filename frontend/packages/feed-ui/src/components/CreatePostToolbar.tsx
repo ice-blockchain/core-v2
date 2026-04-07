@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon, useTheme } from '@ion/ui';
 
-function ToolbarIcons() {
+interface ToolbarIconsProps {
+  onGalleryPress?: (() => void) | undefined;
+}
+
+function ToolbarIcons({ onGalleryPress }: ToolbarIconsProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -13,7 +17,9 @@ function ToolbarIcons() {
 
   return (
     <View style={iconRowStyle}>
-      <Icon name="gallery-open" size={scale(24)} color={theme.colors.primaryAccent} />
+      <Pressable onPress={onGalleryPress} hitSlop={8}>
+        <Icon name="gallery-open" size={scale(24)} color={theme.colors.primaryAccent} />
+      </Pressable>
       <Icon name="post-poll" size={scale(24)} color={theme.colors.primaryAccent} />
       <Icon name="post-bold" size={scale(24)} color={theme.colors.primaryAccent} />
       <Icon name="post-italic" size={scale(24)} color={theme.colors.primaryAccent} />
@@ -46,7 +52,11 @@ function DisabledSendButton() {
   );
 }
 
-export function CreatePostToolbar() {
+interface CreatePostToolbarProps {
+  onGalleryPress?: () => void;
+}
+
+export function CreatePostToolbar({ onGalleryPress }: CreatePostToolbarProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -66,7 +76,7 @@ export function CreatePostToolbar() {
 
   return (
     <View style={containerStyle}>
-      <ToolbarIcons />
+      <ToolbarIcons onGalleryPress={onGalleryPress} />
       <DisabledSendButton />
     </View>
   );

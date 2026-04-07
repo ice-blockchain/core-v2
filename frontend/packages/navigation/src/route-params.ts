@@ -30,6 +30,9 @@ export type RootStackParamList = {
   'Sheet/ConfirmPassword': undefined;
   'Sheet/RestoreSuccess': undefined;
   'Sheet/GeneralError': { errorCode: string };
+  'Sheet/MediaPicker': { onComplete?: (assets: unknown[]) => void } | undefined;
+  'Sheet/GalleryPermissionDenied': undefined;
+  'Sheet/CameraPermissionDenied': undefined;
 };
 
 export type AuthStackParamList = {

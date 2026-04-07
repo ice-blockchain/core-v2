@@ -26,7 +26,7 @@ import { walletUiTranslations } from "@ion/wallet-ui";
 import { userSearchTranslations } from "@ion/user-search-ui";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
-import { CreatePostSheetScreen, feedTranslations } from "@ion/feed-ui";
+import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, feedTranslations } from "@ion/feed-ui";
 import { profileTranslations } from "@ion/profile-ui";
 import { HomeScreen, homeTranslations } from "@ion/home-ui";
 import { SplashScreen } from "./src/components/splash-screen";
@@ -63,6 +63,9 @@ const screens = {
   AddBiometrics: AddBiometricsScreen,
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
   CreatePost: CreatePostSheetScreen,
+  MediaPicker: MediaPickerSheetScreen,
+  GalleryPermissionDenied: GalleryPermissionDeniedScreen,
+  CameraPermissionDenied: CameraPermissionDeniedScreen,
   LinkDevice: LinkDeviceScreen,
   InvalidCredentials: InvalidCredentialsModal,
   ConfirmPassword: ConfirmPasswordScreen,

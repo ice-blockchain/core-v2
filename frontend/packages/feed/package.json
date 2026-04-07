@@ -1,5 +1,5 @@
 {
-  "name": "@ion/feed-ui",
+  "name": "@ion/feed",
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
@@ -12,19 +12,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ion/ui": "workspace:*",
-    "@ion/navigation": "workspace:*",
-    "@ion/localization": "workspace:*",
-    "@ion/feed": "workspace:*"
+    "@ion/permissions": "workspace:*",
+    "@ion/media-acquisition": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=19",
-    "react-native": ">=0.76",
-    "react-native-safe-area-context": ">=4.0.0",
-    "react-native-svg": ">=15.0.0"
+    "react": ">=19"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }

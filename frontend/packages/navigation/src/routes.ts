@@ -21,6 +21,9 @@ export const Routes = {
     ConfirmPassword: 'Sheet/ConfirmPassword',
     RestoreSuccess: 'Sheet/RestoreSuccess',
     GeneralError: 'Sheet/GeneralError',
+    MediaPicker: 'Sheet/MediaPicker',
+    GalleryPermissionDenied: 'Sheet/GalleryPermissionDenied',
+    CameraPermissionDenied: 'Sheet/CameraPermissionDenied',
   },
 
   Auth: {
