@@ -25,7 +25,6 @@ import { CreatePostSheetScreen, feedTranslations } from "@ion/feed-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
 import { CatalogScreen } from "./src/components/catalog-screen";
-import { ChatPreviewScreen } from "./src/components/chat-preview-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
 import { MainScreen } from "./src/components/main-screen";
@@ -43,7 +42,6 @@ const screens = {
   GetStarted: IntroScreen,
   Main: MainScreen,
   Catalog: CatalogScreen,
-  ChatPreview: ChatPreviewScreen,
   LinkDevice: LinkDeviceScreen,
   NicknameReserved: NicknameReservedScreen,
   ProxyTest: ProxyTestScreen,

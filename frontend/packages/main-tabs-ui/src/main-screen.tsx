@@ -9,6 +9,7 @@ import { useMainTabState } from "./use-main-tab-state";
 import { buildSheetConfigs } from "./sheet-action-configs";
 import type { SheetActionHandlers } from "./sheet-action-configs";
 import { MAIN_SHELL_NAMESPACE } from "./translations";
+import { BottomNavProvider, useBottomNav } from "./bottom-nav-context";
 
 const NS = MAIN_SHELL_NAMESPACE;
 
@@ -26,8 +27,9 @@ interface MainScreenProps {
   actionHandlers?: SheetActionHandlers;
 }
 
-export function MainScreen({ screens, actionHandlers }: MainScreenProps) {
+function MainScreenContent({ screens, actionHandlers }: { screens: MainShellScreens; actionHandlers?: SheetActionHandlers | undefined }) {
   const theme = useTheme();
+  const { isBottomNavHidden } = useBottomNav();
   const { activeTab, isSheetOpen, handleTabPress, handleCenterPress, handleSheetClose } = useMainTabState();
   const sheetConfigs = useMemo(() => buildSheetConfigs(theme.colors.success, actionHandlers), [theme.colors.success, actionHandlers]);
   const sheetConfig = sheetConfigs[activeTab];
@@ -39,8 +41,18 @@ export function MainScreen({ screens, actionHandlers }: MainScreenProps) {
         <TabContentLayer screens={screens} activeTab={activeTab} />
         <BottomNavBarSheet isVisible={isSheetOpen} onClose={handleSheetClose} title={sheetConfig.title} actions={sheetConfig.actions} inline />
       </View>
-      <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} onCenterPress={handleCenterPress} isCenterModalOpen={isSheetOpen} tabs={tabConfigs} />
+      {!isBottomNavHidden && (
+        <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} onCenterPress={handleCenterPress} isCenterModalOpen={isSheetOpen} tabs={tabConfigs} />
+      )}
     </View>
+  );
+}
+
+export function MainScreen({ screens, actionHandlers }: MainScreenProps) {
+  return (
+    <BottomNavProvider>
+      <MainScreenContent screens={screens} actionHandlers={actionHandlers} />
+    </BottomNavProvider>
   );
 }
 

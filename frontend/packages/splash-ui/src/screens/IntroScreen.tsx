@@ -3,11 +3,7 @@ import { useAppNavigation, Routes } from "@ion/navigation";
 import { translate } from "@ion/localization";
 import { Button, Icon, useTheme } from "@ion/ui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Platform, View } from "react-native";
-
-function DevButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return <Button label={label} color="secondary" height={56} onPress={onPress} />;
-}
+import { View } from "react-native";
 
 export function IntroScreen() {
   const navigation = useAppNavigation();
@@ -28,16 +24,6 @@ export function IntroScreen() {
         height={56}
         onPress={handleLogin}
       />
-      <View style={{ height: scale(12) }} />
-      <DevButton label="UI Catalog (TEST)" onPress={() => navigation.navigate(Routes.Catalog)} />
-      {Platform.OS !== "web" && (
-        <>
-          <View style={{ height: scale(12) }} />
-          <DevButton label="Proxy Test (TEST)" onPress={() => navigation.navigate(Routes.ProxyTest)} />
-          <View style={{ height: scale(12) }} />
-          <DevButton label="Storage Test (TEST)" onPress={() => navigation.navigate(Routes.StorageTest)} />
-        </>
-      )}
     </View>
   );
 }
