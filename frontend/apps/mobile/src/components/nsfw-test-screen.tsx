@@ -63,7 +63,7 @@ function CategoryRow({ label, confidence, isAboveThreshold }: {
       </Text>
       <Text
         variant="body2"
-        style={[styles.cellFlag, { color: isAboveThreshold ? "#ef5350" : "#66bb6a" }]}
+        style={[styles.cellFlag, isAboveThreshold ? styles.flaggedColor : styles.unflaggedColor]}
       >
         {isAboveThreshold ? "YES" : "no"}
       </Text>
@@ -173,7 +173,7 @@ export function NsfwTestScreen() {
       <Text variant="headline2" style={{ color: theme.colors.primaryText }}>
         NSFW Detection Test
       </Text>
-      <Text variant="body2" style={{ color: theme.colors.secondaryText, marginTop: 4 }}>
+      <Text variant="body2" style={[styles.subtitle, { color: theme.colors.secondaryText }]}>
         Pick an image or video to run safety detection. Stubs return mock scores.
       </Text>
 
@@ -231,6 +231,9 @@ const styles = StyleSheet.create({
   cellLabel: { flex: 2, color: "#ddd" },
   cellValue: { flex: 1, color: "#ddd", textAlign: "center" },
   cellFlag: { flex: 1, textAlign: "right" },
+  flaggedColor: { color: "#ef5350" },
+  unflaggedColor: { color: "#66bb6a" },
+  subtitle: { marginTop: 4 },
   frameList: { marginBottom: 12 },
   frameCard: { width: 140, marginRight: 12, alignItems: "center" },
   frameImage: { width: 140, height: 100, borderRadius: 6, borderWidth: 2 },
