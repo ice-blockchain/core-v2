@@ -7,5 +7,8 @@ const resolveAsset = (asset: number): ImageSourcePropType => ({
 });
 
 export const chatEmptyStateImage: ImageSourcePropType = resolveAsset(require("../assets/chat-empty-state.png") as number);
+export const chatEmptyStateDarkImage: ImageSourcePropType = resolveAsset(require("../assets/chat-empty-state-dark.png") as number);
+export const newChatEmptyStateImage: ImageSourcePropType = resolveAsset(require("../assets/new-chat-empty-state.png") as number);
+export const newChatEmptyStateDarkImage: ImageSourcePropType = resolveAsset(require("../assets/new-chat-empty-state-dark.png") as number);
 export const chatDeleteImage: ImageSourcePropType = resolveAsset(require("../assets/chat-delete.png") as number);
 /* eslint-enable @typescript-eslint/no-var-requires */
