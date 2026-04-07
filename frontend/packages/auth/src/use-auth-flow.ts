@@ -92,7 +92,7 @@ function buildScreenProps(input: BuildScreenPropsInput): AuthScreenProps {
     register: {
       onBack: () => deps.dispatch({ type: 'GO_TO_GET_STARTED' }),
       onContinue: (data) => registerGuard(() => handleRegister(deps, data)),
-      passkeyAvailable: isPasskeyAvailable(),
+      isPasskeyAvailable: isPasskeyAvailable(),
     },
     verifyPassword: {
       backgroundProps: { loadingElement },

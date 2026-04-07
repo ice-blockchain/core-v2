@@ -51,10 +51,10 @@ export function AuthFlowScreen() {
   }, [state.phase, screenProps, navigation]);
 
   const title = translate(PHASE_TITLE_KEYS[state.phase]);
-  const hideBack = state.phase === 'verify-password';
+  const shouldHideBack = state.phase === 'verify-password';
 
   return (
-    <Sheet onClose={handleClose} title={title} onBack={hideBack ? undefined : handleBack}>
+    <Sheet onClose={handleClose} title={title} onBack={shouldHideBack ? undefined : handleBack}>
       <AuthFlowPhase state={state} screenProps={screenProps} />
       <RestoreSuccessModal {...screenProps.restoreSuccessModal} />
       <IdentityKeyNotFoundModal {...screenProps.identityKeyNotFoundModal} />
@@ -68,7 +68,7 @@ function AuthFlowPhase({ state, screenProps }: { state: ReturnType<typeof useAut
     case "get-started":
       return <GetStartedScreen callbacks={screenProps.getStarted} />;
     case "register":
-      return screenProps.register.passkeyAvailable
+      return screenProps.register.isPasskeyAvailable
         ? <PasskeyRegisterScreen callbacks={screenProps.register} />
         : <PasswordRegisterScreen callbacks={screenProps.register} />;
     case "verify-password":

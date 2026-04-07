@@ -153,7 +153,7 @@ function RegisterContent({ form, onContinue, scaled }: { form: FormState; onCont
 export interface RegisterScreenCallbacks {
   onBack: () => void;
   onContinue: (data: { identityKeyName: string; password?: string }) => void;
-  passkeyAvailable: boolean;
+  isPasskeyAvailable: boolean;
 }
 
 export interface PasswordRegisterScreenProps {

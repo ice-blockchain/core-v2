@@ -26,7 +26,7 @@ export async function handleRestoreCredentials(
       return;
     }
     await callPasskeyRecovery(identityClient, data);
-    Logger.info('Passkey recovery succeeded', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
+    Logger.info('Passkey recovery succeeded', { tag: 'auth' });
     dispatch({ type: 'SHOW_RESTORE_SUCCESS' });
   } catch (error) {
     handlePasskeyRecoveryError(dispatch, error, data);
@@ -46,11 +46,11 @@ function callPasskeyRecovery(client: IdentityClient, data: RecoveryData): Promis
 
 function handlePasskeyRecoveryError(dispatch: Dispatch, error: unknown, data: RecoveryData): void {
   if (isPasskeyPlatformError(error)) {
-    Logger.info('Passkey cancelled, falling back to password', { tag: 'auth', data: { identityKeyName: data.identityKeyName } });
+    Logger.info('Passkey cancelled, falling back to password', { tag: 'auth' });
     dispatch({ type: 'GO_TO_SET_NEW_PASSWORD', identityKeyName: data.identityKeyName });
     return;
   }
-  logRecoveryError(error, data.identityKeyName);
+  logRecoveryError(error);
   if (isInvalidRecoveryCredentials(error)) {
     dispatch({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
   } else {
@@ -58,11 +58,10 @@ function handlePasskeyRecoveryError(dispatch: Dispatch, error: unknown, data: Re
   }
 }
 
-function logRecoveryError(error: unknown, identityKeyName: string): void {
+function logRecoveryError(error: unknown): void {
   Logger.error('Account recovery failed', {
     tag: 'auth',
     error: error instanceof Error ? error : new Error(String(error)),
-    data: { identityKeyName },
   });
 }
 

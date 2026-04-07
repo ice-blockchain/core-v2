@@ -28,7 +28,7 @@ export function ProfilePlaceholder() {
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.primaryBackground, gap: 24 }}>
       <Text variant="headline2">{translate("mainShell:profileTab")}</Text>
       {username && (
-        <Button label="Log out" color="primary" height={44} onPress={handleLogout} />
+        <Button label={translate("mainShell:logOutButton")} color="primary" height={44} onPress={handleLogout} />
       )}
     </View>
   );

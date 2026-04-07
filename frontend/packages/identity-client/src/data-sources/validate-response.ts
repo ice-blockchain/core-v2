@@ -73,6 +73,8 @@ export function validateRecoveryResultResponse(value: unknown): void {
     throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid response: missing credential');
   }
   assertString(value.credential as Record<string, unknown>, 'uuid');
+  assertString(value.credential as Record<string, unknown>, 'kind');
+  assertString(value.credential as Record<string, unknown>, 'name');
   if (!isNonNullObject(value.authentication)) {
     throw new IdentityError(IdentityErrorCode.UNKNOWN, 'Invalid response: missing authentication');
   }

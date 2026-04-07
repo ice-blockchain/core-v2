@@ -50,7 +50,12 @@ async function setSecureItem(keychain: KeychainBackend, key: string, value: stri
   const keys = await getKeyRegistry(keychain);
   if (!keys.includes(key)) {
     keys.push(key);
-    await saveKeyRegistry(keychain, keys);
+    try {
+      await saveKeyRegistry(keychain, keys);
+    } catch (registryError) {
+      await keychain.resetGenericPassword({ service: serviceFor(key) });
+      throw registryError;
+    }
   }
 }
 

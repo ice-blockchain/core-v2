@@ -17,10 +17,10 @@ export async function handleSetNewPassword(input: SetNewPasswordInput, newPasswo
   dispatch({ type: 'SET_LOADING', isLoading: true });
   try {
     await callRecoverAccount(identityClient, recoveryData, newPassword);
-    Logger.info('Password recovery succeeded', { tag: 'auth', data: { identityKeyName: recoveryData.identityKeyName } });
+    Logger.info('Password recovery succeeded', { tag: 'auth' });
     dispatch({ type: 'SHOW_RESTORE_SUCCESS' });
   } catch (error) {
-    handleRecoveryError(dispatch, error, recoveryData.identityKeyName);
+    handleRecoveryError(dispatch, error);
   } finally {
     dispatch({ type: 'SET_LOADING', isLoading: false });
   }
@@ -36,8 +36,8 @@ function callRecoverAccount(client: IdentityClient, data: RecoveryData, newPassw
   });
 }
 
-function handleRecoveryError(dispatch: (action: AuthFlowAction) => void, error: unknown, identityKeyName: string): void {
-  logRecoveryError(error, identityKeyName);
+function handleRecoveryError(dispatch: (action: AuthFlowAction) => void, error: unknown): void {
+  logRecoveryError(error);
   if (isInvalidRecoveryCredentials(error)) {
     dispatch({ type: 'SHOW_IDENTITY_KEY_NOT_FOUND' });
   } else {
@@ -45,11 +45,10 @@ function handleRecoveryError(dispatch: (action: AuthFlowAction) => void, error: 
   }
 }
 
-function logRecoveryError(error: unknown, identityKeyName: string): void {
+function logRecoveryError(error: unknown): void {
   Logger.error('Account recovery failed', {
     tag: 'auth',
     error: error instanceof Error ? error : new Error(String(error)),
-    data: { identityKeyName },
   });
 }
 

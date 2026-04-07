@@ -71,6 +71,7 @@ describe('handleLoginAttempt', () => {
     vi.mocked(client.loginWithPasskey).mockResolvedValue('token');
     await handleLoginAttempt(deps(), 'bob');
     expect(onAuthSuccess).toHaveBeenCalledWith('bob');
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'GO_TO_VERIFY_PASSWORD' }));
   });
 
   it('falls back to verify-password when passkey is cancelled and password is supported', async () => {

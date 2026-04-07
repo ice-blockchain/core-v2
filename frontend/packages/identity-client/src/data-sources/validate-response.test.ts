@@ -95,7 +95,7 @@ describe('validateRegistrationResultResponse', () => {
 
 describe('validateRecoveryResultResponse', () => {
   const validAuth = { token: 't', refreshToken: 'r' };
-  const validRecovery = { credential: { uuid: 'cr-1' }, authentication: validAuth, user: { id: 'u1' } };
+  const validRecovery = { credential: { uuid: 'cr-1', kind: 'Fido2', name: 'my-key' }, authentication: validAuth, user: { id: 'u1' } };
 
   it('accepts valid recovery result', () => {
     expect(() => validateRecoveryResultResponse(validRecovery)).not.toThrow();
@@ -106,15 +106,23 @@ describe('validateRecoveryResultResponse', () => {
   });
 
   it('rejects credential without uuid', () => {
-    expect(() => validateRecoveryResultResponse({ credential: { kind: 'K' }, authentication: validAuth, user: { id: 'u1' } })).toThrow('missing or empty uuid');
+    expect(() => validateRecoveryResultResponse({ credential: { kind: 'K', name: 'n' }, authentication: validAuth, user: { id: 'u1' } })).toThrow('missing or empty uuid');
+  });
+
+  it('rejects credential without kind', () => {
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1', name: 'n' }, authentication: validAuth, user: { id: 'u1' } })).toThrow('missing or empty kind');
+  });
+
+  it('rejects credential without name', () => {
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1', kind: 'K' }, authentication: validAuth, user: { id: 'u1' } })).toThrow('missing or empty name');
   });
 
   it('rejects missing authentication', () => {
-    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1' }, user: { id: 'u1' } })).toThrow('missing authentication');
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1', kind: 'Fido2', name: 'k' }, user: { id: 'u1' } })).toThrow('missing authentication');
   });
 
   it('rejects missing user', () => {
-    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1' }, authentication: validAuth })).toThrow('missing user');
+    expect(() => validateRecoveryResultResponse({ credential: { uuid: 'cr-1', kind: 'Fido2', name: 'k' }, authentication: validAuth })).toThrow('missing user');
   });
 
   it('rejects null', () => {

@@ -14,13 +14,13 @@ export async function restoreAuth(deps: RestoreAuthDeps): Promise<void> {
   for (const username of trackedUsers) {
     const tokens = await deps.tokenManager.getTokens(username);
     if (!tokens) {
-      Logger.info('Clearing tracked user with missing tokens', { tag: 'auth', data: { username } });
+      Logger.info('Clearing tracked user with missing tokens', { tag: 'auth' });
       await deps.tokenManager.clearTokens(username);
       continue;
     }
     const isExpired = await deps.tokenManager.isTokenExpired(username);
     if (isExpired) {
-      Logger.info('Clearing tracked user with expired tokens', { tag: 'auth', data: { username } });
+      Logger.info('Clearing tracked user with expired tokens', { tag: 'auth' });
       await deps.tokenManager.clearTokens(username);
       continue;
     }
