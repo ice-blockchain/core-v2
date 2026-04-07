@@ -30,9 +30,8 @@ func (c *Coordinator) ValidatedOwner(bagID [32]byte) string {
 }
 
 // isNodeAlive checks whether a node has a heartbeat within the stale timeout.
-// If the coordinator has a private key configured, it attempts to verify
-// the heartbeat's ed25519 signature against the node's public key from nodeinfo.
-// Falls back to unsigned parsing if signature verification is not required.
+// Verifies the heartbeat's ed25519 signature against the node's public key
+// from nodeinfo. Rejects nodes without a published public key.
 func (c *Coordinator) isNodeAlive(nodeID string) bool {
 	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
@@ -41,26 +40,16 @@ func (c *Coordinator) isNodeAlive(nodeID string) bool {
 		return false
 	}
 
-	var ts int64
-	if pubKey := c.getNodePublicKey(ctx, nodeID); pubKey != nil {
-		ts, err = ParseSignedHeartbeat(val, nodeID, pubKey)
-		if err != nil {
-			if c.cfg.HeartbeatSignatureRequired {
-				c.logger.Debug("heartbeat signature verification failed",
-					"node", nodeID, "error", err)
-				return false
-			}
-			// Fall back to unsigned parse during rolling upgrade.
-			ts, err = ParseHeartbeat(val)
-			if err != nil {
-				return false
-			}
-		}
-	} else {
-		ts, err = ParseHeartbeat(val)
-		if err != nil {
-			return false
-		}
+	pubKey := c.getNodePublicKey(ctx, nodeID)
+	if pubKey == nil {
+		c.logger.Debug("heartbeat rejected: no public key for node", "node", nodeID)
+		return false
+	}
+	ts, err := ParseSignedHeartbeat(val, nodeID, pubKey)
+	if err != nil {
+		c.logger.Debug("heartbeat signature verification failed",
+			"node", nodeID, "error", err)
+		return false
 	}
 
 	threshold := time.Now().Unix() - int64(c.cfg.StaleHeartbeatTimeout.Seconds())

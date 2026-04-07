@@ -128,6 +128,43 @@ func ParseSignedHeartbeat(data []byte, nodeID string, pubKey ed25519.PublicKey) 
 	return ts, nil
 }
 
+// FormatSignedOwnership creates a signed ownership claim.
+// Format: "<nodeID>:<timestamp>:<hex_signature>"
+// Signed message: "own:<bagIDHex>:<nodeID>:<timestamp>"
+func FormatSignedOwnership(bagIDHex, nodeID string, ts int64, privKey ed25519.PrivateKey) []byte {
+	tsStr := strconv.FormatInt(ts, 10)
+	msg := []byte("own:" + bagIDHex + ":" + nodeID + ":" + tsStr)
+	sig := ed25519.Sign(privKey, msg)
+	return []byte(nodeID + ":" + tsStr + ":" + hex.EncodeToString(sig))
+}
+
+// ParseSignedOwnership verifies and extracts the nodeID from a signed ownership claim.
+// getPubKey resolves a nodeID to its ed25519 public key from CRDT nodeinfo.
+func ParseSignedOwnership(data []byte, bagIDHex string, getPubKey func(string) ed25519.PublicKey) (string, int64, error) {
+	parts := strings.SplitN(string(data), ":", 3)
+	if len(parts) != 3 {
+		return "", 0, fmt.Errorf("invalid signed ownership format")
+	}
+	nodeID := parts[0]
+	ts, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return "", 0, fmt.Errorf("parse ownership timestamp: %w", err)
+	}
+	sig, err := hex.DecodeString(parts[2])
+	if err != nil {
+		return "", 0, fmt.Errorf("decode ownership signature: %w", err)
+	}
+	pubKey := getPubKey(nodeID)
+	if pubKey == nil {
+		return "", 0, fmt.Errorf("no public key for node %s", nodeID)
+	}
+	msg := []byte("own:" + bagIDHex + ":" + nodeID + ":" + parts[1])
+	if !ed25519.Verify(pubKey, msg, sig) {
+		return "", 0, fmt.Errorf("ownership signature verification failed")
+	}
+	return nodeID, ts, nil
+}
+
 // ComputeClusterOverlayID derives a 32-byte overlay ID from the cluster config string.
 func ComputeClusterOverlayID(clusterID string) [32]byte {
 	return sha256.Sum256([]byte("ion-cluster-overlay:" + clusterID))

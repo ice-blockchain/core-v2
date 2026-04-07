@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"crypto/ed25519"
 	"log/slog"
 	"strings"
 	"time"
@@ -11,17 +12,21 @@ import (
 	crdt "github.com/ipfs/go-ds-crdt"
 )
 
+// PublicKeyResolver resolves a node's ed25519 public key from CRDT nodeinfo.
+type PublicKeyResolver func(ctx context.Context, nodeID string) ed25519.PublicKey
+
 const reconcileInterval = 5 * time.Minute
 
 // countActiveNodes scans heartbeat/* keys and counts fresh ones.
 // O(nodes) -- never O(bags).
-func countActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *slog.Logger) int {
-	nodes, _ := listActiveNodes(store, staleTimeout, logger)
+func countActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, resolver PublicKeyResolver, logger *slog.Logger) int {
+	nodes, _ := listActiveNodes(store, staleTimeout, resolver, logger)
 	return len(nodes)
 }
 
 // listActiveNodes returns nodeIDs with fresh heartbeats.
-func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *slog.Logger) ([]string, []string) {
+// Uses signed heartbeat verification when a public key is available.
+func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, resolver PublicKeyResolver, logger *slog.Logger) ([]string, []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	results, err := store.Query(ctx, dsq.Query{Prefix: prefixHeartbeat})
@@ -40,8 +45,8 @@ func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *
 			continue
 		}
 		nodeID := extractNodeIDFromHeartbeatKey(r.Key)
-		ts, err := ParseHeartbeat(r.Value)
-		if err != nil {
+		ts, ok := parseHeartbeatVerified(ctx, r.Value, nodeID, resolver)
+		if !ok {
 			continue
 		}
 		if ts >= threshold {
@@ -51,6 +56,23 @@ func listActiveNodes(store *crdt.Datastore, staleTimeout time.Duration, logger *
 		}
 	}
 	return active, dead
+}
+
+// parseHeartbeatVerified verifies the ed25519 signature on a heartbeat.
+// Rejects heartbeats from nodes without a published public key.
+func parseHeartbeatVerified(ctx context.Context, data []byte, nodeID string, resolver PublicKeyResolver) (int64, bool) {
+	if resolver == nil {
+		return 0, false
+	}
+	pubKey := resolver(ctx, nodeID)
+	if pubKey == nil {
+		return 0, false
+	}
+	ts, err := ParseSignedHeartbeat(data, nodeID, pubKey)
+	if err != nil {
+		return 0, false
+	}
+	return ts, true
 }
 
 func extractNodeIDFromHeartbeatKey(key string) string {

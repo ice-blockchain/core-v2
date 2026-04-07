@@ -62,11 +62,10 @@ func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
 	defer func() { cancel(); coord.Stop() }()
 
 	bagID := [32]byte{0x04}
-	// Simulate another node owning this bag with a fresh heartbeat.
+	// Simulate another node owning this bag with a fresh signed heartbeat.
+	foreignPriv := writeSignedOwnershipAsNode(t, coord, "node-b", bagID)
 	require.NoError(t, coord.crdt.Put(ctx,
-		dsKeyFromString(OwnershipKey(bagID)), []byte("node-b")))
-	require.NoError(t, coord.crdt.Put(ctx,
-		dsKeyFromString(HeartbeatKey("node-b")), FormatHeartbeat(time.Now().Unix())))
+		dsKeyFromString(HeartbeatKey("node-b")), FormatSignedHeartbeat(time.Now().Unix(), "node-b", foreignPriv)))
 
 	owned, err := coord.OwnsOrClaim(ctx, bagID)
 	require.NoError(t, err)

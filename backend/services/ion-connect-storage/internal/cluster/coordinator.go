@@ -47,6 +47,11 @@ func (c *CoordinatorConfig) applyDefaults() {
 	if c.ReclamationStartDelay == 0 {
 		c.ReclamationStartDelay = c.StaleHeartbeatTimeout
 	}
+	// Secure by default: require signed heartbeats when a private key is configured.
+	// Callers must explicitly set HeartbeatSignatureRequired=false for rolling upgrades.
+	if c.PrivateKey != nil && !c.HeartbeatSignatureRequired {
+		c.HeartbeatSignatureRequired = true
+	}
 }
 
 // Coordinator manages CRDT-based bag ownership across cluster nodes.
@@ -183,7 +188,14 @@ func (c *Coordinator) IsConnected() bool {
 
 // ActiveNodeCount returns the count of nodes with fresh heartbeats.
 func (c *Coordinator) ActiveNodeCount() int {
-	return countActiveNodes(c.crdt, c.cfg.StaleHeartbeatTimeout, c.logger)
+	return countActiveNodes(c.crdt, c.cfg.StaleHeartbeatTimeout, c.publicKeyResolver(), c.logger)
+}
+
+// publicKeyResolver returns a resolver that looks up node public keys from CRDT.
+func (c *Coordinator) publicKeyResolver() PublicKeyResolver {
+	return func(ctx context.Context, nodeID string) ed25519.PublicKey {
+		return c.getNodePublicKey(ctx, nodeID)
+	}
 }
 
 // NodeID returns this coordinator's node identifier.
@@ -271,12 +283,7 @@ func (c *Coordinator) writeHeartbeat(ctx context.Context) {
 		return
 	}
 	ts := time.Now().Unix()
-	var val []byte
-	if c.cfg.PrivateKey != nil {
-		val = FormatSignedHeartbeat(ts, c.nodeID, c.cfg.PrivateKey)
-	} else {
-		val = FormatHeartbeat(ts)
-	}
+	val := FormatSignedHeartbeat(ts, c.nodeID, c.cfg.PrivateKey)
 	if err := c.crdt.Put(ctx, ds.NewKey(HeartbeatKey(c.nodeID)), val); err != nil {
 		if ctx.Err() == nil {
 			c.logger.Warn("write heartbeat", "error", err)

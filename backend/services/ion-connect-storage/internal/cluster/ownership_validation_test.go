@@ -17,7 +17,7 @@ func TestValidatedOwnerReturnsSelfWithoutHeartbeatCheck(t *testing.T) {
 	ctx := context.Background()
 	bagID := [32]byte{0xaa, 0xbb}
 
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("self-node")))
+	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
 	owner := coord.ValidatedOwner(bagID)
 	require.Equal(t, "self-node", owner)
@@ -25,11 +25,10 @@ func TestValidatedOwnerReturnsSelfWithoutHeartbeatCheck(t *testing.T) {
 
 func TestValidatedOwnerRejectsNodeWithoutHeartbeat(t *testing.T) {
 	coord := newTestCoordinator(t, "local-node")
-	ctx := context.Background()
 	bagID := [32]byte{0xcc, 0xdd}
 
 	// Foreign node claims ownership but has no heartbeat.
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("foreign-node")))
+	writeSignedOwnershipAsNode(t, coord, "foreign-node", bagID)
 
 	owner := coord.ValidatedOwner(bagID)
 	require.Equal(t, "", owner, "should reject owner without heartbeat")
@@ -40,10 +39,11 @@ func TestValidatedOwnerAcceptsAliveNode(t *testing.T) {
 	ctx := context.Background()
 	bagID := [32]byte{0xee, 0xff}
 
-	// Foreign node claims ownership and has a fresh heartbeat.
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("alive-node")))
+	// Foreign node claims ownership and has a fresh signed heartbeat.
+	// writeSignedOwnershipAsNode registers the key and ownership; use returned key for heartbeat.
+	foreignPriv := writeSignedOwnershipAsNode(t, coord, "alive-node", bagID)
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("alive-node")),
-		FormatHeartbeat(time.Now().Unix())))
+		FormatSignedHeartbeat(time.Now().Unix(), "alive-node", foreignPriv)))
 
 	owner := coord.ValidatedOwner(bagID)
 	require.Equal(t, "alive-node", owner)
@@ -54,11 +54,11 @@ func TestValidatedOwnerRejectsStaleHeartbeat(t *testing.T) {
 	ctx := context.Background()
 	bagID := [32]byte{0x11, 0x22}
 
-	// Foreign node has a stale heartbeat (older than StaleHeartbeatTimeout).
+	// Foreign node with stale signed heartbeat.
 	staleTimestamp := time.Now().Unix() - int64(coord.cfg.StaleHeartbeatTimeout.Seconds()) - 10
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("stale-node")))
+	foreignPriv := writeSignedOwnershipAsNode(t, coord, "stale-node", bagID)
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("stale-node")),
-		FormatHeartbeat(staleTimestamp)))
+		FormatSignedHeartbeat(staleTimestamp, "stale-node", foreignPriv)))
 
 	owner := coord.ValidatedOwner(bagID)
 	require.Equal(t, "", owner, "should reject owner with stale heartbeat")
@@ -97,7 +97,6 @@ func TestIsNodeAliveVerifiesSignedHeartbeat(t *testing.T) {
 	pub, priv, _ := ed25519.GenerateKey(rand.Reader)
 
 	coord := newTestCoordinator(t, "local")
-	coord.cfg.PrivateKey = priv
 	ctx := context.Background()
 
 	// Write signed heartbeat for foreign node.
@@ -118,7 +117,6 @@ func TestIsNodeAliveRejectsSpoofedHeartbeat(t *testing.T) {
 	_, attackerPriv, _ := ed25519.GenerateKey(rand.Reader)
 
 	coord := newTestCoordinator(t, "local")
-	coord.cfg.HeartbeatSignatureRequired = true
 	ctx := context.Background()
 
 	// Attacker writes heartbeat for victim signed with wrong key.
@@ -131,4 +129,15 @@ func TestIsNodeAliveRejectsSpoofedHeartbeat(t *testing.T) {
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(NodeInfoKey("victim-node")), data))
 
 	require.False(t, coord.isNodeAlive("victim-node"))
+}
+
+func TestIsNodeAliveRejectsNodeWithoutPublicKey(t *testing.T) {
+	coord := newTestCoordinator(t, "local")
+	ctx := context.Background()
+
+	// Write heartbeat but no nodeinfo (no public key).
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(HeartbeatKey("no-key-node")),
+		FormatHeartbeat(time.Now().Unix())))
+
+	require.False(t, coord.isNodeAlive("no-key-node"))
 }

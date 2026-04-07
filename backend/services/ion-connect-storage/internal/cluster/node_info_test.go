@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"crypto/ed25519"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -52,6 +53,49 @@ func TestValidateNodeID(t *testing.T) {
 	require.Error(t, ValidateNodeID("../own/target"))
 	require.Error(t, ValidateNodeID("node\x00id"))
 	require.Error(t, ValidateNodeID("node id"))
+}
+
+func TestSignedOwnershipRejectsForgedClaim(t *testing.T) {
+	_, realPriv, _ := ed25519.GenerateKey(nil)
+	realPub := realPriv.Public().(ed25519.PublicKey)
+	_, attackerPriv, _ := ed25519.GenerateKey(nil)
+
+	bagHex := "abcd000000000000000000000000000000000000000000000000000000000000"
+
+	// Attacker signs as "victim" with wrong key.
+	forged := FormatSignedOwnership(bagHex, "victim", 1700000000, attackerPriv)
+	_, _, err := ParseSignedOwnership(forged, bagHex, func(nid string) ed25519.PublicKey {
+		if nid == "victim" {
+			return realPub
+		}
+		return nil
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "signature verification failed")
+}
+
+func TestSignedOwnershipRejectsUnsignedClaim(t *testing.T) {
+	_, _, err := ParseSignedOwnership([]byte("plain-node-id"), "baghex", func(string) ed25519.PublicKey {
+		return nil
+	})
+	require.Error(t, err)
+}
+
+func TestSignedOwnershipRoundTrip(t *testing.T) {
+	_, priv, _ := ed25519.GenerateKey(nil)
+	pub := priv.Public().(ed25519.PublicKey)
+	bagHex := "abcd000000000000000000000000000000000000000000000000000000000000"
+
+	val := FormatSignedOwnership(bagHex, "mynode", 1700000000, priv)
+	nodeID, ts, err := ParseSignedOwnership(val, bagHex, func(nid string) ed25519.PublicKey {
+		if nid == "mynode" {
+			return pub
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, "mynode", nodeID)
+	require.Equal(t, int64(1700000000), ts)
 }
 
 func TestHeartbeatRoundTrip(t *testing.T) {

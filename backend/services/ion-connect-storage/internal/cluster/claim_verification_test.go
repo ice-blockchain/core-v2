@@ -2,12 +2,36 @@ package cluster
 
 import (
 	"context"
+	"crypto/ed25519"
+	"encoding/hex"
 	"testing"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/require"
 )
+
+// writeSignedOwnershipAsNode writes a signed ownership claim for bagID as if
+// from nodeID, and registers the node's public key in CRDT nodeinfo.
+// Returns the private key so callers can write matching signed heartbeats.
+func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, nodeID string, bagID [32]byte) ed25519.PrivateKey {
+	t.Helper()
+	_, privKey, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+	pubKey := privKey.Public().(ed25519.PublicKey)
+
+	// Register node's public key in CRDT.
+	info := NodeInfo{PublicKey: hex.EncodeToString(pubKey)}
+	infoBytes, err := MarshalNodeInfo(info)
+	require.NoError(t, err)
+	require.NoError(t, coord.crdt.Put(context.Background(), ds.NewKey(NodeInfoKey(nodeID)), infoBytes))
+
+	// Write signed ownership.
+	bagHex := hexEncode(bagID[:])
+	val := FormatSignedOwnership(bagHex, nodeID, time.Now().Unix(), privKey)
+	require.NoError(t, coord.crdt.Put(context.Background(), ds.NewKey(OwnershipKey(bagID)), val))
+	return privKey
+}
 
 func TestVerifyClaimSucceedsWhenOwner(t *testing.T) {
 	coord := newTestCoordinator(t, "claimer")
@@ -28,7 +52,7 @@ func TestVerifyClaimFailsWhenOverwritten(t *testing.T) {
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
 	// Simulate another node winning by overwriting the ownership key.
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("winner")))
+	writeSignedOwnershipAsNode(t, coord, "winner", bagID)
 
 	require.False(t, coord.verifyClaim(ctx, bagID))
 }
@@ -72,7 +96,7 @@ func TestRollbackDoesNotDeleteWinnerOwnership(t *testing.T) {
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
 	// Simulate the winner overwriting ownership.
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("winner-node")))
+	writeSignedOwnershipAsNode(t, coord, "winner-node", bagID)
 
 	// Loser rolls back -- must NOT delete the winner's ownership.
 	coord.rollbackClaim(ctx, bagID)
@@ -111,7 +135,7 @@ func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {
 
 	// Create bynode key for this node, but ownership points to another node.
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(ByNodeKey("recon-node", bagID)), nil))
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(OwnershipKey(bagID)), []byte("other-node")))
+	writeSignedOwnershipAsNode(t, coord, "other-node", bagID)
 	coord.ownedCount.Store(1)
 
 	coord.reconcileOwnedCount(ctx)

@@ -44,7 +44,8 @@ func (c *Coordinator) verifyClaim(ctx context.Context, bagID [32]byte) bool {
 func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, bagID [32]byte) bool {
 	results := c.transport.QueryPeerOwnership(ctx, bagID)
 	if len(results) == 0 {
-		return true
+		c.logger.Warn("quorum check: no peers responded", "bag", bagID[:4])
+		return false
 	}
 	agree := 0
 	for _, owner := range results {

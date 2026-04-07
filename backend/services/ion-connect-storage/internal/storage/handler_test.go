@@ -180,7 +180,7 @@ func TestHandlerRejectsForwardedPieceWithTamperedProof(t *testing.T) {
 	req := buildTestGetPieceRequest(0)
 	_, err = h.HandleOverlayQuery(context.Background(), bagID, req)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "proof invalid")
+	require.Contains(t, err.Error(), "invalid")
 }
 
 type mockTamperedForwarder struct {

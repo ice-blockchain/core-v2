@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"math/rand/v2"
 	"strings"
@@ -26,7 +27,10 @@ func (c *Coordinator) ClaimBag(ctx context.Context, bagID [32]byte) error {
 	if err := c.crdt.Put(ctx, byNodeKey, nil); err != nil {
 		return fmt.Errorf("put bynode key: %w", err)
 	}
-	if err := c.crdt.Put(ctx, ownerKey, []byte(c.nodeID)); err != nil {
+	ts := time.Now().Unix()
+	bagHex := hexEncode(bagID[:])
+	ownerVal := FormatSignedOwnership(bagHex, c.nodeID, ts, c.cfg.PrivateKey)
+	if err := c.crdt.Put(ctx, ownerKey, ownerVal); err != nil {
 		_ = c.crdt.Delete(ctx, byNodeKey) // best-effort cleanup
 		return fmt.Errorf("put ownership key: %w", err)
 	}
@@ -70,6 +74,7 @@ func (c *Coordinator) baseContext() context.Context {
 }
 
 // Owner returns the nodeID that owns a bag, or empty string if unclaimed.
+// Verifies the ed25519 signature on the ownership claim to prevent forgery.
 func (c *Coordinator) Owner(bagID [32]byte) string {
 	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
@@ -77,7 +82,15 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 	if err != nil {
 		return ""
 	}
-	return string(val)
+	bagHex := hexEncode(bagID[:])
+	nodeID, _, parseErr := ParseSignedOwnership(val, bagHex, func(nid string) ed25519.PublicKey {
+		return c.getNodePublicKey(ctx, nid)
+	})
+	if parseErr != nil {
+		c.logger.Debug("ownership signature invalid, rejecting", "error", parseErr)
+		return ""
+	}
+	return nodeID
 }
 
 // OwnsOrClaim checks ownership. If unclaimed, claims for this node.

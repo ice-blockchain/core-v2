@@ -37,7 +37,7 @@ func (c *Coordinator) StartReclamation(ctx context.Context) {
 }
 
 func (c *Coordinator) runReclamationCycle(ctx context.Context) {
-	active, dead := listActiveNodes(c.crdt, c.cfg.StaleHeartbeatTimeout, c.logger)
+	active, dead := listActiveNodes(c.crdt, c.cfg.StaleHeartbeatTimeout, c.publicKeyResolver(), c.logger)
 	if len(dead) == 0 {
 		return
 	}

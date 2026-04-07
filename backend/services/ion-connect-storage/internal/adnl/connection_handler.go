@@ -61,7 +61,7 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 		}
 		// Handle cluster queries sent without overlay wrapping (block exchange).
 		if clusterHandler != nil {
-			if memberChecker != nil && !memberChecker.IsClusterMember(peerID) {
+			if memberChecker == nil || !memberChecker.IsClusterMember(peerID) {
 				logger.Debug("rejected cluster query from non-member peer", "peer", hex.EncodeToString(peerID[:8]))
 				return nil
 			}
@@ -80,8 +80,8 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 		logger.Debug("unhandled root ADNL query", "type", fmt.Sprintf("%T", query.Data))
 		return nil
 	})
-	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, logger))
-	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, logger))
+	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, querySem, logger))
+	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, querySem, logger))
 
 	if bridge != nil {
 		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(rl, client.GetID()))
@@ -92,9 +92,16 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 
 // makeADNLHandler routes overlay queries. Cluster overlay goes to clusterHandler;
 // storage overlays go to OverlayManager.
-func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, logger *slog.Logger) func(query *adnl.MessageQuery) error {
+func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, querySem chan struct{}, logger *slog.Logger) func(query *adnl.MessageQuery) error {
 	return func(query *adnl.MessageQuery) (retErr error) {
 		defer recoverPanic(logger, &retErr)
+
+		select {
+		case querySem <- struct{}{}:
+			defer func() { <-querySem }()
+		default:
+			return fmt.Errorf("query concurrency limit reached")
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
@@ -113,7 +120,7 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 		}
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
-			if memberChecker != nil && !memberChecker.IsClusterMember(peerID) {
+			if memberChecker == nil || !memberChecker.IsClusterMember(peerID) {
 				logger.Debug("rejected overlay cluster query from non-member")
 				return nil
 			}
@@ -138,9 +145,16 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 	}
 }
 
-func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
+func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, querySem chan struct{}, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
 	return func(transferID []byte, query *rldp.Query) (retErr error) {
 		defer recoverPanic(logger, &retErr)
+
+		select {
+		case querySem <- struct{}{}:
+			defer func() { <-querySem }()
+		default:
+			return fmt.Errorf("query concurrency limit reached")
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
@@ -160,7 +174,7 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 		}
 
 		if clusterHandler != nil && overlayID == clusterOverlayID {
-			if memberChecker != nil && !memberChecker.IsClusterMember(peerID) {
+			if memberChecker == nil || !memberChecker.IsClusterMember(peerID) {
 				logger.Debug("rejected RLDP cluster query from non-member")
 				return nil
 			}

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"crypto/ed25519"
 	"log/slog"
 	"os"
 	"testing"
@@ -14,6 +15,8 @@ import (
 func newTestCoordinator(t *testing.T, nodeID string) *Coordinator {
 	t.Helper()
 	db := openTestDB(t)
+	_, privKey, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
 	coord, err := NewCoordinator(CoordinatorConfig{
 		NodeID:                nodeID,
 		ClusterOverlayID:      "test-overlay",
@@ -22,8 +25,11 @@ func newTestCoordinator(t *testing.T, nodeID string) *Coordinator {
 		HeartbeatInterval:     200 * time.Millisecond,
 		ReclamationInterval:   500 * time.Millisecond,
 		StaleHeartbeatTimeout: 1 * time.Second,
+		PrivateKey:            privKey,
 	})
 	require.NoError(t, err)
+	// Publish nodeinfo so Owner() can verify this node's signed claims.
+	require.NoError(t, coord.publishNodeInfo(context.Background()))
 	return coord
 }
 
@@ -56,7 +62,8 @@ func TestCoordinatorHeartbeatWritten(t *testing.T) {
 	val, err := coord.crdt.Get(ctx, ds.NewKey(HeartbeatKey("node-hb")))
 	require.NoError(t, err)
 
-	ts, err := ParseHeartbeat(val)
+	pubKey := coord.cfg.PrivateKey.Public().(ed25519.PublicKey)
+	ts, err := ParseSignedHeartbeat(val, "node-hb", pubKey)
 	require.NoError(t, err)
 	require.InDelta(t, time.Now().Unix(), ts, 5)
 }

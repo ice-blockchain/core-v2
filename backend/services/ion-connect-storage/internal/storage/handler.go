@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
 
@@ -126,16 +127,15 @@ func (h *Handler) handleForwardedPiece(ctx context.Context, bagID [32]byte, piec
 	if err != nil {
 		return nil, fmt.Errorf("forward piece %d: %w", pieceID, err)
 	}
-	if err := h.verifyForwardedProof(ctx, bagID, proof); err != nil {
-		return nil, fmt.Errorf("forwarded piece %d proof invalid: %w", pieceID, err)
+	if err := h.verifyForwardedPiece(ctx, bagID, pieceID, proof, data); err != nil {
+		return nil, fmt.Errorf("forwarded piece %d invalid: %w", pieceID, err)
 	}
 	return serializePieceResponse(proof, data)
 }
 
-// verifyForwardedProof checks the Merkle proof received from a peer against
-// the bag's root hash to prevent a compromised cluster node from serving
-// corrupted data through forwarding nodes.
-func (h *Handler) verifyForwardedProof(ctx context.Context, bagID [32]byte, proof []byte) error {
+// verifyForwardedPiece checks both the Merkle proof structure and the data hash
+// to prevent a compromised cluster node from serving corrupted data.
+func (h *Handler) verifyForwardedPiece(ctx context.Context, bagID [32]byte, pieceID int, proof []byte, data []byte) error {
 	if len(proof) == 0 {
 		return fmt.Errorf("empty proof")
 	}
@@ -147,7 +147,18 @@ func (h *Handler) verifyForwardedProof(ctx context.Context, bagID [32]byte, proo
 	if err != nil {
 		return fmt.Errorf("parse proof BoC: %w", err)
 	}
-	return cell.CheckProof(proofCell, meta.RootHash[:])
+	if err := cell.CheckProof(proofCell, meta.RootHash[:]); err != nil {
+		return fmt.Errorf("proof verification: %w", err)
+	}
+	leafHash, err := boc.ExtractLeafHash(proofCell, pieceID, meta.PieceCount)
+	if err != nil {
+		return fmt.Errorf("extract leaf hash: %w", err)
+	}
+	dataHash := sha256.Sum256(data)
+	if dataHash != leafHash {
+		return fmt.Errorf("data hash mismatch: proof %x, actual %x", leafHash[:8], dataHash[:8])
+	}
+	return nil
 }
 
 func (h *Handler) handleAddUpdateFromTL(ctx context.Context, bagID [32]byte, payload []byte) ([]byte, error) {

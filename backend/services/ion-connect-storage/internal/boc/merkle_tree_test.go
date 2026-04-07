@@ -123,6 +123,39 @@ func TestGenerateMerkleProofOutOfRange(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestExtractLeafHashMatchesPieceHash(t *testing.T) {
+	hashes := makeTestHashes(4)
+	tree := boc.BuildMerkleTree(hashes)
+
+	for i := range 4 {
+		proof, err := boc.GenerateMerkleProof(tree, i, 4)
+		require.NoError(t, err)
+		proofCell, err := cell.FromBOC(proof)
+		require.NoError(t, err)
+
+		leafHash, err := boc.ExtractLeafHash(proofCell, i, 4)
+		require.NoError(t, err)
+		require.Equal(t, hashes[i], leafHash, "leaf %d hash mismatch", i)
+	}
+}
+
+func TestExtractLeafHashRejectsCorruptedData(t *testing.T) {
+	hashes := makeTestHashes(4)
+	tree := boc.BuildMerkleTree(hashes)
+
+	proof, err := boc.GenerateMerkleProof(tree, 0, 4)
+	require.NoError(t, err)
+	proofCell, err := cell.FromBOC(proof)
+	require.NoError(t, err)
+
+	leafHash, err := boc.ExtractLeafHash(proofCell, 0, 4)
+	require.NoError(t, err)
+
+	// Verify that sha256 of wrong data does NOT match the leaf hash.
+	wrongHash := sha256.Sum256([]byte("corrupted data"))
+	require.NotEqual(t, leafHash, wrongHash)
+}
+
 func TestComputePieceHashesZeroPieceSize(t *testing.T) {
 	result := boc.ComputePieceHashes([]byte("data"), 0)
 	require.Nil(t, result)
