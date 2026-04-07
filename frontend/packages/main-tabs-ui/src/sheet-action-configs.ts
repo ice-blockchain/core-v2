@@ -7,9 +7,13 @@ const NS = MAIN_SHELL_NAMESPACE;
 
 function noop() {}
 
-function buildFeedActions(successColor: string): BottomNavBarSheetAction[] {
+export interface SheetActionHandlers {
+  onCreatePost?: () => void;
+}
+
+function buildFeedActions(successColor: string, handlers: SheetActionHandlers): BottomNavBarSheetAction[] {
   return [
-    { iconName: "feed-post", iconBackgroundColor: colorPalette.purple, title: translate(`${NS}:postAction`), description: translate(`${NS}:postDescription`), onPress: noop },
+    { iconName: "feed-post", iconBackgroundColor: colorPalette.purple, title: translate(`${NS}:postAction`), description: translate(`${NS}:postDescription`), onPress: handlers.onCreatePost ?? noop },
     { iconName: "feed-stories", iconBackgroundColor: colorPalette.orangePeel, title: translate(`${NS}:storyAction`), description: translate(`${NS}:storyDescription`), onPress: noop },
     { iconName: "videos-trading", iconBackgroundColor: colorPalette.raspberry, title: translate(`${NS}:videoAction`), description: translate(`${NS}:videoDescription`), onPress: noop },
     { iconName: "articles", iconBackgroundColor: successColor, title: translate(`${NS}:articleAction`), description: translate(`${NS}:articleDescription`), onPress: noop },
@@ -35,8 +39,8 @@ interface SheetConfig {
   actions: BottomNavBarSheetAction[];
 }
 
-export function buildSheetConfigs(successColor: string): Record<BottomNavBarTabIndex, SheetConfig> {
-  const feedActions = buildFeedActions(successColor);
+export function buildSheetConfigs(successColor: string, handlers: SheetActionHandlers = {}): Record<BottomNavBarTabIndex, SheetConfig> {
+  const feedActions = buildFeedActions(successColor, handlers);
   return {
     0: { title: translate(`${NS}:createValueTitle`), actions: feedActions },
     1: { title: translate(`${NS}:startConversationTitle`), actions: buildChatActions() },

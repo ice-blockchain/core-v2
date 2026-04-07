@@ -29,8 +29,6 @@ export function IntroScreen() {
         onPress={handleLogin}
       />
       <View style={{ height: scale(12) }} />
-      <DevButton label="Create Post (TEST)" onPress={() => navigation.navigate(Routes.Sheet.CreatePost)} />
-      <View style={{ height: scale(12) }} />
       <DevButton label="UI Catalog (TEST)" onPress={() => navigation.navigate(Routes.Catalog)} />
       {Platform.OS !== "web" && (
         <>
