@@ -156,3 +156,17 @@ func TestPreallocateRejectsEmptyName(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "empty file name")
 }
+
+func TestEnsurePathInsideRejectsSymlinkEscape(t *testing.T) {
+	base := t.TempDir()
+	outside := t.TempDir()
+
+	// Create a symlink inside base that points outside.
+	symlink := filepath.Join(base, "escape")
+	require.NoError(t, os.Symlink(outside, symlink))
+
+	target := filepath.Join(base, "escape", "secret.txt")
+	err := ensurePathInside(base, target)
+	require.Error(t, err, "symlink escape must be rejected")
+	require.Contains(t, err.Error(), "path traversal")
+}

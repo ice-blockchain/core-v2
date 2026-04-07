@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -103,8 +104,8 @@ func (c *Coordinator) SetPieceForwarder(forwarder *PieceForwarder) {
 // SetTransport wires the cluster transport for CRDT broadcast and block exchange.
 func (c *Coordinator) SetTransport(transport *ClusterTransport) {
 	c.transport.Store(transport)
-	c.broadcaster.peer = transport
-	c.dagService.fetcher = transport
+	c.broadcaster.SetPeer(transport)
+	c.dagService.SetFetcher(transport)
 	transport.SetMemberResolver(c)
 }
 
@@ -221,7 +222,13 @@ func (c *Coordinator) IsRegisteredNode(adnlAddr [32]byte) bool {
 		if r.Error != nil {
 			continue
 		}
-		if _, verifyErr := VerifyNodeInfo(r.Value); verifyErr != nil {
+		pubKey, verifyErr := VerifyNodeInfo(r.Value)
+		if verifyErr != nil {
+			continue
+		}
+		// Extract nodeID from CRDT key (format: /nodeinfo/<nodeID>).
+		nodeID := strings.TrimPrefix(r.Key, "/"+prefixNodeInfo)
+		if hexEncode(pubKey) != nodeID {
 			continue
 		}
 		info, err := UnmarshalNodeInfo(r.Value)

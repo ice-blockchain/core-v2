@@ -68,5 +68,9 @@ func (c *Coordinator) getNodePublicKey(ctx context.Context, nodeID string) ed255
 		c.logger.Debug("nodeinfo verification failed", "node", nodeID, "error", err)
 		return nil
 	}
+	if hexEncode(pubKey) != nodeID {
+		c.logger.Debug("nodeinfo pubkey does not match nodeID", "node", nodeID)
+		return nil
+	}
 	return pubKey
 }

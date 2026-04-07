@@ -24,6 +24,7 @@ type PeerRateLimiter struct {
 	rps       rate.Limit
 	burst     int
 	done      chan struct{}
+	closeOnce sync.Once
 }
 
 // NewPeerRateLimiter creates a rate limiter that allows rps requests per
@@ -35,8 +36,8 @@ func NewPeerRateLimiter(rps float64, burst int) *PeerRateLimiter {
 	return rl
 }
 
-// Close stops the background cleanup goroutine.
-func (rl *PeerRateLimiter) Close() { close(rl.done) }
+// Close stops the background cleanup goroutine. Safe to call multiple times.
+func (rl *PeerRateLimiter) Close() { rl.closeOnce.Do(func() { close(rl.done) }) }
 
 // Middleware returns a gin middleware that rate-limits requests by peer ID.
 // Peers are identified by the X-RLDP-Peer-ID header set by the RLDP bridge.

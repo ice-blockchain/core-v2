@@ -53,11 +53,16 @@ func validateFileName(name string) error {
 }
 
 func ensurePathInside(base, target string) error {
-	absBase, err := filepath.Abs(base)
+	// EvalSymlinks resolves symlinks AND returns absolute paths,
+	// preventing traversal via symlink chains.
+	absBase, err := filepath.EvalSymlinks(base)
 	if err != nil {
 		return fmt.Errorf("resolve base path: %w", err)
 	}
-	absTarget, err := filepath.Abs(target)
+	// Target file (and its parent dirs) may not exist yet. Walk up the path
+	// until we find an existing ancestor, resolve symlinks there, then
+	// reconstruct the remainder.
+	absTarget, err := evalSymlinksPartial(target)
 	if err != nil {
 		return fmt.Errorf("resolve target path: %w", err)
 	}
@@ -65,6 +70,28 @@ func ensurePathInside(base, target string) error {
 		return fmt.Errorf("path traversal: %s escapes %s", target, base)
 	}
 	return nil
+}
+
+// evalSymlinksPartial resolves symlinks on the longest existing prefix of
+// path, then appends the non-existent suffix. This handles paths where
+// intermediate directories haven't been created yet.
+func evalSymlinksPartial(path string) (string, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	resolved, err := filepath.EvalSymlinks(absPath)
+	if err == nil {
+		return resolved, nil
+	}
+	// Walk up to find existing ancestor.
+	dir := filepath.Dir(absPath)
+	base := filepath.Base(absPath)
+	resolvedDir, err := evalSymlinksPartial(dir)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(resolvedDir, base), nil
 }
 
 func createTruncatedFile(path string, size int64) error {

@@ -17,7 +17,7 @@ type PeerBroadcaster interface {
 // ADNLBroadcaster implements go-ds-crdt's Broadcaster interface.
 // Sends head CID notifications to cluster peers and receives them.
 type ADNLBroadcaster struct {
-	peer     PeerBroadcaster
+	peer     atomic.Value // stores PeerBroadcaster
 	incoming chan []byte
 	closed   chan struct{}
 	once     sync.Once
@@ -27,12 +27,20 @@ type ADNLBroadcaster struct {
 
 // NewADNLBroadcaster creates a broadcaster backed by ADNL overlay messaging.
 func NewADNLBroadcaster(peer PeerBroadcaster, logger *slog.Logger) *ADNLBroadcaster {
-	return &ADNLBroadcaster{
-		peer:     peer,
+	b := &ADNLBroadcaster{
 		incoming: make(chan []byte, 4096),
 		closed:   make(chan struct{}),
 		logger:   logger,
 	}
+	if peer != nil {
+		b.peer.Store(peer)
+	}
+	return b
+}
+
+// SetPeer atomically updates the peer broadcaster.
+func (b *ADNLBroadcaster) SetPeer(p PeerBroadcaster) {
+	b.peer.Store(p)
 }
 
 // Broadcast sends a head CID notification to all cluster peers.
@@ -44,11 +52,12 @@ func (b *ADNLBroadcaster) Broadcast(ctx context.Context, data []byte) error {
 	default:
 	}
 
-	if b.peer == nil {
+	p, _ := b.peer.Load().(PeerBroadcaster)
+	if p == nil {
 		return nil // no-op if no peer broadcaster configured (single-node/test)
 	}
 	// Pass raw data -- the transport handles TL wrapping via CRDTHeadMsg.
-	if err := b.peer.BroadcastToCluster(ctx, data); err != nil {
+	if err := p.BroadcastToCluster(ctx, data); err != nil {
 		b.logger.Warn("broadcast crdt head failed", "error", err)
 		return err
 	}

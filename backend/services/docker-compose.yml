@@ -43,15 +43,15 @@ services:
       context: ..
       dockerfile: services/ion-connect-storage/Dockerfile
     environment:
-      # WARNING: Use Docker secrets or external vault in production.
-      # Environment variables are visible via docker inspect.
-      ADNL_PRIVATE_KEY: ${ADNL_PRIVATE_KEY}
+      # Keys are read from secret files mounted at /run/secrets/.
+      # The _FILE suffix tells config.go to read the file contents.
+      ADNL_PRIVATE_KEY_FILE: /run/secrets/adnl_private_key
       ADNL_EXTERNAL_ADDR: ${ADNL_EXTERNAL_ADDR:-127.0.0.1:3278}
       PORT: ${ION_STORAGE_PORT:-3278}
       GLOBAL_CONFIG_URL: ${GLOBAL_CONFIG_URL:-https://ton.org/global-config.json}
       GREENFIELD_RPC_URLS: ${GREENFIELD_RPC_URLS:-https://gnfd-testnet-fullnode-tendermint-us.bnbchain.org:443}
       GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
-      GREENFIELD_PRIVATE_KEY: ${GREENFIELD_PRIVATE_KEY}
+      GREENFIELD_PRIVATE_KEY_FILE: /run/secrets/greenfield_private_key
       ONLINEIO_ENV: ${ONLINEIO_ENV:-dev}
       CACHE_TTL: ${CACHE_TTL:-24h}
       CACHE_DIR: /data/cache
@@ -59,6 +59,9 @@ services:
       ACTIVE_DHT_LIMIT: ${ACTIVE_DHT_LIMIT:-100000}
       HTTP_PORT: "8080"
       LOG_LEVEL: ${LOG_LEVEL:-debug}
+    secrets:
+      - adnl_private_key
+      - greenfield_private_key
     ports:
       - "127.0.0.1:${ION_STORAGE_PORT:-3278}:${ION_STORAGE_PORT:-3278}/udp"
     volumes:
@@ -71,6 +74,12 @@ services:
       start_period: 30s
     restart: unless-stopped
     container_name: ion-connect-storage
+
+secrets:
+  adnl_private_key:
+    file: ${ADNL_PRIVATE_KEY_FILE:-.secrets/adnl_private_key}
+  greenfield_private_key:
+    file: ${GREENFIELD_PRIVATE_KEY_FILE:-.secrets/greenfield_private_key}
 
 volumes:
   dragonfly-data:

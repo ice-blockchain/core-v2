@@ -35,7 +35,8 @@ func (s *Server) handleNewConnection(client adnl.Peer) error {
 	client.SetDisconnectHandler(func(_ string, _ ed25519.PublicKey) {
 		s.activeConnections.Add(-1)
 	})
-	setupOverlayRLDP(client, s.overlays, s.httpBridge, s.clusterOverlayID, s.clusterQueryHandler, s.clusterMemberChecker, s.querySemaphore, s.logger)
+	cc := s.loadClusterConfig()
+	setupOverlayRLDP(client, s.overlays, s.httpBridge, cc.overlayID, cc.queryHandler, cc.memberChecker, s.querySemaphore, s.logger)
 	return nil
 }
 

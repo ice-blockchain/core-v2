@@ -10,13 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// writeSignedOwnershipAsNode writes a signed ownership claim for bagID as if
-// from nodeID, and registers the node's public key in CRDT nodeinfo.
-// Returns the private key so callers can write matching signed heartbeats.
-func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, nodeID string, bagID [32]byte) ed25519.PrivateKey {
+// writeSignedOwnershipAsNode writes a signed ownership claim for bagID from
+// a newly generated node. Derives nodeID from the ed25519 key (matching
+// production behaviour). Returns the derived nodeID and private key.
+func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, _ string, bagID [32]byte) (string, ed25519.PrivateKey) {
 	t.Helper()
 	_, privKey, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
+	pubKey := privKey.Public().(ed25519.PublicKey)
+	nodeID := hexEncode(pubKey)
 
 	// Register node's self-certifying nodeinfo in CRDT.
 	info := NodeInfo{}
@@ -28,11 +30,11 @@ func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, nodeID string,
 	bagHex := hexEncode(bagID[:])
 	val := FormatSignedOwnership(bagHex, nodeID, time.Now().Unix(), privKey)
 	require.NoError(t, coord.crdt.Put(context.Background(), ds.NewKey(OwnershipKey(bagID)), val))
-	return privKey
+	return nodeID, privKey
 }
 
 func TestVerifyClaimSucceedsWhenOwner(t *testing.T) {
-	coord := newTestCoordinator(t, "claimer")
+	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx := context.Background()
 	bagID := [32]byte{0x01}
@@ -42,7 +44,7 @@ func TestVerifyClaimSucceedsWhenOwner(t *testing.T) {
 }
 
 func TestVerifyClaimFailsWhenOverwritten(t *testing.T) {
-	coord := newTestCoordinator(t, "loser")
+	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx := context.Background()
 	bagID := [32]byte{0x02}
@@ -50,13 +52,13 @@ func TestVerifyClaimFailsWhenOverwritten(t *testing.T) {
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
 	// Simulate another node winning by overwriting the ownership key.
-	writeSignedOwnershipAsNode(t, coord, "winner", bagID)
+	writeSignedOwnershipAsNode(t, coord, "", bagID)
 
 	require.False(t, coord.verifyClaim(ctx, bagID))
 }
 
 func TestVerifyClaimRespectsContextCancellation(t *testing.T) {
-	coord := newTestCoordinator(t, "cancelled")
+	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 1 * time.Second
 	ctx, cancel := context.WithCancel(context.Background())
 	bagID := [32]byte{0x03}
@@ -68,7 +70,7 @@ func TestVerifyClaimRespectsContextCancellation(t *testing.T) {
 }
 
 func TestRollbackClaimDeletesBynodeKey(t *testing.T) {
-	coord := newTestCoordinator(t, "rollback-node")
+	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
 	bagID := [32]byte{0x04}
 
@@ -77,7 +79,7 @@ func TestRollbackClaimDeletesBynodeKey(t *testing.T) {
 	coord.rollbackClaim(ctx, bagID)
 
 	// Verify bynode key was deleted.
-	_, err := coord.crdt.Get(ctx, ds.NewKey(ByNodeKey("rollback-node", bagID)))
+	_, err := coord.crdt.Get(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)))
 	require.Error(t, err, "bynode key should be deleted after rollback")
 
 	// Verify ownership key was deleted (this node still owned it at rollback time).
@@ -86,7 +88,7 @@ func TestRollbackClaimDeletesBynodeKey(t *testing.T) {
 }
 
 func TestRollbackDoesNotDeleteWinnerOwnership(t *testing.T) {
-	coord := newTestCoordinator(t, "loser-node")
+	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
 	bagID := [32]byte{0x06}
 
@@ -94,16 +96,16 @@ func TestRollbackDoesNotDeleteWinnerOwnership(t *testing.T) {
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
 	// Simulate the winner overwriting ownership.
-	writeSignedOwnershipAsNode(t, coord, "winner-node", bagID)
+	winnerID, _ := writeSignedOwnershipAsNode(t, coord, "", bagID)
 
 	// Loser rolls back -- must NOT delete the winner's ownership.
 	coord.rollbackClaim(ctx, bagID)
 
-	require.Equal(t, "winner-node", coord.Owner(bagID))
+	require.Equal(t, winnerID, coord.Owner(bagID))
 }
 
 func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
-	coord := newTestCoordinator(t, "counter-node")
+	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
@@ -117,7 +119,7 @@ func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
 
 	// Clean up for OwnsOrClaim test.
 	_ = coord.crdt.Delete(ctx, ds.NewKey(OwnershipKey(bagID)))
-	_ = coord.crdt.Delete(ctx, ds.NewKey(ByNodeKey("counter-node", bagID)))
+	_ = coord.crdt.Delete(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)))
 
 	// OwnsOrClaim with successful verification should increment counter.
 	owned, err := coord.OwnsOrClaim(ctx, bagID)
@@ -127,13 +129,13 @@ func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
 }
 
 func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {
-	coord := newTestCoordinator(t, "recon-node")
+	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
 	bagID := [32]byte{0x05}
 
 	// Create bynode key for this node, but ownership points to another node.
-	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(ByNodeKey("recon-node", bagID)), nil))
-	writeSignedOwnershipAsNode(t, coord, "other-node", bagID)
+	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)), nil))
+	writeSignedOwnershipAsNode(t, coord, "", bagID)
 	coord.ownedCount.Store(1)
 
 	coord.reconcileOwnedCount(ctx)
@@ -141,6 +143,6 @@ func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {
 	require.Equal(t, int64(0), coord.ownedCount.Load())
 
 	// Verify stale bynode key was cleaned up.
-	_, err := coord.crdt.Get(ctx, ds.NewKey(ByNodeKey("recon-node", bagID)))
+	_, err := coord.crdt.Get(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)))
 	require.Error(t, err, "stale bynode key should be deleted")
 }

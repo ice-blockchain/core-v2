@@ -100,6 +100,12 @@ func TestRateLimiterIsolatesPeers(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code)
 }
 
+func TestRateLimiterDoubleCloseNoPanic(t *testing.T) {
+	rl := NewPeerRateLimiter(10, 5)
+	rl.Close()
+	rl.Close() // must not panic
+}
+
 func TestRateLimiterRejectsWhenMaxPeersReached(t *testing.T) {
 	rl := NewPeerRateLimiter(100, 100)
 	defer rl.Close()

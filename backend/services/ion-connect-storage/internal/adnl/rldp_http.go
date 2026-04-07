@@ -18,25 +18,28 @@ import (
 )
 
 const (
-	payloadTTL         = 30 * time.Second
-	reaperInterval     = 10 * time.Second
-	chunkSize          = 1 << 20
-	maxPendingPayloads = 500
-	maxRLDPDeadline    = 60 * time.Second
-	rldpGracePeriod    = 5 * time.Second
+	payloadTTL           = 30 * time.Second
+	reaperInterval       = 10 * time.Second
+	chunkSize            = 1 << 20
+	maxPendingPayloads   = 500
+	maxTotalPayloadBytes = 500 << 20 // 500 MB aggregate limit
+	maxRLDPDeadline      = 60 * time.Second
+	rldpGracePeriod      = 5 * time.Second
 )
 
 // RLDPHTTPBridge forwards HTTP-over-RLDP requests to a gin.Engine.
 type RLDPHTTPBridge struct {
-	engine       *gin.Engine
-	logger       *slog.Logger
-	payloads     *xsync.Map[string, *pendingPayload]
-	payloadCount atomic.Int64
-	cancel       context.CancelFunc
+	engine            *gin.Engine
+	logger            *slog.Logger
+	payloads          *xsync.Map[string, *pendingPayload]
+	payloadCount      atomic.Int64
+	totalPayloadBytes atomic.Int64
+	cancel            context.CancelFunc
 }
 
 type pendingPayload struct {
 	data      []byte
+	size      int64
 	createdAt time.Time
 }
 
@@ -92,9 +95,11 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 	resp := buildTLResponse(w)
 	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
 
-	if w.body.Len() > 0 && b.tryReservePayloadSlot() {
+	bodySize := int64(w.body.Len())
+	if bodySize > 0 && b.tryReservePayloadSlot(bodySize) {
 		b.payloads.Store(reqID, &pendingPayload{
 			data:      w.body.Bytes(),
+			size:      bodySize,
 			createdAt: time.Now(),
 		})
 		resp.NoPayload = false
@@ -142,23 +147,29 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	)
 }
 
-// tryReservePayloadSlot atomically increments the payload counter if below the limit.
-func (b *RLDPHTTPBridge) tryReservePayloadSlot() bool {
+// tryReservePayloadSlot atomically increments the payload counter and byte
+// tracker if both are below their limits.
+func (b *RLDPHTTPBridge) tryReservePayloadSlot(size int64) bool {
 	for {
 		current := b.payloadCount.Load()
 		if current >= maxPendingPayloads {
 			return false
 		}
+		if b.totalPayloadBytes.Load()+size > maxTotalPayloadBytes {
+			return false
+		}
 		if b.payloadCount.CompareAndSwap(current, current+1) {
+			b.totalPayloadBytes.Add(size)
 			return true
 		}
 	}
 }
 
-// deletePayload atomically removes a payload and decrements the counter.
+// deletePayload atomically removes a payload and decrements both counters.
 func (b *RLDPHTTPBridge) deletePayload(reqID string) {
-	if _, loaded := b.payloads.LoadAndDelete(reqID); loaded {
+	if p, loaded := b.payloads.LoadAndDelete(reqID); loaded {
 		b.payloadCount.Add(-1)
+		b.totalPayloadBytes.Add(-p.size)
 	}
 }
 

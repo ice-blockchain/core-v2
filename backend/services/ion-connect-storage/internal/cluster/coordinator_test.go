@@ -12,11 +12,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestCoordinator(t *testing.T, nodeID string) *Coordinator {
+// newTestCoordinator creates a coordinator with nodeID derived from the
+// generated ed25519 key (matching production behaviour). The label parameter
+// is ignored — use coord.nodeID to reference this node in tests.
+func newTestCoordinator(t *testing.T, _ string) *Coordinator {
 	t.Helper()
 	db := openTestDB(t)
 	_, privKey, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
+	pubKey := privKey.Public().(ed25519.PublicKey)
+	nodeID := hexEncode(pubKey)
 	coord, err := NewCoordinator(CoordinatorConfig{
 		NodeID:                nodeID,
 		ClusterOverlayID:      "test-overlay",
@@ -34,13 +39,13 @@ func newTestCoordinator(t *testing.T, nodeID string) *Coordinator {
 }
 
 func TestCoordinatorStartStop(t *testing.T) {
-	coord := newTestCoordinator(t, "node-1")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 
 	err := coord.Start(ctx)
 	require.NoError(t, err)
 
-	val, err := coord.crdt.Get(ctx, ds.NewKey(NodeInfoKey("node-1")))
+	val, err := coord.crdt.Get(ctx, ds.NewKey(NodeInfoKey(coord.nodeID)))
 	require.NoError(t, err)
 	info, err := UnmarshalNodeInfo(val)
 	require.NoError(t, err)
@@ -52,18 +57,18 @@ func TestCoordinatorStartStop(t *testing.T) {
 }
 
 func TestCoordinatorHeartbeatWritten(t *testing.T) {
-	coord := newTestCoordinator(t, "node-hb")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer func() { cancel(); coord.Stop() }()
 
 	require.NoError(t, coord.Start(ctx))
 	time.Sleep(300 * time.Millisecond)
 
-	val, err := coord.crdt.Get(ctx, ds.NewKey(HeartbeatKey("node-hb")))
+	val, err := coord.crdt.Get(ctx, ds.NewKey(HeartbeatKey(coord.nodeID)))
 	require.NoError(t, err)
 
 	pubKey := coord.cfg.PrivateKey.Public().(ed25519.PublicKey)
-	ts, err := ParseSignedHeartbeat(val, "node-hb", pubKey)
+	ts, err := ParseSignedHeartbeat(val, coord.nodeID, pubKey)
 	require.NoError(t, err)
 	require.InDelta(t, time.Now().Unix(), ts, 5)
 }

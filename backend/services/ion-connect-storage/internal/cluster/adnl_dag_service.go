@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 
 	"github.com/cockroachdb/pebble/v2"
 	dag "github.com/ipfs/boxo/ipld/merkledag"
@@ -25,13 +26,22 @@ type BlockFetcher interface {
 // Stores blocks locally in PebbleDB. On cache miss, fetches from cluster peers.
 type ADNLDAGService struct {
 	db      *pebble.DB
-	fetcher BlockFetcher
+	fetcher atomic.Value // stores BlockFetcher
 	logger  *slog.Logger
 }
 
 // NewADNLDAGService creates a DAG service backed by PebbleDB and peer fetching.
 func NewADNLDAGService(db *pebble.DB, fetcher BlockFetcher, logger *slog.Logger) *ADNLDAGService {
-	return &ADNLDAGService{db: db, fetcher: fetcher, logger: logger}
+	s := &ADNLDAGService{db: db, logger: logger}
+	if fetcher != nil {
+		s.fetcher.Store(fetcher)
+	}
+	return s
+}
+
+// SetFetcher atomically updates the block fetcher.
+func (s *ADNLDAGService) SetFetcher(f BlockFetcher) {
+	s.fetcher.Store(f)
 }
 
 // Get retrieves an IPLD node by CID. Checks local store first, then peers.
@@ -41,13 +51,14 @@ func (s *ADNLDAGService) Get(ctx context.Context, c cid.Cid) (ipld.Node, error) 
 		return decodeBlock(c, data)
 	}
 
-	if s.fetcher == nil {
+	f, _ := s.fetcher.Load().(BlockFetcher)
+	if f == nil {
 		s.logger.Debug("dag get: no fetcher, returning not found", "cid", c.String())
 		return nil, ipld.ErrNotFound{Cid: c}
 	}
 
 	s.logger.Debug("dag get: fetching from peers", "cid", c.String())
-	remote, err := s.fetcher.FetchBlockFromPeers(ctx, c.Bytes())
+	remote, err := f.FetchBlockFromPeers(ctx, c.Bytes())
 	if err != nil {
 		s.logger.Debug("dag get: peer fetch failed", "cid", c.String(), "error", err)
 		return nil, fmt.Errorf("fetch block %s from peers: %w", c, err)

@@ -42,7 +42,7 @@ func (c Config) ClusterEnabled() bool {
 }
 
 func Load() (Config, error) {
-	adnlKey := os.Getenv("ADNL_PRIVATE_KEY")
+	adnlKey := secretFromEnvOrFile("ADNL_PRIVATE_KEY")
 	if err := validateAdnlKey(adnlKey); err != nil {
 		return Config{}, err
 	}
@@ -65,9 +65,9 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("ONLINEIO_ENV is required")
 	}
 
-	greenfieldPrivKey := os.Getenv("GREENFIELD_PRIVATE_KEY")
+	greenfieldPrivKey := secretFromEnvOrFile("GREENFIELD_PRIVATE_KEY")
 	if greenfieldPrivKey == "" {
-		return Config{}, fmt.Errorf("GREENFIELD_PRIVATE_KEY is required")
+		return Config{}, fmt.Errorf("GREENFIELD_PRIVATE_KEY is required (set env var or GREENFIELD_PRIVATE_KEY_FILE)")
 	}
 
 	adnlPort, err := parseRequiredPort("PORT")
@@ -237,4 +237,17 @@ func parseDuration(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+// secretFromEnvOrFile reads a secret from environment variable KEY, or from
+// the file path in KEY_FILE. File takes precedence when both are set.
+// This supports Docker secrets (mounted as files) without breaking env-var usage.
+func secretFromEnvOrFile(key string) string {
+	if filePath := os.Getenv(key + "_FILE"); filePath != "" {
+		data, err := os.ReadFile(filePath)
+		if err == nil {
+			return strings.TrimSpace(string(data))
+		}
+	}
+	return os.Getenv(key)
 }

@@ -38,25 +38,31 @@ type ClusterMemberChecker interface {
 	IsClusterMember(adnlAddr []byte) bool
 }
 
+// clusterConfig holds cluster overlay settings read atomically from
+// handleNewConnection to avoid data races with SetCluster* methods.
+type clusterConfig struct {
+	overlayID     [32]byte
+	queryHandler  ClusterQueryHandler
+	memberChecker ClusterMemberChecker
+}
+
 type Server struct {
-	gateway              *adnl.Gateway
-	dhtClient            *dht.Client
-	registrar            *DHTRegistrar
-	overlays             *OverlayManager
-	httpBridge           *RLDPHTTPBridge
-	clusterOverlayID     [32]byte
-	clusterQueryHandler  ClusterQueryHandler
-	clusterMemberChecker ClusterMemberChecker
-	privateKey           ed25519.PrivateKey
-	port                 int
-	externalIP           net.IP
-	externalPort         int
-	maxConnections       int
-	querySemaphore       chan struct{}
-	activeConnections    atomic.Int64
-	running              atomic.Bool
-	ready                atomic.Bool
-	logger               *slog.Logger
+	gateway           *adnl.Gateway
+	dhtClient         *dht.Client
+	registrar         *DHTRegistrar
+	overlays          *OverlayManager
+	httpBridge        *RLDPHTTPBridge
+	cluster           atomic.Pointer[clusterConfig]
+	privateKey        ed25519.PrivateKey
+	port              int
+	externalIP        net.IP
+	externalPort      int
+	maxConnections    int
+	querySemaphore    chan struct{}
+	activeConnections atomic.Int64
+	running           atomic.Bool
+	ready             atomic.Bool
+	logger            *slog.Logger
 }
 
 func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*Server, error) {
@@ -207,14 +213,26 @@ func (s *Server) SetHTTPBridge(b *RLDPHTTPBridge) { s.httpBridge = b }
 // SetClusterOverlay registers a handler for the cluster overlay.
 // Queries arriving on this overlay ID are routed to the handler instead of OverlayManager.
 func (s *Server) SetClusterOverlay(overlayID [32]byte, handler ClusterQueryHandler) {
-	s.clusterOverlayID = overlayID
-	s.clusterQueryHandler = handler
+	cfg := s.loadClusterConfig()
+	cfg.overlayID = overlayID
+	cfg.queryHandler = handler
+	s.cluster.Store(&cfg)
 }
 
 // SetClusterMemberChecker registers a checker that verifies whether
 // a peer is an authorized cluster member before routing cluster queries.
 func (s *Server) SetClusterMemberChecker(checker ClusterMemberChecker) {
-	s.clusterMemberChecker = checker
+	cfg := s.loadClusterConfig()
+	cfg.memberChecker = checker
+	s.cluster.Store(&cfg)
+}
+
+// loadClusterConfig returns a copy of the current cluster config.
+func (s *Server) loadClusterConfig() clusterConfig {
+	if c := s.cluster.Load(); c != nil {
+		return *c
+	}
+	return clusterConfig{}
 }
 
 // ExternalIP returns the advertised IP address.

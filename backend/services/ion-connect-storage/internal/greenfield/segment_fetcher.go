@@ -35,6 +35,7 @@ func fetchSegment(
 	if err != nil {
 		return nil, fmt.Errorf("get segment %d of %s/%s: %w", segmentIndex, bucket, object, err)
 	}
+	defer reader.Close()
 
 	const maxSegmentRead = boc.SegmentSize + 1024 // 16 MB + small buffer
 	var src io.Reader = io.LimitReader(reader, int64(maxSegmentRead))
@@ -43,7 +44,6 @@ func fetchSegment(
 	}
 
 	data, err := io.ReadAll(src)
-	reader.Close()
 	if err != nil {
 		return nil, fmt.Errorf("read segment %d of %s/%s: %w", segmentIndex, bucket, object, err)
 	}

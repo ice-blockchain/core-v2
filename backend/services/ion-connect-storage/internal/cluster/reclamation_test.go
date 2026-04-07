@@ -14,9 +14,10 @@ func newTestCoordinatorWithCleanup(t *testing.T, nodeID string) *Coordinator {
 }
 
 func TestResponsibilityRing(t *testing.T) {
-	coord := newTestCoordinatorWithCleanup(t, "node-A")
+	coord := newTestCoordinatorWithCleanup(t, "")
 
-	activeNodes := []string{"node-A", "node-B", "node-C"}
+	// Use coord.nodeID as one of the active nodes so it matches.
+	activeNodes := []string{coord.nodeID, "node-B", "node-C"}
 	deadNode := "dead-node-X"
 
 	responsibleCount := 0
@@ -30,8 +31,8 @@ func TestResponsibilityRing(t *testing.T) {
 }
 
 func TestResponsibilityRingDeterministic(t *testing.T) {
-	coord := newTestCoordinatorWithCleanup(t, "node-A")
-	activeNodes := []string{"node-A", "node-B", "node-C"}
+	coord := newTestCoordinatorWithCleanup(t, "")
+	activeNodes := []string{coord.nodeID, "node-B", "node-C"}
 
 	var winner string
 	for i := 0; i < 10; i++ {
@@ -49,8 +50,8 @@ func TestResponsibilityRingDeterministic(t *testing.T) {
 }
 
 func TestResponsibilityRingSingleNode(t *testing.T) {
-	coord := newTestCoordinatorWithCleanup(t, "only-node")
-	require.True(t, coord.isResponsibleForReclamation("dead", []string{"only-node"}))
+	coord := newTestCoordinatorWithCleanup(t, "")
+	require.True(t, coord.isResponsibleForReclamation("dead", []string{coord.nodeID}))
 }
 
 func TestExtractBagIDFromByNodeKey(t *testing.T) {

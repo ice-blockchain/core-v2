@@ -155,9 +155,9 @@ func buildIndices(files []FileEntry) (names []byte, nameIndex, dataIndex []uint6
 }
 
 func parseFileEntries(data []byte, filesCount uint32, totalNameSize, totalDataSize uint64) ([]FileEntry, []byte, error) {
-	indexBytes := int(filesCount) * 16
-	if len(data) < indexBytes {
-		return nil, nil, fmt.Errorf("data too short for file indices: need %d, have %d", indexBytes, len(data))
+	indexSize := uint64(filesCount) * 16
+	if uint64(len(data)) < indexSize {
+		return nil, nil, fmt.Errorf("data too short for file indices: need %d, have %d", indexSize, len(data))
 	}
 
 	nameIndex := make([]uint64, filesCount)
@@ -169,7 +169,7 @@ func parseFileEntries(data []byte, filesCount uint32, totalNameSize, totalDataSi
 		}
 		dataIndex[i] = binary.LittleEndian.Uint64(data[uint64(filesCount)*8+uint64(i)*8:])
 	}
-	data = data[indexBytes:]
+	data = data[int(indexSize):]
 
 	if totalNameSize+totalDataSize < totalNameSize {
 		return nil, nil, fmt.Errorf("name+data size overflow")

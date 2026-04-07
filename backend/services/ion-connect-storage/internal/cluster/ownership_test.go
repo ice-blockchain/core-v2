@@ -10,7 +10,7 @@ import (
 )
 
 func TestClaimAndOwnsBag(t *testing.T) {
-	coord := newTestCoordinator(t, "owner-node")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
@@ -21,13 +21,13 @@ func TestClaimAndOwnsBag(t *testing.T) {
 	err := coord.ClaimBag(ctx, bagID)
 	require.NoError(t, err)
 	require.True(t, coord.OwnsBag(bagID))
-	require.Equal(t, "owner-node", coord.Owner(bagID))
+	require.Equal(t, coord.nodeID, coord.Owner(bagID))
 	// ClaimBag no longer increments counter; only OwnsOrClaim does after verification.
 	require.Equal(t, 0, coord.OwnedCount())
 }
 
 func TestReleaseBag(t *testing.T) {
-	coord := newTestCoordinator(t, "releaser")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
@@ -41,7 +41,7 @@ func TestReleaseBag(t *testing.T) {
 }
 
 func TestOwnsOrClaimUnclaimed(t *testing.T) {
-	coord := newTestCoordinator(t, "claimer")
+	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
@@ -55,7 +55,7 @@ func TestOwnsOrClaimUnclaimed(t *testing.T) {
 }
 
 func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
-	coord := newTestCoordinator(t, "node-a")
+	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
@@ -64,10 +64,10 @@ func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
 	bagID := [32]byte{0x04}
 	// Simulate another node owning this bag with a fresh signed heartbeat.
 	// writeSignedOwnershipAsNode also writes self-certifying nodeinfo.
-	foreignPriv := writeSignedOwnershipAsNode(t, coord, "node-b", bagID)
+	foreignNodeID, foreignPriv := writeSignedOwnershipAsNode(t, coord, "", bagID)
 	require.NoError(t, coord.crdt.Put(ctx,
-		dsKeyFromString(HeartbeatKey("node-b")),
-		FormatSignedHeartbeat(time.Now().Unix(), "node-b", foreignPriv)))
+		dsKeyFromString(HeartbeatKey(foreignNodeID)),
+		FormatSignedHeartbeat(time.Now().Unix(), foreignNodeID, foreignPriv)))
 
 	owned, err := coord.OwnsOrClaim(ctx, bagID)
 	require.NoError(t, err)
@@ -75,7 +75,7 @@ func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
 }
 
 func TestOwnerUnknownBag(t *testing.T) {
-	coord := newTestCoordinator(t, "node-x")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
@@ -84,18 +84,18 @@ func TestOwnerUnknownBag(t *testing.T) {
 }
 
 func TestNodeADNLAddress(t *testing.T) {
-	coord := newTestCoordinator(t, "addr-node")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
 	// Verify published nodeinfo is readable.
-	_, _, _, found := coord.NodeADNLAddress("addr-node")
+	_, _, _, found := coord.NodeADNLAddress(coord.nodeID)
 	require.True(t, found)
 }
 
 func TestMultipleBagsClaimed(t *testing.T) {
-	coord := newTestCoordinator(t, "multi")
+	coord := newTestCoordinator(t, "")
 	ctx, cancel := context.WithCancel(context.Background())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()

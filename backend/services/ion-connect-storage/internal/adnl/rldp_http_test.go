@@ -190,7 +190,7 @@ func TestPayloadCountAtomicUnderConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if bridge.tryReservePayloadSlot() {
+			if bridge.tryReservePayloadSlot(1024) {
 				reserved.Add(1)
 			}
 		}()
@@ -220,7 +220,7 @@ func TestPayloadCountNeverExceedsLimit(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if bridge.tryReservePayloadSlot() {
+			if bridge.tryReservePayloadSlot(1024) {
 				reserved.Add(1)
 			}
 		}()
@@ -253,7 +253,7 @@ func TestPayloadIsolationBetweenPeers(t *testing.T) {
 	_ = reqID
 
 	// Peer A stores a payload
-	bridge.payloads.Store(keyA, &pendingPayload{data: []byte("secret-A"), createdAt: time.Now()})
+	bridge.payloads.Store(keyA, &pendingPayload{data: []byte("secret-A"), size: 8, createdAt: time.Now()})
 	bridge.payloadCount.Store(1)
 
 	// Peer B cannot load peer A's payload using the same reqID
@@ -273,14 +273,34 @@ func TestDeletePayloadDecrementsSafely(t *testing.T) {
 	bridge := NewRLDPHTTPBridge(ctx, nil, testLogger())
 	defer bridge.Stop()
 
-	bridge.payloads.Store("key1", &pendingPayload{data: []byte("x"), createdAt: time.Now()})
+	bridge.payloads.Store("key1", &pendingPayload{data: []byte("x"), size: 1, createdAt: time.Now()})
 	bridge.payloadCount.Store(1)
+	bridge.totalPayloadBytes.Store(1)
 
 	// First delete decrements
 	bridge.deletePayload("key1")
 	require.Equal(t, int64(0), bridge.payloadCount.Load())
+	require.Equal(t, int64(0), bridge.totalPayloadBytes.Load())
 
 	// Second delete on same key is a no-op (no double decrement)
 	bridge.deletePayload("key1")
 	require.Equal(t, int64(0), bridge.payloadCount.Load())
+}
+
+func TestPayloadByteLimitEnforced(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	bridge := NewRLDPHTTPBridge(ctx, nil, testLogger())
+	defer bridge.Stop()
+
+	// Set totalPayloadBytes just below the limit.
+	bridge.totalPayloadBytes.Store(maxTotalPayloadBytes - 100)
+
+	// A small payload should succeed.
+	require.True(t, bridge.tryReservePayloadSlot(50))
+	require.Equal(t, int64(maxTotalPayloadBytes-50), bridge.totalPayloadBytes.Load())
+
+	// A payload that would exceed the limit should be rejected.
+	require.False(t, bridge.tryReservePayloadSlot(100))
 }
