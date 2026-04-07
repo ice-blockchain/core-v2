@@ -37,11 +37,13 @@ func (c *Coordinator) verifyClaim(ctx context.Context, bagID [32]byte) bool {
 // rollbackClaim undoes a failed ownership claim. Decrements the owned count
 // and removes the orphaned bynode key to prevent stale entries.
 func (c *Coordinator) rollbackClaim(ctx context.Context, bagID [32]byte) {
+	c.ownedCountMu.Lock()
 	c.ownedCount.Add(-1)
 	if c.metrics != nil {
 		c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
 		c.metrics.ConflictsResolved.Inc()
 	}
+	c.ownedCountMu.Unlock()
 	ownerKey := ds.NewKey(OwnershipKey(bagID))
 	if err := c.crdt.Delete(ctx, ownerKey); err != nil {
 		c.logger.Warn("rollback claim: delete ownership key", "error", err)

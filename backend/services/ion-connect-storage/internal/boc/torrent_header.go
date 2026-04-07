@@ -164,6 +164,9 @@ func parseFileEntries(data []byte, filesCount uint32, totalNameSize, totalDataSi
 	dataIndex := make([]uint64, filesCount)
 	for i := uint32(0); i < filesCount; i++ {
 		nameIndex[i] = binary.LittleEndian.Uint64(data[i*8:])
+		if nameIndex[i] > totalNameSize {
+			return nil, nil, fmt.Errorf("file %d: name index %d exceeds total name size %d", i, nameIndex[i], totalNameSize)
+		}
 		dataIndex[i] = binary.LittleEndian.Uint64(data[uint64(filesCount)*8+uint64(i)*8:])
 	}
 	data = data[indexBytes:]

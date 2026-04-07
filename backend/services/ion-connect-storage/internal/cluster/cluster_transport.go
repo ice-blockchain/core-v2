@@ -185,7 +185,12 @@ func (t *ClusterTransport) BroadcastToCluster(ctx context.Context, data []byte) 
 	for addr, cp := range peers {
 		wg.Add(1)
 		go func(addr [32]byte, cp *clusterPeer) {
-			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					t.logger.Error("panic in broadcast goroutine", "peer", addr[:4], "recover", r)
+				}
+				wg.Done()
+			}()
 			peerCtx, cancel := context.WithTimeout(ctx, broadcastPeerTimeout)
 			defer cancel()
 			var ack BlockMsg
@@ -226,8 +231,8 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 // payloads (128KB) exceed the ADNL message size limit.
 func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
 	t.mu.RLock()
+	defer t.mu.RUnlock()
 	cp, ok := t.peers[adnlAddr]
-	t.mu.RUnlock()
 	if !ok {
 		return nil, nil, fmt.Errorf("peer %x not connected", adnlAddr[:4])
 	}
@@ -248,8 +253,8 @@ func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32
 // cluster overlay. Uses ADNL (responses are small control messages).
 func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error) {
 	t.mu.RLock()
+	defer t.mu.RUnlock()
 	cp, ok := t.peers[ownerADNLAddr]
-	t.mu.RUnlock()
 	if !ok {
 		return nil, fmt.Errorf("owner peer %x not connected", ownerADNLAddr[:4])
 	}

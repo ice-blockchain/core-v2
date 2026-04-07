@@ -34,10 +34,12 @@ func (c *Coordinator) ClaimBag(ctx context.Context, bagID [32]byte) error {
 		return fmt.Errorf("put ownership key: %w", err)
 	}
 
+	c.ownedCountMu.Lock()
 	c.ownedCount.Add(1)
 	if c.metrics != nil {
 		c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
 	}
+	c.ownedCountMu.Unlock()
 	return nil
 }
 
@@ -53,10 +55,12 @@ func (c *Coordinator) ReleaseBag(ctx context.Context, bagID [32]byte) error {
 		return fmt.Errorf("delete bynode key: %w", err)
 	}
 
+	c.ownedCountMu.Lock()
 	c.ownedCount.Add(-1)
 	if c.metrics != nil {
 		c.metrics.BagsOwned.Set(float64(c.ownedCount.Load()))
 	}
+	c.ownedCountMu.Unlock()
 	return nil
 }
 

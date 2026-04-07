@@ -102,11 +102,13 @@ func (c *Coordinator) reconcileOwnedCount(ctx context.Context) {
 		c.logger.Info("reconcile: removed stale bynode key", "bag", r.Key)
 	}
 
+	c.ownedCountMu.Lock()
 	old := c.ownedCount.Swap(validCount)
+	if c.metrics != nil && old != validCount {
+		c.metrics.BagsOwned.Set(float64(validCount))
+	}
+	c.ownedCountMu.Unlock()
 	if old != validCount {
 		c.logger.Info("reconciled owned count", "old", old, "new", validCount)
-		if c.metrics != nil {
-			c.metrics.BagsOwned.Set(float64(validCount))
-		}
 	}
 }

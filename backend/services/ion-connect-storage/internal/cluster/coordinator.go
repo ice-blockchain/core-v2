@@ -56,6 +56,7 @@ type Coordinator struct {
 	pieceForwarder *PieceForwarder
 	transport      *ClusterTransport
 	nodeID         string
+	ownedCountMu   sync.Mutex
 	ownedCount     atomic.Int64
 	metrics        *ClusterMetrics
 	logger         *slog.Logger
