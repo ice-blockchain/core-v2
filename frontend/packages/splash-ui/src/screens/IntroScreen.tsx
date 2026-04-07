@@ -15,6 +15,10 @@ export function IntroScreen() {
     navigation.navigate(Routes.Sheet.Auth);
   }, [navigation]);
 
+  const handleCatalog = useCallback(() => {
+    navigation.navigate(Routes.Catalog);
+  }, [navigation]);
+
   return (
     <View style={{paddingBottom: insets.bottom + scale(20), width: '80%'}}>
       <Button
@@ -24,6 +28,15 @@ export function IntroScreen() {
         height={56}
         onPress={handleLogin}
       />
+      <View style={{marginTop: scale(12)}}>
+        <Button
+          label="Catalog (Test)"
+          icon={<Icon name="button-next" size={scale(24)} color={theme.colors.onPrimaryAccent} />}
+          iconPosition="right"
+          height={56}
+          onPress={handleCatalog}
+        />
+      </View>
     </View>
   );
 }
