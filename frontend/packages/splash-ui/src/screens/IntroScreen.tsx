@@ -21,11 +21,11 @@ export function IntroScreen() {
       />
       <View style={{marginTop: scale(12)}}>
         <Button
-          label="Catalog (Test)"
+          label={translate("splash:mainScreenButton")}
           icon={<Icon name="button-next" size={scale(24)} color={theme.colors.onPrimaryAccent} />}
           iconPosition="right"
           height={56}
-          onPress={() => navigation.navigate(Routes.Catalog)}
+          onPress={() => navigation.navigate(Routes.Main)}
         />
       </View>
     </View>
