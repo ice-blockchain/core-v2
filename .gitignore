@@ -9,4 +9,4 @@
 !**/.claude/rules/**
 **/dist/**
 *.env
-**/*.env
+**/*.env.DS_Store

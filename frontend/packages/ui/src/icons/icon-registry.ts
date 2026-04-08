@@ -6,12 +6,14 @@ import { ActionLoginLinkaccountIcon } from "./generated/ActionLoginLinkaccountIc
 import { ActionWalletAddpasskeyIcon } from "./generated/ActionWalletAddpasskeyIcon";
 import { ActionWalletFaceidIcon } from "./generated/ActionWalletFaceidIcon";
 import { ActionWalletPasskeyIcon } from "./generated/ActionWalletPasskeyIcon";
+import { ArticleLinkIcon } from "./generated/ArticleLinkIcon";
 import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
 import { BlockEyeOffIcon } from "./generated/BlockEyeOffIcon";
 import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
+import { BlockchainIcon } from "./generated/BlockchainIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonQrcodeIcon } from "./generated/ButtonQrcodeIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
@@ -34,8 +36,12 @@ import { CloseIcon } from "./generated/CloseIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { DappCheckIcon } from "./generated/DappCheckIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
+import { FeedArticlesIcon } from "./generated/FeedArticlesIcon";
 import { FeedPostIcon } from "./generated/FeedPostIcon";
+import { FeedRepliesIcon } from "./generated/FeedRepliesIcon";
 import { FeedStoriesIcon } from "./generated/FeedStoriesIcon";
+import { FeedVideosIcon } from "./generated/FeedVideosIcon";
+import { FieldCalendarIcon } from "./generated/FieldCalendarIcon";
 import { FieldClearallIcon } from "./generated/FieldClearallIcon";
 import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
@@ -53,6 +59,7 @@ import { KeysSuccessIcon } from "./generated/KeysSuccessIcon";
 import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
 import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { ManageIcon } from "./generated/ManageIcon";
+import { MorePopupIcon } from "./generated/MorePopupIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
 import { NotificationBellIcon } from "./generated/NotificationBellIcon";
@@ -70,6 +77,7 @@ import { PostSendIcon } from "./generated/PostSendIcon";
 import { PostTopicIcon } from "./generated/PostTopicIcon";
 import { ProfileCameraIcon } from "./generated/ProfileCameraIcon";
 import { ProfileFeedIcon } from "./generated/ProfileFeedIcon";
+import { ProfileLocationIcon } from "./generated/ProfileLocationIcon";
 import { ProfileNoimageIcon } from "./generated/ProfileNoimageIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
 import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
@@ -77,6 +85,8 @@ import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
 import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
 import { RestoreKeyIcon } from "./generated/RestoreKeyIcon";
 import { SearchChannelIcon } from "./generated/SearchChannelIcon";
+import { SearchFollowIcon } from "./generated/SearchFollowIcon";
+import { SearchFollowersIcon } from "./generated/SearchFollowersIcon";
 import { SearchGroupsIcon } from "./generated/SearchGroupsIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SendIcon } from "./generated/SendIcon";
@@ -101,12 +111,14 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "action-wallet-addpasskey": ActionWalletAddpasskeyIcon,
   "action-wallet-faceid": ActionWalletFaceidIcon,
   "action-wallet-passkey": ActionWalletPasskeyIcon,
+  "article-link": ArticleLinkIcon,
   "articles": ArticlesIcon,
   "at-sign": AtSignIcon,
   "back-arrow": BackArrowIcon,
   "badge-verify": BadgeVerifyIcon,
   "block-eye-off": BlockEyeOffIcon,
   "block-eye-on": BlockEyeOnIcon,
+  "blockchain": BlockchainIcon,
   "button-next": ButtonNextIcon,
   "button-qrcode": ButtonQrcodeIcon,
   "button-receive": ButtonReceiveIcon,
@@ -129,8 +141,12 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "danger_triangle": DangerTriangleIcon,
   "dapp-check": DappCheckIcon,
   "edit-link": EditLinkIcon,
+  "feed-articles": FeedArticlesIcon,
   "feed-post": FeedPostIcon,
+  "feed-replies": FeedRepliesIcon,
   "feed-stories": FeedStoriesIcon,
+  "feed-videos": FeedVideosIcon,
+  "field-calendar": FieldCalendarIcon,
   "field-clearall": FieldClearallIcon,
   "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
@@ -148,6 +164,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "login-ice-logo": LoginIceLogoIcon,
   "login-identity": LoginIdentityIcon,
   "manage": ManageIcon,
+  "more-popup": MorePopupIcon,
   "name-reserved": NameReservedIcon,
   "news": NewsIcon,
   "notification-bell": NotificationBellIcon,
@@ -165,6 +182,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "post-topic": PostTopicIcon,
   "profile-camera": ProfileCameraIcon,
   "profile-feed": ProfileFeedIcon,
+  "profile-location": ProfileLocationIcon,
   "profile-noimage": ProfileNoimageIcon,
   "profile-save": ProfileSaveIcon,
   "recovery-code": RecoveryCodeIcon,
@@ -172,6 +190,8 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "restore-credentials": RestoreCredentialsIcon,
   "restore-key": RestoreKeyIcon,
   "search-channel": SearchChannelIcon,
+  "search-follow": SearchFollowIcon,
+  "search-followers": SearchFollowersIcon,
   "search-groups": SearchGroupsIcon,
   "search": SearchIcon,
   "send": SendIcon,
