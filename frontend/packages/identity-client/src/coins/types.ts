@@ -6,7 +6,7 @@ export interface Coin {
   network: string;
   contractAddress: string;
   decimals: number;
-  priceUSD: number;
+  priceUSD: string;
   iconURL: string;
   syncFrequency: number;
   native: boolean;

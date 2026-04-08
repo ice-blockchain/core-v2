@@ -1,5 +1,5 @@
 import type { WalletsDataSource } from '../data-sources/wallets-data-source';
-import type { CallFunctionRequest } from './types';
+import type { CallFunctionRequest, CallFunctionResponse } from './types';
 
 interface CallFunctionDeps {
   walletsDataSource: WalletsDataSource;
@@ -11,6 +11,6 @@ interface CallFunctionOptions {
   request: CallFunctionRequest;
 }
 
-export async function callFunction(options: CallFunctionOptions, deps: CallFunctionDeps): Promise<unknown> {
+export async function callFunction(options: CallFunctionOptions, deps: CallFunctionDeps): Promise<CallFunctionResponse> {
   return deps.walletsDataSource.callFunction(options.network, options.request, options.username);
 }

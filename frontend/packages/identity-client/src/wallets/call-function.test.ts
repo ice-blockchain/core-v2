@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { callFunction } from './call-function';
-import type { CallFunctionRequest } from './types';
+import type { CallFunctionRequest, CallFunctionResponse } from './types';
 
 function createMockDeps() {
   return {
@@ -32,7 +32,7 @@ describe('callFunction', () => {
       },
       calldata: { owner: '0x123' },
     };
-    const expected = { result: '1000' };
+    const expected: CallFunctionResponse = { result: '1000' };
     deps.walletsDataSource.callFunction.mockResolvedValue(expected);
 
     const result = await callFunction({ username: 'user1', network: 'ethereum', request }, deps);

@@ -18,7 +18,7 @@ function makeCoin(overrides?: Partial<Coin>): Coin {
     network: 'bitcoin',
     contractAddress: '',
     decimals: 8,
-    priceUSD: 60000,
+    priceUSD: '60000',
     iconURL: 'https://example.com/btc.png',
     syncFrequency: 30_000 * NANO_MS,
     native: true,

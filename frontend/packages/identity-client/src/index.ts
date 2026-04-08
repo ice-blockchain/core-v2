@@ -45,7 +45,7 @@ export type {
   WalletViewSummary, WalletViewDetail, WalletViewInput, WalletViewCoinRef, WalletViewCoin, SymbolGroupBalance,
   EvmBroadcastRequest, GenerateSignatureRequest, GenerateSignatureResponse,
   EstimateFee, FeeLevel, CreateWalletInput, RestrictedRegionDetails,
-  CallFunctionRequest, AbiFunction, AbiParam,
+  CallFunctionRequest, CallFunctionResponse, AbiFunction, AbiParam,
   PaginationParams,
 } from './wallets/types';
 export type { WalletViewDetailWithPagination } from './wallets/wallet-views';

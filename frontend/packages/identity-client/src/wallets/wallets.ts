@@ -1,11 +1,12 @@
 import { NetworkError } from '@ion/network';
+import type { HttpClient } from '@ion/network';
+import { Logger } from '@ion/diagnostics';
 
 import { executeSignedRequest } from '../auth/execute-signed-request';
 import { IdentityError, IdentityErrorCode } from '../errors';
 import type { SigningContext } from '../types';
 import type { UserActionDataSource } from '../data-sources/user-action-data-source';
 import type { WalletsDataSource } from '../data-sources/wallets-data-source';
-import type { HttpClient } from '@ion/network';
 import type { Wallet, WalletAsset, CreateWalletInput } from './types';
 
 interface WalletReadDeps {
@@ -65,6 +66,7 @@ export async function probeRestrictedRegion(username: string, deps: WalletReadDe
     if (isRestrictedRegionError(error)) {
       throw new IdentityError(IdentityErrorCode.RESTRICTED_REGION, 'Restricted region', error);
     }
+    Logger.warning('probeRestrictedRegion failed with non-restricted error', { data: { username } });
     return null;
   }
 }

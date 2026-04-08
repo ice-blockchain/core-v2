@@ -7,6 +7,7 @@ import type {
   WalletHistoryItem,
   WalletTransferRequest,
   CallFunctionRequest,
+  CallFunctionResponse,
 } from '../wallets/types';
 
 interface ListWalletsResponse { items: Wallet[] }
@@ -19,7 +20,7 @@ export interface WalletsDataSource {
   listWallets(username: string): Promise<ListWalletsResponse>;
   getWalletAssets(walletId: string, username: string): Promise<WalletAssetsResponse>;
   getWalletNfts(walletId: string, username: string): Promise<WalletNftsResponse>;
-  probeRestrictedRegion(username: string): Promise<unknown>;
+  probeRestrictedRegion(username: string): Promise<void>;
   getWalletHistory(
     walletId: string,
     username: string,
@@ -31,7 +32,7 @@ export interface WalletsDataSource {
     query?: { limit?: number; paginationToken?: string },
   ): Promise<WalletTransfersResponse>;
   getTransferById(walletId: string, transferId: string, username: string): Promise<WalletTransferRequest>;
-  callFunction(network: string, request: CallFunctionRequest, username: string): Promise<unknown>;
+  callFunction(network: string, request: CallFunctionRequest, username: string): Promise<CallFunctionResponse>;
 }
 
 function buildPaginationQuery(params?: { limit?: number; paginationToken?: string }): Record<string, string> {
@@ -64,10 +65,9 @@ function buildWalletCoreMethods(httpClient: HttpClient) {
       return body;
     },
     async probeRestrictedRegion(username: string) {
-      const { body } = await httpClient.post<unknown>('/wallets/wa-bogus-restricted-region-probe/transactions', {
+      await httpClient.post('/wallets/wa-bogus-restricted-region-probe/transactions', {
         body: {}, headers: { 'X-Username': username },
       });
-      return body;
     },
   };
 }
@@ -101,7 +101,7 @@ function buildWalletHistoryMethods(httpClient: HttpClient) {
 function buildCallFunctionMethod(httpClient: HttpClient) {
   return {
     async callFunction(network: string, request: CallFunctionRequest, username: string) {
-      const { body } = await httpClient.post<unknown>(
+      const { body } = await httpClient.post<CallFunctionResponse>(
         `/networks/${encodeURIComponent(network)}/call-function`,
         { body: request, headers: { 'X-Username': username } },
       );

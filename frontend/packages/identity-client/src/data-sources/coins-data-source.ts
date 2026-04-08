@@ -1,5 +1,6 @@
 import { NetworkError } from '@ion/network';
 import type { HttpClient } from '@ion/network';
+import { Logger } from '@ion/diagnostics';
 
 import type { Coin, CoinsResponse } from '../coins/types';
 
@@ -75,7 +76,10 @@ function createSearchCoins(httpClient: HttpClient): CoinsDataSource['searchCoins
       });
       return body;
     } catch (error) {
-      if (error instanceof NetworkError && error.code === 'PARSE_ERROR') return [];
+      if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {
+        Logger.warning('searchCoins returned unparseable response, returning empty', { data: { keyword } });
+        return [];
+      }
       throw error;
     }
   };

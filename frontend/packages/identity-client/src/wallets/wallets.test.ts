@@ -107,7 +107,7 @@ describe('createWallet', () => {
 describe('probeRestrictedRegion', () => {
   it('returns null on success', async () => {
     const deps = createMockDeps();
-    deps.walletsDataSource.probeRestrictedRegion.mockResolvedValue({});
+    deps.walletsDataSource.probeRestrictedRegion.mockResolvedValue(undefined);
     const result = await probeRestrictedRegion('alice', deps);
     expect(result).toBeNull();
   });
