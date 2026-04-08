@@ -31,6 +31,7 @@ export async function getCoins(username: string, version: number, deps: CoinsDep
 }
 
 export async function syncCoins(username: string, symbolGroups: string[], deps: CoinsDeps): Promise<Coin[]> {
+  await extractUserId(username, deps.tokenManager);
   const coins = await deps.coinsDataSource.syncCoins(symbolGroups, username);
   return coins.map(normalizeCoin);
 }
