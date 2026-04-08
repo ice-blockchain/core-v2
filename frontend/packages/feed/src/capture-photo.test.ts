@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { capturePhoto } from "./capture-photo";
+import { capturePhoto } from "./platform/capture-photo.native";
 
 vi.mock("react-native-image-picker", () => ({
   launchCamera: vi.fn(),
