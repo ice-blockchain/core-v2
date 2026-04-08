@@ -1,10 +1,10 @@
 export const feedEN = {
-  newPostTitle: 'New post',
-  addTopicLabel: 'Add topic',
-  languageLabel: 'Language',
-  composerPlaceholder: "What's happening?",
-  everyoneLabel: 'Everyone',
-  topicTooltipTitle: 'Topic',
-  topicTooltipDescription:
-    'Adding a topic helps to improve visibility and engagement, making the platform more useful and attractive to users.',
+  searchPlaceholder: "Search",
+  storyYouLabel: "you",
+  emptyTitle: "There are no posts at the moment",
+  categoryFeed: "Feed",
+  categoryVideos: "Videos",
+  categoryArticles: "Articles",
+  filterForYou: "For you",
+  filterFollowing: "Following",
 } as const;

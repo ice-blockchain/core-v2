@@ -17,7 +17,7 @@ export function useFeedFiltersMenu(options: UseFeedFiltersMenuOptions) {
     if (!isActive && isMenuOpen) setIsMenuOpen(false);
   }, [isActive, isMenuOpen]);
 
-  const handleToggle = useCallback(() => setIsMenuOpen((prev) => !prev), []);
+  const handleToggle = useCallback(() => { if (isActive) setIsMenuOpen((prev) => !prev); }, [isActive]);
   const handleClose = useCallback(() => setIsMenuOpen(false), []);
 
   const handleCategoryChange = useCallback(
