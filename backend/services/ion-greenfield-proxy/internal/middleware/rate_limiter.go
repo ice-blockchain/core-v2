@@ -21,21 +21,21 @@ type rateLimitEntry struct {
 }
 
 type rateLimiter struct {
-	global  *rate.Limiter
-	perIP   *xsync.Map[string, *rateLimitEntry]
-	perKey  *xsync.Map[string, *rateLimitEntry]
-	ipRate  rate.Limit
-	ipBurst int
-	keyRate rate.Limit
+	global   *rate.Limiter
+	perPeer  *xsync.Map[string, *rateLimitEntry]
+	perKey   *xsync.Map[string, *rateLimitEntry]
+	ipRate   rate.Limit
+	ipBurst  int
+	keyRate  rate.Limit
 	keyBurst int
-	metrics *MetricsCollectors
-	logger  *slog.Logger
+	metrics  *MetricsCollectors
+	logger   *slog.Logger
 }
 
 func newRateLimiter(logger *slog.Logger, cfg *config.Config, mc *MetricsCollectors) *rateLimiter {
 	rl := &rateLimiter{
 		global:   rate.NewLimiter(perHourRate(cfg.RateLimitGlobal), cfg.RateLimitGlobal),
-		perIP:    xsync.NewMap[string, *rateLimitEntry](),
+		perPeer:  xsync.NewMap[string, *rateLimitEntry](),
 		perKey:   xsync.NewMap[string, *rateLimitEntry](),
 		ipRate:   perHourRate(cfg.RateLimitPerIP),
 		ipBurst:  cfg.RateLimitPerIP,
@@ -65,6 +65,18 @@ func (rl *rateLimiter) getOrCreate(m *xsync.Map[string, *rateLimitEntry], key st
 	return entry.limiter
 }
 
+func (rl *rateLimiter) peerIdentity(c *gin.Context) string {
+	if ip := c.ClientIP(); ip != "" {
+		return ip
+	}
+	if addr, ok := c.Get(ContextKeyADNLAddress); ok {
+		if s, ok := addr.(string); ok && s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
 func (rl *rateLimiter) handle(c *gin.Context) {
 	if !rl.global.Allow() {
 		if rl.metrics != nil {
@@ -74,14 +86,16 @@ func (rl *rateLimiter) handle(c *gin.Context) {
 		return
 	}
 
-	ip := c.ClientIP()
-	ipLimiter := rl.getOrCreate(rl.perIP, ip, rl.ipRate, rl.ipBurst)
-	if !ipLimiter.Allow() {
-		if rl.metrics != nil {
-			rl.metrics.RateLimitedByIP.Inc()
+	peer := rl.peerIdentity(c)
+	if peer != "" {
+		peerLimiter := rl.getOrCreate(rl.perPeer, peer, rl.ipRate, rl.ipBurst)
+		if !peerLimiter.Allow() {
+			if rl.metrics != nil {
+				rl.metrics.RateLimitedByIP.Inc()
+			}
+			rl.reject(c)
+			return
 		}
-		rl.reject(c)
-		return
 	}
 
 	if key, ok := c.Get(ContextKeyTxSigner); ok {
@@ -108,9 +122,9 @@ func (rl *rateLimiter) reject(c *gin.Context) {
 
 func (rl *rateLimiter) cleanup() {
 	cutoff := time.Now().Add(-1 * time.Hour).Unix()
-	rl.perIP.Range(func(key string, entry *rateLimitEntry) bool {
+	rl.perPeer.Range(func(key string, entry *rateLimitEntry) bool {
 		if entry.lastAccess.Load() < cutoff {
-			rl.perIP.Delete(key)
+			rl.perPeer.Delete(key)
 		}
 		return true
 	})

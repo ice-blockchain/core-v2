@@ -7,44 +7,60 @@ Three-tier token bucket rate limiter protecting the proxy from abuse.
 | Bucket | Key | Default | Env Var | Metric |
 |---|---|---|---|---|
 | Global | shared (all requests) | 5000/hr | `RATE_LIMIT_GLOBAL` | `req_limited_global` |
-| Per IP | `c.ClientIP()` | 1000/hr | `RATE_LIMIT_PER_IP` | `req_limited_by_ip` |
+| Per peer | `c.ClientIP()` or ADNL address | 1000/hr | `RATE_LIMIT_PER_IP` | `req_limited_by_ip` |
 | Per user key | `tx_signer` from context | 100/hr | `RATE_LIMIT_PER_KEY` | `req_limited_by_user` |
 
-The per-key bucket only applies when a `tx_signer` is present in the gin context (set by the RPC/broadcast intercept middleware for signed transactions). Unsigned requests are subject to global and IP limits only.
+The per-key bucket only applies when a `tx_signer` is present in the gin context (set by the RPC/broadcast intercept middleware for signed transactions). Unsigned requests are subject to global and per-peer limits only.
+
+## Peer Identity Resolution
+
+The per-peer bucket needs a stable identifier for each client. The rate limiter resolves peer identity with a fallback chain:
+
+1. **`c.ClientIP()`** -- used for HTTP/TCP requests where `RemoteAddr` is set
+2. **`ContextKeyADNLAddress`** -- used for ADNL requests where `RemoteAddr` is empty and the ADNL public key is available from context
+3. **No identity** -- if neither is available, per-peer limiting is skipped but global and per-key limits still apply
+
+ADNL requests arrive via the ADNL gateway which converts them into `*http.Request` objects with an empty `RemoteAddr`. Without the fallback, all ADNL traffic would share a single per-peer bucket keyed on `""`, making per-peer limiting ineffective.
 
 ## Request Flow
-
-```
-                  incoming request
-                        |
-                        v
-               +------------------+
-               |  global.Allow()  |
-               +------------------+
-                  |            |
-                 yes           no ---> inc req_limited_global
-                  |                    return 429
-                  v
-          +----------------+
-          |  ip.Allow()    |
-          +----------------+
-             |          |
-            yes          no ---> inc req_limited_by_ip
-             |                   return 429
-             v
-       tx_signer present?
-          |          |
-         yes          no ---> c.Next() (pass)
-          |
-          v
-      +----------------+
-      |  key.Allow()   |
-      +----------------+
-         |          |
-        yes          no ---> inc req_limited_by_user
-         |                   return 429
-         v
-      c.Next() (pass)
+```text
+               incoming request
+                      |
+                      v
+             +------------------+
+             |  global.Allow()  |
+             +------------------+
+                |            |
+               yes           no ---> inc req_limited_global
+                |                    return 429
+                v
+        +-------------------+
+        |  peerIdentity(c)  |
+        +-------------------+
+           |            |
+        non-empty      empty ---> skip per-peer check
+           |                           |
+           v                           |
+        +----------------+             |
+        |  peer.Allow()  |             |
+        +----------------+             |
+           |          |                |
+          yes          no ---> inc req_limited_by_ip
+           |                   return 429
+           v
+     tx_signer present? <--------------+
+        |          |
+       yes          no ---> c.Next() (pass)
+        |
+        v
+    +----------------+
+    |  key.Allow()   |
+    +----------------+
+       |          |
+      yes          no ---> inc req_limited_by_user
+       |                   return 429
+       v
+    c.Next() (pass)
 ```
 
 ## Algorithm
@@ -73,7 +89,7 @@ Content-Type: application/json
 
 ## Memory Management
 
-Per-IP and per-key entries are stored in `xsync.Map` (lock-free concurrent map). A background goroutine runs every 10 minutes and evicts entries not accessed in the last hour. The goroutine is stopped via the cleanup function wired to the fx `OnStop` lifecycle hook.
+Per-peer and per-key entries are stored in `xsync.Map` (lock-free concurrent map). A background goroutine runs every 10 minutes and evicts entries not accessed in the last hour. The goroutine is stopped via the cleanup function wired to the fx `OnStop` lifecycle hook.
 
 ## Metrics
 
@@ -91,7 +107,7 @@ All values are optional. Defaults are applied if the env var is missing or empty
 
 ```env
 RATE_LIMIT_PER_KEY=100    # requests per hour per tx_signer
-RATE_LIMIT_PER_IP=1000    # requests per hour per client IP
+RATE_LIMIT_PER_IP=1000    # requests per hour per peer (IP or ADNL address)
 RATE_LIMIT_GLOBAL=5000    # requests per hour total
 ```
 
