@@ -11,10 +11,14 @@ interface SignedRequestDeps {
   origin: string;
 }
 
+function toHex(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 function prepareSignatureBody(request: GenerateSignatureRequest): GenerateSignatureRequest {
   if (request.kind === 'Message') {
-    const hexMessage = Buffer.from(request.message).toString('hex');
-    return { ...request, message: hexMessage };
+    return { ...request, message: toHex(request.message) };
   }
   return request;
 }

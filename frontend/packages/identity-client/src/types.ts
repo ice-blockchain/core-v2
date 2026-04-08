@@ -91,7 +91,7 @@ export interface IdentityClient {
   getWalletAssets(username: string, walletId: string): Promise<{ walletId: string; network: string; assets: WalletAsset[] }>;
   getWalletNfts(username: string, walletId: string): Promise<WalletNft[]>;
   createWallet(username: string, input: CreateWalletInput, signingContext: SigningContext): Promise<Wallet>;
-  probeRestrictedRegion(username: string): Promise<null>;
+  probeRestrictedRegion(username: string): Promise<void>;
   getWalletHistory(username: string, walletId: string, params?: PaginationParams): Promise<{ items: WalletHistoryItem[]; nextPageToken: string | null }>;
   getWalletTransfers(username: string, walletId: string, params?: PaginationParams): Promise<{ walletId: string; items: WalletTransferRequest[]; nextPageToken: string | null }>;
   getTransferById(username: string, walletId: string, transferId: string): Promise<WalletTransferRequest>;

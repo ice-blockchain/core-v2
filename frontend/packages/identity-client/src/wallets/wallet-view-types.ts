@@ -70,7 +70,7 @@ export interface FeeLevel {
 
 export interface EstimateFee {
   network: string;
-  estimatedBaseFee: number;
+  estimatedBaseFee: string;
   kind: string | null;
   fast: FeeLevel;
   standard: FeeLevel;

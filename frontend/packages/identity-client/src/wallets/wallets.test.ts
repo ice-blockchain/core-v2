@@ -105,11 +105,10 @@ describe('createWallet', () => {
 });
 
 describe('probeRestrictedRegion', () => {
-  it('returns null on success', async () => {
+  it('resolves on success', async () => {
     const deps = createMockDeps();
     deps.walletsDataSource.probeRestrictedRegion.mockResolvedValue(undefined);
-    const result = await probeRestrictedRegion('alice', deps);
-    expect(result).toBeNull();
+    await expect(probeRestrictedRegion('alice', deps)).resolves.toBeUndefined();
   });
 
   it('throws IdentityError for restricted region', async () => {
@@ -122,17 +121,17 @@ describe('probeRestrictedRegion', () => {
     });
     deps.walletsDataSource.probeRestrictedRegion.mockRejectedValue(networkError);
 
-    await expect(probeRestrictedRegion('alice', deps)).rejects.toThrow(IdentityError);
-    await expect(probeRestrictedRegion('alice', deps)).rejects.toMatchObject({
+    const promise = probeRestrictedRegion('alice', deps);
+    await expect(promise).rejects.toThrow(IdentityError);
+    await expect(promise).rejects.toMatchObject({
       code: IdentityErrorCode.RESTRICTED_REGION,
     });
   });
 
-  it('returns null for non-restricted-region errors', async () => {
+  it('resolves for non-restricted-region errors', async () => {
     const deps = createMockDeps();
     const genericError = new Error('Network failure');
     deps.walletsDataSource.probeRestrictedRegion.mockRejectedValue(genericError);
-    const result = await probeRestrictedRegion('alice', deps);
-    expect(result).toBeNull();
+    await expect(probeRestrictedRegion('alice', deps)).resolves.toBeUndefined();
   });
 });

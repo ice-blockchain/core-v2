@@ -58,15 +58,13 @@ export async function createWallet(options: CreateWalletOptions, deps: WalletWri
   );
 }
 
-export async function probeRestrictedRegion(username: string, deps: WalletReadDeps): Promise<null> {
+export async function probeRestrictedRegion(username: string, deps: WalletReadDeps): Promise<void> {
   try {
     await deps.walletsDataSource.probeRestrictedRegion(username);
-    return null;
   } catch (error) {
     if (isRestrictedRegionError(error)) {
       throw new IdentityError(IdentityErrorCode.RESTRICTED_REGION, 'Restricted region', error);
     }
     Logger.warning('probeRestrictedRegion failed with non-restricted error', { data: { username } });
-    return null;
   }
 }
