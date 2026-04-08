@@ -74,7 +74,8 @@ export async function getWalletView(
     { userId, walletViewId: options.walletViewId, username, query: options.params },
   );
   const nextPageToken = headers['x-next-page'] ?? null;
-  return { ...body, aggregation: normalizeAggregation(body.aggregation), nextPageToken };
+  const aggregation = body.aggregation ? normalizeAggregation(body.aggregation) : {};
+  return { ...body, aggregation, nextPageToken };
 }
 
 interface UpdateWalletViewOptions {

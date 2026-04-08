@@ -1,3 +1,4 @@
+import { NetworkError } from '@ion/network';
 import type { HttpClient } from '@ion/network';
 import type { WalletViewSummary, WalletViewDetail, WalletViewInput } from '../wallets/types';
 
@@ -64,9 +65,14 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
       return response.body;
     },
     async deleteWalletView(userId: string, walletViewId: string, username: string) {
-      await httpClient.delete(buildViewPath(userId, walletViewId), {
-        headers: { 'X-Username': username },
-      });
+      try {
+        await httpClient.delete(buildViewPath(userId, walletViewId), {
+          headers: { 'X-Username': username },
+        });
+      } catch (error) {
+        if (error instanceof NetworkError && error.code === 'PARSE_ERROR') return;
+        throw error;
+      }
     },
   };
 }

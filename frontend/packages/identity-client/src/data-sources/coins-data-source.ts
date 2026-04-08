@@ -1,3 +1,4 @@
+import { NetworkError } from '@ion/network';
 import type { HttpClient } from '@ion/network';
 
 import type { Coin, CoinsResponse } from '../coins/types';
@@ -67,11 +68,16 @@ function createGetCoinData(httpClient: HttpClient): CoinsDataSource['getCoinData
 
 function createSearchCoins(httpClient: HttpClient): CoinsDataSource['searchCoins'] {
   return async (keyword, username, params) => {
-    const { body } = await httpClient.get<Coin[]>('/v2/coins', {
-      query: buildSearchQuery(keyword, params),
-      headers: { 'X-Username': username },
-    });
-    return body;
+    try {
+      const { body } = await httpClient.get<Coin[]>('/v2/coins', {
+        query: buildSearchQuery(keyword, params),
+        headers: { 'X-Username': username },
+      });
+      return body;
+    } catch (error) {
+      if (error instanceof NetworkError && error.code === 'PARSE_ERROR') return [];
+      throw error;
+    }
   };
 }
 
