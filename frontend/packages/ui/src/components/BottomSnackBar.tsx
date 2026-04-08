@@ -1,7 +1,6 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { View, Animated, Easing, Pressable } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
-import { useMemo } from "react";
 import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
 import { Icon } from "../icons/Icon";
