@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import type { ViewStyle } from "react-native";
-import { Text, useTheme, colorPalette } from "@ion/ui";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import type { ContactData } from "../types";
 import { ContactItem } from "./ContactItem";
@@ -33,7 +33,7 @@ export function FriendsSection() {
   return (
     <View style={containerStyle}>
       <View style={[styles.header, headerStyle]}>
-        <Text variant="caption" color={colorPalette.sharkText}>{translate("walletUi:friendsTitle")}</Text>
+        <Text variant="caption" color={colors.secondaryText}>{translate("walletUi:friendsTitle")}</Text>
         <TouchableOpacity accessibilityLabel={translate("walletUi:viewAllLink")} accessibilityRole="button">
           <Text variant="caption" color={colors.primaryAccent}>{translate("walletUi:viewAllLink")}</Text>
         </TouchableOpacity>

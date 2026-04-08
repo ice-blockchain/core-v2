@@ -1,3 +1,4 @@
+import { StyleSheet } from "react-native";
 import type { ImageStyle, ViewStyle } from "react-native";
 
 interface ThemeColors {
@@ -14,7 +15,7 @@ export function buildCardContainerStyle(
   return {
     height: scale(120),
     borderRadius: scaleRadius(16),
-    borderWidth: 0.5,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.onTertiaryFill,
     backgroundColor: colors.tertiaryBackground,
     overflow: "hidden",
