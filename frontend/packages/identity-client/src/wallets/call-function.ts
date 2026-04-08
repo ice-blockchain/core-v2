@@ -5,11 +5,12 @@ interface CallFunctionDeps {
   walletsDataSource: WalletsDataSource;
 }
 
-export async function callFunction(
-  username: string,
-  network: string,
-  request: CallFunctionRequest,
-  deps: CallFunctionDeps,
-): Promise<unknown> {
-  return deps.walletsDataSource.callFunction(network, request, username);
+interface CallFunctionOptions {
+  username: string;
+  network: string;
+  request: CallFunctionRequest;
+}
+
+export async function callFunction(options: CallFunctionOptions, deps: CallFunctionDeps): Promise<unknown> {
+  return deps.walletsDataSource.callFunction(options.network, options.request, options.username);
 }

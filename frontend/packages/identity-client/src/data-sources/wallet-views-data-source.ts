@@ -1,31 +1,16 @@
 import type { HttpClient } from '@ion/network';
 import type { WalletViewSummary, WalletViewDetail, WalletViewInput } from '../wallets/types';
 
-interface GetWalletViewQuery {
-  limit?: number;
-  paginationToken?: string;
-}
-
-interface GetWalletViewResult {
-  body: WalletViewDetail;
-  headers: Record<string, string>;
-}
+interface GetWalletViewQuery { limit?: number; paginationToken?: string }
+interface GetWalletViewResult { body: WalletViewDetail; headers: Record<string, string> }
+interface GetWalletViewOptions { userId: string; walletViewId: string; username: string; query?: GetWalletViewQuery | undefined }
+interface UpdateWalletViewOptions { userId: string; walletViewId: string; input: WalletViewInput; username: string }
 
 export interface WalletViewsDataSource {
   listWalletViews(userId: string, username: string): Promise<WalletViewSummary[]>;
   createWalletView(userId: string, input: WalletViewInput, username: string): Promise<WalletViewDetail>;
-  getWalletView(
-    userId: string,
-    walletViewId: string,
-    username: string,
-    query?: GetWalletViewQuery,
-  ): Promise<GetWalletViewResult>;
-  updateWalletView(
-    userId: string,
-    walletViewId: string,
-    input: WalletViewInput,
-    username: string,
-  ): Promise<WalletViewDetail>;
+  getWalletView(options: GetWalletViewOptions): Promise<GetWalletViewResult>;
+  updateWalletView(options: UpdateWalletViewOptions): Promise<WalletViewDetail>;
   deleteWalletView(userId: string, walletViewId: string, username: string): Promise<void>;
 }
 
@@ -44,43 +29,51 @@ function buildGetQuery(params?: GetWalletViewQuery): Record<string, string> {
   return query;
 }
 
-export function createWalletViewsDataSource(httpClient: HttpClient): WalletViewsDataSource {
+function buildViewsReadMethods(httpClient: HttpClient) {
   return {
-    async listWalletViews(userId, username) {
+    async listWalletViews(userId: string, username: string) {
       const response = await httpClient.get<WalletViewSummary[]>(buildViewsPath(userId), {
         headers: { 'X-Username': username },
       });
       return response.body;
     },
+    async getWalletView(options: GetWalletViewOptions) {
+      const response = await httpClient.get<WalletViewDetail>(buildViewPath(options.userId, options.walletViewId), {
+        headers: { 'X-Username': options.username },
+        query: buildGetQuery(options.query),
+      });
+      return { body: response.body, headers: response.headers };
+    },
+  };
+}
 
-    async createWalletView(userId, input, username) {
+function buildViewsWriteMethods(httpClient: HttpClient) {
+  return {
+    async createWalletView(userId: string, input: WalletViewInput, username: string) {
       const response = await httpClient.post<WalletViewDetail>(buildViewsPath(userId), {
         headers: { 'X-Username': username },
         body: input,
       });
       return response.body;
     },
-
-    async getWalletView(userId, walletViewId, username, params) {
-      const response = await httpClient.get<WalletViewDetail>(buildViewPath(userId, walletViewId), {
-        headers: { 'X-Username': username },
-        query: buildGetQuery(params),
-      });
-      return { body: response.body, headers: response.headers };
-    },
-
-    async updateWalletView(userId, walletViewId, input, username) {
-      const response = await httpClient.put<WalletViewDetail>(buildViewPath(userId, walletViewId), {
-        headers: { 'X-Username': username },
-        body: input,
+    async updateWalletView(options: UpdateWalletViewOptions) {
+      const response = await httpClient.put<WalletViewDetail>(buildViewPath(options.userId, options.walletViewId), {
+        headers: { 'X-Username': options.username },
+        body: options.input,
       });
       return response.body;
     },
-
-    async deleteWalletView(userId, walletViewId, username) {
+    async deleteWalletView(userId: string, walletViewId: string, username: string) {
       await httpClient.delete(buildViewPath(userId, walletViewId), {
         headers: { 'X-Username': username },
       });
     },
+  };
+}
+
+export function createWalletViewsDataSource(httpClient: HttpClient): WalletViewsDataSource {
+  return {
+    ...buildViewsReadMethods(httpClient),
+    ...buildViewsWriteMethods(httpClient),
   };
 }

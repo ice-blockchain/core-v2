@@ -36,8 +36,8 @@ function createMockDeps() {
 
 function createMockWriteDeps() {
   return {
-    userActionDataSource: { createUserAction: vi.fn() },
-    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
+    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), head: vi.fn() },
     origin: 'https://api.example.com',
   };
 }
@@ -66,7 +66,7 @@ describe('getWalletAssets', () => {
       walletId: 'w1', network: 'ethereum', assets: [rawAsset],
     });
     const result = await getWalletAssets('user1', 'w1', deps);
-    expect(result.assets[0].balance).toBe('12345');
+    expect(result.assets[0]!.balance).toBe('12345');
     expect(deps.walletsDataSource.getWalletAssets).toHaveBeenCalledWith('w1', 'user1');
   });
 });
@@ -94,7 +94,7 @@ describe('createWallet', () => {
     const signingContext = { kind: 'password' as const, password: 'pass' };
     mockExecuteSignedRequest.mockResolvedValue(wallet);
 
-    const result = await createWallet('user1', input, signingContext, deps);
+    const result = await createWallet({ username: 'user1', input, signingContext }, deps);
 
     expect(result).toEqual(wallet);
     expect(mockExecuteSignedRequest).toHaveBeenCalledWith(

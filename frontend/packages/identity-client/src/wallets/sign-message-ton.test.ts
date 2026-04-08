@@ -13,8 +13,8 @@ const mockExecuteSignedRequest = vi.mocked(executeSignedRequest);
 
 function createMockDeps() {
   return {
-    userActionDataSource: { createUserAction: vi.fn() },
-    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
+    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), head: vi.fn() },
     origin: 'https://api.example.com',
   };
 }
@@ -37,7 +37,7 @@ describe('signMessageTon', () => {
     const signingContext = { kind: 'password' as const, password: 'pass' };
     mockExecuteSignedRequest.mockResolvedValue(signatureResponse);
 
-    const result = await signMessageTon('user1', 'key1', 'hello-ton', signingContext, deps);
+    const result = await signMessageTon({ username: 'user1', signingKeyId: 'key1', message: 'hello-ton', signingContext }, deps);
 
     expect(result).toEqual(signatureResponse);
     expect(mockExecuteSignedRequest).toHaveBeenCalledWith(
@@ -57,9 +57,9 @@ describe('signMessageTon', () => {
     const signingContext = { kind: 'password' as const, password: 'pass' };
     mockExecuteSignedRequest.mockResolvedValue(signatureResponse);
 
-    await signMessageTon('user1', 'key/special', 'msg', signingContext, deps);
+    await signMessageTon({ username: 'user1', signingKeyId: 'key/special', message: 'msg', signingContext }, deps);
 
-    const [input] = mockExecuteSignedRequest.mock.calls[0];
+    const [input] = mockExecuteSignedRequest.mock.calls[0]!;
     expect(input.httpPath).toBe('/keys/key%2Fspecial/signatures');
   });
 });

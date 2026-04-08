@@ -64,7 +64,7 @@ describe('createWalletViewsDataSource', () => {
     vi.mocked(http.get).mockResolvedValueOnce({ status: 200, headers: responseHeaders, body: mockDetail });
     const ds = createWalletViewsDataSource(http);
 
-    const result = await ds.getWalletView('user-1', 'v1', 'alice');
+    const result = await ds.getWalletView({ userId: 'user-1', walletViewId: 'v1', username: 'alice' });
 
     expect(http.get).toHaveBeenCalledWith('/v1/users/user-1/wallet-views/v1', {
       headers: { 'X-Username': 'alice' },
@@ -79,7 +79,7 @@ describe('createWalletViewsDataSource', () => {
     vi.mocked(http.get).mockResolvedValueOnce({ status: 200, headers: {}, body: mockDetail });
     const ds = createWalletViewsDataSource(http);
 
-    await ds.getWalletView('user-1', 'v1', 'alice', { limit: 10, paginationToken: 'tok' });
+    await ds.getWalletView({ userId: 'user-1', walletViewId: 'v1', username: 'alice', query: { limit: 10, paginationToken: 'tok' } });
 
     expect(http.get).toHaveBeenCalledWith('/v1/users/user-1/wallet-views/v1', {
       headers: { 'X-Username': 'alice' },
@@ -92,7 +92,7 @@ describe('createWalletViewsDataSource', () => {
     vi.mocked(http.get).mockResolvedValueOnce({ status: 200, headers: {}, body: mockDetail });
     const ds = createWalletViewsDataSource(http);
 
-    await ds.getWalletView('user-1', 'a/b', 'alice');
+    await ds.getWalletView({ userId: 'user-1', walletViewId: 'a/b', username: 'alice' });
 
     expect(http.get).toHaveBeenCalledWith('/v1/users/user-1/wallet-views/a%2Fb', {
       headers: { 'X-Username': 'alice' },
@@ -105,7 +105,7 @@ describe('createWalletViewsDataSource', () => {
     vi.mocked(http.put).mockResolvedValueOnce({ status: 200, headers: {}, body: mockDetail });
     const ds = createWalletViewsDataSource(http);
 
-    const result = await ds.updateWalletView('user-1', 'v1', mockInput, 'alice');
+    const result = await ds.updateWalletView({ userId: 'user-1', walletViewId: 'v1', input: mockInput, username: 'alice' });
 
     expect(http.put).toHaveBeenCalledWith('/v1/users/user-1/wallet-views/v1', {
       headers: { 'X-Username': 'alice' },

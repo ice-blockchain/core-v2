@@ -11,20 +11,21 @@ interface SignedRequestDeps {
   origin: string;
 }
 
-export async function signAndBroadcastEvm(
-  username: string,
-  walletId: string,
-  request: EvmBroadcastRequest,
-  signingContext: SigningContext,
-  deps: SignedRequestDeps,
-): Promise<WalletTransferRequest> {
+interface SignAndBroadcastEvmOptions {
+  username: string;
+  walletId: string;
+  request: EvmBroadcastRequest;
+  signingContext: SigningContext;
+}
+
+export async function signAndBroadcastEvm(options: SignAndBroadcastEvmOptions, deps: SignedRequestDeps): Promise<WalletTransferRequest> {
   return executeSignedRequest<WalletTransferRequest>(
     {
-      username,
+      username: options.username,
       httpMethod: 'POST',
-      httpPath: `/wallets/${encodeURIComponent(walletId)}/transactions`,
-      body: request,
-      signingContext,
+      httpPath: `/wallets/${encodeURIComponent(options.walletId)}/transactions`,
+      body: options.request,
+      signingContext: options.signingContext,
     },
     deps,
   );

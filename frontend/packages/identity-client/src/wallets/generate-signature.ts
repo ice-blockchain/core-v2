@@ -19,21 +19,22 @@ function prepareSignatureBody(request: GenerateSignatureRequest): GenerateSignat
   return request;
 }
 
-export async function generateSignature(
-  username: string,
-  walletId: string,
-  request: GenerateSignatureRequest,
-  signingContext: SigningContext,
-  deps: SignedRequestDeps,
-): Promise<GenerateSignatureResponse> {
-  const body = prepareSignatureBody(request);
+interface GenerateSignatureOptions {
+  username: string;
+  walletId: string;
+  request: GenerateSignatureRequest;
+  signingContext: SigningContext;
+}
+
+export async function generateSignature(options: GenerateSignatureOptions, deps: SignedRequestDeps): Promise<GenerateSignatureResponse> {
+  const body = prepareSignatureBody(options.request);
   return executeSignedRequest<GenerateSignatureResponse>(
     {
-      username,
+      username: options.username,
       httpMethod: 'POST',
-      httpPath: `/wallets/${encodeURIComponent(walletId)}/signatures`,
+      httpPath: `/wallets/${encodeURIComponent(options.walletId)}/signatures`,
       body,
-      signingContext,
+      signingContext: options.signingContext,
     },
     deps,
   );

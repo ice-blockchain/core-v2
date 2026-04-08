@@ -67,7 +67,7 @@ describe('createKeysDataSource', () => {
       vi.mocked(httpClient.get).mockResolvedValueOnce({ status: 200, headers: {}, body: mockKeysResponse });
       const ds = createKeysDataSource(httpClient);
 
-      await ds.listKeys('alice', { owner: 'user-1', limit: undefined });
+      await ds.listKeys('alice', { owner: 'user-1' });
 
       expect(httpClient.get).toHaveBeenCalledWith('/keys', {
         query: { owner: 'user-1' },

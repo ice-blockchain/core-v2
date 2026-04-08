@@ -9,32 +9,11 @@ import type {
   CallFunctionRequest,
 } from '../wallets/types';
 
-interface ListWalletsResponse {
-  items: Wallet[];
-}
-
-interface WalletAssetsResponse {
-  walletId: string;
-  network: string;
-  assets: WalletAsset[];
-}
-
-interface WalletNftsResponse {
-  walletId: string;
-  network: string;
-  nfts: WalletNft[];
-}
-
-interface WalletHistoryResponse {
-  items: WalletHistoryItem[];
-  nextPageToken: string | null;
-}
-
-interface WalletTransfersResponse {
-  walletId: string;
-  items: WalletTransferRequest[];
-  nextPageToken: string | null;
-}
+interface ListWalletsResponse { items: Wallet[] }
+interface WalletAssetsResponse { walletId: string; network: string; assets: WalletAsset[] }
+interface WalletNftsResponse { walletId: string; network: string; nfts: WalletNft[] }
+export interface WalletHistoryResponse { items: WalletHistoryItem[]; nextPageToken: string | null }
+export interface WalletTransfersResponse { walletId: string; items: WalletTransferRequest[]; nextPageToken: string | null }
 
 export interface WalletsDataSource {
   listWallets(username: string): Promise<ListWalletsResponse>;
@@ -62,71 +41,77 @@ function buildPaginationQuery(params?: { limit?: number; paginationToken?: strin
   return query;
 }
 
-export function createWalletsDataSource(httpClient: HttpClient): WalletsDataSource {
+function walletPath(walletId: string): string {
+  return `/wallets/${encodeURIComponent(walletId)}`;
+}
+
+function buildWalletCoreMethods(httpClient: HttpClient) {
   return {
-    async listWallets(username) {
-      const { body } = await httpClient.get<ListWalletsResponse>('/wallets', {
-        headers: { 'X-Username': username },
-      });
+    async listWallets(username: string) {
+      const { body } = await httpClient.get<ListWalletsResponse>('/wallets', { headers: { 'X-Username': username } });
       return body;
     },
-
-    async getWalletAssets(walletId, username) {
+    async getWalletAssets(walletId: string, username: string) {
       const { body } = await httpClient.get<WalletAssetsResponse>(
-        `/wallets/${encodeURIComponent(walletId)}/assets`,
-        { headers: { 'X-Username': username } },
+        `${walletPath(walletId)}/assets`, { headers: { 'X-Username': username } },
       );
       return body;
     },
-
-    async getWalletNfts(walletId, username) {
+    async getWalletNfts(walletId: string, username: string) {
       const { body } = await httpClient.get<WalletNftsResponse>(
-        `/wallets/${encodeURIComponent(walletId)}/nfts`,
-        { headers: { 'X-Username': username } },
+        `${walletPath(walletId)}/nfts`, { headers: { 'X-Username': username } },
       );
       return body;
     },
-
     async probeRestrictedRegion() {
-      const { body } = await httpClient.post<unknown>(
-        '/wallets/wa-bogus-restricted-region-probe/transactions',
-        { body: {} },
-      );
+      const { body } = await httpClient.post<unknown>('/wallets/wa-bogus-restricted-region-probe/transactions', { body: {} });
       return body;
     },
+  };
+}
 
-    async getWalletHistory(walletId, username, params) {
+function buildWalletHistoryMethods(httpClient: HttpClient) {
+  return {
+    async getWalletHistory(walletId: string, username: string, params?: { limit?: number; paginationToken?: string }) {
       const query = buildPaginationQuery(params);
       const { body } = await httpClient.get<WalletHistoryResponse>(
-        `/wallets/${encodeURIComponent(walletId)}/history`,
-        { query, headers: { 'X-Username': username } },
+        `${walletPath(walletId)}/history`, { query, headers: { 'X-Username': username } },
       );
       return body;
     },
-
-    async getWalletTransfers(walletId, username, params) {
+    async getWalletTransfers(walletId: string, username: string, params?: { limit?: number; paginationToken?: string }) {
       const query = buildPaginationQuery(params);
       const { body } = await httpClient.get<WalletTransfersResponse>(
-        `/wallets/${encodeURIComponent(walletId)}/transfers`,
-        { query, headers: { 'X-Username': username } },
+        `${walletPath(walletId)}/transfers`, { query, headers: { 'X-Username': username } },
       );
       return body;
     },
-
-    async getTransferById(walletId, transferId, username) {
+    async getTransferById(walletId: string, transferId: string, username: string) {
       const { body } = await httpClient.get<WalletTransferRequest>(
-        `/wallets/${encodeURIComponent(walletId)}/transfers/${encodeURIComponent(transferId)}`,
+        `${walletPath(walletId)}/transfers/${encodeURIComponent(transferId)}`,
         { headers: { 'X-Username': username } },
       );
       return body;
     },
+  };
+}
 
-    async callFunction(network, request, username) {
+function buildCallFunctionMethod(httpClient: HttpClient) {
+  return {
+    async callFunction(network: string, request: CallFunctionRequest, username: string) {
       const { body } = await httpClient.post<unknown>(
         `/networks/${encodeURIComponent(network)}/call-function`,
         { body: request, headers: { 'X-Username': username } },
       );
       return body;
     },
+  };
+}
+
+export function createWalletsDataSource(httpClient: HttpClient): WalletsDataSource {
+  return {
+    ...buildWalletCoreMethods(httpClient),
+    ...buildWalletHistoryMethods(httpClient),
+    ...buildCallFunctionMethod(httpClient),
   };
 }

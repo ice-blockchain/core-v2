@@ -35,7 +35,7 @@ describe('callFunction', () => {
     const expected = { result: '1000' };
     deps.walletsDataSource.callFunction.mockResolvedValue(expected);
 
-    const result = await callFunction('user1', 'ethereum', request, deps);
+    const result = await callFunction({ username: 'user1', network: 'ethereum', request }, deps);
 
     expect(result).toEqual(expected);
     expect(deps.walletsDataSource.callFunction).toHaveBeenCalledWith('ethereum', request, 'user1');

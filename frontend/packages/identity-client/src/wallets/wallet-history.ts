@@ -9,29 +9,26 @@ interface PaginationParams {
   paginationToken?: string;
 }
 
-export async function getWalletHistory(
-  username: string,
-  walletId: string,
-  params: PaginationParams | undefined,
-  deps: WalletHistoryDeps,
-) {
-  return deps.walletsDataSource.getWalletHistory(walletId, username, params);
+interface WalletHistoryOptions {
+  username: string;
+  walletId: string;
+  params?: PaginationParams | undefined;
 }
 
-export async function getWalletTransfers(
-  username: string,
-  walletId: string,
-  params: PaginationParams | undefined,
-  deps: WalletHistoryDeps,
-) {
-  return deps.walletsDataSource.getWalletTransfers(walletId, username, params);
+interface GetTransferOptions {
+  username: string;
+  walletId: string;
+  transferId: string;
 }
 
-export async function getTransferById(
-  username: string,
-  walletId: string,
-  transferId: string,
-  deps: WalletHistoryDeps,
-) {
-  return deps.walletsDataSource.getTransferById(walletId, transferId, username);
+export async function getWalletHistory(options: WalletHistoryOptions, deps: WalletHistoryDeps) {
+  return deps.walletsDataSource.getWalletHistory(options.walletId, options.username, options.params);
+}
+
+export async function getWalletTransfers(options: WalletHistoryOptions, deps: WalletHistoryDeps) {
+  return deps.walletsDataSource.getWalletTransfers(options.walletId, options.username, options.params);
+}
+
+export async function getTransferById(options: GetTransferOptions, deps: WalletHistoryDeps) {
+  return deps.walletsDataSource.getTransferById(options.walletId, options.transferId, options.username);
 }

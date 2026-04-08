@@ -17,21 +17,22 @@ function stripUndefinedFields(obj: Record<string, unknown>): Record<string, unkn
   );
 }
 
-export async function makeTransfer(
-  username: string,
-  walletId: string,
-  transfer: TransferRequest,
-  signingContext: SigningContext,
-  deps: MakeTransferDeps,
-): Promise<WalletTransferRequest> {
-  const body = stripUndefinedFields(transfer as unknown as Record<string, unknown>);
+interface MakeTransferOptions {
+  username: string;
+  walletId: string;
+  transfer: TransferRequest;
+  signingContext: SigningContext;
+}
+
+export async function makeTransfer(options: MakeTransferOptions, deps: MakeTransferDeps): Promise<WalletTransferRequest> {
+  const body = stripUndefinedFields(options.transfer as unknown as Record<string, unknown>);
   return executeSignedRequest<WalletTransferRequest>(
     {
-      username,
+      username: options.username,
       httpMethod: 'POST',
-      httpPath: `/wallets/${encodeURIComponent(walletId)}/transfers`,
+      httpPath: `/wallets/${encodeURIComponent(options.walletId)}/transfers`,
       body,
-      signingContext,
+      signingContext: options.signingContext,
     },
     deps,
   );

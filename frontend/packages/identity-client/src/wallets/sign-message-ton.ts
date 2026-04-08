@@ -11,20 +11,21 @@ interface SignedRequestDeps {
   origin: string;
 }
 
-export async function signMessageTon(
-  username: string,
-  signingKeyId: string,
-  message: string,
-  signingContext: SigningContext,
-  deps: SignedRequestDeps,
-): Promise<GenerateSignatureResponse> {
+interface SignMessageTonOptions {
+  username: string;
+  signingKeyId: string;
+  message: string;
+  signingContext: SigningContext;
+}
+
+export async function signMessageTon(options: SignMessageTonOptions, deps: SignedRequestDeps): Promise<GenerateSignatureResponse> {
   return executeSignedRequest<GenerateSignatureResponse>(
     {
-      username,
+      username: options.username,
       httpMethod: 'POST',
-      httpPath: `/keys/${encodeURIComponent(signingKeyId)}/signatures`,
-      body: { blockchainKind: 'Ton', kind: 'Message', message },
-      signingContext,
+      httpPath: `/keys/${encodeURIComponent(options.signingKeyId)}/signatures`,
+      body: { blockchainKind: 'Ton', kind: 'Message', message: options.message },
+      signingContext: options.signingContext,
     },
     deps,
   );

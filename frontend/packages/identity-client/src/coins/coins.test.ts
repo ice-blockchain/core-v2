@@ -40,7 +40,7 @@ function createMockDeps() {
     getCoinData: vi.fn(),
     searchCoins: vi.fn(),
   };
-  const tokenManager = { getTokens: vi.fn(), storeTokens: vi.fn(), deleteTokens: vi.fn(), listUsernames: vi.fn() };
+  const tokenManager = { getTokens: vi.fn(), setTokens: vi.fn(), clearTokens: vi.fn(), isTokenExpired: vi.fn(), getTrackedUsers: vi.fn() };
   return { coinsDataSource, tokenManager };
 }
 
@@ -53,7 +53,7 @@ describe('getCoins', () => {
 
     const result = await getCoins('alice', 1, deps);
 
-    expect(result.coins[0].syncFrequency).toBe(30_000);
+    expect(result.coins[0]!.syncFrequency).toBe(30_000);
     expect(result.networks).toEqual([mockNetwork]);
     expect(result.version).toBe(2);
   });
@@ -70,8 +70,8 @@ describe('getCoins', () => {
 
     const result = await getCoins('alice', 1, deps);
 
-    expect(result.coins[0].native).toBe(false);
-    expect(result.coins[0].prioritized).toBe(false);
+    expect(result.coins[0]!.native).toBe(false);
+    expect(result.coins[0]!.prioritized).toBe(false);
   });
 
   it('returns empty arrays when response body is null', async () => {
@@ -101,7 +101,7 @@ describe('syncCoins', () => {
 
     const result = await syncCoins('alice', ['BTC'], deps);
 
-    expect(result[0].syncFrequency).toBe(5_000);
+    expect(result[0]!.syncFrequency).toBe(5_000);
     expect(deps.coinsDataSource.syncCoins).toHaveBeenCalledWith(['BTC'], 'alice');
   });
 });
@@ -114,7 +114,7 @@ describe('getCoinsBySymbolGroup', () => {
 
     const result = await getCoinsBySymbolGroup('alice', 'BTC', deps);
 
-    expect(result[0].syncFrequency).toBe(10_000);
+    expect(result[0]!.syncFrequency).toBe(10_000);
     expect(deps.coinsDataSource.getCoinsBySymbolGroup).toHaveBeenCalledWith('user-123', 'BTC', 'alice');
   });
 });
@@ -140,7 +140,7 @@ describe('searchCoins', () => {
 
     const result = await searchCoins({ username: 'alice', keyword: 'bit', params: { limit: 10, offset: 0 } }, deps);
 
-    expect(result[0].syncFrequency).toBe(15_000);
+    expect(result[0]!.syncFrequency).toBe(15_000);
     expect(deps.coinsDataSource.searchCoins).toHaveBeenCalledWith('bit', 'alice', { limit: 10, offset: 0 });
   });
 });

@@ -44,14 +44,15 @@ export async function getWalletNfts(username: string, walletId: string, deps: Wa
   return response.nfts;
 }
 
-export async function createWallet(
-  username: string,
-  input: CreateWalletInput,
-  signingContext: SigningContext,
-  deps: WalletWriteDeps,
-): Promise<Wallet> {
+interface CreateWalletOptions {
+  username: string;
+  input: CreateWalletInput;
+  signingContext: SigningContext;
+}
+
+export async function createWallet(options: CreateWalletOptions, deps: WalletWriteDeps): Promise<Wallet> {
   return executeSignedRequest<Wallet>(
-    { username, httpMethod: 'POST', httpPath: '/wallets', body: input, signingContext },
+    { username: options.username, httpMethod: 'POST', httpPath: '/wallets', body: options.input, signingContext: options.signingContext },
     deps,
   );
 }

@@ -44,6 +44,41 @@ The client creates its own `HttpClient` internally with the auth interceptor bak
 | `deleteTwoFAMethod(input)` | Delete a 2FA method |
 | `deleteAccount(username, userAction)` | Delete account (caller provides signed event) |
 | `recoverAccount(input)` | Recover account using recovery credentials |
+| **Wallets** | |
+| `listWallets(username)` | List all user wallets |
+| `getWalletAssets(username, walletId)` | Get wallet token balances (normalizes balance to string) |
+| `getWalletNfts(username, walletId)` | Get wallet NFTs |
+| `createWallet(username, input, signingContext)` | Create a new wallet (signed) |
+| `probeRestrictedRegion()` | Check if user is in a restricted region |
+| **Wallet History & Transfers** | |
+| `getWalletHistory(username, walletId, params?)` | Paginated transaction history |
+| `getWalletTransfers(username, walletId, params?)` | Paginated transfer requests |
+| `getTransferById(username, walletId, transferId)` | Single transfer request |
+| `makeTransfer(params)` | Send crypto (13 transfer variants, signed) |
+| **Wallet Views** | |
+| `listWalletViews(username)` | List wallet view summaries |
+| `createWalletView(username, input)` | Create a wallet view |
+| `getWalletView(username, walletViewId, params?)` | Get wallet view detail (header-based pagination) |
+| `updateWalletView(username, walletViewId, input)` | Update a wallet view |
+| `deleteWalletView(username, walletViewId)` | Delete a wallet view |
+| **EVM & Signatures** | |
+| `signAndBroadcastEvm(params)` | Broadcast EVM transaction (signed) |
+| `generateSignature(params)` | Generate wallet signature (signed) |
+| `callFunction(username, network, request)` | Call smart contract function |
+| `signMessageTon(params)` | Sign a TON message (signed) |
+| **Coins** | |
+| `getCoins(username, version)` | Get coins + networks (converts syncFrequency ns->ms) |
+| `syncCoins(username, symbolGroups)` | Sync coins for symbol groups |
+| `getCoinsBySymbolGroup(username, symbolGroup)` | Get coins in a symbol group |
+| `getCoinData(username, contractAddress, network)` | Get coin by contract+network |
+| `searchCoins(username, keyword, params?)` | Search coins (v2 endpoint) |
+| **Networks** | |
+| `getEstimateFees(username, networks)` | Estimate network fees (normalizes fee values) |
+| **Keys** | |
+| `listKeys(username, params?)` | List signing keys (paginated) |
+| `createKey(username, input, signingContext)` | Create a signing key (signed) |
+| `deriveKey(params)` | Derive a key (signed) |
+| `updateKey(params)` | Rename a key (signed) |
 | `authStore` | Reactive auth state store (getSnapshot, subscribe) |
 
 ### AuthStore
@@ -131,6 +166,7 @@ IdentityErrorCode:
   USER_DEACTIVATED | TOKEN_EXPIRED | UNAUTHENTICATED
   INVALID_RECOVERY_CREDENTIALS | NETWORK_ERROR | UNKNOWN
   INVALID_NICKNAME | NICKNAME_ALREADY_EXISTS | NICKNAME_RESERVED
+  RESTRICTED_REGION | WALLET_NOT_FOUND
 
 EncryptedPrivateKey { salt: string; nonce: string; ciphertext: string; mac: string }
   -- base64-encoded. PBKDF2 (100k iterations, SHA256) + AES-GCM-256.
@@ -222,6 +258,11 @@ Until that is implemented, `deleteAccount` cannot be called successfully.
 | `user-action-data-source` | `/auth/action/init`, `/auth/action` |
 | `recovery-data-source` | `/auth/recover/init`, `/auth/recover/user` |
 | `user-profile-data-source` | `/v1/users/{id}/profiles/social`, `/v1/users/verify-username-availability` |
+| `wallets-data-source` | `/wallets`, `/wallets/{id}/assets`, `/wallets/{id}/nfts`, `/wallets/{id}/history`, `/wallets/{id}/transfers`, `/networks/{n}/call-function` |
+| `wallet-views-data-source` | `/v1/users/{id}/wallet-views/*` (CRUD, header-based pagination via `x-next-page`) |
+| `coins-data-source` | `/v1/users/{id}/coins`, `/v1/sync-coins`, `/v1/coins`, `/v2/coins` |
+| `networks-data-source` | `/networks/fees` |
+| `keys-data-source` | `/keys` |
 Data sources are thin HTTP wrappers. They set `X-Username` header; the interceptor injects `Authorization`.
 
 ## Dependencies

@@ -61,7 +61,7 @@ export async function createWalletView(
 
 interface GetWalletViewOptions {
   walletViewId: string;
-  params?: PaginationParams;
+  params?: PaginationParams | undefined;
 }
 
 export async function getWalletView(
@@ -71,7 +71,7 @@ export async function getWalletView(
 ): Promise<WalletViewDetailWithPagination> {
   const userId = await extractUserId(username, deps.tokenManager);
   const { body, headers } = await deps.walletViewsDataSource.getWalletView(
-    userId, options.walletViewId, username, options.params,
+    { userId, walletViewId: options.walletViewId, username, query: options.params },
   );
   const nextPageToken = headers['x-next-page'] ?? null;
   return { ...body, aggregation: normalizeAggregation(body.aggregation), nextPageToken };
@@ -89,7 +89,7 @@ export async function updateWalletView(
 ): Promise<WalletViewDetail> {
   const userId = await extractUserId(username, deps.tokenManager);
   return deps.walletViewsDataSource.updateWalletView(
-    userId, options.walletViewId, options.input, username,
+    { userId, walletViewId: options.walletViewId, input: options.input, username },
   );
 }
 

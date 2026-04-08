@@ -107,7 +107,7 @@ describe('updateWalletView', () => {
 
     const result = await updateWalletView('alice', { walletViewId: 'v1', input }, deps);
 
-    expect(deps.walletViewsDataSource.updateWalletView).toHaveBeenCalledWith('user-123', 'v1', input, 'alice');
+    expect(deps.walletViewsDataSource.updateWalletView).toHaveBeenCalledWith({ userId: 'user-123', walletViewId: 'v1', input, username: 'alice' });
     expect(result).toEqual(mockDetail);
   });
 });

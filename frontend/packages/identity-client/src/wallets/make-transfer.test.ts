@@ -13,8 +13,8 @@ const mockExecuteSignedRequest = vi.mocked(executeSignedRequest);
 
 function createMockDeps() {
   return {
-    userActionDataSource: { createUserAction: vi.fn() },
-    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
+    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), head: vi.fn() },
     origin: 'https://api.example.com',
   };
 }
@@ -36,14 +36,14 @@ describe('makeTransfer', () => {
     const deps = createMockDeps();
     const signingContext = { kind: 'password' as const, password: 'pass' };
     const transfer: TransferRequest = {
-      kind: 'Native', to: '0xabc', amount: '100', priority: undefined, memo: undefined,
+      kind: 'Native', to: '0xabc', amount: '100',
     };
     mockExecuteSignedRequest.mockResolvedValue(transferResponse);
 
-    const result = await makeTransfer('user1', 'w1', transfer, signingContext, deps);
+    const result = await makeTransfer({ username: 'user1', walletId: 'w1', transfer, signingContext }, deps);
 
     expect(result).toEqual(transferResponse);
-    const [input] = mockExecuteSignedRequest.mock.calls[0];
+    const [input] = mockExecuteSignedRequest.mock.calls[0]!;
     expect(input.body).toEqual({ kind: 'Native', to: '0xabc', amount: '100' });
     expect(input.httpPath).toBe('/wallets/w1/transfers');
     expect(input.httpMethod).toBe('POST');
@@ -55,9 +55,9 @@ describe('makeTransfer', () => {
     const transfer: TransferRequest = { kind: 'Native', to: '0xabc', amount: '50' };
     mockExecuteSignedRequest.mockResolvedValue(transferResponse);
 
-    await makeTransfer('user1', 'wallet/special', transfer, signingContext, deps);
+    await makeTransfer({ username: 'user1', walletId: 'wallet/special', transfer, signingContext }, deps);
 
-    const [input] = mockExecuteSignedRequest.mock.calls[0];
+    const [input] = mockExecuteSignedRequest.mock.calls[0]!;
     expect(input.httpPath).toBe('/wallets/wallet%2Fspecial/transfers');
   });
 });

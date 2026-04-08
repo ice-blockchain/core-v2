@@ -32,8 +32,8 @@ function createMockReadDeps() {
 
 function createMockWriteDeps() {
   return {
-    userActionDataSource: { createUserAction: vi.fn() },
-    httpClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
+    httpClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), head: vi.fn() },
     origin: 'https://api.example.com',
   };
 }

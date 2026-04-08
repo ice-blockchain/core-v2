@@ -57,7 +57,7 @@ export async function getCoinData(options: GetCoinDataOptions, deps: CoinsDeps):
 interface SearchCoinsOptions {
   username: string;
   keyword: string;
-  params?: { limit?: number; offset?: number };
+  params?: { limit?: number; offset?: number } | undefined;
 }
 
 export async function searchCoins(options: SearchCoinsOptions, deps: CoinsDeps): Promise<Coin[]> {

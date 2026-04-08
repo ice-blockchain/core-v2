@@ -13,8 +13,8 @@ const mockExecuteSignedRequest = vi.mocked(executeSignedRequest);
 
 function createMockDeps() {
   return {
-    userActionDataSource: { createUserAction: vi.fn() },
-    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
+    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), head: vi.fn() },
     origin: 'https://api.example.com',
   };
 }
@@ -38,7 +38,7 @@ describe('signAndBroadcastEvm', () => {
     const request: EvmBroadcastRequest = { kind: 'Transaction', transaction: '0xraw' };
     mockExecuteSignedRequest.mockResolvedValue(transferResponse);
 
-    const result = await signAndBroadcastEvm('user1', 'w1', request, signingContext, deps);
+    const result = await signAndBroadcastEvm({ username: 'user1', walletId: 'w1', request, signingContext }, deps);
 
     expect(result).toEqual(transferResponse);
     expect(mockExecuteSignedRequest).toHaveBeenCalledWith(
@@ -59,9 +59,9 @@ describe('signAndBroadcastEvm', () => {
     const request: EvmBroadcastRequest = { kind: 'Transaction', transaction: '0x' };
     mockExecuteSignedRequest.mockResolvedValue(transferResponse);
 
-    await signAndBroadcastEvm('user1', 'a/b', request, signingContext, deps);
+    await signAndBroadcastEvm({ username: 'user1', walletId: 'a/b', request, signingContext }, deps);
 
-    const [input] = mockExecuteSignedRequest.mock.calls[0];
+    const [input] = mockExecuteSignedRequest.mock.calls[0]!;
     expect(input.httpPath).toBe('/wallets/a%2Fb/transactions');
   });
 });

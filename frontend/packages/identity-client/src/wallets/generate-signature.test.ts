@@ -13,8 +13,8 @@ const mockExecuteSignedRequest = vi.mocked(executeSignedRequest);
 
 function createMockDeps() {
   return {
-    userActionDataSource: { createUserAction: vi.fn() },
-    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+    userActionDataSource: { initAction: vi.fn(), completeAction: vi.fn() },
+    httpClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn(), upload: vi.fn(), head: vi.fn() },
     origin: 'https://api.example.com',
   };
 }
@@ -38,11 +38,11 @@ describe('generateSignature', () => {
     const request: GenerateSignatureRequest = { kind: 'Message', message: 'hello' };
     mockExecuteSignedRequest.mockResolvedValue(signatureResponse);
 
-    await generateSignature('user1', 'w1', request, signingContext, deps);
+    await generateSignature({ username: 'user1', walletId: 'w1', request, signingContext }, deps);
 
-    const [input] = mockExecuteSignedRequest.mock.calls[0];
+    const [input] = mockExecuteSignedRequest.mock.calls[0]!;
     const expectedHex = Buffer.from('hello').toString('hex');
-    expect((input.body as GenerateSignatureRequest).message).toBe(expectedHex);
+    expect((input.body as { message: string }).message).toBe(expectedHex);
     expect((input.body as GenerateSignatureRequest).kind).toBe('Message');
   });
 
@@ -52,9 +52,9 @@ describe('generateSignature', () => {
     const request: GenerateSignatureRequest = { kind: 'Hash', hash: '0xdeadbeef' };
     mockExecuteSignedRequest.mockResolvedValue(signatureResponse);
 
-    await generateSignature('user1', 'w1', request, signingContext, deps);
+    await generateSignature({ username: 'user1', walletId: 'w1', request, signingContext }, deps);
 
-    const [input] = mockExecuteSignedRequest.mock.calls[0];
+    const [input] = mockExecuteSignedRequest.mock.calls[0]!;
     expect(input.body).toEqual(request);
   });
 
@@ -64,7 +64,7 @@ describe('generateSignature', () => {
     const request: GenerateSignatureRequest = { kind: 'Hash', hash: '0x1' };
     mockExecuteSignedRequest.mockResolvedValue(signatureResponse);
 
-    const result = await generateSignature('user1', 'w1', request, signingContext, deps);
+    const result = await generateSignature({ username: 'user1', walletId: 'w1', request, signingContext }, deps);
 
     expect(result).toEqual(signatureResponse);
     expect(mockExecuteSignedRequest).toHaveBeenCalledWith(

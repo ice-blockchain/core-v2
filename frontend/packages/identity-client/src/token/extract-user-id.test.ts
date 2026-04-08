@@ -11,6 +11,8 @@ function createMockTokenManager() {
     getTokens: vi.fn(),
     setTokens: vi.fn(),
     clearTokens: vi.fn(),
+    isTokenExpired: vi.fn(),
+    getTrackedUsers: vi.fn(),
   };
 }
 
