@@ -4,13 +4,13 @@ import type { SheetActionHandlers } from "@ion/main-tabs-ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
 import { FeedScreen } from "@ion/feed-ui";
 import { ChatTabScreen } from "./chat-tab-screen";
-import { WalletPlaceholder } from "./placeholders/wallet-placeholder";
+import { WalletScreen } from "@ion/wallet-ui";
 import { ProfilePlaceholder } from "./placeholders/profile-placeholder";
 
 const SCREENS = {
   Feed: FeedScreen,
   Chat: ChatTabScreen,
-  Wallet: WalletPlaceholder,
+  Wallet: WalletScreen,
   Profile: ProfilePlaceholder,
 };
 
