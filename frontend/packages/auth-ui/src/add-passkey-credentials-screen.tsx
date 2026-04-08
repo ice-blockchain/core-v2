@@ -55,7 +55,7 @@ function useNavigateToVerify() {
     if (appNavigation.canGoBack()) appNavigation.goBack();
     requestAnimationFrame(() => {
       appNavigation.navigate(Routes.Sheet.Verify, {
-        next: { name: Routes.Catalog, reset: true },
+        next: { name: Routes.Main, reset: true },
       });
     });
   }, [appNavigation]);
