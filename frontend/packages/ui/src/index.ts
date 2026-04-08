@@ -59,6 +59,8 @@ export type { AvatarPickerProps } from "./components/avatar-picker-types";
 export { PlusIconButton } from "./components/PlusIconButton";
 export type { PlusIconButtonProps } from "./components/PlusIconButton";
 
+export { AddStoryAvatar } from "./components/AddStoryAvatar";
+
 export { StoryAvatar } from "./components/StoryAvatar";
 export type { StoryAvatarProps } from "./components/story-avatar-types";
 
@@ -94,6 +96,17 @@ export type {
   BottomNavBarSheetProps,
   BottomNavBarSheetAction,
 } from "./components/bottom-nav-bar-types";
+
+// Overlay Menu
+export { OverlayMenu } from "./components/OverlayMenu";
+export type { OverlayMenuProps } from "./components/overlay-menu-types";
+
+// Feed Filters Menu
+export { FeedFiltersMenuButton } from "./components/FeedFiltersMenuButton";
+export type { FeedFiltersMenuButtonProps, FeedCategory, FeedFilter } from "./components/feed-filters-menu-types";
+
+// Portal
+export { FullscreenPortalHost, FullscreenPortal } from "./components/fullscreen-portal";
 
 // Catalog
 export { CatalogScreen } from "./catalog/CatalogScreen";

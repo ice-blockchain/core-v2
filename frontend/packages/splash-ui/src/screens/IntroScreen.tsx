@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { useAppNavigation, Routes } from "@ion/navigation";
 import { translate } from "@ion/localization";
 import { Button, Icon, useTheme } from "@ion/ui";
@@ -11,10 +10,6 @@ export function IntroScreen() {
   const scale = theme.scale.scaleSize;
   const insets = useSafeAreaInsets();
 
-  const handleLogin = useCallback(() => {
-    navigation.navigate(Routes.Sheet.Auth);
-  }, [navigation]);
-
   return (
     <View style={{paddingBottom: insets.bottom + scale(20), width: '80%'}}>
       <Button
@@ -22,8 +17,17 @@ export function IntroScreen() {
         icon={<Icon name="button-next" size={scale(24)} color={theme.colors.onPrimaryAccent} />}
         iconPosition="right"
         height={56}
-        onPress={handleLogin}
+        onPress={() => navigation.navigate(Routes.Sheet.Auth)}
       />
+      <View style={{marginTop: scale(12)}}>
+        <Button
+          label={translate("splash:mainScreenButton")}
+          icon={<Icon name="button-next" size={scale(24)} color={theme.colors.onPrimaryAccent} />}
+          iconPosition="right"
+          height={56}
+          onPress={() => navigation.navigate(Routes.Main)}
+        />
+      </View>
     </View>
   );
 }

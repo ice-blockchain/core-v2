@@ -24,21 +24,31 @@ function toRegistryKey(filename) {
   return stripPrefix(filename);
 }
 
+function extractViewBox(svgCode) {
+  const vbMatch = svgCode.match(/viewBox="([^"]+)"/);
+  if (vbMatch) return vbMatch[1];
+  const wMatch = svgCode.match(/width="([\d.]+)"/);
+  const hMatch = svgCode.match(/height="([\d.]+)"/);
+  if (wMatch && hMatch) return `0 0 ${wMatch[1]} ${hMatch[1]}`;
+  return "0 0 24 24";
+}
+
 async function generateComponent(svgFile) {
   const svgCode = fs.readFileSync(path.join(ASSETS_DIR, svgFile), "utf-8");
   const componentName = toComponentName(svgFile);
+  const viewBox = extractViewBox(svgCode);
 
   const config = require(path.resolve(__dirname, "../svgr.config.js"));
   const jsxCode = await transform(svgCode, config, { componentName });
 
-  const patchedCode = patchGeneratedCode(jsxCode, componentName);
+  const patchedCode = patchGeneratedCode(jsxCode, componentName, viewBox);
   const outputPath = path.join(GENERATED_DIR, `${componentName}.tsx`);
   fs.writeFileSync(outputPath, `${HEADER}\n${patchedCode}`);
 
   return { componentName, registryKey: toRegistryKey(svgFile) };
 }
 
-function patchGeneratedCode(code, componentName) {
+function patchGeneratedCode(code, componentName, viewBox) {
   let patched = code;
 
   // Replace the default SVGR props interface with our own
@@ -92,6 +102,11 @@ function patchGeneratedCode(code, componentName) {
   // Replace width/height with size prop on the root Svg element only
   patched = patched.replace(/(<Svg\s[^>]*)width=\{[\d.]+\}/, "$1width={size}");
   patched = patched.replace(/(<Svg\s[^>]*)height=\{[\d.]+\}/, "$1height={size}");
+
+  // Add viewBox so SVG paths scale properly at any rendered size
+  if (!patched.includes("viewBox")) {
+    patched = patched.replace(/<Svg /, `<Svg viewBox="${viewBox}" `);
+  }
 
   // Clean up the top of the file and rebuild
   patched = patched.replace(/^import.*;\n*/gm, "");

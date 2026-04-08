@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Button, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useAppNavigation, Routes } from "@ion/navigation";
@@ -25,7 +25,7 @@ export function ProfilePlaceholder() {
   }, [username, navigation]);
 
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.primaryBackground }}>
+    <View style={[styles.container, { backgroundColor: theme.colors.primaryBackground }]}>
       <Text variant="headline2">{translate("mainShell:profileTab")}</Text>
       {username && (
         <Button label={translate("mainShell:logOutButton")} color="primary" height={44} onPress={handleLogout} />
@@ -33,3 +33,7 @@ export function ProfilePlaceholder() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", justifyContent: "center" },
+});

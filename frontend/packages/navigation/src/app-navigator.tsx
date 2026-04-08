@@ -47,13 +47,15 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
-export function AppNavigator({ screens: s, authScreens, isAuthenticated }: AppNavigatorProps) {
+// TODO: restore isAuthenticated usage before later
+export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
   const Auth = useAuthScreen(authScreens);
   return (
     <Stack.Navigator screenOptions={NAV}>
       <Stack.Screen name={Routes.Splash} component={s.Splash} />
       <Stack.Screen name={Routes.GetStarted} component={s.GetStarted} />
-      {s.Main && isAuthenticated && <Stack.Screen name={Routes.Main} component={s.Main} />}
+      {/* TODO: restore isAuthenticated guard before release */}
+      {s.Main && <Stack.Screen name={Routes.Main} component={s.Main} />}
       <Stack.Screen name={Routes.Catalog} component={s.Catalog} />
       {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
       {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}

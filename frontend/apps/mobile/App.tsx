@@ -2,7 +2,7 @@ import 'react-native-get-random-values';
 import 'fast-text-encoding';
 import type { ReactNode } from "react";
 import { useState, useEffect, useSyncExternalStore } from 'react';
-import { StatusBar, View } from 'react-native';
+import { StatusBar, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -72,7 +72,7 @@ const authScreens = {
 function ThemedRoot({ children }: { children: ReactNode }) {
   const theme = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.secondaryBackground }}>
+    <View style={[themedRootStyles.container, { backgroundColor: theme.colors.secondaryBackground }]}>
       <StatusBar barStyle={theme.colorMode === "dark" ? "light-content" : "dark-content"} />
       {children}
     </View>
@@ -118,5 +118,6 @@ function App() {
 }
 
 const rootStyle = { flex: 1 };
+const themedRootStyles = StyleSheet.create({ container: { flex: 1 } });
 
 export default App;
