@@ -13,6 +13,7 @@ import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
 import { BlockEyeOffIcon } from "./generated/BlockEyeOffIcon";
 import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
+import { ButtonQrcodeIcon } from "./generated/ButtonQrcodeIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
 import { CameraIcon } from "./generated/CameraIcon";
 import { CategoriesFollowingIcon } from "./generated/CategoriesFollowingIcon";
@@ -42,6 +43,7 @@ import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
 import { FieldPassIcon } from "./generated/FieldPassIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
 import { GalleryOpenIcon } from "./generated/GalleryOpenIcon";
+import { HeaderScanIcon } from "./generated/HeaderScanIcon";
 import { HomeOffIcon } from "./generated/HomeOffIcon";
 import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
 import { IdentityKeyNoteIcon } from "./generated/IdentityKeyNoteIcon";
@@ -81,8 +83,12 @@ import { SheetCloseIcon } from "./generated/SheetCloseIcon";
 import { SwapIcon } from "./generated/SwapIcon";
 import { TrashIcon } from "./generated/TrashIcon";
 import { VideosTradingIcon } from "./generated/VideosTradingIcon";
+import { WalletBuycryptoIcon } from "./generated/WalletBuycryptoIcon";
 import { WalletIconProfileEmptypostsIcon } from "./generated/WalletIconProfileEmptypostsIcon";
+import { WalletMoreIcon } from "./generated/WalletMoreIcon";
 import { WalletOffIcon } from "./generated/WalletOffIcon";
+import { WalletSwapIcon } from "./generated/WalletSwapIcon";
+import { WalletIcon } from "./generated/WalletIcon";
 
 interface IconComponentProps {
   size?: number;
@@ -101,6 +107,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "block-eye-off": BlockEyeOffIcon,
   "block-eye-on": BlockEyeOnIcon,
   "button-next": ButtonNextIcon,
+  "button-qrcode": ButtonQrcodeIcon,
   "button-receive": ButtonReceiveIcon,
   "camera": CameraIcon,
   "categories-following": CategoriesFollowingIcon,
@@ -130,6 +137,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "field-pass": FieldPassIcon,
   "field-search": FieldSearchIcon,
   "gallery-open": GalleryOpenIcon,
+  "header-scan": HeaderScanIcon,
   "home-off": HomeOffIcon,
   "icon-identitykey": IconIdentitykeyIcon,
   "identity-key-note": IdentityKeyNoteIcon,
@@ -169,6 +177,10 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "swap": SwapIcon,
   "trash": TrashIcon,
   "videos-trading": VideosTradingIcon,
+  "wallet-buycrypto": WalletBuycryptoIcon,
   "wallet-icon-profile-emptyposts": WalletIconProfileEmptypostsIcon,
+  "wallet-more": WalletMoreIcon,
   "wallet-off": WalletOffIcon,
+  "wallet-swap": WalletSwapIcon,
+  "wallet": WalletIcon,
 };

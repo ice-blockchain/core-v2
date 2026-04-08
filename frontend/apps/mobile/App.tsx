@@ -21,6 +21,7 @@ import {
 } from "@ion/onboarding-ui";
 import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
+import { walletUiTranslations } from "@ion/wallet-ui";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
 import { CreatePostSheetScreen, feedTranslations } from "@ion/feed-ui";
@@ -39,6 +40,7 @@ registerTranslations(i18n, chatTranslations);
 registerTranslations(i18n, splashTranslations);
 registerTranslations(i18n, mainShellTranslations);
 registerTranslations(i18n, feedTranslations);
+registerTranslations(i18n, walletUiTranslations);
 
 const screens = {
   Splash: SplashScreen,

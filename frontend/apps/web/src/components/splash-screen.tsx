@@ -10,6 +10,20 @@ const splashSource: MediaViewerSource = {
   mimeType: "video/mp4",
 };
 
+function useAuthRestore(onComplete: () => void) {
+  useEffect(() => {
+    identityClient
+      .restoreAuth()
+      .catch((error: unknown) => {
+        Logger.error('Auth restore failed', {
+          tag: 'auth',
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      })
+      .finally(onComplete);
+  }, [onComplete]);
+}
+
 export function SplashScreen() {
   const navigation = useAppNavigation();
   const restoreComplete = useRef(false);
@@ -24,20 +38,12 @@ export function SplashScreen() {
     navigation.reset({ index: 0, routes: [{ name: target }] });
   }, [navigation]);
 
-  useEffect(() => {
-    identityClient
-      .restoreAuth()
-      .catch((error: unknown) => {
-        Logger.error('Auth restore failed', {
-          tag: 'auth',
-          error: error instanceof Error ? error : new Error(String(error)),
-        });
-      })
-      .finally(() => {
-        restoreComplete.current = true;
-        if (videoComplete.current) navigateToTarget();
-      });
+  const handleRestoreComplete = useCallback(() => {
+    restoreComplete.current = true;
+    if (videoComplete.current) navigateToTarget();
   }, [navigateToTarget]);
+
+  useAuthRestore(handleRestoreComplete);
 
   const handleComplete = useCallback(() => {
     videoComplete.current = true;

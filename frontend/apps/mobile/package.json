@@ -20,6 +20,7 @@
     "@gorhom/bottom-sheet": "^5.2.8",
     "@gorhom/portal": "^1.0.14",
     "@ion/auth": "workspace:*",
+    "@ion/wallet-ui": "workspace:*",
     "@ion/auth-ui": "workspace:*",
     "@ion/chat": "workspace:*",
     "@ion/config": "workspace:*",
