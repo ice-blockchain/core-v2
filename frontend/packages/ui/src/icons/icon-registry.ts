@@ -6,6 +6,7 @@ import { ActionLoginLinkaccountIcon } from "./generated/ActionLoginLinkaccountIc
 import { ActionWalletAddpasskeyIcon } from "./generated/ActionWalletAddpasskeyIcon";
 import { ActionWalletFaceidIcon } from "./generated/ActionWalletFaceidIcon";
 import { ActionWalletPasskeyIcon } from "./generated/ActionWalletPasskeyIcon";
+import { ArrowRightIcon } from "./generated/ArrowRightIcon";
 import { ArticleLinkIcon } from "./generated/ArticleLinkIcon";
 import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
@@ -66,6 +67,7 @@ import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
 import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { LoginPasswordIcon } from "./generated/LoginPasswordIcon";
 import { ManageIcon } from "./generated/ManageIcon";
+import { MenuLogoutIcon } from "./generated/MenuLogoutIcon";
 import { MorePopupIcon } from "./generated/MorePopupIcon";
 import { NameReservedIcon } from "./generated/NameReservedIcon";
 import { NewsIcon } from "./generated/NewsIcon";
@@ -86,8 +88,12 @@ import { ProfileCameraIcon } from "./generated/ProfileCameraIcon";
 import { ProfileFeedIcon } from "./generated/ProfileFeedIcon";
 import { ProfileLocationIcon } from "./generated/ProfileLocationIcon";
 import { ProfileNoimageIcon } from "./generated/ProfileNoimageIcon";
+import { ProfilePrivacyIcon } from "./generated/ProfilePrivacyIcon";
+import { ProfilePrivacypolicyIcon } from "./generated/ProfilePrivacypolicyIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
 import { ProfileSettingsIcon } from "./generated/ProfileSettingsIcon";
+import { ProfileTermsIcon } from "./generated/ProfileTermsIcon";
+import { ProfileUserIcon } from "./generated/ProfileUserIcon";
 import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
 import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
 import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
@@ -97,7 +103,9 @@ import { SearchFollowIcon } from "./generated/SearchFollowIcon";
 import { SearchFollowersIcon } from "./generated/SearchFollowersIcon";
 import { SearchGroupsIcon } from "./generated/SearchGroupsIcon";
 import { SearchIcon } from "./generated/SearchIcon";
+import { SecurityShieldUserIcon } from "./generated/SecurityShieldUserIcon";
 import { SendIcon } from "./generated/SendIcon";
+import { SettingsFeedbackIcon } from "./generated/SettingsFeedbackIcon";
 import { SheetCloseIcon } from "./generated/SheetCloseIcon";
 import { SwapIcon } from "./generated/SwapIcon";
 import { TrashIcon } from "./generated/TrashIcon";
@@ -119,6 +127,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "action-wallet-addpasskey": ActionWalletAddpasskeyIcon,
   "action-wallet-faceid": ActionWalletFaceidIcon,
   "action-wallet-passkey": ActionWalletPasskeyIcon,
+  "arrow-right": ArrowRightIcon,
   "article-link": ArticleLinkIcon,
   "articles": ArticlesIcon,
   "at-sign": AtSignIcon,
@@ -179,6 +188,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "login-identity": LoginIdentityIcon,
   "login-password": LoginPasswordIcon,
   "manage": ManageIcon,
+  "menu-logout": MenuLogoutIcon,
   "more-popup": MorePopupIcon,
   "name-reserved": NameReservedIcon,
   "news": NewsIcon,
@@ -199,8 +209,12 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "profile-feed": ProfileFeedIcon,
   "profile-location": ProfileLocationIcon,
   "profile-noimage": ProfileNoimageIcon,
+  "profile-privacy": ProfilePrivacyIcon,
+  "profile-privacypolicy": ProfilePrivacypolicyIcon,
   "profile-save": ProfileSaveIcon,
   "profile-settings": ProfileSettingsIcon,
+  "profile-terms": ProfileTermsIcon,
+  "profile-user": ProfileUserIcon,
   "recovery-code": RecoveryCodeIcon,
   "restore-cloud": RestoreCloudIcon,
   "restore-credentials": RestoreCredentialsIcon,
@@ -210,7 +224,9 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "search-followers": SearchFollowersIcon,
   "search-groups": SearchGroupsIcon,
   "search": SearchIcon,
+  "security-shield-user": SecurityShieldUserIcon,
   "send": SendIcon,
+  "settings-feedback": SettingsFeedbackIcon,
   "sheet-close": SheetCloseIcon,
   "swap": SwapIcon,
   "trash": TrashIcon,

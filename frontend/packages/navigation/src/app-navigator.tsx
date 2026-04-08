@@ -39,6 +39,7 @@ interface AppNavigatorScreens {
   CameraPermissionDenied?: ComponentType;
   CancelPost?: ComponentType;
   walletViewScreens?: WalletViewScreens;
+  Settings?: ComponentType;
 }
 
 interface AppNavigatorProps {
@@ -97,6 +98,7 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       {s.GalleryPermissionDenied && <Stack.Screen name={Routes.Sheet.GalleryPermissionDenied} component={s.GalleryPermissionDenied} options={MODAL} />}
       {s.CameraPermissionDenied && <Stack.Screen name={Routes.Sheet.CameraPermissionDenied} component={s.CameraPermissionDenied} options={MODAL} />}
       {s.CancelPost && <Stack.Screen name={Routes.Sheet.CancelPost} component={s.CancelPost} options={MODAL} />}
+      {s.Settings && <Stack.Screen name={Routes.Sheet.Settings} component={s.Settings} options={MODAL} />}
     </Stack.Navigator>
   );
 }

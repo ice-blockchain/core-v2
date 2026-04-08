@@ -27,13 +27,15 @@ export function ProfileSettingsMenu({ onItemPress }: ProfileSettingsMenuProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const rowStyle = useMemo(() => buildRowStyle(scale), [scale]);
+  const firstRowStyle = useMemo(() => ({ borderTopLeftRadius: scale(16), borderTopRightRadius: scale(16) }), [scale]);
+  const lastRowStyle = useMemo(() => ({ borderBottomLeftRadius: scale(16), borderBottomRightRadius: scale(16) }), [scale]);
   const dividerStyle = useMemo(() => ({ backgroundColor: theme.colors.onTertiaryFill }), [theme.colors]);
 
   return (
     <View>
       {MENU_ITEMS.map((item, index) => (
         <View key={item.labelKey}>
-          <Pressable style={[rowStyle, index === 0 && styles.firstRow, index === MENU_ITEMS.length - 1 && styles.lastRow]}
+          <Pressable style={[rowStyle, index === 0 && firstRowStyle, index === MENU_ITEMS.length - 1 && lastRowStyle]}
             onPress={() => onItemPress(item.labelKey)}>
             <Text variant="subtitle3">{translate(item.labelKey)}</Text>
             <Icon name={item.iconName} size={scale(20)} color={theme.colors.quaternaryText} />
@@ -56,7 +58,5 @@ function buildRowStyle(scale: (n: number) => number) {
 }
 
 const styles = StyleSheet.create({
-  firstRow: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  lastRow: { borderBottomLeftRadius: 16, borderBottomRightRadius: 16 },
   divider: { height: StyleSheet.hairlineWidth },
 });

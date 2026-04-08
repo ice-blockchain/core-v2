@@ -27,6 +27,7 @@ export const Routes = {
     GalleryPermissionDenied: 'Sheet/GalleryPermissionDenied',
     CameraPermissionDenied: 'Sheet/CameraPermissionDenied',
     CancelPost: 'Sheet/CancelPost',
+    Settings: 'Sheet/Settings',
   },
 
   WalletView: {

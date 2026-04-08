@@ -45,6 +45,7 @@ export type RootStackParamList = {
   'Sheet/GalleryPermissionDenied': undefined;
   'Sheet/CameraPermissionDenied': undefined;
   'Sheet/CancelPost': undefined;
+  'Sheet/Settings': undefined;
 };
 
 export type AuthStackParamList = {
