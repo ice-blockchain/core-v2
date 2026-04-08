@@ -5,6 +5,5 @@ export function buildTabLayerStyle(isActive: boolean): ViewStyle {
   return {
     ...StyleSheet.absoluteFillObject,
     opacity: isActive ? 1 : 0,
-    pointerEvents: isActive ? "auto" : "none",
   };
 }
