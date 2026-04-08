@@ -72,11 +72,7 @@ function useAutoDismiss(isVisible: boolean, durationMs: number, onDismiss: () =>
   }, [isVisible, durationMs]);
 }
 
-export function BottomSnackBar(props: BottomSnackBarProps) {
-  const { message, isVisible, onDismiss, durationMs = DEFAULT_DURATION } = props;
-  const theme = useTheme();
-  const { colors } = theme;
-  const scaleSize = theme.scale.scaleSize;
+function useSnackPresence(isVisible: boolean, message: string) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -90,9 +86,10 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
     setIsMounted(false);
   }, []);
 
-  const progress = useSlideAnimation(isVisible, handleHideComplete);
-  useAutoDismiss(isVisible, durationMs, onDismiss);
+  return { isMounted, handleHideComplete };
+}
 
+function useSnackStyles(colors: { primaryAccent: string; onPrimaryAccent: string }, scaleSize: (n: number) => number) {
   const containerStyle = useMemo<ViewStyle>(
     () => ({
       backgroundColor: colors.primaryAccent,
@@ -117,36 +114,30 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
     [colors.onPrimaryAccent],
   );
 
-  const animatedStyle = {
-    opacity: progress,
-    transform: [
-      {
-        translateY: progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [20, 0],
-        }),
-      },
-    ],
-  };
+  return { containerStyle, textStyle };
+}
+
+export function BottomSnackBar(props: BottomSnackBarProps) {
+  const { message, isVisible, onDismiss, durationMs = DEFAULT_DURATION } = props;
+  const theme = useTheme();
+  const scaleSize = theme.scale.scaleSize;
+  const { isMounted, handleHideComplete } = useSnackPresence(isVisible, message);
+  const progress = useSlideAnimation(isVisible, handleHideComplete);
+  useAutoDismiss(isVisible, durationMs, onDismiss);
+  const { containerStyle, textStyle } = useSnackStyles(theme.colors, scaleSize);
 
   if (!isMounted) return null;
 
+  const animatedStyle = {
+    opacity: progress,
+    transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+  };
+
   return (
     <Animated.View style={animatedStyle}>
-      <Pressable
-        onPress={onDismiss}
-        style={containerStyle}
-        accessibilityRole="alert"
-        accessibilityLabel={message}
-      >
-        <IconBadge
-        backgroundColor={colors.onPrimaryAccent}
-        iconColor={colors.primaryAccent}
-        scale={scaleSize}
-      />
-        <Text variant="body" style={textStyle} numberOfLines={1}>
-          {message}
-        </Text>
+      <Pressable onPress={onDismiss} style={containerStyle} accessibilityRole="alert" accessibilityLabel={message}>
+        <IconBadge backgroundColor={theme.colors.onPrimaryAccent} iconColor={theme.colors.primaryAccent} scale={scaleSize} />
+        <Text variant="body" style={textStyle} numberOfLines={1}>{message}</Text>
       </Pressable>
     </Animated.View>
   );
