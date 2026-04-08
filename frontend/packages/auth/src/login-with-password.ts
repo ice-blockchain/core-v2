@@ -14,7 +14,7 @@ export async function loginWithPassword(
     return { outcome: 'authenticated' };
   } catch (error) {
     const wrapped = error instanceof Error ? error : new Error(String(error));
-    Logger.error('Password login failed', { tag: 'auth', error: wrapped, data: { identityKeyName } });
+    Logger.error('Password login failed', { tag: 'auth', error: wrapped });
     return { outcome: 'error', error: mapIdentityError(error) };
   }
 }

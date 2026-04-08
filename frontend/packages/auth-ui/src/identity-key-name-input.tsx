@@ -12,6 +12,19 @@ interface IdentityKeyNameInputProps {
   style?: StyleProp<ViewStyle>;
 }
 
+function InfoButton({ onPress, size }: { onPress: () => void; size: number }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={translate("auth:identityKeyNameNoteModalTitle")}
+    >
+      <InfoIcon size={size} />
+    </Pressable>
+  );
+}
+
 export function IdentityKeyNameInput({ identity, style }: IdentityKeyNameInputProps) {
   const { scale } = useTheme();
   const appNavigation = useAppNavigation();
@@ -24,19 +37,13 @@ export function IdentityKeyNameInput({ identity, style }: IdentityKeyNameInputPr
     ? { state: "error" as const, errorMessage: identity.errorMessage }
     : {};
 
-  const suffixIcon = (
-    <Pressable onPress={handleInfoPress} hitSlop={8} accessibilityRole="button">
-      <InfoIcon size={scale.scaleSize(24)} />
-    </Pressable>
-  );
-
   return (
     <TextInput
       value={identity.value}
       onChangeText={identity.setValue}
       placeholder={translate("auth:identityKeyNameLabel")}
       prefixIcon="icon-identitykey"
-      suffixIcon={suffixIcon}
+      suffixIcon={<InfoButton onPress={handleInfoPress} size={scale.scaleSize(24)} />}
       autoCapitalize={'none'}
       {...errorProps}
       style={style}

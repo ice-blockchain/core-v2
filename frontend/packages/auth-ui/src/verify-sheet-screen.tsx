@@ -81,7 +81,7 @@ function usePasswordLoginOnConfirm(config: PasswordFlowConfig) {
       if (!wasPasswordConfirmed()) { handlers.handleClose(); return; }
       const password = getConfirmedPassword();
       resetPasswordConfirmed();
-      if (!identityKeyName || !password) { handlers.handleDismiss(); return; }
+      if (!identityKeyName || !password) { handlers.handleClose(); return; }
       loginWithPassword(identityKeyName, password).then((result) => {
         if (result.outcome === 'authenticated') { onAuthSuccess(identityKeyName); handlers.handleDismiss(); }
         else { appNavigation.navigate(Routes.Sheet.GeneralError, { errorCode: result.error.numericCode }); handlers.handleClose(); }

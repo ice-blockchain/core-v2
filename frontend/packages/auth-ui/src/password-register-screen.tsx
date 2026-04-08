@@ -94,6 +94,10 @@ function handlePasswordRegisterResult(
     ctx.authNav.navigate(Routes.Auth.ProfileSetup);
     return;
   }
+  if (result.outcome === 'cancelled') {
+    // Passkey cancelled — no action needed on password registration screen
+    return;
+  }
   if (result.outcome === 'error') {
     if (isInlineAuthError(result.error.code)) {
       ctx.identity.setServerError(result.error.userMessage);

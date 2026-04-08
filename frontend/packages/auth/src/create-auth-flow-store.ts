@@ -158,13 +158,13 @@ function applyRegisterResult(ctx: ApplyResultContext, result: RegisterResult): v
 function applyRestoreResult(s: StoreInternals, result: RestoreResult, data: RecoveryData): void {
   if (result.outcome === 'restored') {
     s.markSuccess('restore');
-    s.update({ isRestoreSuccessVisible: true });
+    s.update({ isRestoreSuccessVisible: true, recoveryData: null });
   } else if (result.outcome === 'needs-password') {
     s.setOperation('restore', { status: 'idle', error: null });
     s.update({ phase: 'set-new-password', identityKeyName: data.identityKeyName });
   } else if (result.outcome === 'invalid-credentials') {
     s.setOperation('restore', { status: 'idle', error: null });
-    s.update({ isIdentityKeyNotFoundVisible: true });
+    s.update({ isIdentityKeyNotFoundVisible: true, recoveryData: null });
   } else {
     s.setOperation('restore', { status: 'error', error: result.error });
   }
@@ -173,10 +173,10 @@ function applyRestoreResult(s: StoreInternals, result: RestoreResult, data: Reco
 function applyRecoveryResult(s: StoreInternals, key: OperationKey, result: SetNewPasswordResult): void {
   if (result.outcome === 'restored') {
     s.markSuccess(key);
-    s.update({ isRestoreSuccessVisible: true });
+    s.update({ isRestoreSuccessVisible: true, recoveryData: null });
   } else if (result.outcome === 'invalid-credentials') {
     s.setOperation(key, { status: 'idle', error: null });
-    s.update({ isIdentityKeyNotFoundVisible: true });
+    s.update({ isIdentityKeyNotFoundVisible: true, recoveryData: null });
   } else {
     s.setOperation(key, { status: 'error', error: result.error });
   }
