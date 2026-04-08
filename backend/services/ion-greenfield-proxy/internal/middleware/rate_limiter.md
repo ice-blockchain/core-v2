@@ -23,8 +23,7 @@ The per-peer bucket needs a stable identifier for each client. The rate limiter 
 ADNL requests arrive via the ADNL gateway which converts them into `*http.Request` objects with an empty `RemoteAddr`. Without the fallback, all ADNL traffic would share a single per-peer bucket keyed on `""`, making per-peer limiting ineffective.
 
 ## Request Flow
-
-```
+```text
                incoming request
                       |
                       v
@@ -48,7 +47,7 @@ ADNL requests arrive via the ADNL gateway which converts them into `*http.Reques
            |          |                |
           yes          no ---> inc req_limited_by_ip
            |                   return 429
-           v                           
+           v
      tx_signer present? <--------------+
         |          |
        yes          no ---> c.Next() (pass)
