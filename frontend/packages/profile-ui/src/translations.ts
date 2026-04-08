@@ -18,6 +18,10 @@ const profileEN = {
   emptyRepliesOther: "@{{username}} doesn't have any replies",
   emptyVideosOther: "@{{username}} doesn't have any videos",
   emptyArticlesOther: "@{{username}} doesn't have any articles",
+  menuShare: "Share",
+  menuBookmarks: "Bookmarks",
+  menuInviteFriend: "Invite a friend",
+  menuSettings: "Settings",
 };
 
 const profileFR = {
@@ -36,6 +40,10 @@ const profileFR = {
   emptyRepliesOther: "@{{username}} n'a aucune reponse",
   emptyVideosOther: "@{{username}} n'a aucune video",
   emptyArticlesOther: "@{{username}} n'a aucun article",
+  menuShare: "Partager",
+  menuBookmarks: "Signets",
+  menuInviteFriend: "Inviter un ami",
+  menuSettings: "Parametres",
 };
 
 const profileDE = {
@@ -54,6 +62,10 @@ const profileDE = {
   emptyRepliesOther: "@{{username}} hat keine Antworten",
   emptyVideosOther: "@{{username}} hat keine Videos",
   emptyArticlesOther: "@{{username}} hat keine Artikel",
+  menuShare: "Teilen",
+  menuBookmarks: "Lesezeichen",
+  menuInviteFriend: "Freund einladen",
+  menuSettings: "Einstellungen",
 };
 
 export const profileTranslations: readonly TranslationResource[] = [

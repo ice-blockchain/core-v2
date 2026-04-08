@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import type { LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedTabBar, AnimatedTabPager, useTabViewState, useTheme } from "@ion/ui";
 import type { AnimatedTabDefinition } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { ProfileNavBar } from "./ProfileNavBar";
+import { ProfileNavBarWithMenu } from "./ProfileNavBarWithMenu";
 import { ProfileScrollHeader } from "./ProfileScrollHeader";
 import { ProfileTabPage } from "./ProfileTabContent";
 import { useProfileScrollAnimation } from "./useProfileScrollAnimation";
@@ -87,7 +87,7 @@ export function ProfileScreen() {
           </AnimatedTabPager>
         )}
       </scrollAnim.AnimatedScrollView>
-      <ProfileNavBar showBackButton={!isCurrentUser} profile={profile}
+      <ProfileNavBarWithMenu showBackButton={!isCurrentUser} profile={profile}
         collapsedHeaderOpacity={scrollAnim.collapsedHeaderOpacity} navBarBgAnimatedStyle={scrollAnim.navBarBgStyle} />
     </View>
   );

@@ -80,13 +80,13 @@ function useOverlayAnimation(isVisible: boolean) {
   return { shouldRender, animatedStyle };
 }
 
-export function OverlayMenu({ isVisible, onClose, anchorRef, children, testID }: OverlayMenuProps) {
+export function OverlayMenu({ isVisible, onClose, anchorRef, children, width, testID }: OverlayMenuProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const { anchor, reset: resetAnchor } = useMeasureAnchor({ anchorRef, isVisible });
   const position = useOverlayPosition(anchor, scale);
   const { shouldRender, animatedStyle } = useOverlayAnimation(isVisible);
-  const containerStyle = useMemo(() => buildContainerStyle({ scale, bgColor: theme.colors.tertiaryBackground }), [scale, theme.colors]);
+  const containerStyle = useMemo(() => buildContainerStyle({ scale, bgColor: theme.colors.tertiaryBackground, width }), [scale, theme.colors, width]);
   const backdropStyle = useMemo(() => buildBackdropStyle(), []);
   const handleBackdropPress = useCallback(() => onClose(), [onClose]);
 

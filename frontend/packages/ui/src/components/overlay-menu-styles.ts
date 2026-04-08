@@ -4,10 +4,11 @@ import { MENU_WIDTH } from "./overlay-menu-types";
 export function buildContainerStyle(options: {
   scale: (n: number) => number;
   bgColor: string;
+  width?: number | undefined;
 }): ViewStyle {
-  const { scale, bgColor } = options;
+  const { scale, bgColor, width } = options;
   return {
-    width: scale(MENU_WIDTH),
+    width: scale(width ?? MENU_WIDTH),
     backgroundColor: bgColor,
     borderRadius: scale(16),
     shadowColor: "#000000",

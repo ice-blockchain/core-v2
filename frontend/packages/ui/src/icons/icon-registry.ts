@@ -15,11 +15,14 @@ import { BlockDeleteIcon } from "./generated/BlockDeleteIcon";
 import { BlockEyeOffIcon } from "./generated/BlockEyeOffIcon";
 import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
 import { BlockchainIcon } from "./generated/BlockchainIcon";
+import { BookmarksIcon } from "./generated/BookmarksIcon";
 import { ButtonAddstrokeIcon } from "./generated/ButtonAddstrokeIcon";
+import { ButtonInviteIcon } from "./generated/ButtonInviteIcon";
 import { ButtonManageWalletIcon } from "./generated/ButtonManageWalletIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonQrcodeIcon } from "./generated/ButtonQrcodeIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
+import { ButtonShareIcon } from "./generated/ButtonShareIcon";
 import { CameraIcon } from "./generated/CameraIcon";
 import { CategoriesFollowingIcon } from "./generated/CategoriesFollowingIcon";
 import { CategoriesForyouIcon } from "./generated/CategoriesForyouIcon";
@@ -84,6 +87,7 @@ import { ProfileFeedIcon } from "./generated/ProfileFeedIcon";
 import { ProfileLocationIcon } from "./generated/ProfileLocationIcon";
 import { ProfileNoimageIcon } from "./generated/ProfileNoimageIcon";
 import { ProfileSaveIcon } from "./generated/ProfileSaveIcon";
+import { ProfileSettingsIcon } from "./generated/ProfileSettingsIcon";
 import { RecoveryCodeIcon } from "./generated/RecoveryCodeIcon";
 import { RestoreCloudIcon } from "./generated/RestoreCloudIcon";
 import { RestoreCredentialsIcon } from "./generated/RestoreCredentialsIcon";
@@ -124,11 +128,14 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "block-eye-off": BlockEyeOffIcon,
   "block-eye-on": BlockEyeOnIcon,
   "blockchain": BlockchainIcon,
+  "bookmarks": BookmarksIcon,
   "button-addstroke": ButtonAddstrokeIcon,
+  "button-invite": ButtonInviteIcon,
   "button-manage-wallet": ButtonManageWalletIcon,
   "button-next": ButtonNextIcon,
   "button-qrcode": ButtonQrcodeIcon,
   "button-receive": ButtonReceiveIcon,
+  "button-share": ButtonShareIcon,
   "camera": CameraIcon,
   "categories-following": CategoriesFollowingIcon,
   "categories-foryou": CategoriesForyouIcon,
@@ -193,6 +200,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "profile-location": ProfileLocationIcon,
   "profile-noimage": ProfileNoimageIcon,
   "profile-save": ProfileSaveIcon,
+  "profile-settings": ProfileSettingsIcon,
   "recovery-code": RecoveryCodeIcon,
   "restore-cloud": RestoreCloudIcon,
   "restore-credentials": RestoreCredentialsIcon,
