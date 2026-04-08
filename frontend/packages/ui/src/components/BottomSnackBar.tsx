@@ -5,6 +5,7 @@ import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
 import { Icon } from "../icons/Icon";
 
+/** Props for the BottomSnackBar component. */
 export interface BottomSnackBarProps {
   message: string;
   isVisible: boolean;
@@ -119,6 +120,7 @@ function useSnackStyles(colors: { primaryAccent: string; onPrimaryAccent: string
   return { containerStyle, textStyle };
 }
 
+/** Animated snack bar that appears at the bottom of the screen and auto-dismisses after a configurable duration. */
 export function BottomSnackBar(props: BottomSnackBarProps) {
   const { message, isVisible, onDismiss, durationMs = DEFAULT_DURATION } = props;
   const theme = useTheme();
