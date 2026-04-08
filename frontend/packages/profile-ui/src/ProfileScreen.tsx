@@ -36,6 +36,13 @@ function useProfileLayout() {
   };
 }
 
+function useProfileTabs() {
+  const tabState = useTabViewState();
+  const tabs = useMemo(() => buildTabs(), []);
+  const handlePageSelected = useCallback((index: number) => { tabState.currentIndex.value = index; }, [tabState.currentIndex]);
+  return { ...tabState, tabs, handlePageSelected };
+}
+
 function usePagerHeight() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
@@ -56,13 +63,11 @@ function usePagerHeight() {
 }
 
 export function ProfileScreen() {
-  const { position, currentIndex, setPage, pagerRef } = useTabViewState();
+  const { position, setPage, pagerRef, tabs, handlePageSelected } = useProfileTabs();
   const { rootStyle, sectionStyle, spacerHeight, tabBarBorderColor } = useProfileLayout();
   const { pagerStyle, handleHeaderLayout, handleScrollViewLayout, isReady } = usePagerHeight();
   const scrollAnim = useProfileScrollAnimation();
-  const tabs = useMemo(() => buildTabs(), []);
   const [profile, isCurrentUser] = [MOCK_PROFILE, true] as const;
-  const handlePageSelected = useCallback((index: number) => { currentIndex.value = index; }, [currentIndex]);
 
   return (
     <View style={rootStyle}>
