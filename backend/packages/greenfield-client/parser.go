@@ -201,5 +201,11 @@ func parseChecksums(raw string) []string {
 	if raw == "" {
 		return nil
 	}
+	if strings.HasPrefix(raw, "[") {
+		var parsed []string
+		if err := json.Unmarshal([]byte(raw), &parsed); err == nil {
+			return parsed
+		}
+	}
 	return strings.Split(raw, ",")
 }
