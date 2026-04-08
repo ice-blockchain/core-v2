@@ -22,7 +22,7 @@ export function CoinSearchBar({ value, onChangeText, onCancel }: CoinSearchBarPr
         placeholder={translate("walletUi:searchPlaceholder")}
         style={styles.searchBar}
       />
-      <TouchableOpacity onPress={onCancel}>
+      <TouchableOpacity onPress={onCancel} accessibilityLabel={translate("walletUi:cancelButton")} accessibilityRole="button">
         <Text variant="caption" color={theme.colors.primaryAccent}>
           {translate("walletUi:cancelButton")}
         </Text>

@@ -16,7 +16,7 @@ export function EmptyNftsState() {
       <Text variant="caption2" color={colors.tertiaryText}>
         {translate("walletUi:emptyNftsMessage")}
       </Text>
-      <TouchableOpacity>
+      <TouchableOpacity accessibilityLabel={translate("walletUi:receiveNftLink")} accessibilityRole="button">
         <Text variant="caption" color={colors.primaryAccent}>
           {translate("walletUi:receiveNftLink")}
         </Text>

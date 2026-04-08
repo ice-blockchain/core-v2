@@ -9,7 +9,7 @@
   "scripts": {
     "lint": "eslint src/",
     "type-check": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ion/localization": "workspace:*",
@@ -18,11 +18,11 @@
   "peerDependencies": {
     "react": ">=19",
     "react-native": ">=0.76",
-    "react-native-safe-area-context": ">=4"
+    "react-native-safe-area-context": ">=4.0.0"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.0.0",
     "@types/react": "^19.0.0",
-    "react-native-safe-area-context": "^5.7.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }

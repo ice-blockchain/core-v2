@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import type { ImageSourcePropType } from "react-native";
 import { Text, useTheme } from "@ion/ui";
-import { BannerDots } from "./BannerDots";
 import {
   buildCardContainerStyle,
   buildTextBlockStyle,
@@ -13,11 +12,9 @@ interface BannerCardProps {
   title: string;
   description: string;
   image: ImageSourcePropType;
-  dotCount: number;
-  activeDotIndex: number;
 }
 
-export function BannerCard({ title, description, image, dotCount, activeDotIndex }: BannerCardProps) {
+export function BannerCard({ title, description, image }: BannerCardProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const scaleRadius = theme.scale.scaleRadius;
@@ -36,7 +33,6 @@ export function BannerCard({ title, description, image, dotCount, activeDotIndex
         <Text variant="body2" color={theme.colors.primaryText}>{description}</Text>
       </View>
       <Image source={image} style={[styles.image, imageStyle]} />
-      <BannerDots count={dotCount} activeIndex={activeDotIndex} inside />
     </View>
   );
 }

@@ -34,9 +34,7 @@ export function buildBannerWrapperStyle(
   };
 }
 
-export function buildScrollContentStyle(
-  _scale: (n: number) => number,
-): ViewStyle {
+export function buildScrollContentStyle(): ViewStyle {
   return { paddingBottom: 0 };
 }
 

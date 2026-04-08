@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-03-30
+> Last updated: 2026-04-08
 
 ---
 
@@ -62,7 +62,16 @@
 | `@ion/auth` | Auth flow orchestrator | In Progress |
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
 
-**Total: 25 packages**
+### UI Layer
+| Package | Purpose | Status |
+|---|---|---|
+| `@ion/splash-ui` | Splash and intro screens | Implemented |
+| `@ion/onboarding-ui` | Onboarding flow screens | Implemented |
+| `@ion/feed-ui` | Feed screens and components | Implemented |
+| `@ion/main-tabs-ui` | Main tab navigation screens | Implemented |
+| `@ion/wallet-ui` | Wallet tab screens and components | Implemented |
+
+**Total: 30 packages**
 
 ---
 

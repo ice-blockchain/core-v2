@@ -1,0 +1,33 @@
+import type { walletUiEN } from "./en";
+
+export const walletUiFR: Record<keyof typeof walletUiEN, string> = {
+  balanceLabel: "Solde",
+  balanceAmount: "0,00 $",
+  buyAction: "Acheter",
+  receiveAction: "Recevoir",
+  swapAction: "Échanger",
+  moreAction: "Plus",
+  friendsTitle: "Amis",
+  viewAllLink: "voir tout",
+  portfolioTitle: "Portfolio",
+  portfolioDescription:
+    "Suivez et gérez toutes vos cryptos en toute sécurité",
+  coinsTab: "Jetons",
+  nftsTab: "NFTs",
+  emptyCoinsMessage: "Vous n'avez pas encore de jetons",
+  emptyNftsMessage: "Vous n'avez aucun NFT",
+  receiveNftLink: "Recevoir un NFT",
+  manageCoinsButton: "Gérer les jetons",
+  walletName: "ion.wallet",
+  swapBannerTitle: "Échanger",
+  swapBannerDescription:
+    "Échangez vos jetons instantanément et en toute sécurité, directement depuis votre portefeuille",
+  bridgeBannerTitle: "Pont",
+  bridgeBannerDescription:
+    "Transférez vos jetons en toute sécurité sur plusieurs réseaux connectés",
+  balanceHidden: "********",
+  searchPlaceholder: "Rechercher",
+  cancelButton: "Annuler",
+  toggleBalanceLabel: "Basculer la visibilité du solde",
+  scanButtonLabel: "Scanner",
+};

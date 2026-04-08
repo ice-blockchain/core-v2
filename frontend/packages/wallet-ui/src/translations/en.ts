@@ -1,0 +1,31 @@
+export const walletUiEN = {
+  balanceLabel: "Balance",
+  balanceAmount: "$0.00",
+  buyAction: "Buy",
+  receiveAction: "Receive",
+  swapAction: "Swap",
+  moreAction: "More",
+  friendsTitle: "Friends",
+  viewAllLink: "view all",
+  portfolioTitle: "Portfolio",
+  portfolioDescription:
+    "Track and manage all your crypto securely in one place",
+  coinsTab: "Coins",
+  nftsTab: "NFTs",
+  emptyCoinsMessage: "You have no coins yet",
+  emptyNftsMessage: "You don't have any NFT's",
+  receiveNftLink: "Receive NFT",
+  manageCoinsButton: "Manage coins",
+  walletName: "ion.wallet",
+  swapBannerTitle: "Swap",
+  swapBannerDescription:
+    "Swap your tokens instantly and securely, directly from your wallet",
+  bridgeBannerTitle: "Bridge",
+  bridgeBannerDescription:
+    "Bridge your tokens securely across multiple connected networks",
+  balanceHidden: "********",
+  searchPlaceholder: "Search",
+  cancelButton: "Cancel",
+  toggleBalanceLabel: "Toggle balance visibility",
+  scanButtonLabel: "Scan",
+} as const;

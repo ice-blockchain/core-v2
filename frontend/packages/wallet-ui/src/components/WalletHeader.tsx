@@ -19,7 +19,7 @@ export function WalletHeader() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={[styles.pill, pillStyle]}>
+      <TouchableOpacity style={[styles.pill, pillStyle]} accessibilityLabel={translate("walletUi:walletName")} accessibilityRole="button">
         <View style={[styles.innerGroup, innerGap]}>
           <View style={[styles.center, walletBoxStyle]}>
             <Icon name="wallet" size={scale(16)} color={colorPalette.white} />
@@ -28,7 +28,7 @@ export function WalletHeader() {
         </View>
         <Icon name="chevron-down" size={scale(20)} color={theme.colors.primaryText} />
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.center, scanStyle]}>
+      <TouchableOpacity style={[styles.center, scanStyle]} accessibilityLabel={translate("walletUi:scanButtonLabel")} accessibilityRole="button">
         <Icon name="header-scan" size={scale(24)} color={theme.colors.primaryText} />
       </TouchableOpacity>
     </View>

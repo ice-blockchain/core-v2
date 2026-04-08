@@ -31,9 +31,3 @@ export function buildEmptyStateStyle(
     paddingVertical: scale(65),
   };
 }
-
-export function buildSearchGapStyle(
-  scale: (n: number) => number,
-): ViewStyle {
-  return { marginTop: scale(0) };
-}

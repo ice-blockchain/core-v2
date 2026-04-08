@@ -21,14 +21,14 @@ export function CoinsTabs({ activeTab, onTabChange, onSearchPress }: CoinsTabsPr
   return (
     <View style={styles.tabHeader}>
       <View style={[styles.tabs, tabGapStyle]}>
-        <TouchableOpacity onPress={() => onTabChange("coins")}>
+        <TouchableOpacity onPress={() => onTabChange("coins")} accessibilityLabel={translate("walletUi:coinsTab")} accessibilityRole="tab">
           <Text variant="title" color={coinsColor}>{translate("walletUi:coinsTab")}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onTabChange("nfts")}>
+        <TouchableOpacity onPress={() => onTabChange("nfts")} accessibilityLabel={translate("walletUi:nftsTab")} accessibilityRole="tab">
           <Text variant="title" color={nftsColor}>{translate("walletUi:nftsTab")}</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={onSearchPress}>
+      <TouchableOpacity onPress={onSearchPress} accessibilityLabel={translate("walletUi:searchPlaceholder")} accessibilityRole="button">
         <Icon name="field-search" size={scale(20)} color={theme.colors.primaryText} />
       </TouchableOpacity>
     </View>

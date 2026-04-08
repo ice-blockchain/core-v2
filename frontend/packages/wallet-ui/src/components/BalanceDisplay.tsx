@@ -24,7 +24,7 @@ export function BalanceDisplay({ isBalanceVisible, onToggleVisibility }: Balance
 
   return (
     <View style={[styles.container, gapStyle]}>
-      <TouchableOpacity onPress={onToggleVisibility} style={[styles.labelRow, labelRowStyle]}>
+      <TouchableOpacity onPress={onToggleVisibility} style={[styles.labelRow, labelRowStyle]} accessibilityLabel={translate("walletUi:toggleBalanceLabel")} accessibilityRole="button">
         <Text variant="subtitle2" color={colors.secondaryText}>{translate("walletUi:balanceLabel")}</Text>
         <Icon name={iconName} size={scale(24)} color={colors.secondaryText} />
       </TouchableOpacity>

@@ -19,7 +19,7 @@ export function ManageCoinsButton() {
   );
 
   return (
-    <TouchableOpacity style={[styles.button, buttonStyle]}>
+    <TouchableOpacity style={[styles.button, buttonStyle]} accessibilityLabel={translate("walletUi:manageCoinsButton")} accessibilityRole="button">
       <Icon name="manage" size={scale(24)} color={theme.colors.primaryText} />
       <Text variant="body" color={theme.colors.primaryText}>
         {translate("walletUi:manageCoinsButton")}

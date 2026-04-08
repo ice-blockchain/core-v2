@@ -21,6 +21,7 @@ export function useTabPager(onTabChange: (tab: CoinTabKey) => void) {
 
   const onScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (pageWidth.current === 0) return;
       const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth.current);
       const tab: CoinTabKey = index === 0 ? "coins" : "nfts";
       onTabChange(tab);

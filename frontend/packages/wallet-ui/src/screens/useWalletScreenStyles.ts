@@ -28,7 +28,7 @@ export function useWalletScreenStyles(isScrolled: boolean) {
     ],
     header: buildHeaderSectionStyle(scale, colors),
     banner: buildBannerWrapperStyle(scale, colors),
-    scrollContent: buildScrollContentStyle(scale),
+    scrollContent: buildScrollContentStyle(),
     gap: buildGapStyle(scale, colors),
   }), [colors, scale, insets.top, isScrolled, shadow]);
 }
