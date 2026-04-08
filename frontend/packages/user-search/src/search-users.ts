@@ -1,7 +1,7 @@
 import type { SearchUsersInput, SearchUsersResult, SearchableUser } from "./types";
 import { STUB_USERS } from "./stub-users";
 
-function filterUsersByQuery(users: SearchableUser[], query: string): SearchableUser[] {
+function filterUsersByQuery(users: readonly SearchableUser[], query: string): SearchableUser[] {
   const lowerQuery = query.toLowerCase();
   return users.filter(
     (user) =>

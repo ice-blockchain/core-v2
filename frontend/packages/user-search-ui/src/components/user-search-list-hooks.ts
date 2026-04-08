@@ -45,8 +45,9 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// TODO: Remove stub delay when real API is wired
 async function fetchSearchPage(query: string, page: number): Promise<{ users: SearchableUser[]; hasMore: boolean }> {
-  if (page === 0) await delay(STUB_DELAY_MS);
+  if (__DEV__ && page === 0) await delay(STUB_DELAY_MS);
   return searchUsers({ query, page, pageSize: PAGE_SIZE });
 }
 
@@ -55,21 +56,22 @@ function useSearchPerform() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
 
-  const loadFollowed = useCallback(async (page: number) => {
-    setIsLoading(page === 0);
-    const result = await fetchFollowedUsers({ page, pageSize: PAGE_SIZE });
+  const applyResult = useCallback((result: { users: SearchableUser[]; hasMore: boolean }, page: number) => {
     setUsers((prev) => (page === 0 ? result.users : [...prev, ...result.users]));
     setHasMore(result.hasMore);
-    setIsLoading(false);
   }, []);
+
+  const loadFollowed = useCallback(async (page: number) => {
+    setIsLoading(page === 0);
+    try { applyResult(await fetchFollowedUsers({ page, pageSize: PAGE_SIZE }), page); }
+    finally { setIsLoading(false); }
+  }, [applyResult]);
 
   const performSearch = useCallback(async (query: string, page: number) => {
     setIsLoading(page === 0);
-    const result = await fetchSearchPage(query, page);
-    setUsers((prev) => (page === 0 ? result.users : [...prev, ...result.users]));
-    setHasMore(result.hasMore);
-    setIsLoading(false);
-  }, []);
+    try { applyResult(await fetchSearchPage(query, page), page); }
+    finally { setIsLoading(false); }
+  }, [applyResult]);
 
   const clearResults = useCallback(() => {
     setUsers([]);

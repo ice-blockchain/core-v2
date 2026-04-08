@@ -27,12 +27,16 @@ function mapCacheEntryToUser(entry: UserSearchCacheEntry): SearchableUser {
   };
 }
 
+function escapeLikePattern(input: string): string {
+  return input.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
 export async function getCachedUsers(database: Database, query: string): Promise<SearchableUser[]> {
   const cutoff = new Date(Date.now() - CACHE_TTL_MS).toISOString();
-  const pattern = `%${query}%`;
+  const pattern = `%${escapeLikePattern(query)}%`;
   const rows = await database.query<UserSearchCacheEntry>(
     `SELECT * FROM user_search_cache
-     WHERE (username LIKE ? OR displayName LIKE ?) AND cachedAt > ?
+     WHERE (username LIKE ? ESCAPE '\\' OR displayName LIKE ? ESCAPE '\\') AND cachedAt > ?
      ORDER BY displayName ASC LIMIT 20`,
     [pattern, pattern, cutoff],
   );

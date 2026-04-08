@@ -4,7 +4,7 @@ function stubAvatar(id: string): string {
   return `https://i.pravatar.cc/150?u=${id}`;
 }
 
-export const STUB_USERS: SearchableUser[] = [
+export const STUB_USERS: readonly SearchableUser[] = [
   { id: "1", username: "alinaproxima", displayName: "Alina Proxima", avatarUrl: stubAvatar("1"), isVerified: true },
   { id: "2", username: "aliciawernet", displayName: "Alicia Wernet", avatarUrl: stubAvatar("2"), isVerified: false },
   { id: "3", username: "cristianlower", displayName: "Cristian Lower", avatarUrl: stubAvatar("3"), isVerified: false },
