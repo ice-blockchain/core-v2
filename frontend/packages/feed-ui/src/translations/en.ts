@@ -9,4 +9,11 @@ export const feedEN = {
   categoryArticles: "Articles",
   filterForYou: "For you",
   filterFollowing: "Following",
+  newPostTitle: "New post",
+  addTopicLabel: "Add topic",
+  languageLabel: "Language",
+  everyoneLabel: "Everyone",
+  composerPlaceholder: "What's on your mind?",
+  topicTooltipTitle: "Add a topic",
+  topicTooltipDescription: "Help others find your post by adding a relevant topic",
 } as const;

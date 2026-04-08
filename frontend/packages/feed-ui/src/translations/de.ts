@@ -11,4 +11,11 @@ export const feedDE: Record<keyof typeof feedEN, string> = {
   categoryArticles: "Artikel",
   filterForYou: "Für dich",
   filterFollowing: "Folge ich",
+  newPostTitle: "Neuer Beitrag",
+  addTopicLabel: "Thema hinzufügen",
+  languageLabel: "Sprache",
+  everyoneLabel: "Alle",
+  composerPlaceholder: "Was beschäftigt dich?",
+  topicTooltipTitle: "Thema hinzufügen",
+  topicTooltipDescription: "Hilf anderen, deinen Beitrag zu finden, indem du ein passendes Thema hinzufügst",
 };
