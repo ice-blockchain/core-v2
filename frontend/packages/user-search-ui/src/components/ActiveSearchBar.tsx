@@ -101,7 +101,7 @@ export function ActiveSearchBar({ value, isFocused, onChangeText, isLoading, onC
 
   return (
     <View style={styles.wrapper}>
-      <SearchInput value={value} onChangeText={onChangeText} styles={styles} onFocus={onFocus} onBlur={onBlur} isLoading={isLoading} testID={testID} />
+      <SearchInput value={value} onChangeText={onChangeText} styles={styles} onFocus={onFocus} onBlur={onBlur} isLoading={isLoading} {...(testID !== undefined ? { testID } : {})} />
       {(isFocused || value.length > 0) && <CancelButton onPress={handleCancel} color={theme.colors.primaryAccent} />}
     </View>
   );
