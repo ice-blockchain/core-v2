@@ -19,8 +19,17 @@ interface WalletWriteDeps {
   origin: string;
 }
 
+const KNOWN_ASSET_KINDS = new Set([
+  'Native', 'Erc20', 'Asa', 'Spl', 'Spl2022', 'Sep41', 'Tep74', 'Trc10', 'Trc20', 'Aip21',
+]);
+
+function normalizeAssetKind(asset: WalletAsset): WalletAsset {
+  if (KNOWN_ASSET_KINDS.has(asset.kind)) return asset;
+  return { ...asset, rawKind: asset.kind, kind: 'Unknown' as const };
+}
+
 function normalizeAssetBalance(asset: WalletAsset): WalletAsset {
-  return { ...asset, balance: String(asset.balance) };
+  return { ...normalizeAssetKind(asset), balance: String(asset.balance) };
 }
 
 function isRestrictedRegionError(error: unknown): boolean {

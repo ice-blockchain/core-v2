@@ -44,6 +44,8 @@ export interface Trc20Asset extends WalletAssetBase { kind: 'Trc20'; contract: s
 export interface Aip21Asset extends WalletAssetBase { kind: 'Aip21'; metadata: string; symbol: string; name?: string }
 
 export interface UnknownAsset extends WalletAssetBase {
+  kind: 'Unknown';
+  rawKind: string;
   symbol?: string; contract?: string; master?: string; name?: string;
   assetId?: string; mint?: string; tokenId?: string; verified?: boolean;
 }
