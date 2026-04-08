@@ -15,7 +15,7 @@ export function capturePhoto(): Promise<DeviceAsset | null> {
       const asset = response.assets[0]!;
       if (!asset.uri) { resolve(null); return; }
       resolve({
-        id: asset.uri,
+        id: asset.id ?? asset.uri,
         uri: asset.uri,
         width: asset.width ?? 0,
         height: asset.height ?? 0,

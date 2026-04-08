@@ -26,7 +26,14 @@ export async function capturePhoto(): Promise<DeviceAsset | null> {
 
 function waitForFile(input: HTMLInputElement): Promise<File | null> {
   return new Promise((resolve) => {
-    input.onchange = () => resolve(input.files?.[0] ?? null);
+    const cleanup = () => {
+      input.removeEventListener("change", handleChange);
+      input.removeEventListener("cancel", handleCancel);
+    };
+    const handleChange = () => { cleanup(); resolve(input.files?.[0] ?? null); };
+    const handleCancel = () => { cleanup(); resolve(null); };
+    input.addEventListener("change", handleChange);
+    input.addEventListener("cancel", handleCancel);
     input.click();
   });
 }

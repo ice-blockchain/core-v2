@@ -3,25 +3,29 @@ import { View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Text, useTheme } from '@ion/ui';
 
+const BADGE_SIZE = 20;
+const BADGE_RADIUS = 10;
+const BADGE_BORDER_WIDTH = 1;
+
 interface SelectionBadgeProps {
   order?: number | undefined;
 }
 
 function buildUnselectedStyle(scale: (n: number) => number, borderColor: string): ViewStyle {
   return {
-    width: scale(20),
-    height: scale(20),
-    borderRadius: scale(10),
-    borderWidth: 1,
+    width: scale(BADGE_SIZE),
+    height: scale(BADGE_SIZE),
+    borderRadius: scale(BADGE_RADIUS),
+    borderWidth: BADGE_BORDER_WIDTH,
     borderColor,
   };
 }
 
 function buildSelectedStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
   return {
-    width: scale(20),
-    height: scale(20),
-    borderRadius: scale(10),
+    width: scale(BADGE_SIZE),
+    height: scale(BADGE_SIZE),
+    borderRadius: scale(BADGE_RADIUS),
     backgroundColor,
     alignItems: 'center',
     justifyContent: 'center',

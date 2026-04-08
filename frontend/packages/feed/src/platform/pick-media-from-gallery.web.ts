@@ -1,11 +1,12 @@
 import type { DeviceAsset } from "../types";
 
 const MAX_SELECTION = 10;
+const MILLISECONDS_PER_SECOND = 1000;
 
 function resolveMediaFile(file: File): Promise<DeviceAsset> {
   const url = URL.createObjectURL(file);
   const isVideo = file.type.startsWith("video/");
-  return isVideo ? resolveVideoAsset(file, url) : resolveImageAsset(url);
+  return isVideo ? resolveVideoAsset(url) : resolveImageAsset(url);
 }
 
 function resolveImageAsset(url: string): Promise<DeviceAsset> {
@@ -17,12 +18,13 @@ function resolveImageAsset(url: string): Promise<DeviceAsset> {
   });
 }
 
-function resolveVideoAsset(file: File, url: string): Promise<DeviceAsset> {
+function resolveVideoAsset(url: string): Promise<DeviceAsset> {
   return new Promise((resolve) => {
     const video = document.createElement("video");
     video.preload = "metadata";
     video.onloadedmetadata = () => {
-      resolve({ id: url, uri: url, width: video.videoWidth, height: video.videoHeight, duration: Math.round(video.duration * 1000), mediaType: "video", creationTime: Date.now() });
+      const duration = Number.isFinite(video.duration) ? Math.round(video.duration * MILLISECONDS_PER_SECOND) : undefined;
+      resolve({ id: url, uri: url, width: video.videoWidth, height: video.videoHeight, duration, mediaType: "video", creationTime: Date.now() });
     };
     video.onerror = () => resolve({ id: url, uri: url, width: 0, height: 0, mediaType: "video", creationTime: Date.now() });
     video.src = url;
@@ -42,7 +44,14 @@ export async function pickMediaFromGallery(): Promise<DeviceAsset[]> {
 
 function waitForFiles(input: HTMLInputElement): Promise<File[]> {
   return new Promise((resolve) => {
-    input.onchange = () => resolve(input.files ? Array.from(input.files) : []);
+    const cleanup = () => {
+      input.removeEventListener("change", handleChange);
+      input.removeEventListener("cancel", handleCancel);
+    };
+    const handleChange = () => { cleanup(); resolve(input.files ? Array.from(input.files) : []); };
+    const handleCancel = () => { cleanup(); resolve([]); };
+    input.addEventListener("change", handleChange);
+    input.addEventListener("cancel", handleCancel);
     input.click();
   });
 }

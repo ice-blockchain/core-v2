@@ -5,6 +5,9 @@ import { Button, Icon, Text, useTheme } from '@ion/ui';
 import type { IconName } from '@ion/ui';
 import { buildDeniedContainerStyle, buildDeniedHeaderStyle, buildDeniedBodyStyle, buildDeniedIconCircleStyle } from './permission-denied-styles';
 
+const HEADER_ICON_SIZE = 36;
+const BUTTON_WIDTH = 287;
+
 interface PermissionDeniedContentProps {
   iconName: IconName;
   headerTitle: string;
@@ -24,7 +27,7 @@ function DeniedHeader({ iconName, headerTitle }: Pick<PermissionDeniedContentPro
   return (
     <View style={headerStyle}>
       <View style={circleStyle}>
-        <Icon name={iconName} size={scale(36)} color={theme.colors.onPrimaryAccent} />
+        <Icon name={iconName} size={scale(HEADER_ICON_SIZE)} color={theme.colors.onPrimaryAccent} />
       </View>
       <Text variant="headline1">{headerTitle}</Text>
     </View>
@@ -51,7 +54,7 @@ export function PermissionDeniedContent(props: PermissionDeniedContentProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const containerStyle = useMemo(() => buildDeniedContainerStyle(), []);
-  const buttonWidth = useMemo(() => ({ width: scale(287) }), [scale]);
+  const buttonWidth = useMemo(() => ({ width: scale(BUTTON_WIDTH) }), [scale]);
 
   return (
     <View style={containerStyle}>

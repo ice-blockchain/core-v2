@@ -11,36 +11,58 @@ interface FetchPhotosResult {
 
 type FetchFn = (opts: { first: number; after?: string | undefined }) => Promise<FetchPhotosResult>;
 
+function usePaginationRefs() {
+  const cursorRef = useRef<string | undefined>(undefined);
+  const hasMoreRef = useRef(true);
+  const isLoadingRef = useRef(false);
+  return { cursorRef, hasMoreRef, isLoadingRef };
+}
+
+interface LoadInitialDeps {
+  fetchPhotos: FetchFn;
+  refs: ReturnType<typeof usePaginationRefs>;
+  setters: { setAssets: (a: DeviceAsset[]) => void; setIsLoading: (b: boolean) => void };
+}
+
+function useLoadInitial({ fetchPhotos, refs, setters }: LoadInitialDeps) {
+  return useCallback(async () => {
+    setters.setIsLoading(true);
+    refs.isLoadingRef.current = true;
+    try {
+      const result = await fetchPhotos({ first: PAGE_SIZE });
+      refs.cursorRef.current = result.endCursor;
+      refs.hasMoreRef.current = result.hasNextPage;
+      setters.setAssets(result.assets);
+    } catch (error) {
+      console.error('Failed to load photos', error);
+    } finally {
+      refs.isLoadingRef.current = false;
+      setters.setIsLoading(false);
+    }
+  }, [fetchPhotos, refs, setters]);
+}
+
 export function useAssetPagination(fetchPhotos: FetchFn) {
   const [assets, setAssets] = useState<DeviceAsset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const cursorRef = useRef<string | undefined>(undefined);
-  const hasMoreRef = useRef(true);
-
-  const loadInitial = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await fetchPhotos({ first: PAGE_SIZE });
-      cursorRef.current = result.endCursor;
-      hasMoreRef.current = result.hasNextPage;
-      setAssets(result.assets);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchPhotos]);
+  const refs = usePaginationRefs();
+  const setters = { setAssets, setIsLoading };
+  const loadInitial = useLoadInitial({ fetchPhotos, refs, setters });
 
   const loadMore = useCallback(async () => {
-    if (!hasMoreRef.current || isLoading) return;
+    if (!refs.hasMoreRef.current || refs.isLoadingRef.current) return;
+    refs.isLoadingRef.current = true;
     setIsLoading(true);
     try {
-      const result = await fetchPhotos({ first: PAGE_SIZE, after: cursorRef.current });
-      cursorRef.current = result.endCursor;
-      hasMoreRef.current = result.hasNextPage;
+      const result = await fetchPhotos({ first: PAGE_SIZE, after: refs.cursorRef.current });
+      refs.cursorRef.current = result.endCursor;
+      refs.hasMoreRef.current = result.hasNextPage;
       setAssets((prev) => [...prev, ...result.assets]);
     } finally {
+      refs.isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [fetchPhotos, isLoading]);
+  }, [fetchPhotos, refs]);
 
   return { assets, isLoading, loadInitial, loadMore };
 }
