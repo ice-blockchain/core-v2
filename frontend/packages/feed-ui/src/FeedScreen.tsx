@@ -27,7 +27,7 @@ export function FeedScreen() {
       <FeedStoriesSection />
       <View style={separatorStyle} />
       <View style={styles.content}>
-        <FeedEmptyContent />
+        <FeedEmptyContent category={category} />
       </View>
     </View>
   );
