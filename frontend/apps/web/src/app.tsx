@@ -32,6 +32,7 @@ registerTranslations(i18n, chatTranslations);
 const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
+  Main: CatalogScreen,
   Catalog: CatalogScreen,
   LinkDevice: LinkDeviceScreen,
   NicknameReserved: NicknameReservedScreen,

@@ -83,7 +83,7 @@ export function NotificationsScreen() {
     } catch (error) {
       console.warn("Notification permission denied or unavailable", error);
     }
-    navigation.getParent()?.reset({ index: 0, routes: [{ name: Routes.Catalog }] });
+    navigation.getParent()?.reset({ index: 0, routes: [{ name: Routes.Main }] });
   }, [navigation]);
 
   const sheetScroll = useSheetScroll();

@@ -86,18 +86,12 @@ function useActionStyles() {
 function useHandleContinue(identity: ReturnType<typeof useIdentityKeyValidation>) {
   const appNavigation = useAppNavigation();
   return useCallback(() => {
-    if (!identity.validate()) return;
-    const name = identity.value;
-    if (name === "invalid") {
-      appNavigation.navigate(Routes.Sheet.InvalidCredentials);
-    } else if (name === "password") {
+    if (!(identity.value.trim().length > 0 && !identity.errorMessage)) return;
+    requestAnimationFrame(() => {
       appNavigation.navigate(Routes.Sheet.Verify, {
-        next: { name: Routes.Sheet.AddBiometrics },
-        method: "Password",
+        next: { name: Routes.Main, reset: true },
       });
-    } else {
-      appNavigation.navigate(Routes.Sheet.VerifyOnOtherDevice);
-    }
+    });
   }, [identity, appNavigation]);
 }
 
