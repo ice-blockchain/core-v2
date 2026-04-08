@@ -21,15 +21,15 @@ type rateLimitEntry struct {
 }
 
 type rateLimiter struct {
-	global  *rate.Limiter
-	perIP   *xsync.Map[string, *rateLimitEntry]
-	perKey  *xsync.Map[string, *rateLimitEntry]
-	ipRate  rate.Limit
-	ipBurst int
-	keyRate rate.Limit
+	global   *rate.Limiter
+	perIP    *xsync.Map[string, *rateLimitEntry]
+	perKey   *xsync.Map[string, *rateLimitEntry]
+	ipRate   rate.Limit
+	ipBurst  int
+	keyRate  rate.Limit
 	keyBurst int
-	metrics *MetricsCollectors
-	logger  *slog.Logger
+	metrics  *MetricsCollectors
+	logger   *slog.Logger
 }
 
 func newRateLimiter(logger *slog.Logger, cfg *config.Config, mc *MetricsCollectors) *rateLimiter {
@@ -65,6 +65,18 @@ func (rl *rateLimiter) getOrCreate(m *xsync.Map[string, *rateLimitEntry], key st
 	return entry.limiter
 }
 
+func (rl *rateLimiter) peerIdentity(c *gin.Context) string {
+	if ip := c.ClientIP(); ip != "" {
+		return ip
+	}
+	if addr, ok := c.Get(ContextKeyADNLAddress); ok {
+		if s, ok := addr.(string); ok && s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
 func (rl *rateLimiter) handle(c *gin.Context) {
 	if !rl.global.Allow() {
 		if rl.metrics != nil {
@@ -74,14 +86,16 @@ func (rl *rateLimiter) handle(c *gin.Context) {
 		return
 	}
 
-	ip := c.ClientIP()
-	ipLimiter := rl.getOrCreate(rl.perIP, ip, rl.ipRate, rl.ipBurst)
-	if !ipLimiter.Allow() {
-		if rl.metrics != nil {
-			rl.metrics.RateLimitedByIP.Inc()
+	peer := rl.peerIdentity(c)
+	if peer != "" {
+		ipLimiter := rl.getOrCreate(rl.perIP, peer, rl.ipRate, rl.ipBurst)
+		if !ipLimiter.Allow() {
+			if rl.metrics != nil {
+				rl.metrics.RateLimitedByIP.Inc()
+			}
+			rl.reject(c)
+			return
 		}
-		rl.reject(c)
-		return
 	}
 
 	if key, ok := c.Get(ContextKeyTxSigner); ok {

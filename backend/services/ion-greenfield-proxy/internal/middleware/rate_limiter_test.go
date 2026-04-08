@@ -189,6 +189,96 @@ func TestDifferentKeysHaveIndependentLimits(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code, "fresh key should not be limited")
 }
 
+func setupWithADNL(t *testing.T, perKey, perIP, global int, adnlAddr string) (*gin.Engine, *middleware.MetricsCollectors, func()) {
+	t.Helper()
+	reg := prometheus.NewRegistry()
+	mc := middleware.NewMetricsCollectors(reg)
+	cfg := &config.Config{
+		RateLimitPerKey: perKey,
+		RateLimitPerIP:  perIP,
+		RateLimitGlobal: global,
+	}
+
+	mw, stopCleanup := middleware.RateLimiter(discardLogger(), cfg, mc)
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		if adnlAddr != "" {
+			c.Set(middleware.ContextKeyADNLAddress, adnlAddr)
+		}
+		c.Next()
+	})
+	r.Use(mw)
+	r.GET("/test", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+	return r, mc, stopCleanup
+}
+
+func TestADNLAddressFallbackWhenNoIP(t *testing.T) {
+	t.Parallel()
+	r, mc, stop := setupWithADNL(t, 10000, 5, 10000, "76bd871f2f3f0601e6c8bdc54fb597027fd6f1035cb739f54ffce50ca657b9eb")
+	defer stop()
+
+	// Empty RemoteAddr simulates ADNL — per-IP bucket should key on ADNL address
+	rejected := fireRequests(r, 8, "")
+	require.GreaterOrEqual(t, rejected, 2, "expected rejections keyed on ADNL address")
+	require.GreaterOrEqual(t, readCounter(mc.RateLimitedByIP), float64(2))
+}
+
+func TestDifferentADNLAddressesHaveIndependentLimits(t *testing.T) {
+	t.Parallel()
+	reg := prometheus.NewRegistry()
+	mc := middleware.NewMetricsCollectors(reg)
+	cfg := &config.Config{
+		RateLimitPerKey: 10000,
+		RateLimitPerIP:  5,
+		RateLimitGlobal: 10000,
+	}
+	mw, stop := middleware.RateLimiter(discardLogger(), cfg, mc)
+	defer stop()
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		if addr := c.GetHeader("X-Test-ADNL"); addr != "" {
+			c.Set(middleware.ContextKeyADNLAddress, addr)
+		}
+		c.Next()
+	})
+	r.Use(mw)
+	r.GET("/test", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	// Exhaust ADNL peer 1 (empty RemoteAddr simulates ADNL transport)
+	for i := 0; i < 6; i++ {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
+		req.RemoteAddr = ""
+		req.Header.Set("X-Test-ADNL", "adnl_peer_1")
+		r.ServeHTTP(w, req)
+	}
+
+	// ADNL peer 2 should still work
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.RemoteAddr = ""
+	req.Header.Set("X-Test-ADNL", "adnl_peer_2")
+	r.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code, "different ADNL peer should not be limited")
+}
+
+func TestNoPeerIdentityPassesThrough(t *testing.T) {
+	t.Parallel()
+	r, mc, stop := setupRateLimiter(t, 10000, 1, 10000)
+	defer stop()
+
+	// Empty RemoteAddr, no ADNL address — should pass (only global limit applies)
+	rejected := fireRequests(r, 5, "")
+	require.Equal(t, 0, rejected, "requests with no peer identity should not be IP-limited")
+	require.Equal(t, float64(0), readCounter(mc.RateLimitedByIP))
+}
+
 func TestReturns429WithCorrectBody(t *testing.T) {
 	t.Parallel()
 	r, _, stop := setupRateLimiter(t, 1000, 1000, 1)
