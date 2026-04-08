@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from "react";
-import { View, Animated, Easing, Pressable } from "react-native";
+import { View, Animated, Easing, Pressable, AccessibilityInfo } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
@@ -79,8 +79,11 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (isVisible) setIsMounted(true);
-  }, [isVisible]);
+    if (isVisible) {
+      setIsMounted(true);
+      AccessibilityInfo.announceForAccessibility(message);
+    }
+  }, [isVisible, message]);
 
   const handleHideComplete = useCallback(() => {
     setIsMounted(false);
@@ -129,7 +132,12 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
 
   return (
     <Animated.View style={animatedStyle}>
-      <Pressable onPress={onDismiss} style={containerStyle}>
+      <Pressable
+        onPress={onDismiss}
+        style={containerStyle}
+        accessibilityRole="alert"
+        accessibilityLabel={message}
+      >
         <IconBadge
           backgroundColor={colors.onPrimaryAccent}
           iconColor={colors.primaryAccent}
