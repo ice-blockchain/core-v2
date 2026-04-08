@@ -102,6 +102,7 @@ export const authDE: Record<keyof typeof authEN, string> = {
   errorInvalidEmail: 'Ungültige E-Mail-Adresse.',
   errorPasswordFlowNotAvailable: 'Passwort-Anmeldung ist für dieses Konto nicht verfügbar.',
   errorWalletNotFound: 'Wallet nicht gefunden.',
+  errorServerError: 'Serverfehler. Bitte versuche es später erneut.',
   errorUnknown: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
   identityKeyNameNoteModalTitle: 'Information',
   identityKeyNameNoteTitle: 'Name des Identitätsschlüssels',

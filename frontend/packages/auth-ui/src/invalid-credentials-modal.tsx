@@ -1,9 +1,8 @@
-import { useCallback, useMemo } from "react";
-import { StyleSheet, View } from "react-native";
-import type { ViewStyle } from "react-native";
-import { Button, Icon, Text, useTheme } from "@ion/ui";
+import { useCallback } from "react";
+import { StyleSheet } from "react-native";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { DynamicSheet, InformationSheetContent, useAppNavigation } from "@ion/navigation";
+import { SingleActionSheetScreen, useAppNavigation } from "@ion/navigation";
 
 function InvalidCredentialsDescription() {
   const { colors } = useTheme();
@@ -15,46 +14,22 @@ function InvalidCredentialsDescription() {
   );
 }
 
-function buildButtonContainerStyle(scale: (n: number) => number): ViewStyle {
-  return {
-    paddingHorizontal: scale(16),
-    paddingBottom: scale(16),
-    paddingTop: scale(12),
-  };
-}
-
-function CloseButton() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
+export function InvalidCredentialsModal() {
   const navigation = useAppNavigation();
-
-  const containerStyle = useMemo(() => buildButtonContainerStyle(scale), [scale]);
 
   const handleClose = useCallback(() => {
     if (navigation.canGoBack()) navigation.goBack();
   }, [navigation]);
 
   return (
-    <View style={containerStyle}>
-      <Button label={translate("auth:closeButton")} onPress={handleClose} />
-    </View>
-  );
-}
-
-export function InvalidCredentialsModal() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-
-  return (
-    <DynamicSheet showClose={false}>
-      <InformationSheetContent
-        icon={<Icon name="keys-error" size={scale(80)} color="white" />}
-        title={translate("auth:invalidCredentialsTitle")}
-        description={<InvalidCredentialsDescription />}
-        topPadding={30}
-      />
-      <CloseButton />
-    </DynamicSheet>
+    <SingleActionSheetScreen
+      iconName="keys-error"
+      iconColor="white"
+      title={translate("auth:invalidCredentialsTitle")}
+      description={<InvalidCredentialsDescription />}
+      buttonLabel={translate("auth:closeButton")}
+      onPress={handleClose}
+    />
   );
 }
 

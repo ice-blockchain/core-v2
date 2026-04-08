@@ -20,15 +20,21 @@ export function validateIdentityKeyName(value: string): string | null {
 }
 
 export function useIdentityKeyValidation(initialValue = "") {
-  const [value, setValue] = useState(initialValue);
+  const [value, setRawValue] = useState(initialValue);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const charError = useMemo(() => validateIdentityKeyName(value), [value]);
   const emptyError = submitted && value.length === 0 ? translate("auth:enterIdentityKeyNameError") : null;
+
+  const setValue = useCallback((text: string) => {
+    setRawValue(text);
+    setServerError(null);
+  }, []);
 
   const validate = useCallback(() => {
     setSubmitted(true);
     return value.length > 0 && !charError;
   }, [value, charError]);
 
-  return { value, setValue, errorMessage: charError ?? emptyError, validate };
+  return { value, setValue, errorMessage: charError ?? emptyError ?? serverError, setServerError, validate };
 }

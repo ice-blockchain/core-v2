@@ -1,6 +1,6 @@
 # @ion/auth-ui Architecture
 
-Authentication UI component library. Provides pre-built screens for registration, passkey verification, and password verification flows.
+Authentication UI component library. Provides pre-built screens for registration, passkey verification, password verification, and identity restore flows.
 
 ## Public API
 
@@ -9,44 +9,49 @@ Authentication UI component library. Provides pre-built screens for registration
 - `PasswordRegisterScreen` -- Password-based registration with identity key name, password + confirm, strength checklist
 - `PasskeyRegisterScreen` -- Passkey-based registration
 - `IdentityKeyNameNoteScreen` -- Identity key name informational screen
-- `RestoreMenuScreen` -- Restore method selection (cloud or credential)
-- `RestoreCredentialsScreen` -- Credential-based account restore form
-- `RestoreCloudScreen` -- Cloud-based account restore
-- `SetNewPasswordScreen` -- Set new password after credential recovery
-- `RestoreSuccessModal` -- Success confirmation after restore
-- `IdentityKeyNotFoundModal` -- Error modal for unrecognized identity key
-- `VerifyScreen` -- Verification loading state with method variants: Passkey, Password, Biometrics (auto-dismisses after 3s)
-- `VerifySheetScreen` -- Verification in bottom sheet
+- `RestoreIdentityScreen` -- Restore method selection (cloud or credentials)
+- `RestoreWithRecoveryCredsScreen` -- Credential-based identity key restore (identity key name + recovery key ID + recovery code)
+- `RestoreSetNewPasswordScreen` -- Set new password after credential recovery
+- `RestoreSuccessScreen` -- Success confirmation after restore
+- `LinkDeviceScreen` -- Device linking screen
+- `VerifySheetScreen` -- Verification in bottom sheet (passkey or password method)
+- `VerifyOnOtherDeviceScreen` -- Cross-device verification
 - `AddBiometricsScreen` -- Biometrics setup screen
+- `AddPasskeyCredentialsScreen` -- Passkey credentials setup
 - `InvalidCredentialsModal` -- Error modal for invalid credentials
 - `ConfirmPasswordScreen` -- Password confirmation screen
-- `VerifyPasswordBackground`, `VerifyPasswordOverlay` -- Password verification modal
 
-### Components
-- `PrimaryButton`, `SecondaryButton`, `TextButton` -- Button variants
-- `RegisterHeader`, `SheetHeader` -- Header layouts
-- `SecuredByFooter`, `TermsFooter` -- Footer branding
-- `RegisterForm` -- Identity key form with validation
-- `PasskeyBenefitList` -- Educational passkey benefits
-- `PasswordStrengthChecklist` -- Visual password rules
+### Shared Components
+- `PrimaryButton` -- Primary action button
+- `RegisterHeader` -- Auth screen header layout
+- `AuthFooter` -- Footer branding
+- `PasswordFormFields` -- Reusable password + confirm fields with strength checklist
+- `IdentityKeyNameInput` -- Identity key name input with info button
+- `RecoveryKeyIdInput` -- Recovery key ID input
+- `RecoveryCodeInput` -- Recovery code input
+- `RestoreOptionCard` -- Restore method selection card
+
+### Context
+- `AuthActionsContext` -- React context providing auth actions to screens
+- `useAuthActions()` -- Hook to consume auth actions from context
+
+### Hooks
+- `useIdentityKeyValidation()` -- Identity key form state with validation
+- `usePasswordForm()` -- Password + confirm form state with rules
 
 ### Validation
 - `validateIdentityKeyName(value)` -- Sync: returns error string or null
-- `useIdentityKeyValidation()` -- Hook with state management
 - `buildPasswordRules(password)` -- Returns `PasswordRule[]`
 - `areAllPasswordRulesMet(password)` -- Boolean check
-
-### Icons
-21 SVG icon components (auth-specific: passkey, fingerprint, identity key, etc.)
+- `isInlineAuthError(code)` -- Checks if error should be shown inline vs modal
 
 ## Authentication Flows
 
 ```
 GetStarted -> Register (new user, password or passkey)
-           -> VerifyPasskey (existing user)
-           -> VerifyPassword (fallback)
-           -> RestoreMenu -> RestoreCredentials -> SetNewPassword
-                          -> RestoreCloud
+           -> VerifySheet (existing user, passkey or password)
+           -> RestoreIdentity -> RestoreWithRecoveryCreds -> RestoreSetNewPassword -> RestoreSuccess
+                              -> RestoreCloud (placeholder, not yet implemented)
 ```
 
 ## Validation Rules
@@ -63,41 +68,47 @@ GetStarted -> Register (new user, password or passkey)
 
 ## Design Decisions
 
-- **Callback-driven navigation**: Screens receive `onNavigateToX`, `onContinue`, `onBack` callbacks. No router dependency.
-- **Self-contained icons**: 21 custom SVG components rather than using `@ion/ui` icon registry (auth-specific visuals).
-- **Hook-based forms**: `useRegisterPasswordForm()` and `useIdentityKeyValidation()` encapsulate form state.
-- **Hardcoded styling**: Uses direct hex colors rather than `@ion/ui` tokens (predates token system).
+- **Context-driven actions**: Screens consume auth operations via `AuthActionsContext` rather than importing actions directly. This decouples UI from store implementation.
+- **Navigator-driven navigation**: Screens use `useAuthNavigation()` and `useAppNavigation()` from `@ion/navigation`.
+- **Self-contained icons**: Custom SVG components for auth-specific visuals (passkey, fingerprint, identity key, etc.).
+- **Hook-based forms**: `usePasswordForm()` and `useIdentityKeyValidation()` encapsulate form state and validation.
 
 ## Dependencies
 
-- **Runtime**: `@ion/ui` (TextField component)
-- **Peer deps**: `react`, `react-native`, `react-native-svg`
-- **Downstream**: `@ion/ui` (foundation)
-- **Upstream consumers**: App shells (mobile/web auth screens)
+- **Runtime**: `@ion/ui` (TextField, Text, Icon, theming), `@ion/localization` (translate), `@ion/navigation` (routing)
+- **Peer deps**: `react`, `react-native`, `react-native-svg`, `@gorhom/bottom-sheet`
+- **Upstream consumers**: App shells (mobile/web auth screens), `@ion/auth` (provides AuthActionsProvider)
 
 ## File Structure
 
 ```
 src/
-  index.ts                          # All exports
+  index.ts                              # All exports
+  auth-actions-context.ts               # AuthActionsContext + useAuthActions
   get-started-screen.tsx
   password-register-screen.tsx
   passkey-register-screen.tsx
   identity-key-name-note-screen.tsx
-  restore-menu-screen.tsx
-  restore-credentials-screen.tsx
-  restore-cloud-screen.tsx
-  set-new-password-screen.tsx
-  restore-success-modal.tsx
-  identity-key-not-found-modal.tsx
-  verify-passkey-screen.tsx
-  verify-passkey-sheet-screen.tsx
-  verify-password-screen.tsx
-  primary-button.tsx, secondary-button.tsx, text-button.tsx
-  register-header.tsx, sheet-header.tsx
-  secured-by-footer.tsx, terms-footer.tsx
-  password-strength-checklist.tsx
-  identity-key-rules.ts (+test)
-  password-rules.tsx (+test)
-  [SVG icon components]
+  restore-identity-screen.tsx
+  restore-with-recovery-creds-screen.tsx
+  restore-set-new-password-screen.tsx
+  restore-success-screen.tsx
+  verify-sheet-screen.tsx
+  verify-on-other-device-screen.tsx
+  add-biometrics-screen.tsx
+  add-passkey-credentials-screen.tsx
+  link-device-screen.tsx
+  invalid-credentials-modal.tsx
+  confirm-password-screen.tsx
+  primary-button.tsx
+  register-header.tsx
+  auth-footer.tsx
+  password-form-fields.tsx
+  use-password-form.tsx
+  identity-key-name-input.tsx
+  identity-key-rules.ts
+  restore-option-card.tsx
+  restore-key-icon.tsx
+  is-inline-error.ts
+  translations/
 ```

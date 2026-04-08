@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
 import type { ViewStyle } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import { ArrowIcon } from "./arrow-icon";
@@ -9,11 +9,13 @@ interface PrimaryButtonProps {
   onPress?: () => void;
   style?: ViewStyle;
   disabled?: boolean;
+  loading?: boolean;
   showArrow?: boolean;
 }
 
-export function PrimaryButton({ label, onPress, style, disabled, showArrow = true }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress, style, disabled, loading, showArrow = true }: PrimaryButtonProps) {
   const { colors, scale } = useTheme();
+  const isDisabled = disabled || loading;
 
   const buttonStyle = useMemo(() => ({
     ...styles.button,
@@ -27,12 +29,14 @@ export function PrimaryButton({ label, onPress, style, disabled, showArrow = tru
 
   return (
     <Pressable
-      style={[buttonStyle, disabled && styles.disabled, style]}
+      style={[buttonStyle, isDisabled && styles.disabled, style]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
     >
-      <Text variant="body" color={colors.onPrimaryAccent}>{label}</Text>
-      {showArrow && <ArrowIcon size={scale.scaleSize(15)} color={colors.onPrimaryAccent} />}
+      {loading
+        ? <ActivityIndicator color={colors.onPrimaryAccent} />
+        : <Text variant="body" color={colors.onPrimaryAccent}>{label}</Text>}
+      {showArrow && !loading && <ArrowIcon size={scale.scaleSize(15)} color={colors.onPrimaryAccent} />}
     </Pressable>
   );
 }

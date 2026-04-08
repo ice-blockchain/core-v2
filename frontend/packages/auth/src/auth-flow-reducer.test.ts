@@ -3,7 +3,7 @@ import { IdentityErrorCode } from '@ion/identity-client';
 import { authFlowReducer, createInitialState } from './auth-flow-reducer';
 import type { AuthFlowState, AuthFlowError } from './types';
 
-const TEST_ERROR: AuthFlowError = { code: IdentityErrorCode.NETWORK_ERROR, userMessage: 'Connection failed.' };
+const TEST_ERROR: AuthFlowError = { code: IdentityErrorCode.NETWORK_ERROR, numericCode: '602', userMessage: 'Connection failed.' };
 
 describe('createInitialState', () => {
   it('returns get-started phase with no loading or error', () => {

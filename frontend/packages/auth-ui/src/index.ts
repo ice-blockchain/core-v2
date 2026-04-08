@@ -1,3 +1,7 @@
+// Auth Actions Context
+export { AuthActionsContext, useAuthActions } from "./auth-actions-context";
+export type { AuthActions, AuthError, LoginAttemptResult, RegisterResult, PasswordLoginResult } from "./auth-actions-context";
+
 // Screens
 export { GetStartedScreen } from "./get-started-screen";
 export { IdentityKeyNameNoteScreen } from "./identity-key-name-note-screen";
@@ -5,12 +9,13 @@ export { IdentityKeyNotFoundModal } from "./identity-key-not-found-modal";
 export { InvalidCredentialsModal } from "./invalid-credentials-modal";
 export { PasskeyRegisterScreen } from "./passkey-register-screen";
 export { PasswordRegisterScreen } from "./password-register-screen";
-export type { PasswordRegisterScreenProps, RegisterScreenCallbacks } from "./password-register-screen";
+export type { RegisterScreenCallbacks } from "./password-register-screen";
 export { RestoreCloudScreen } from "./restore-cloud-screen";
-export { RestoreCredentialsScreen } from "./restore-credentials-screen";
-export { RestoreMenuScreen } from "./restore-menu-screen";
-export { RestoreSuccessModal } from "./restore-success-modal";
-export { SetNewPasswordScreen } from "./set-new-password-screen";
+export { RestoreIdentityScreen } from "./restore-identity-screen";
+export { RestoreWithRecoveryCredsScreen } from "./restore-with-recovery-creds-screen";
+
+export { RestoreSetNewPasswordScreen } from "./restore-set-new-password-screen";
+export { RestoreSuccessScreen } from "./restore-success-screen";
 export { AddBiometricsScreen } from "./add-biometrics-screen";
 export { AddPasskeyCredentialsScreen } from "./add-passkey-credentials-screen";
 export { LinkDeviceScreen, hasLinkDeviceBeenShown, markLinkDeviceShown } from "./link-device-screen";
@@ -18,7 +23,7 @@ export { VerifyOnOtherDeviceScreen } from "./verify-on-other-device-screen";
 export { VerifyScreen } from "./verify-screen";
 export { VerifySheetScreen } from "./verify-sheet-screen";
 export { VerifyPasswordBackground, VerifyPasswordOverlay } from "./verify-password-screen";
-export { ConfirmPasswordScreen } from "./confirm-password-screen";
+export { ConfirmPasswordScreen, getConfirmedPassword } from "./confirm-password-screen";
 
 // Buttons
 export { PrimaryButton } from "./primary-button";
@@ -39,12 +44,18 @@ export { RestoreOptionCard } from "./restore-option-card";
 
 // Inputs
 export { IdentityKeyNameInput } from "./identity-key-name-input";
+export { RecoveryKeyIdInput } from "./recovery-key-id-input";
+export { RecoveryCodeInput } from "./recovery-code-input";
 export { PasswordInput } from "./password-input";
 
 // Forms
+export { PasswordFormFields } from "./password-form-fields";
 export { RegisterForm } from "./register-form";
 export { PasskeyBenefitList } from "./passkey-benefit-list";
 export { PasswordStrengthChecklist } from "./password-strength-checklist";
+
+// Hooks
+export { usePasswordForm } from "./use-password-form";
 
 // Validation
 export { isValidIdentityKeyName, validateIdentityKeyName, useIdentityKeyValidation } from "./identity-key-rules";

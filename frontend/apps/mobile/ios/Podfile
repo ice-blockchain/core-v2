@@ -26,6 +26,11 @@ if linkage != nil
 end
 
 target 'mobile' do
+  # RN 0.84 enables prebuilt artifacts by default. Force source builds to avoid
+  # header resolution issues with some third-party pods in our local setup.
+  ENV['RCT_USE_RN_DEP'] = '0'
+  ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+
   config = use_native_modules!
 
   use_react_native!(

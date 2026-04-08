@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
+import { CommonActions } from "@react-navigation/native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
@@ -10,64 +11,26 @@ import { TextButton } from "./text-button";
 import { AuthFooter } from "./auth-footer";
 import { IceLogoIcon } from "./ice-logo-icon";
 import { CreateAccountIcon } from "./create-account-icon";
+import { RegisterHeader } from "./register-header";
 import { IdentityKeyNameInput } from "./identity-key-name-input";
 import { useIdentityKeyValidation } from "./identity-key-rules";
-
-function useHeaderStyles() {
-  const { colors, scale } = useTheme();
-
-  return useMemo(() => ({
-    iconCircle: {
-      ...styles.iconCircle,
-      width: scale.scaleSize(65),
-      height: scale.scaleSize(65),
-      borderRadius: scale.scaleRadius(32.5),
-      marginBottom: scale.scaleSize(20),
-      backgroundColor: colors.primaryAccent,
-    },
-    subtitle: {
-      ...styles.subtitle,
-      maxWidth: scale.scaleSize(320),
-      marginTop: scale.scaleSize(8),
-      marginBottom: scale.scaleSize(56),
-    },
-    logoWidth: scale.scaleSize(44),
-    logoHeight: scale.scaleSize(45),
-  }), [colors.primaryAccent, scale]);
-}
-
-function GetStartedHeader() {
-  const { colors } = useTheme();
-  const headerStyles = useHeaderStyles();
-
-  return (
-    <>
-      <View style={headerStyles.iconCircle}>
-        <IceLogoIcon width={headerStyles.logoWidth} height={headerStyles.logoHeight} />
-      </View>
-      <Text variant="headline1" color={colors.primaryText}>{translate("auth:getStartedTitle")}</Text>
-      <Text variant="body2" color={colors.tertiaryText} style={headerStyles.subtitle}>
-        {translate("auth:getStartedSubtitle")}
-      </Text>
-    </>
-  );
-}
+import { useAuthActions } from "./auth-actions-context";
+import type { AuthActions } from "./auth-actions-context";
+import { isInlineAuthError } from "./is-inline-error";
 
 function useGetStartedNavigation() {
   const navigation = useAuthNavigation();
+  const { isPasskeyAvailable } = useAuthActions();
 
   return {
     handleRegister: useCallback(() => {
-      const route = Date.now() % 2 === 0
-        ? Routes.Auth.PasswordRegister
-        : Routes.Auth.PasskeyRegister;
+      const route = isPasskeyAvailable()
+        ? Routes.Auth.PasskeyRegister
+        : Routes.Auth.PasswordRegister;
       navigation.navigate(route);
-    }, [navigation]),
-    handleVerifyPassword: useCallback(() => {
-      navigation.navigate(Routes.Auth.ProfileSetup);
-    }, [navigation]),
+    }, [navigation, isPasskeyAvailable]),
     handleRestore: useCallback(() => {
-      navigation.navigate(Routes.Auth.ProfileSetup);
+      navigation.navigate(Routes.Auth.RestoreIdentity);
     }, [navigation]),
   };
 }
@@ -83,16 +46,49 @@ function useActionStyles() {
   }), [scale]);
 }
 
+interface LoginResultContext {
+  identity: ReturnType<typeof useIdentityKeyValidation>;
+  navigation: ReturnType<typeof useAppNavigation>;
+  onAuthSuccess: (username: string) => void;
+}
+
+function handleLoginResult(
+  result: Awaited<ReturnType<AuthActions['attemptLogin']>>,
+  ctx: LoginResultContext,
+): void {
+  if (!result) return;
+  if (result.outcome === 'authenticated') {
+    ctx.onAuthSuccess(ctx.identity.value);
+    const resetAction = CommonActions.reset({ index: 0, routes: [{ name: Routes.Main }] }) as unknown as { type: string; payload: object };
+    ctx.navigation.dispatch(resetAction);
+    return;
+  }
+  if (result.outcome === 'needs-password') {
+    ctx.navigation.navigate(Routes.Sheet.Verify, {
+      next: { name: Routes.Main, reset: true },
+      method: "Password",
+      identityKeyName: result.identityKeyName,
+    });
+    return;
+  }
+  if (isInlineAuthError(result.error.code)) {
+    ctx.identity.setServerError(result.error.userMessage);
+  } else {
+    ctx.navigation.navigate(Routes.Sheet.GeneralError, { errorCode: result.error.numericCode });
+  }
+}
+
 function useHandleContinue(identity: ReturnType<typeof useIdentityKeyValidation>) {
   const appNavigation = useAppNavigation();
-  return useCallback(() => {
-    if (!(identity.value.trim().length > 0 && !identity.errorMessage)) return;
-    requestAnimationFrame(() => {
-      appNavigation.navigate(Routes.Sheet.Verify, {
-        next: { name: Routes.Main, reset: true },
-      });
-    });
-  }, [identity, appNavigation]);
+  const { attemptLogin, onAuthSuccess, isLoginAttemptLoading } = useAuthActions();
+
+  const handleContinue = useCallback(async () => {
+    if (!identity.validate()) return;
+    const result = await attemptLogin(identity.value);
+    handleLoginResult(result, { identity, navigation: appNavigation, onAuthSuccess });
+  }, [identity, appNavigation, attemptLogin, onAuthSuccess]);
+
+  return { handleContinue, isLoading: isLoginAttemptLoading };
 }
 
 function GetStartedActions({ identity, nav }: {
@@ -101,12 +97,12 @@ function GetStartedActions({ identity, nav }: {
 }) {
   const { colors } = useTheme();
   const actionStyles = useActionStyles();
-  const handleContinue = useHandleContinue(identity);
+  const { handleContinue, isLoading } = useHandleContinue(identity);
 
   return (
     <>
       <View style={actionStyles.continueWrapper}>
-        <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} />
+        <PrimaryButton label={translate("auth:continueButton")} onPress={handleContinue} loading={isLoading} />
       </View>
       <Text variant="caption" color={colors.tertiaryText} style={actionStyles.orText}>
         {translate("auth:orDivider")}
@@ -131,6 +127,7 @@ function useContentStyles() {
   return useMemo(() => ({
     page: { ...styles.page, paddingTop: scale.scaleSize(5) },
     field: { width: scale.scaleSize(287) },
+    headerWrapper: { marginBottom: scale.scaleSize(56) },
   }), [scale]);
 }
 
@@ -139,17 +136,19 @@ function GetStartedContent({ identity, nav }: {
   nav: ReturnType<typeof useGetStartedNavigation>;
 }) {
   const sheetScroll = useSheetScroll();
-  const appNavigation = useAppNavigation();
   const contentStyles = useContentStyles();
-  const handleInfoPress = useCallback(() => {
-    appNavigation.navigate(Routes.Sheet.IdentityKeyNameNote);
-  }, [appNavigation]);
 
   return (
     <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
       <View style={contentStyles.page}>
-        <GetStartedHeader />
-        <IdentityKeyNameInput identity={identity} onInfoPress={handleInfoPress} style={contentStyles.field} />
+        <View style={contentStyles.headerWrapper}>
+          <RegisterHeader
+            icon={<IceLogoIcon />}
+            title={translate("auth:getStartedTitle")}
+            subtitle={translate("auth:getStartedSubtitle")}
+          />
+        </View>
+        <IdentityKeyNameInput identity={identity} style={contentStyles.field} />
         <GetStartedActions identity={identity} nav={nav} />
         <AuthFooter />
       </View>
@@ -185,12 +184,5 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: "center",
     width: "100%",
-  },
-  iconCircle: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  subtitle: {
-    textAlign: "center",
   },
 });

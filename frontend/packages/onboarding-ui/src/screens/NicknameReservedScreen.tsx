@@ -1,6 +1,6 @@
-import { Icon, Text, useTheme } from "@ion/ui";
+import { Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { DynamicSheet, InformationSheetContent } from "@ion/navigation";
+import { InfoSheetScreen } from "@ion/navigation";
 
 const CONTACT_EMAIL = "hi@ice.io";
 
@@ -18,18 +18,17 @@ function DescriptionWithEmail({ color, emailColor }: { color: string; emailColor
 }
 
 export function NicknameReservedScreen() {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
+  const { colors } = useTheme();
 
   return (
-    <DynamicSheet title={translate("onboarding:nicknameReservedModalTitle")}>
-      <InformationSheetContent
-        icon={<Icon name="name-reserved" size={scale(80)} color={theme.colors.secondaryText} />}
-        title={translate("onboarding:nicknameReservedTitle")}
-        description={
-          <DescriptionWithEmail color={theme.colors.secondaryText} emailColor={theme.colors.primaryAccent} />
-        }
-      />
-    </DynamicSheet>
+    <InfoSheetScreen
+      headerTitle={translate("onboarding:nicknameReservedModalTitle")}
+      iconName="name-reserved"
+      iconColor={colors.secondaryText}
+      title={translate("onboarding:nicknameReservedTitle")}
+      description={
+        <DescriptionWithEmail color={colors.secondaryText} emailColor={colors.primaryAccent} />
+      }
+    />
   );
 }

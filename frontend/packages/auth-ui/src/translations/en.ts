@@ -96,6 +96,7 @@ export const authEN = {
   errorInvalidEmail: 'Invalid email address.',
   errorPasswordFlowNotAvailable: 'Password login is not available for this account.',
   errorWalletNotFound: 'Wallet not found.',
+  errorServerError: 'Server error. Please try again later.',
   errorUnknown: 'Something went wrong. Please try again.',
   identityKeyNameNoteModalTitle: 'Information',
   identityKeyNameNoteTitle: 'Identity key name',

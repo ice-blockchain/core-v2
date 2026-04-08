@@ -18,7 +18,7 @@ export async function handleRegister(
 ): Promise<void> {
   const { dispatch } = deps;
   if (!isValidIdentityKeyName(data.identityKeyName)) {
-    dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', userMessage: translate('auth:errorInvalidIdentityKeyName') } });
+    dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', numericCode: '600', userMessage: translate('auth:errorInvalidIdentityKeyName') } });
     return;
   }
   dispatch({ type: 'SET_LOADING', isLoading: true });

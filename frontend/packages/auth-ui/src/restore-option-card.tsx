@@ -10,19 +10,31 @@ interface RestoreOptionCardProps {
   onPress?: () => void;
 }
 
+function useCardStyles() {
+  const { colors, scale } = useTheme();
+
+  return useMemo(() => ({
+    card: {
+      ...styles.card,
+      borderRadius: scale.scaleRadius(16),
+      paddingVertical: scale.scaleSize(16),
+      paddingHorizontal: scale.scaleSize(20),
+      backgroundColor: colors.tertiaryBackground,
+    },
+    content: { ...styles.content, gap: scale.scaleSize(8) },
+    textContainer: { ...styles.textContainer, gap: scale.scaleSize(4) },
+  }), [colors.tertiaryBackground, scale]);
+}
+
 export function RestoreOptionCard({ icon, title, description, onPress }: RestoreOptionCardProps) {
   const { colors } = useTheme();
-
-  const cardStyle = useMemo(() => ({
-    ...styles.card,
-    backgroundColor: colors.tertiaryBackground,
-  }), [colors.tertiaryBackground]);
+  const cardStyles = useCardStyles();
 
   return (
-    <Pressable style={cardStyle} onPress={onPress}>
-      <View style={styles.content}>
+    <Pressable style={cardStyles.card} onPress={onPress}>
+      <View style={cardStyles.content}>
         {icon}
-        <View style={styles.textContainer}>
+        <View style={cardStyles.textContainer}>
           <Text variant="body" color={colors.primaryText}>{title}</Text>
           <Text variant="caption3" color={colors.secondaryText} style={styles.description}>{description}</Text>
         </View>
@@ -33,22 +45,16 @@ export function RestoreOptionCard({ icon, title, description, onPress }: Restore
 
 const styles = StyleSheet.create({
   card: {
-    width: 300,
-    borderRadius: 16,
-    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
   content: {
     alignItems: "center",
-    gap: 8,
   },
   textContainer: {
     alignItems: "center",
-    gap: 4,
   },
   description: {
     textAlign: "center",
-    width: 258,
   },
 });

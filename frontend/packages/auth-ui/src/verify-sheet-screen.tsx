@@ -5,7 +5,8 @@ import { IONLoader, useTheme } from "@ion/ui";
 import { Routes, Sheet, useAppNavigation } from "@ion/navigation";
 import type { RootStackParamList } from "@ion/navigation";
 import { VerifyScreen } from "./verify-screen";
-import { wasPasswordConfirmed, resetPasswordConfirmed } from "./confirm-password-screen";
+import { wasPasswordConfirmed, getConfirmedPassword, resetPasswordConfirmed } from "./confirm-password-screen";
+import { useAuthActions } from "./auth-actions-context";
 
 type VerifyRoute = RouteProp<RootStackParamList, 'Sheet/Verify'>;
 
@@ -39,7 +40,7 @@ function useDismissHandler() {
   }, [appNavigation, route.params]);
 }
 
-function usePasswordFlow(isPasswordMethod: boolean, handleDismiss: () => void, handleClose: () => void) {
+function useOpenConfirmPassword(isPasswordMethod: boolean) {
   const appNavigation = useAppNavigation();
   const leftScreenRef = useRef(false);
 
@@ -52,20 +53,47 @@ function usePasswordFlow(isPasswordMethod: boolean, handleDismiss: () => void, h
     });
   }, [isPasswordMethod, appNavigation]);
 
+  return leftScreenRef;
+}
+
+interface PasswordFlowHandlers {
+  handleDismiss: () => void;
+  handleClose: () => void;
+}
+
+interface PasswordFlowConfig {
+  isPasswordMethod: boolean;
+  identityKeyName: string | undefined;
+  handlers: PasswordFlowHandlers;
+  leftScreenRef: React.RefObject<boolean>;
+}
+
+function usePasswordLoginOnConfirm(config: PasswordFlowConfig) {
+  const { isPasswordMethod, identityKeyName, handlers, leftScreenRef } = config;
+  const appNavigation = useAppNavigation();
+  const { loginWithPassword, onAuthSuccess } = useAuthActions();
+
   useEffect(() => {
     if (!isPasswordMethod) return;
     const unsubscribe = appNavigation.addListener("focus", () => {
       if (!leftScreenRef.current) return;
       leftScreenRef.current = false;
-      if (wasPasswordConfirmed()) {
-        resetPasswordConfirmed();
-        handleDismiss();
-      } else {
-        handleClose();
-      }
+      if (!wasPasswordConfirmed()) { handlers.handleClose(); return; }
+      const password = getConfirmedPassword();
+      resetPasswordConfirmed();
+      if (!identityKeyName || !password) { handlers.handleClose(); return; }
+      loginWithPassword(identityKeyName, password).then((result) => {
+        if (result.outcome === 'authenticated') { onAuthSuccess(identityKeyName); handlers.handleDismiss(); }
+        else { appNavigation.navigate(Routes.Sheet.GeneralError, { errorCode: result.error.numericCode }); handlers.handleClose(); }
+      });
     });
     return unsubscribe;
-  }, [isPasswordMethod, appNavigation, handleDismiss, handleClose]);
+  }, [isPasswordMethod, identityKeyName, appNavigation, loginWithPassword, onAuthSuccess, handlers, leftScreenRef]);
+}
+
+function usePasswordFlow(config: { isPasswordMethod: boolean; identityKeyName: string | undefined; handlers: PasswordFlowHandlers }) {
+  const leftScreenRef = useOpenConfirmPassword(config.isPasswordMethod);
+  usePasswordLoginOnConfirm({ ...config, leftScreenRef });
 }
 
 export function VerifySheetScreen() {
@@ -73,6 +101,7 @@ export function VerifySheetScreen() {
   const route = useRoute<VerifyRoute>();
   const { scale } = useTheme();
   const method = route.params.method ?? "Passkey";
+  const identityKeyName = route.params.identityKeyName;
   const isPasswordMethod = method === "Password";
   const handleDismiss = useDismissHandler();
 
@@ -80,7 +109,8 @@ export function VerifySheetScreen() {
     if (appNavigation.canGoBack()) appNavigation.goBack();
   }, [appNavigation]);
 
-  usePasswordFlow(isPasswordMethod, handleDismiss, handleClose);
+  const handlers = useMemo(() => ({ handleDismiss, handleClose }), [handleDismiss, handleClose]);
+  usePasswordFlow({ isPasswordMethod, identityKeyName, handlers });
 
   const loader = useMemo(
     () => <IONLoader variant="light" size={scale.scaleSize(30)} />,

@@ -26,8 +26,26 @@ export interface AuthFlowState {
 
 export interface AuthFlowError {
   code: IdentityErrorCode | 'UNKNOWN';
+  numericCode: string;
   userMessage: string;
 }
+
+export interface RecoveryData {
+  identityKeyName: string;
+  recoveryKeyId: string;
+  recoveryCode: string;
+}
+
+export type RestoreResult =
+  | { outcome: 'needs-password'; identityKeyName: string }
+  | { outcome: 'restored' }
+  | { outcome: 'invalid-credentials' }
+  | { outcome: 'error'; error: AuthFlowError };
+
+export type SetNewPasswordResult =
+  | { outcome: 'restored' }
+  | { outcome: 'invalid-credentials' }
+  | { outcome: 'error'; error: AuthFlowError };
 
 export type AuthFlowAction =
   | { type: 'GO_TO_GET_STARTED'; identityKeyName?: string }

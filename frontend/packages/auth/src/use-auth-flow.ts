@@ -1,5 +1,6 @@
 import { useCallback, useReducer, useRef } from 'react';
 import { isPasskeyAvailable } from '@ion/identity-client';
+import { translate } from '@ion/localization';
 import type { AuthFlowAction, AuthFlowConfig, AuthFlowState, AuthScreenProps } from './types';
 import { authFlowReducer, createInitialState } from './auth-flow-reducer';
 import { handleLoginAttempt } from './handle-login-attempt';
@@ -136,7 +137,7 @@ function buildSetNewPasswordProps(input: RestorePropsInput) {
     onContinue: (password: string) => restoreGuard(() => {
       const rd = recoveryDataRef.current;
       if (!rd) {
-        deps.dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', userMessage: 'Recovery session expired. Please try again.' } });
+        deps.dispatch({ type: 'SET_ERROR', error: { code: 'UNKNOWN', numericCode: '600', userMessage: translate('auth:errorUnknown') } });
         deps.dispatch({ type: 'GO_TO_GET_STARTED' });
         return Promise.resolve();
       }

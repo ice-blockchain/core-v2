@@ -62,7 +62,7 @@ function buildInternals(config: HttpClientConfig): ClientInternals {
     maxBodyLength: maxRequestBodySizeBytes,
     retryConfig: config.retryConfig ?? DEFAULT_RETRY_CONFIG,
   });
-  const baseUrl = config.transport ? config.baseUrl : undefined;
+  const baseUrl = config.baseUrl;
   return { config: { timeoutMs, maxRequestBodySizeBytes }, baseUrl, defaultHeaders: config.headers, transport, interceptors: config.interceptors, requestQueue: config.requestQueue };
 }
 
