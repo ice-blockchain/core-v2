@@ -1,31 +1,17 @@
 import { translate } from "@ion/localization";
 import { ProfileEmptyState } from "./ProfileEmptyState";
 import { PROFILE_NAMESPACE } from "./translations";
-import {
-  profileEmptyPostsImage,
-  profileEmptyRepliesImage,
-  profileEmptyVideoImage,
-  profileEmptyArticlesImage,
-} from "./profile-images";
+import type { TabPageConfig } from "./profile-tab-config";
 
 const NS = PROFILE_NAMESPACE;
 
-interface ProfileTabContentProps {
-  activeIndex: number;
+interface ProfileTabPageProps {
+  config: TabPageConfig;
   isCurrentUser: boolean;
   username: string;
 }
 
-const TAB_CONFIG = [
-  { image: profileEmptyPostsImage, ownKey: "emptyPostsOwn", otherKey: "emptyPostsOther" },
-  { image: profileEmptyRepliesImage, ownKey: "emptyRepliesOwn", otherKey: "emptyRepliesOther" },
-  { image: profileEmptyVideoImage, ownKey: "emptyVideosOwn", otherKey: "emptyVideosOther" },
-  { image: profileEmptyArticlesImage, ownKey: "emptyArticlesOwn", otherKey: "emptyArticlesOther" },
-] as const;
-
-export function ProfileTabContent({ activeIndex, isCurrentUser, username }: ProfileTabContentProps) {
-  const config = TAB_CONFIG[activeIndex] ?? TAB_CONFIG[0];
-
+export function ProfileTabPage({ config, isCurrentUser, username }: ProfileTabPageProps) {
   const text = isCurrentUser
     ? translate(`${NS}:${config.ownKey}`)
     : translate(`${NS}:${config.otherKey}`, { username });

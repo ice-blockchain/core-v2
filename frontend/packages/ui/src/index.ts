@@ -97,6 +97,17 @@ export type {
   BottomNavBarSheetAction,
 } from "./components/bottom-nav-bar-types";
 
+// Animated Tab View
+export { AnimatedTabBar } from "./components/AnimatedTabBar";
+export { AnimatedTabPager } from "./components/AnimatedTabPager";
+export { useTabViewState } from "./components/use-tab-view-state";
+export type {
+  AnimatedTabDefinition,
+  AnimatedTabBarProps,
+  AnimatedTabPagerProps,
+  TabViewState,
+} from "./components/animated-tab-view-types";
+
 // Overlay Menu
 export { OverlayMenu } from "./components/OverlayMenu";
 export type { OverlayMenuProps } from "./components/overlay-menu-types";

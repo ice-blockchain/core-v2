@@ -23,6 +23,11 @@ Centralized design system library. Single source of truth for all visual primiti
 - `Icon` -- Renders from registry by name
 - `IconName` -- Union type of 20+ registered icon names
 
+### Animated Tab View
+- `AnimatedTabBar` -- Horizontal scrollable tab bar with animated indicator and color cross-fade, driven by a continuous `SharedValue<number>` position
+- `AnimatedTabPager` -- Wraps `react-native-pager-view` for native horizontal swiping with continuous scroll position tracking. Has `.web.tsx` fallback using `ScrollView` with `pagingEnabled`
+- `useTabViewState()` -- Hook that creates the shared position value, current index, pager ref, and `setPage()` function connecting the tab bar and pager
+
 ### Tokens
 - `colorPalette` -- 19 brand color constants
 - `gradients` -- Predefined gradient definitions
@@ -74,7 +79,7 @@ interface Theme {
 ## Dependencies
 
 - **Downstream**: None (foundation layer)
-- **Peer deps**: `react`, `react-native`, `react-native-safe-area-context`, `react-native-svg`
+- **Peer deps**: `react`, `react-native`, `react-native-safe-area-context`, `react-native-svg`, `react-native-pager-view`, `react-native-reanimated`
 - **Dev deps**: `@svgr/*` (icon generation)
 - **Upstream consumers**: Every UI package and app shell
 

@@ -4,23 +4,26 @@ Profile screen package for the mobile app. Displays user profile information, fo
 
 ## Data Structures
 
-- `ProfileData` — user metadata type: displayName, username, bio, avatar, followers, etc.
+- `ProfileData` -- user metadata type: displayName, username, bio, avatar, followers, etc.
+- `TabPageConfig` -- per-tab config: key, empty state image, translation keys
 - Mock data used for initial implementation; will be replaced by API integration.
 
 ## API Surface
 
-- `ProfileScreen` — main screen component, renders the full profile layout
-- `profileTranslations` — i18n resource array (en/fr/de)
-- `PROFILE_NAMESPACE` — translation namespace constant
+- `ProfileScreen` -- main screen component, renders the full profile layout
+- `profileTranslations` -- i18n resource array (en/fr/de)
+- `PROFILE_NAMESPACE` -- translation namespace constant
 
 ## Dependencies
 
-- `@ion/ui` — Avatar, SmallButton, Text, Icon, HorizontalSeparator, VerticalSeparator, useTheme
-- `@ion/localization` — translate(), TranslationResource
+- `@ion/ui` -- AnimatedTabBar, AnimatedTabPager, useTabViewState, Text, Icon, HorizontalSeparator, useTheme
+- `@ion/localization` -- translate(), TranslationResource
+- `react-native-pager-view` -- native horizontal page swiping (via @ion/ui)
+- `react-native-reanimated` -- scroll animations, shared values
 
 ## Design Decisions
 
-- Tab bar is a generic reusable component (`ProfileTabBar`) — not profile-specific logic
+- Tab system uses `AnimatedTabBar` + `AnimatedTabPager` from `@ion/ui` with a shared `SharedValue<number>` position driving indicator animation, color cross-fade, and page transitions
 - Multi-color empty state illustrations stored as PNG assets (not SVG icons) because the icon generator replaces all colors with a single prop
-- Collapsing header deferred to a follow-up; current layout uses a static ScrollView
-- Tab switching is state-based (no swipe library); swipe can be layered on later
+- Header scroll and tab pager are currently independent (not nested). When real scrollable tab content is added, the layout will need coordinated nested scrolling (collapsible header pins tab bar, inner scroll collapses header first). This is a known architectural debt.
+- Each tab page stays mounted (PagerView default) preserving scroll position and loaded state

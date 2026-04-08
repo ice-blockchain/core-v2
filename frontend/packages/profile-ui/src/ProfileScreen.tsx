@@ -1,22 +1,21 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import type { LayoutChangeEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HorizontalSeparator, useTheme } from "@ion/ui";
+import { AnimatedTabBar, AnimatedTabPager, useTabViewState, useTheme } from "@ion/ui";
+import type { AnimatedTabDefinition } from "@ion/ui";
 import { translate } from "@ion/localization";
-import type { TabDefinition } from "./ProfileTabBar";
 import { ProfileNavBar } from "./ProfileNavBar";
-import { ProfileHeader } from "./ProfileHeader";
-import { ProfileStats } from "./ProfileStats";
-import { ProfileBio } from "./ProfileBio";
-import { ProfileTabBar } from "./ProfileTabBar";
-import { ProfileTabContent } from "./ProfileTabContent";
+import { ProfileScrollHeader } from "./ProfileScrollHeader";
+import { ProfileTabPage } from "./ProfileTabContent";
 import { useProfileScrollAnimation } from "./useProfileScrollAnimation";
 import { MOCK_PROFILE } from "./profile-mock-data";
 import { PROFILE_NAMESPACE } from "./translations";
+import { TAB_PAGE_CONFIG } from "./profile-tab-config";
 
 const NS = PROFILE_NAMESPACE;
 
-function buildTabs(): readonly TabDefinition[] {
+function buildTabs(): readonly AnimatedTabDefinition[] {
   return [
     { key: "posts", label: translate(`${NS}:tabPosts`), iconName: "profile-feed" },
     { key: "replies", label: translate(`${NS}:tabReplies`), iconName: "feed-replies" },
@@ -25,62 +24,70 @@ function buildTabs(): readonly TabDefinition[] {
   ];
 }
 
-function useProfileStyles() {
+function useProfileLayout() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const scale = theme.scale.scaleSize;
-
-  const rootStyle = useMemo(() => ({ flex: 1, backgroundColor: theme.colors.secondaryBackground }), [theme.colors]);
-  const sectionStyle = useMemo(
-    () => ({ paddingHorizontal: scale(16), paddingVertical: scale(12) }),
-    [scale],
-  );
-  const spacerHeight = useMemo(() => insets.top + scale(8), [insets.top, scale]);
-
-  return { rootStyle, sectionStyle, spacerHeight };
+  return {
+    rootStyle: useMemo(() => ({ flex: 1, backgroundColor: theme.colors.secondaryBackground }), [theme.colors]),
+    sectionStyle: useMemo(() => ({ paddingHorizontal: scale(16), paddingVertical: scale(12) }), [scale]),
+    spacerHeight: insets.top + scale(8),
+    tabBarBorderColor: theme.colors.primaryBackground,
+  };
 }
 
-function ProfileScrollContent({ sectionStyle, spacerHeight, profile, isCurrentUser, tabs, activeTab, onTabChange }: {
-  sectionStyle: object; spacerHeight: number; profile: typeof MOCK_PROFILE;
-  isCurrentUser: boolean; tabs: readonly TabDefinition[]; activeTab: number; onTabChange: (i: number) => void;
-}) {
-  return (
-    <>
-      <View style={{ height: spacerHeight }} />
-      <ProfileHeader profile={profile} isCurrentUser={isCurrentUser} />
-      <View style={sectionStyle}>
-        <ProfileStats followingCount={profile.followingCount} followersCount={profile.followersCount} />
-      </View>
-      <ProfileBio profile={profile} />
-      <View style={styles.separatorWrap}><HorizontalSeparator /></View>
-      <ProfileTabBar tabs={tabs} activeIndex={activeTab} onTabChange={onTabChange} />
-      <ProfileTabContent activeIndex={activeTab} isCurrentUser={isCurrentUser} username={profile.username} />
-    </>
-  );
+function usePagerHeight() {
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+
+  const handleHeaderLayout = useCallback((event: LayoutChangeEvent) => {
+    setHeaderHeight(event.nativeEvent.layout.height);
+  }, []);
+
+  const handleScrollViewLayout = useCallback((event: LayoutChangeEvent) => {
+    setScrollViewHeight(event.nativeEvent.layout.height);
+  }, []);
+
+  const isReady = headerHeight > 0 && scrollViewHeight > 0;
+  const pagerHeight = isReady ? scrollViewHeight - headerHeight : 0;
+  const pagerStyle = useMemo(() => ({ height: pagerHeight }), [pagerHeight]);
+
+  return { pagerStyle, handleHeaderLayout, handleScrollViewLayout, isReady };
 }
 
 export function ProfileScreen() {
-  const [activeTab, setActiveTab] = useState(0);
-  const { rootStyle, sectionStyle, spacerHeight } = useProfileStyles();
-  const { scrollHandler, collapsedHeaderOpacity, navBarBgStyle, AnimatedScrollView } = useProfileScrollAnimation();
-  const profile = MOCK_PROFILE;
-  const isCurrentUser = true;
-  const tabs = buildTabs();
+  const { position, currentIndex, setPage, pagerRef } = useTabViewState();
+  const { rootStyle, sectionStyle, spacerHeight, tabBarBorderColor } = useProfileLayout();
+  const { pagerStyle, handleHeaderLayout, handleScrollViewLayout, isReady } = usePagerHeight();
+  const scrollAnim = useProfileScrollAnimation();
+  const [profile, isCurrentUser] = [MOCK_PROFILE, true] as const;
+  const handlePageSelected = useCallback((index: number) => { currentIndex.value = index; }, [currentIndex]);
 
   return (
     <View style={rootStyle}>
-      <AnimatedScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} onScroll={scrollHandler} scrollEventThrottle={16}>
-        <ProfileScrollContent sectionStyle={sectionStyle} spacerHeight={spacerHeight} profile={profile}
-          isCurrentUser={isCurrentUser} tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-      </AnimatedScrollView>
+      <scrollAnim.AnimatedScrollView style={styles.scroll} onScroll={scrollAnim.scrollHandler}
+        scrollEventThrottle={16} onLayout={handleScrollViewLayout}>
+        <View onLayout={handleHeaderLayout}>
+          <ProfileScrollHeader spacerHeight={spacerHeight} sectionStyle={sectionStyle}
+            profile={profile} isCurrentUser={isCurrentUser} />
+          <AnimatedTabBar tabs={buildTabs()} position={position} onTabPress={setPage}
+            style={[styles.tabBarWrap, { borderBottomColor: tabBarBorderColor }]} />
+        </View>
+        {isReady && (
+          <AnimatedTabPager ref={pagerRef} position={position} onPageSelected={handlePageSelected} style={pagerStyle}>
+            {TAB_PAGE_CONFIG.map((config) => (
+              <ProfileTabPage key={config.key} config={config} isCurrentUser={isCurrentUser} username={profile.username} />
+            ))}
+          </AnimatedTabPager>
+        )}
+      </scrollAnim.AnimatedScrollView>
       <ProfileNavBar showBackButton={!isCurrentUser} profile={profile}
-        collapsedHeaderOpacity={collapsedHeaderOpacity} navBarBgAnimatedStyle={navBarBgStyle} />
+        collapsedHeaderOpacity={scrollAnim.collapsedHeaderOpacity} navBarBgAnimatedStyle={scrollAnim.navBarBgStyle} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  scrollContent: { flexGrow: 1 },
-  separatorWrap: { paddingTop: 12 },
+  tabBarWrap: { borderBottomWidth: 4 },
 });
