@@ -19,7 +19,7 @@ export interface WalletsDataSource {
   listWallets(username: string): Promise<ListWalletsResponse>;
   getWalletAssets(walletId: string, username: string): Promise<WalletAssetsResponse>;
   getWalletNfts(walletId: string, username: string): Promise<WalletNftsResponse>;
-  probeRestrictedRegion(): Promise<unknown>;
+  probeRestrictedRegion(username: string): Promise<unknown>;
   getWalletHistory(
     walletId: string,
     username: string,
@@ -63,8 +63,10 @@ function buildWalletCoreMethods(httpClient: HttpClient) {
       );
       return body;
     },
-    async probeRestrictedRegion() {
-      const { body } = await httpClient.post<unknown>('/wallets/wa-bogus-restricted-region-probe/transactions', { body: {} });
+    async probeRestrictedRegion(username: string) {
+      const { body } = await httpClient.post<unknown>('/wallets/wa-bogus-restricted-region-probe/transactions', {
+        body: {}, headers: { 'X-Username': username },
+      });
       return body;
     },
   };

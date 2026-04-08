@@ -74,16 +74,16 @@ describe('createWalletsDataSource', () => {
   });
 
   describe('probeRestrictedRegion', () => {
-    it('posts to restricted region probe endpoint with no auth headers', async () => {
+    it('posts to restricted region probe endpoint with username', async () => {
       const httpClient = createMockHttpClient();
       mockPostResponse(httpClient, { restricted: true });
 
       const ds = createWalletsDataSource(httpClient);
-      const result = await ds.probeRestrictedRegion();
+      const result = await ds.probeRestrictedRegion('alice');
 
       expect(httpClient.post).toHaveBeenCalledWith(
         '/wallets/wa-bogus-restricted-region-probe/transactions',
-        { body: {} },
+        { body: {}, headers: { 'X-Username': 'alice' } },
       );
       expect(result).toEqual({ restricted: true });
     });

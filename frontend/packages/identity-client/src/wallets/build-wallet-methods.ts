@@ -65,7 +65,7 @@ function buildWalletReadMethods(readDeps: ReadDeps, writeDeps: WriteDeps) {
     getWalletNfts: (username: string, walletId: string) => getWalletNfts(username, walletId, readDeps),
     createWallet: (username: string, input: CreateWalletInput, signingContext: SigningContext) =>
       createWallet({ username, input, signingContext }, writeDeps),
-    probeRestrictedRegion: () => probeRestrictedRegion(readDeps),
+    probeRestrictedRegion: (username: string) => probeRestrictedRegion(username, readDeps),
   };
 }
 
