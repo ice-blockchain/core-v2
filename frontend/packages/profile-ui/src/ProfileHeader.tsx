@@ -22,7 +22,6 @@ export function ProfileHeader({ profile, isCurrentUser }: ProfileHeaderProps) {
     () => ({
       alignItems: "center" as const,
       gap: scale(12),
-      paddingTop: scale(16),
     }),
     [scale],
   );
@@ -50,13 +49,13 @@ function NameSection({ displayName, isVerified }: { displayName: string; isVerif
 
   return (
     <View style={[styles.nameRow, { gap: scale(6) }]}>
-      <Text variant="subtitle" style={styles.nameText}>{displayName}</Text>
+      <Text variant="subtitle" style={styles.nameText} numberOfLines={1}>{displayName}</Text>
       {isVerified && <Icon name="badge-verify" size={scale(16)} color={colorPalette.lightBlue} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  nameRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16 },
+  nameRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, alignSelf: "stretch" as const, justifyContent: "center" },
   nameText: { textAlign: "center", flexShrink: 1 },
 });
