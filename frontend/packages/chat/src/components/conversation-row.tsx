@@ -3,6 +3,7 @@ import { View } from "react-native";
 import type { ViewStyle } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import type { Conversation } from "../types";
+import { ChatArchiveIcon } from "../icons/ChatArchiveIcon";
 
 type ScaleFunction = (n: number) => number;
 
@@ -13,6 +14,11 @@ function buildRowStyle(scale: ScaleFunction): ViewStyle {
 function buildAvatarStyle(scale: ScaleFunction, backgroundColor: string): ViewStyle {
   const size = scale(48);
   return { width: size, height: size, borderRadius: scale(12), backgroundColor, alignItems: "center", justifyContent: "center", flexShrink: 0 };
+}
+
+function buildFolderAvatarStyle(scale: ScaleFunction, backgroundColor: string, borderColor: string): ViewStyle {
+  const size = scale(48);
+  return { width: size, height: size, borderRadius: scale(12), backgroundColor, borderWidth: 1, borderColor, alignItems: "center", justifyContent: "center", flexShrink: 0 };
 }
 
 function buildUnreadBadgeStyle(backgroundColor: string): ViewStyle {
@@ -36,6 +42,20 @@ function ConversationAvatar({ name }: { readonly name: string }) {
   );
 }
 
+function FolderAvatar() {
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
+  const avatarStyle = useMemo(
+    () => buildFolderAvatarStyle(scale, theme.colors.primaryBackground, theme.colors.onTertiaryFill),
+    [scale, theme.colors.primaryBackground, theme.colors.onTertiaryFill],
+  );
+  return (
+    <View style={avatarStyle}>
+      <ChatArchiveIcon size={scale(24)} color={theme.colors.primaryAccent} />
+    </View>
+  );
+}
+
 const BADGE_TEXT_STYLE = { includeFontPadding: false } as const;
 
 function UnreadBadge({ count }: { readonly count: number }) {
@@ -54,7 +74,7 @@ export function ConversationRow({ conversation }: { readonly conversation: Conve
   const rowStyle = useMemo(() => buildRowStyle(scale), [scale]);
   return (
     <View style={rowStyle}>
-      <ConversationAvatar name={conversation.name} />
+      {conversation.isFolder ? <FolderAvatar /> : <ConversationAvatar name={conversation.name} />}
       <View style={INFO_STYLE}>
         <Text variant="subtitle3" numberOfLines={1}>{conversation.name}</Text>
         <Text variant="body2" color={theme.colors.onTertiaryBackground} numberOfLines={1}>{conversation.preview}</Text>

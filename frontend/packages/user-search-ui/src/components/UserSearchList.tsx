@@ -9,7 +9,7 @@ import { UserSearchRow } from "./UserSearchRow";
 import { UserSearchSkeleton } from "./UserSearchSkeleton";
 import { useUserSearchList } from "./user-search-list-hooks";
 import type { UserSearchListState } from "./user-search-list-hooks";
-import { emptySearchImage, searchHintImage } from "./search-images";
+import { emptySearchImage, searchHintImage, emptySearchDarkImage, searchHintDarkImage } from "./search-images";
 import {
   buildContainerStyle,
   buildContentStyle,
@@ -52,6 +52,7 @@ function useListStyles() {
     searchContainerStyle: useMemo(() => buildSearchBarContainerStyle(scale), [scale]),
     scale,
     colors,
+    isDark: theme.colorMode === "dark",
   };
 }
 
@@ -76,24 +77,27 @@ function UserResultList({ state, renderItem, keyExtractor, onEndReached, content
   );
 }
 
-function ListContent({ state, scale, colors, renderItem, keyExtractor, onEndReached, contentStyle, List }: {
+function ListContent({ state, scale, colors, isDark, renderItem, keyExtractor, onEndReached, contentStyle, List }: {
   state: UserSearchListState;
   scale: (n: number) => number;
   colors: { tertiaryText: string };
+  isDark: boolean;
   renderItem: ({ item }: { item: SearchableUser }) => React.JSX.Element;
   keyExtractor: (item: SearchableUser) => string;
   onEndReached: () => void;
   contentStyle: ReturnType<typeof buildContentStyle>;
   List: FlatListComponent;
 }) {
-  if (state.query.length === 0 && state.isFocused) return <EmptyState scale={scale} tertiaryText={colors.tertiaryText} translationKey="userSearch:searchHint" image={searchHintImage} />;
+  const hintImage = isDark ? searchHintDarkImage : searchHintImage;
+  const emptyImage = isDark ? emptySearchDarkImage : emptySearchImage;
+  if (state.query.length === 0 && state.isFocused) return <EmptyState scale={scale} tertiaryText={colors.tertiaryText} translationKey="userSearch:searchHint" image={hintImage} />;
   if (state.isLoading) return <UserSearchSkeleton />;
-  if (state.users.length === 0 && state.query.length > 0) return <EmptyState scale={scale} tertiaryText={colors.tertiaryText} translationKey="userSearch:noResultsFound" image={emptySearchImage} />;
+  if (state.users.length === 0 && state.query.length > 0) return <EmptyState scale={scale} tertiaryText={colors.tertiaryText} translationKey="userSearch:noResultsFound" image={emptyImage} />;
   return <UserResultList state={state} renderItem={renderItem} keyExtractor={keyExtractor} onEndReached={onEndReached} contentStyle={contentStyle} List={List} />;
 }
 
 export function UserSearchList({ showSearchField = true, onSelectUser, listComponent, testID }: UserSearchListProps) {
-  const { containerStyle, contentStyle, searchContainerStyle, scale, colors } = useListStyles();
+  const { containerStyle, contentStyle, searchContainerStyle, scale, colors, isDark } = useListStyles();
   const [state, actions] = useUserSearchList();
 
   const renderItem = useCallback(
@@ -112,7 +116,7 @@ export function UserSearchList({ showSearchField = true, onSelectUser, listCompo
           <ActiveSearchBar value={state.query} isFocused={state.isFocused} onChangeText={actions.handleQueryChange} isLoading={isSearchLoading} onCancel={actions.handleCancel} onFocus={actions.handleFocus} onBlur={actions.handleBlur} testID="user-search-input" />
         </View>
       )}
-      <ListContent state={state} scale={scale} colors={colors} renderItem={renderItem} keyExtractor={keyExtractor} onEndReached={actions.handleLoadMore} contentStyle={contentStyle} List={listComponent ?? FlatList} />
+      <ListContent state={state} scale={scale} colors={colors} isDark={isDark} renderItem={renderItem} keyExtractor={keyExtractor} onEndReached={actions.handleLoadMore} contentStyle={contentStyle} List={listComponent ?? FlatList} />
     </View>
   );
 }

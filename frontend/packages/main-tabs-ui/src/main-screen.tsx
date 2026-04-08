@@ -13,10 +13,10 @@ import { BottomNavProvider, useBottomNav } from "./bottom-nav-context";
 
 const NS = MAIN_SHELL_NAMESPACE;
 
-function buildTabConfigs(): readonly [BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig] {
+function buildTabConfigs(chatBadgeCount: number): readonly [BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig, BottomNavBarTabConfig] {
   return [
     { label: translate(`${NS}:feedTab`), iconName: "home-off" as const },
-    { label: translate(`${NS}:chatTab`), iconName: "chat-off" as const },
+    { label: translate(`${NS}:chatTab`), iconName: "chat-off" as const, badgeCount: chatBadgeCount },
     { label: translate(`${NS}:walletTab`), iconName: "wallet-off" as const },
     { label: translate(`${NS}:profileTab`), avatar: {} },
   ];
@@ -29,11 +29,11 @@ interface MainScreenProps {
 
 function MainScreenContent({ screens, actionHandlers }: { screens: MainShellScreens; actionHandlers?: SheetActionHandlers | undefined }) {
   const theme = useTheme();
-  const { isBottomNavHidden } = useBottomNav();
+  const { isBottomNavHidden, chatBadgeCount } = useBottomNav();
   const { activeTab, isSheetOpen, handleTabPress, handleCenterPress, handleSheetClose } = useMainTabState();
   const sheetConfigs = useMemo(() => buildSheetConfigs(theme.colors.success, actionHandlers), [theme.colors.success, actionHandlers]);
   const sheetConfig = sheetConfigs[activeTab];
-  const tabConfigs = buildTabConfigs();
+  const tabConfigs = buildTabConfigs(chatBadgeCount);
 
   return (
     <View style={styles.root}>

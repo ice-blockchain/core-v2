@@ -24,6 +24,7 @@
     "@ion/profile-ui": "workspace:*",
     "@ion/identity-client": "workspace:*",
     "@ion/localization": "workspace:*",
+    "@ion/main-tabs-ui": "workspace:*",
     "@ion/media-viewer": "workspace:*",
     "@ion/navigation": "workspace:*",
     "@ion/network": "workspace:*",
