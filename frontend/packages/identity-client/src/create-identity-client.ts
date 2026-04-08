@@ -11,6 +11,11 @@ import { createCredentialsDataSource } from './data-sources/credentials-data-sou
 import { createTwoFADataSource } from './data-sources/two-fa-data-source';
 import { createRecoveryDataSource } from './data-sources/recovery-data-source';
 import { createUserProfileDataSource } from './data-sources/user-profile-data-source';
+import { createWalletsDataSource } from './data-sources/wallets-data-source';
+import { createWalletViewsDataSource } from './data-sources/wallet-views-data-source';
+import { createCoinsDataSource } from './data-sources/coins-data-source';
+import { createNetworksDataSource } from './data-sources/networks-data-source';
+import { createKeysDataSource } from './data-sources/keys-data-source';
 import { createTokenManager } from './token/token-manager';
 import { deduplicatedRefresh } from './token/deduplicated-refresh';
 import { createIdentityAuthInterceptor } from './interceptor/identity-auth-interceptor';
@@ -36,31 +41,33 @@ import { deleteTwoFAMethod } from './auth/delete-two-fa-method';
 import { deleteAccount } from './auth/delete-account';
 import { recoverAccount } from './auth/recover-account';
 import { restoreAuth } from './auth/restore-auth';
+import { buildWalletMethods } from './wallets/build-wallet-methods';
+import { buildCoinMethods } from './coins/build-coin-methods';
+import { buildKeyMethods } from './keys/build-key-methods';
 
 export function createIdentityClient(config: IdentityClientConfig): IdentityClient {
   const ctx = buildContext(config);
-  return { ...buildAuthMethods(ctx), ...buildFeatureMethods(ctx), ...buildUserMethods(ctx), authStore: ctx.authStore };
+  return {
+    ...buildAuthMethods(ctx), ...buildFeatureMethods(ctx), ...buildUserMethods(ctx),
+    ...buildWalletMethods(ctx), ...buildCoinMethods(ctx), ...buildKeyMethods(ctx),
+    authStore: ctx.authStore,
+  };
 }
 
-function buildContext(config: IdentityClientConfig) {
-  const pbkdf2Fn = config.nativePbkdf2;
-  const tokenManager = createTokenManager(config.secureStorage);
-  const authStore = createAuthStore();
+function buildHttpClient(config: IdentityClientConfig, tokenManager: ReturnType<typeof createTokenManager>) {
   const refreshLocks = new Map<string, Promise<void>>();
-
   const lazyDeps = {} as { sessionDataSource: ReturnType<typeof createSessionDataSource> };
   const refreshFn = (username: string) => refreshToken(username, { sessionDataSource: lazyDeps.sessionDataSource, tokenManager });
   const interceptor = createIdentityAuthInterceptor({ tokenManager, refreshFn, refreshLocks, trustedBaseUrl: config.baseUrl });
   const allInterceptors = [...(config.interceptors ?? []), interceptor];
   const httpClient = createHttpClient({ baseUrl: config.baseUrl, interceptors: allInterceptors, headers: { 'X-Client-ID': config.appId } });
   lazyDeps.sessionDataSource = createSessionDataSource(httpClient);
-  const { sessionDataSource } = lazyDeps;
+  return { httpClient, sessionDataSource: lazyDeps.sessionDataSource, refreshLocks, refreshFn };
+}
 
+function buildDataSources(httpClient: ReturnType<typeof createHttpClient>) {
   return {
-    httpClient, tokenManager, authStore, origin: config.appId,
-    refreshLocks, refreshFn, pbkdf2Fn,
     loginDataSource: createLoginDataSource(httpClient),
-    sessionDataSource,
     userActionDataSource: createUserActionDataSource(httpClient),
     registrationDataSource: createRegistrationDataSource(httpClient),
     userDataSource: createUserDataSource(httpClient),
@@ -68,6 +75,22 @@ function buildContext(config: IdentityClientConfig) {
     twoFADataSource: createTwoFADataSource(httpClient),
     recoveryDataSource: createRecoveryDataSource(httpClient),
     userProfileDataSource: createUserProfileDataSource(httpClient),
+    walletsDataSource: createWalletsDataSource(httpClient),
+    walletViewsDataSource: createWalletViewsDataSource(httpClient),
+    coinsDataSource: createCoinsDataSource(httpClient),
+    networksDataSource: createNetworksDataSource(httpClient),
+    keysDataSource: createKeysDataSource(httpClient),
+  };
+}
+
+function buildContext(config: IdentityClientConfig) {
+  const tokenManager = createTokenManager(config.secureStorage);
+  const authStore = createAuthStore();
+  const { httpClient, sessionDataSource, refreshLocks, refreshFn } = buildHttpClient(config, tokenManager);
+  return {
+    httpClient, tokenManager, authStore, origin: config.appId,
+    refreshLocks, refreshFn, pbkdf2Fn: config.nativePbkdf2,
+    sessionDataSource, ...buildDataSources(httpClient),
   };
 }
 

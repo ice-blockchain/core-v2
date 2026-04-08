@@ -24,6 +24,12 @@ export type {
   VerifyTwoFACodeParams,
   DeleteTwoFAMethodInput,
   RecoverAccountInput,
+  MakeTransferParams,
+  SignAndBroadcastEvmParams,
+  GenerateSignatureParams,
+  SignMessageTonParams,
+  UpdateKeyParams,
+  DeriveKeyParams,
 } from './types';
 
 export type {
@@ -31,6 +37,24 @@ export type {
   UpdateSocialProfileInput,
   UpdateSocialProfileResult,
 } from './users/types';
+
+// Wallet types
+export type {
+  Wallet, WalletSigningKey, WalletAsset, WalletNft,
+  WalletHistoryItem, WalletTransferRequest, Requester, TransferRequest, TransferPriority,
+  WalletViewSummary, WalletViewDetail, WalletViewInput, WalletViewCoinRef, WalletViewCoin, SymbolGroupBalance,
+  EvmBroadcastRequest, GenerateSignatureRequest, GenerateSignatureResponse,
+  EstimateFee, FeeLevel, CreateWalletInput, RestrictedRegionDetails,
+  CallFunctionRequest, CallFunctionResponse, AbiFunction, AbiParam,
+  PaginationParams,
+} from './wallets/types';
+export type { WalletViewDetailWithPagination } from './wallets/wallet-views';
+
+// Coin types
+export type { Coin, CoinNetwork, CoinsResponse } from './coins/types';
+
+// Key types
+export type { KeyResponse, ListKeysResponse, CreateKeyInput, DeriveKeyInput } from './keys/types';
 
 export { IdentityError, IdentityErrorCode } from './errors';
 
