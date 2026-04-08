@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
-import { useSheetNavigation } from '@ion/navigation';
-import { fetchDevicePhotos, capturePhoto } from '@ion/feed';
+import { useSheetNavigation, Routes } from '@ion/navigation';
+import { fetchDevicePhotos, capturePhoto, requestCameraPermission } from '@ion/feed';
 import type { DeviceAsset } from '@ion/feed';
 import { useSelectionState, useAssetPagination } from '../components/media-picker/use-media-picker-state';
 
@@ -20,6 +20,13 @@ export function useMediaPickerScreenState(onComplete: (assets: DeviceAsset[]) =>
   }, [pagination.assets, selection.selectedItems, onComplete, navigation]);
 
   const handleCameraPress = useCallback(async () => {
+    const permission = await requestCameraPermission();
+    if (permission === 'permanently_denied') {
+      const nav = navigation.navigate as (...args: unknown[]) => void;
+      nav(Routes.Sheet.CameraPermissionDenied);
+      return;
+    }
+    if (permission !== 'granted') return;
     const photo = await capturePhoto();
     if (photo) { onComplete([photo]); navigation.goBack(); }
   }, [onComplete, navigation]);

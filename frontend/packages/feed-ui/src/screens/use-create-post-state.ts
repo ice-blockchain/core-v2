@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useSheetNavigation, Routes } from '@ion/navigation';
 import type { DeviceAsset } from '@ion/feed';
+import { requestGalleryPermission } from '@ion/feed';
 
 export function useCreatePostState() {
   const navigation = useSheetNavigation();
@@ -16,9 +17,16 @@ export function useCreatePostState() {
     setAttachedMedia((prev) => [...prev, ...assets]);
   }, []);
 
-  const handleGalleryPress = useCallback(() => {
+  const handleGalleryPress = useCallback(async () => {
+    const permission = await requestGalleryPermission();
     const nav = navigation.navigate as (...args: unknown[]) => void;
-    nav(Routes.Sheet.MediaPicker, { onComplete: handleMediaSelected });
+    if (permission === 'granted' || permission === 'limited') {
+      nav(Routes.Sheet.MediaPicker, { onComplete: handleMediaSelected });
+      return;
+    }
+    if (permission === 'permanently_denied') {
+      nav(Routes.Sheet.GalleryPermissionDenied);
+    }
   }, [navigation, handleMediaSelected]);
 
   return { attachedMedia, handleClose, handleRemoveMedia, handleGalleryPress };
