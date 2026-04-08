@@ -26,4 +26,12 @@ describe("capturePhoto", () => {
     const result = await capturePhoto();
     expect(result).toBeNull();
   });
+
+  it("rejects with error when camera returns errorCode", async () => {
+    mockLaunchCamera.mockImplementation((_opts, cb) => {
+      cb!({ errorCode: "camera_unavailable", errorMessage: "Camera not available" });
+      return Promise.resolve({ assets: [] });
+    });
+    await expect(capturePhoto()).rejects.toThrow("Camera error: camera_unavailable");
+  });
 });

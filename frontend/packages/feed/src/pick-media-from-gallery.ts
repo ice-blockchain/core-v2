@@ -4,8 +4,12 @@ import type { DeviceAsset } from "./types";
 const MAX_SELECTION = 10;
 
 export function pickMediaFromGallery(): Promise<DeviceAsset[]> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     launchImageLibrary({ mediaType: "mixed", selectionLimit: MAX_SELECTION }, (response) => {
+      if (response.errorCode) {
+        reject(new Error(`ImagePicker error: ${response.errorCode}: ${response.errorMessage ?? ""}`));
+        return;
+      }
       if (response.didCancel || !response.assets?.length) {
         resolve([]);
         return;

@@ -12,6 +12,7 @@ declare module "@react-native-camera-roll/camera-roll" {
   }
 
   interface PhotoIdentifierNode {
+    id: string;
     type: string;
     group_name: string[];
     image: PhotoIdentifierImage;
@@ -27,8 +28,8 @@ declare module "@react-native-camera-roll/camera-roll" {
     edges: PhotoIdentifier[];
     page_info: {
       has_next_page: boolean;
-      start_cursor: string;
-      end_cursor: string;
+      start_cursor?: string;
+      end_cursor?: string;
     };
   }
 

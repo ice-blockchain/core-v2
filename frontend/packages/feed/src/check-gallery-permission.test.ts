@@ -32,7 +32,7 @@ describe("checkGalleryPermission", () => {
   });
 
   it("returns denied for unknown status", async () => {
-    check.mockResolvedValueOnce({ type: "photos" as never, status: "denied" as never });
+    check.mockResolvedValueOnce({ type: "photos" as never, status: "unknown" as never });
     expect(await checkGalleryPermission()).toBe("denied");
   });
 });

@@ -17,7 +17,7 @@ function ToolbarIcons({ onGalleryPress }: ToolbarIconsProps) {
 
   return (
     <View style={iconRowStyle}>
-      <Pressable onPress={onGalleryPress} hitSlop={8}>
+      <Pressable onPress={onGalleryPress} hitSlop={8} disabled={!onGalleryPress} accessibilityRole="button" accessibilityLabel="Open gallery" accessibilityState={{ disabled: !onGalleryPress }}>
         <Icon name="gallery-open" size={scale(24)} color={theme.colors.primaryAccent} />
       </Pressable>
       <Icon name="post-poll" size={scale(24)} color={theme.colors.primaryAccent} />

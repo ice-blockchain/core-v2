@@ -5,6 +5,8 @@ import { BottomSheet, Button, Text, useTheme } from '@ion/ui';
 import { translate } from '@ion/localization';
 import { buildPromptContainerStyle, buildPromptTextContainerStyle, buildPromptButtonRowStyle } from './permission-prompt-styles';
 
+const FULL_FLEX = { flex: 1 } as const;
+
 interface PermissionPromptSheetProps {
   isVisible: boolean;
   onAllow: () => void;
@@ -30,10 +32,10 @@ function PromptContent({ illustration, title, description, onAllow, onDismiss }:
         <Text variant="body2" color={theme.colors.secondaryText}>{description}</Text>
       </View>
       <View style={buttonRowStyle}>
-        <View style={{ flex: 1 }}>
+        <View style={FULL_FLEX}>
           <Button height={56} color="tertiary" label={translate('feed:dontAllowButton')} onPress={onDismiss} />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={FULL_FLEX}>
           <Button height={56} color="primary" label={translate('feed:allowButton')} onPress={onAllow} />
         </View>
       </View>

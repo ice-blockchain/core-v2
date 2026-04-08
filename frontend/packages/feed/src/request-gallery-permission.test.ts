@@ -26,6 +26,11 @@ describe("requestGalleryPermission", () => {
     expect(await requestGalleryPermission()).toBe("permanently_denied");
   });
 
+  it("returns limited when request yields limited access", async () => {
+    request.mockResolvedValueOnce({ type: "photos" as never, status: "limited" as never });
+    expect(await requestGalleryPermission()).toBe("limited");
+  });
+
   it("returns denied when request is denied", async () => {
     request.mockResolvedValueOnce({ type: "photos" as never, status: "denied" as never });
     expect(await requestGalleryPermission()).toBe("denied");

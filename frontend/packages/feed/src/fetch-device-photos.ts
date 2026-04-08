@@ -23,7 +23,7 @@ export async function fetchDevicePhotos(options: FetchPhotosOptions): Promise<Fe
   const result = await CameraRoll.getPhotos(params);
 
   const assets: DeviceAsset[] = result.edges.map((edge) => ({
-    id: edge.node.image.uri,
+    id: edge.node.id,
     uri: edge.node.image.uri,
     width: edge.node.image.width,
     height: edge.node.image.height,

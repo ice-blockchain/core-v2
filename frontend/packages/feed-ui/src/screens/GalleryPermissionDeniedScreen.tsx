@@ -13,7 +13,11 @@ export function GalleryPermissionDeniedScreen() {
   }, [navigation]);
 
   const handleGoToSettings = useCallback(async () => {
-    await openDeviceSettings();
+    try {
+      await openDeviceSettings();
+    } catch (error) {
+      console.error('Failed to open device settings', error);
+    }
   }, []);
 
   return (
