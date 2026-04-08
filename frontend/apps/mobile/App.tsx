@@ -27,12 +27,12 @@ import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
 import { CreatePostSheetScreen, feedTranslations } from "@ion/feed-ui";
 import { profileTranslations } from "@ion/profile-ui";
+import { HomeScreen, homeTranslations } from "@ion/home-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
 import { CatalogScreen } from "./src/components/catalog-screen";
 import { ProxyTestScreen } from "./src/components/proxy-test-screen";
 import { StorageTestScreen } from "./src/components/storage-test-screen";
-import { MainScreen } from "./src/components/main-screen";
 import { identityClient } from "./src/identity-client";
 
 const i18n = createLocalization();
@@ -45,11 +45,12 @@ registerTranslations(i18n, feedTranslations);
 registerTranslations(i18n, walletUiTranslations);
 registerTranslations(i18n, userSearchTranslations);
 registerTranslations(i18n, profileTranslations);
+registerTranslations(i18n, homeTranslations);
 
 const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
-  Main: MainScreen,
+  Main: HomeScreen,
   Catalog: CatalogScreen,
   NicknameReserved: NicknameReservedScreen,
   ProxyTest: ProxyTestScreen,

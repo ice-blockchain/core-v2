@@ -19,6 +19,11 @@ import {
 import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
 import { splashTranslations } from '@ion/splash-ui';
 import { chatTranslations } from '@ion/chat';
+import { mainShellTranslations } from '@ion/main-tabs-ui';
+import { feedTranslations } from '@ion/feed-ui';
+import { walletUiTranslations } from '@ion/wallet-ui';
+import { profileTranslations } from '@ion/profile-ui';
+import { HomeScreen, homeTranslations } from '@ion/home-ui';
 import { SplashScreen } from './components/splash-screen';
 import { IntroScreen } from './components/intro-screen';
 import { CatalogScreen } from './components/catalog-screen';
@@ -28,11 +33,16 @@ registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
 registerTranslations(i18n, splashTranslations);
 registerTranslations(i18n, chatTranslations);
+registerTranslations(i18n, mainShellTranslations);
+registerTranslations(i18n, feedTranslations);
+registerTranslations(i18n, walletUiTranslations);
+registerTranslations(i18n, profileTranslations);
+registerTranslations(i18n, homeTranslations);
 
 const screens = {
   Splash: SplashScreen,
   GetStarted: IntroScreen,
-  Main: CatalogScreen,
+  Main: HomeScreen,
   Catalog: CatalogScreen,
   LinkDevice: LinkDeviceScreen,
   NicknameReserved: NicknameReservedScreen,

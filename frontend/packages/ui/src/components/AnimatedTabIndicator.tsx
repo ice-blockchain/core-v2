@@ -38,7 +38,7 @@ export function AnimatedTabIndicator({ position, tabLayouts }: AnimatedTabIndica
       width,
       backgroundColor: theme.colors.primaryAccent,
     };
-  });
+  }, [position, tabLayouts, theme.colors.primaryAccent]);
 
   return <Animated.View style={[tabBarStyles.indicator, animatedStyle]} />;
 }

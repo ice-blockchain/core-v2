@@ -1,0 +1,36 @@
+{
+  "name": "@ion/home-ui",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@ion/chat": "workspace:*",
+    "@ion/feed-ui": "workspace:*",
+    "@ion/localization": "workspace:*",
+    "@ion/main-tabs-ui": "workspace:*",
+    "@ion/navigation": "workspace:*",
+    "@ion/profile-ui": "workspace:*",
+    "@ion/ui": "workspace:*",
+    "@ion/wallet-ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@gorhom/bottom-sheet": ">=5",
+    "react": ">=19",
+    "react-native": ">=0.76",
+    "react-native-safe-area-context": ">=4.0.0",
+    "react-native-svg": ">=15.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

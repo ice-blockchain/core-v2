@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { MainScreen as MainScreenCore } from "@ion/main-tabs-ui";
+import { MainScreen } from "@ion/main-tabs-ui";
 import type { SheetActionHandlers } from "@ion/main-tabs-ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
 import { FeedScreen } from "@ion/feed-ui";
@@ -14,7 +14,7 @@ const SCREENS = {
   Profile: ProfileScreen,
 };
 
-export function MainScreen() {
+export function HomeScreen() {
   const navigation = useAppNavigation();
 
   const handleCreatePost = useCallback(() => {
@@ -26,5 +26,5 @@ export function MainScreen() {
     [handleCreatePost],
   );
 
-  return <MainScreenCore screens={SCREENS} actionHandlers={actionHandlers} />;
+  return <MainScreen screens={SCREENS} actionHandlers={actionHandlers} />;
 }

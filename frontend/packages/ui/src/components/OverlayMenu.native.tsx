@@ -75,7 +75,7 @@ function useOverlayAnimation(isVisible: boolean) {
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.value }],
-  }));
+  }), [scaleValue]);
 
   return { shouldRender, animatedStyle };
 }

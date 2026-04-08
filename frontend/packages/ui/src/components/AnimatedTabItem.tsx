@@ -30,12 +30,12 @@ function useTabItemAnimations(position: SharedValue<number>, index: number) {
   const activeOpacity = useAnimatedStyle(() => {
     "worklet";
     return { opacity: Math.max(0, 1 - Math.abs(position.value - index)) };
-  });
+  }, [position, index]);
 
   const inactiveOpacity = useAnimatedStyle(() => {
     "worklet";
     return { opacity: 1 - Math.max(0, 1 - Math.abs(position.value - index)) };
-  });
+  }, [position, index]);
 
   return { activeOpacity, inactiveOpacity };
 }

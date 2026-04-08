@@ -86,6 +86,9 @@ importers:
       '@ion/file-storage':
         specifier: workspace:*
         version: link:../../packages/file-storage
+      '@ion/home-ui':
+        specifier: workspace:*
+        version: link:../../packages/home-ui
       '@ion/identity-client':
         specifier: workspace:*
         version: link:../../packages/identity-client
@@ -324,12 +327,21 @@ importers:
       '@ion/diagnostics':
         specifier: workspace:*
         version: link:../../packages/diagnostics
+      '@ion/feed-ui':
+        specifier: workspace:*
+        version: link:../../packages/feed-ui
+      '@ion/home-ui':
+        specifier: workspace:*
+        version: link:../../packages/home-ui
       '@ion/identity-client':
         specifier: workspace:*
         version: link:../../packages/identity-client
       '@ion/localization':
         specifier: workspace:*
         version: link:../../packages/localization
+      '@ion/main-tabs-ui':
+        specifier: workspace:*
+        version: link:../../packages/main-tabs-ui
       '@ion/media-viewer':
         specifier: workspace:*
         version: link:../../packages/media-viewer
@@ -345,6 +357,9 @@ importers:
       '@ion/onboarding-ui':
         specifier: workspace:*
         version: link:../../packages/onboarding-ui
+      '@ion/profile-ui':
+        specifier: workspace:*
+        version: link:../../packages/profile-ui
       '@ion/splash-ui':
         specifier: workspace:*
         version: link:../../packages/splash-ui
@@ -354,6 +369,12 @@ importers:
       '@ion/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@ion/user-search-ui':
+        specifier: workspace:*
+        version: link:../../packages/user-search-ui
+      '@ion/wallet-ui':
+        specifier: workspace:*
+        version: link:../../packages/wallet-ui
       '@react-navigation/native':
         specifier: ^7.2.2
         version: 7.2.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
@@ -645,6 +666,58 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.1.1
+        version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+
+  packages/home-ui:
+    dependencies:
+      '@gorhom/bottom-sheet':
+        specifier: '>=5'
+        version: 5.2.8(@types/react@19.2.14)(react-native-gesture-handler@2.30.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(react-native-reanimated@4.3.0(react-native-worklets@0.8.1(@babel/core@7.29.0)(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      '@ion/chat':
+        specifier: workspace:*
+        version: link:../chat
+      '@ion/feed-ui':
+        specifier: workspace:*
+        version: link:../feed-ui
+      '@ion/localization':
+        specifier: workspace:*
+        version: link:../localization
+      '@ion/main-tabs-ui':
+        specifier: workspace:*
+        version: link:../main-tabs-ui
+      '@ion/navigation':
+        specifier: workspace:*
+        version: link:../navigation
+      '@ion/profile-ui':
+        specifier: workspace:*
+        version: link:../profile-ui
+      '@ion/ui':
+        specifier: workspace:*
+        version: link:../ui
+      '@ion/wallet-ui':
+        specifier: workspace:*
+        version: link:../wallet-ui
+      react:
+        specifier: '>=19'
+        version: 19.2.4
+      react-native:
+        specifier: '>=0.76'
+        version: 0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
+      react-native-safe-area-context:
+        specifier: '>=4.0.0'
+        version: 5.7.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      react-native-svg:
+        specifier: '>=15.0.0'
+        version: 15.15.4(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
         version: 3.2.4(@types/node@25.5.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
 
   packages/identity-client:
