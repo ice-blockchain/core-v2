@@ -157,9 +157,6 @@ function buildWriteMethods(getKey: () => Promise<CryptoKey>, state: KeyState): P
 }
 
 export function createSecureStorage(password: string): ISecureStorage {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Web secure storage is not safe for production use — use HttpOnly cookies or a native platform');
-  }
   const { state, getKey } = createKeyResolver(password);
   return {
     ...buildReadMethods(getKey),
