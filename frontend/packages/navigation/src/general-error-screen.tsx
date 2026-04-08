@@ -7,6 +7,7 @@ import { translate } from "@ion/localization";
 import { SingleActionSheetScreen } from "./single-action-sheet-screen";
 import { useAppNavigation } from "./use-app-navigation";
 import type { RootStackParamList } from "./route-params";
+import { Routes } from "./routes";
 
 type GeneralErrorRoute = RouteProp<RootStackParamList, 'Sheet/GeneralError'>;
 
@@ -26,7 +27,9 @@ export function GeneralErrorScreen() {
   const navigation = useAppNavigation();
 
   const handlePress = useCallback(() => {
-    if (navigation.canGoBack()) navigation.goBack();
+    // if (navigation.canGoBack()) navigation.goBack();
+    // TODO: tmp solution while integration not complete
+    navigation.reset({ index: 0, routes: [{ name: Routes.Main }] });
   }, [navigation]);
 
   return (
