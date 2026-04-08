@@ -28,6 +28,7 @@ import { NotificationBarProvider } from "../components/NotificationBarProvider";
 import { SelectableListItemCatalogSection } from "./SelectableListItemCatalogSection";
 import { ListEditActionsBarCatalogSection } from "./ListEditActionsBarCatalogSection";
 import { BottomNavBarCatalogSection } from "./BottomNavBarCatalogSection";
+import { AnimatedTabBarCatalogSection } from "./AnimatedTabBarCatalogSection";
 
 function CatalogHeader({ onToggleMode }: { onToggleMode: () => void }) {
   const theme = useTheme();
@@ -54,6 +55,7 @@ function CatalogSections() {
       <ListItemSkeletonCatalogSection />
       <SelectableListItemCatalogSection />
       <ListEditActionsBarCatalogSection />
+      <AnimatedTabBarCatalogSection />
       <BottomNavBarCatalogSection />
       <BottomSheetCatalogSection />
       <AvatarCatalogSection />
