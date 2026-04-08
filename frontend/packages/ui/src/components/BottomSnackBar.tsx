@@ -75,7 +75,8 @@ function useAutoDismiss(isVisible: boolean, durationMs: number, onDismiss: () =>
 export function BottomSnackBar(props: BottomSnackBarProps) {
   const { message, isVisible, onDismiss, durationMs = DEFAULT_DURATION } = props;
   const theme = useTheme();
-  const { colors, scale } = theme;
+  const { colors } = theme;
+  const scaleSize = theme.scale.scaleSize;
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -95,20 +96,20 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
   const containerStyle = useMemo<ViewStyle>(
     () => ({
       backgroundColor: colors.primaryAccent,
-      borderRadius: scale.scaleSize(12),
-      paddingLeft: scale.scaleSize(8),
-      paddingRight: scale.scaleSize(12),
-      paddingVertical: scale.scaleSize(8),
+      borderRadius: scaleSize(12),
+      paddingLeft: scaleSize(8),
+      paddingRight: scaleSize(12),
+      paddingVertical: scaleSize(8),
       flexDirection: "row",
       alignItems: "center",
-      gap: scale.scaleSize(10),
+      gap: scaleSize(10),
       shadowColor: colors.primaryAccent,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.36,
       shadowRadius: 20,
       elevation: 8,
     }),
-    [colors.primaryAccent, scale],
+    [colors.primaryAccent, scaleSize],
   );
 
   const textStyle = useMemo<TextStyle>(
@@ -139,10 +140,10 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
         accessibilityLabel={message}
       >
         <IconBadge
-          backgroundColor={colors.onPrimaryAccent}
-          iconColor={colors.primaryAccent}
-          scale={scale.scaleSize}
-        />
+        backgroundColor={colors.onPrimaryAccent}
+        iconColor={colors.primaryAccent}
+        scale={scaleSize}
+      />
         <Text variant="body" style={textStyle} numberOfLines={1}>
           {message}
         </Text>
