@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from "react";
-import { View, Animated, Easing, Pressable, AccessibilityInfo } from "react-native";
+import { View, Animated, Easing, Pressable, AccessibilityInfo, Platform } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
@@ -78,7 +78,9 @@ function useSnackPresence(isVisible: boolean, message: string) {
   useEffect(() => {
     if (isVisible) {
       setIsMounted(true);
-      AccessibilityInfo.announceForAccessibility(message);
+      if (Platform.OS !== "web") {
+        AccessibilityInfo.announceForAccessibility(message);
+      }
     }
   }, [isVisible, message]);
 
