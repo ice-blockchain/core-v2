@@ -55,12 +55,13 @@ export const FullscreenBottomSheet = forwardRef<FullscreenBottomSheetRef, Fullsc
     if (!isVisible) return null;
     const sizingProps = enableDynamicSizing
       ? { enableDynamicSizing: true as const }
-      : { snapPoints: snapPoints ?? DEFAULT_SNAP_POINTS };
+      : { snapPoints: snapPoints ?? DEFAULT_SNAP_POINTS, enableDynamicSizing: false as const };
 
     return (
       <BottomSheetModal
         ref={modalRef}
         {...sizingProps}
+        index={0}
         enablePanDownToClose={enablePanDownToClose}
         onDismiss={onClose}
         backdropComponent={renderBackdrop}

@@ -36,6 +36,7 @@ import { DappCheckIcon } from "./generated/DappCheckIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
 import { FeedPostIcon } from "./generated/FeedPostIcon";
 import { FeedStoriesIcon } from "./generated/FeedStoriesIcon";
+import { FieldClearallIcon } from "./generated/FieldClearallIcon";
 import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
@@ -130,6 +131,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "edit-link": EditLinkIcon,
   "feed-post": FeedPostIcon,
   "feed-stories": FeedStoriesIcon,
+  "field-clearall": FieldClearallIcon,
   "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
