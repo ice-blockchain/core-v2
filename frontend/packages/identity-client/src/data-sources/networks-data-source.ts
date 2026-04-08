@@ -9,11 +9,11 @@ export interface NetworksDataSource {
 export function createNetworksDataSource(httpClient: HttpClient): NetworksDataSource {
   return {
     async estimateFees(networks, username) {
-      const { body } = await httpClient.get<EstimateFee[]>('/networks/fees', {
+      const { body } = await httpClient.get<EstimateFee | EstimateFee[]>('/networks/fees', {
         query: { network: networks.join(',') },
         headers: { 'X-Username': username },
       });
-      return body;
+      return Array.isArray(body) ? body : [body];
     },
   };
 }
