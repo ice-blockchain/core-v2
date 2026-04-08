@@ -60,6 +60,7 @@ export function ProfileScreen() {
   const { rootStyle, sectionStyle, spacerHeight, tabBarBorderColor } = useProfileLayout();
   const { pagerStyle, handleHeaderLayout, handleScrollViewLayout, isReady } = usePagerHeight();
   const scrollAnim = useProfileScrollAnimation();
+  const tabs = useMemo(() => buildTabs(), []);
   const [profile, isCurrentUser] = [MOCK_PROFILE, true] as const;
   const handlePageSelected = useCallback((index: number) => { currentIndex.value = index; }, [currentIndex]);
 
@@ -70,7 +71,7 @@ export function ProfileScreen() {
         <View onLayout={handleHeaderLayout}>
           <ProfileScrollHeader spacerHeight={spacerHeight} sectionStyle={sectionStyle}
             profile={profile} isCurrentUser={isCurrentUser} />
-          <AnimatedTabBar tabs={buildTabs()} position={position} onTabPress={setPage}
+          <AnimatedTabBar tabs={tabs} position={position} onTabPress={setPage}
             style={[styles.tabBarWrap, { borderBottomColor: tabBarBorderColor }]} />
         </View>
         {isReady && (

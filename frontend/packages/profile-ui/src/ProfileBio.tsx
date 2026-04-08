@@ -17,7 +17,7 @@ function InfoTiles({ profile }: ProfileBioProps) {
   );
 
   const handleWebsitePress = useCallback(() => {
-    if (profile.website) Linking.openURL(`https://${profile.website}`);
+    if (profile.website) Linking.openURL(`https://${profile.website}`).catch(() => {});
   }, [profile.website]);
 
   return (
