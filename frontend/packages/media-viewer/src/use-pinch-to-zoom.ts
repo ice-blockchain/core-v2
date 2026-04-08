@@ -89,7 +89,7 @@ export function usePinchToZoom() {
       { translateX: state.translateX.value },
       { translateY: state.translateY.value },
     ],
-  }));
+  }), [state.scale, state.translateX, state.translateY]);
 
   return {
     animatedStyle,

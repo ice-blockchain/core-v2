@@ -88,8 +88,8 @@ function useInlineAnimation(isVisible: boolean) {
     progress.value = withTiming(isVisible ? 1 : 0, ANIMATION_CONFIG);
   }, [isVisible, progress]);
 
-  const backdropAnimStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
-  const sheetAnimStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - progress.value) * sheetHeight.value }] }));
+  const backdropAnimStyle = useAnimatedStyle(() => ({ opacity: progress.value }), [progress]);
+  const sheetAnimStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - progress.value) * sheetHeight.value }] }), [progress, sheetHeight]);
   const handleLayout = useCallback((e: { nativeEvent: { layout: { height: number } } }) => { sheetHeight.value = e.nativeEvent.layout.height; }, [sheetHeight]);
 
   return { backdropAnimStyle, sheetAnimStyle, handleLayout };

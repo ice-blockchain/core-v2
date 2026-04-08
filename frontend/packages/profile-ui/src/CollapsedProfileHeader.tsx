@@ -17,7 +17,7 @@ export function CollapsedProfileHeader({ profile, animatedOpacity }: CollapsedPr
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: animatedOpacity.value,
     pointerEvents: animatedOpacity.value >= 0.5 ? ("auto" as const) : ("none" as const),
-  }));
+  }), [animatedOpacity]);
 
   const rowStyle = useMemo(() => ({ gap: scale(10) }), [scale]);
   const textColumnStyle = useMemo(() => ({ gap: scale(1) }), [scale]);

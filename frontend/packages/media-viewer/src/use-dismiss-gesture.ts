@@ -36,7 +36,7 @@ export function useDismissGesture(options: UseDismissGestureOptions) {
 
   const dismissStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
-  }));
+  }), [translateY]);
 
   const backgroundOpacity = useAnimatedStyle(() => ({
     opacity: interpolate(
@@ -45,7 +45,7 @@ export function useDismissGesture(options: UseDismissGestureOptions) {
       [1, 0.2],
       Extrapolation.CLAMP,
     ),
-  }));
+  }), [translateY]);
 
   return { dismissGesture, dismissStyle, backgroundOpacity };
 }

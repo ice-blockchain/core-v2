@@ -29,7 +29,7 @@ export function useProfileScrollAnimation() {
       shadowRadius: 10,
       elevation: isOpaque ? 3 : 0,
     };
-  });
+  }, [scrollOffset, theme.colors.secondaryBackground]);
 
   return useMemo(
     () => ({ scrollOffset, scrollHandler, collapsedHeaderOpacity, navBarBgStyle, AnimatedScrollView: Animated.ScrollView }),
