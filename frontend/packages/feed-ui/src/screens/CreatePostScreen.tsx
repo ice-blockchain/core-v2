@@ -7,8 +7,6 @@ import { CreatePostComposer } from '../components/CreatePostComposer';
 import { CreatePostVisibilityBar } from '../components/CreatePostVisibilityBar';
 import { CreatePostToolbar } from '../components/CreatePostToolbar';
 import { AttachedMediaCarousel } from '../components/AttachedMediaCarousel';
-import { PermissionPromptSheet } from '../components/PermissionPromptSheet';
-import { IllustrationGalleryPermissionPrompt } from '../components/IllustrationGalleryPermissionPrompt';
 import { useCreatePostState } from './use-create-post-state';
 
 export function CreatePostSheetScreen() {
@@ -24,14 +22,6 @@ export function CreatePostSheetScreen() {
         <CreatePostVisibilityBar />
         <CreatePostToolbar onGalleryPress={state.handleGalleryPress} />
       </View>
-      <PermissionPromptSheet
-        isVisible={state.isGalleryPromptVisible}
-        onAllow={state.handleGalleryAllow}
-        onDismiss={state.dismissGalleryPrompt}
-        illustration={<IllustrationGalleryPermissionPrompt />}
-        title={translate('feed:allowMediaAccessTitle')}
-        description={translate('feed:allowMediaAccessDescription')}
-      />
     </Sheet>
   );
 }

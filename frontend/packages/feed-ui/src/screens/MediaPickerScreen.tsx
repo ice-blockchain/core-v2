@@ -1,27 +1,41 @@
+import { useCallback, useMemo } from 'react';
+import { Pressable } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import { Sheet } from '@ion/navigation';
 import { translate } from '@ion/localization';
+import { Text, useTheme } from '@ion/ui';
 import type { DeviceAsset } from '@ion/feed';
-import { MediaPickerHeader } from '../components/media-picker/MediaPickerHeader';
 import { MediaPickerGrid } from '../components/media-picker/MediaPickerGrid';
-import { AlbumPickerSheet } from '../components/media-picker/AlbumPickerSheet';
-import { PermissionPromptSheet } from '../components/PermissionPromptSheet';
-import { IllustrationCameraPermissionPrompt } from '../components/IllustrationCameraPermissionPrompt';
 import { useMediaPickerScreenState } from './use-media-picker-screen-state';
 
-interface MediaPickerScreenProps {
-  onComplete: (assets: DeviceAsset[]) => void;
-}
+const noop = () => {};
 
-export function MediaPickerSheetScreen({ onComplete }: MediaPickerScreenProps) {
-  const state = useMediaPickerScreenState(onComplete);
-  const albumTitle = state.currentAlbum?.title ?? translate('feed:allMediaTitle');
+function AddButton({ count, onPress }: { count: number; onPress: () => void }) {
+  const theme = useTheme();
+  const hasSelection = count > 0;
+  const color = hasSelection ? theme.colors.primaryAccent : theme.colors.sheetLine;
+  const label = hasSelection ? `${translate('feed:addButtonLabel')} (${count})` : '';
+  const width = useMemo(() => ({ width: theme.scale.scaleSize(80), alignItems: 'flex-end' as const }), [theme]);
 
   return (
-    <Sheet onClose={state.handleBack}>
-      <MediaPickerHeader albumTitle={albumTitle} selectedCount={state.selectedCount} onBack={state.handleBack} onAlbumPress={() => state.setIsAlbumPickerVisible(true)} onAdd={state.handleAdd} />
+    <Pressable onPress={onPress} disabled={!hasSelection} style={width}>
+      <Text variant="body" color={color}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function MediaPickerSheetScreen() {
+  const route = useRoute();
+  const params = (route.params ?? {}) as { onComplete?: (assets: DeviceAsset[]) => void };
+  const onComplete = useCallback((assets: DeviceAsset[]) => {
+    (params.onComplete ?? noop)(assets);
+  }, [params.onComplete]);
+
+  const state = useMediaPickerScreenState(onComplete);
+
+  return (
+    <Sheet onClose={state.handleBack} title={translate('feed:allMediaTitle')} titleVisible onBack={state.handleBack} headerRightAction={<AddButton count={state.selectedCount} onPress={state.handleAdd} />}>
       <MediaPickerGrid assets={state.assets} selectedItems={state.selectedItems} isMaxSelected={state.isMaxSelected} onToggleSelection={state.toggleSelection} onCameraPress={state.handleCameraPress} onEndReached={state.loadMore} />
-      <AlbumPickerSheet isVisible={state.isAlbumPickerVisible} albums={state.albums} selectedAlbumId={state.currentAlbum?.id ?? null} onSelect={(album) => { state.switchAlbum(album); state.setIsAlbumPickerVisible(false); }} onClose={() => state.setIsAlbumPickerVisible(false)} />
-      <PermissionPromptSheet isVisible={state.isCameraPromptVisible} onAllow={state.handleCameraAllow} onDismiss={() => state.setIsCameraPromptVisible(false)} illustration={<IllustrationCameraPermissionPrompt />} title={translate('feed:allowCameraAccessTitle')} description={translate('feed:allowCameraAccessDescription')} />
     </Sheet>
   );
 }

@@ -1,7 +1,8 @@
-import { Permissions, PermissionType, PermissionStatus } from "@ion/permissions";
+import { PermissionType, PermissionStatus } from "@ion/permissions";
 import type { PermissionFlowResult } from "./types";
 
 export async function requestGalleryPermission(): Promise<PermissionFlowResult> {
+  const { Permissions } = await import("@ion/permissions");
   const result = await Permissions.request(PermissionType.Photos);
 
   if (result.status === PermissionStatus.Granted) return "granted";

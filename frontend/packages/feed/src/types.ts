@@ -4,4 +4,12 @@ export type PermissionFlowResult =
   | "permanently_denied"
   | "limited";
 
-export type { CapturedMedia, Album, DeviceAsset, FetchAssetsOptions, FetchAssetsResult } from "@ion/media-acquisition";
+export interface DeviceAsset {
+  id: string;
+  uri: string;
+  width: number;
+  height: number;
+  duration?: number | undefined;
+  mediaType: "photo" | "video";
+  creationTime: number;
+}

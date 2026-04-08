@@ -6,7 +6,7 @@ import { translate } from '@ion/localization';
 
 interface CameraTileProps {
   onPress: () => void;
-  isDisabled?: boolean;
+  isDisabled?: boolean | undefined;
 }
 
 function buildTileStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
@@ -23,23 +23,13 @@ function buildTileStyle(scale: (n: number) => number, backgroundColor: string): 
 export function CameraTile({ onPress, isDisabled }: CameraTileProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-
-  const tileStyle = useMemo(
-    () => buildTileStyle(scale, theme.colors.onTertiaryFill),
-    [scale, theme.colors],
-  );
-
-  const opacityStyle = useMemo(
-    () => (isDisabled ? { opacity: 0.5 } : undefined),
-    [isDisabled],
-  );
+  const tileStyle = useMemo(() => buildTileStyle(scale, theme.colors.onTertiaryFill), [scale, theme.colors]);
+  const opacityStyle = useMemo(() => (isDisabled ? { opacity: 0.5 } : undefined), [isDisabled]);
 
   return (
     <Pressable style={[tileStyle, opacityStyle]} onPress={onPress} disabled={isDisabled}>
       <Icon name="camera" size={scale(40)} color={theme.colors.primaryAccent} />
-      <Text variant="body" color={theme.colors.primaryAccent}>
-        {translate('feed:cameraLabel')}
-      </Text>
+      <Text variant="body" color={theme.colors.primaryAccent}>{translate('feed:cameraLabel')}</Text>
     </Pressable>
   );
 }

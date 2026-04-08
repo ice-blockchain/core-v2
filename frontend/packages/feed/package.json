@@ -12,11 +12,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ion/permissions": "workspace:*",
-    "@ion/media-acquisition": "workspace:*"
+    "@ion/permissions": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=19"
+    "react": ">=19",
+    "react-native-image-picker": ">=7.0.0",
+    "@react-native-camera-roll/camera-roll": ">=7.0.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

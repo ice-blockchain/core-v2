@@ -1,12 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useSheetNavigation, Routes } from '@ion/navigation';
-import { checkGalleryPermission, requestGalleryPermission } from '@ion/feed';
 import type { DeviceAsset } from '@ion/feed';
 
 export function useCreatePostState() {
   const navigation = useSheetNavigation();
   const [attachedMedia, setAttachedMedia] = useState<DeviceAsset[]>([]);
-  const [isGalleryPromptVisible, setIsGalleryPromptVisible] = useState(false);
 
   const handleClose = useCallback(() => navigation.goBack(), [navigation]);
 
@@ -14,24 +12,14 @@ export function useCreatePostState() {
     setAttachedMedia((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const openMediaPicker = useCallback(() => {
-    navigation.navigate(Routes.Sheet.MediaPicker as never);
-  }, [navigation]);
+  const handleMediaSelected = useCallback((assets: DeviceAsset[]) => {
+    setAttachedMedia((prev) => [...prev, ...assets]);
+  }, []);
 
-  const handleGalleryPress = useCallback(async () => {
-    const status = await checkGalleryPermission();
-    if (status === 'granted' || status === 'limited') { openMediaPicker(); return; }
-    if (status === 'permanently_denied') { navigation.navigate(Routes.Sheet.GalleryPermissionDenied as never); return; }
-    setIsGalleryPromptVisible(true);
-  }, [openMediaPicker, navigation]);
+  const handleGalleryPress = useCallback(() => {
+    const nav = navigation.navigate as (...args: unknown[]) => void;
+    nav(Routes.Sheet.MediaPicker, { onComplete: handleMediaSelected });
+  }, [navigation, handleMediaSelected]);
 
-  const handleGalleryAllow = useCallback(async () => {
-    setIsGalleryPromptVisible(false);
-    const result = await requestGalleryPermission();
-    if (result === 'granted' || result === 'limited') openMediaPicker();
-  }, [openMediaPicker]);
-
-  const dismissGalleryPrompt = useCallback(() => setIsGalleryPromptVisible(false), []);
-
-  return { attachedMedia, isGalleryPromptVisible, handleClose, handleRemoveMedia, handleGalleryPress, handleGalleryAllow, dismissGalleryPrompt };
+  return { attachedMedia, handleClose, handleRemoveMedia, handleGalleryPress };
 }

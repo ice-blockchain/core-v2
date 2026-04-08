@@ -35,6 +35,12 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow access to your photo library to share photos and videos in posts.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow access to your camera to capture photos and videos for posts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow access to your microphone to record videos with audio.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

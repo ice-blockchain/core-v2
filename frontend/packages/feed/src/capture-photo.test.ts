@@ -1,30 +1,28 @@
 import { describe, it, expect, vi } from "vitest";
 import { capturePhoto } from "./capture-photo";
 
-vi.mock("@ion/media-acquisition", () => ({
-  captureMedia: vi.fn(),
+vi.mock("react-native-image-picker", () => ({
+  launchCamera: vi.fn(),
 }));
 
-const { captureMedia } = await import("@ion/media-acquisition");
-const mockCapture = vi.mocked(captureMedia);
-
-const STUB_MEDIA = {
-  uri: "file://photo.jpg",
-  mimeType: "image/jpeg",
-  fileSize: 1024,
-  width: 800,
-  height: 600,
-};
+const { launchCamera } = await import("react-native-image-picker");
+const mockLaunchCamera = vi.mocked(launchCamera);
 
 describe("capturePhoto", () => {
-  it("returns captured media on success", async () => {
-    mockCapture.mockResolvedValueOnce(STUB_MEDIA);
+  it("returns captured photo on success", async () => {
+    mockLaunchCamera.mockImplementation((_opts, cb) => {
+      cb!({ assets: [{ uri: "file://photo.jpg", width: 800, height: 600, type: "image/jpeg" }] });
+      return Promise.resolve({ assets: [] });
+    });
     const result = await capturePhoto();
-    expect(result).toEqual(STUB_MEDIA);
+    expect(result).toMatchObject({ uri: "file://photo.jpg", width: 800, height: 600, mediaType: "photo" });
   });
 
   it("returns null when user cancels", async () => {
-    mockCapture.mockRejectedValueOnce(new Error("Camera capture was canceled"));
+    mockLaunchCamera.mockImplementation((_opts, cb) => {
+      cb!({ didCancel: true });
+      return Promise.resolve({ assets: [] });
+    });
     const result = await capturePhoto();
     expect(result).toBeNull();
   });

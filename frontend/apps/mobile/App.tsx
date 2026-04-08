@@ -64,6 +64,7 @@ const screens = {
   AddPasskeyCredentials: AddPasskeyCredentialsScreen,
   CreatePost: CreatePostSheetScreen,
   MediaPicker: MediaPickerSheetScreen,
+
   GalleryPermissionDenied: GalleryPermissionDeniedScreen,
   CameraPermissionDenied: CameraPermissionDeniedScreen,
   LinkDevice: LinkDeviceScreen,

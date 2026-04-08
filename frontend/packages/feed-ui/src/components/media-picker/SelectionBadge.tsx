@@ -33,15 +33,11 @@ export function SelectionBadge({ order }: SelectionBadgeProps) {
   const scale = theme.scale.scaleSize;
 
   const style = useMemo(() => {
-    if (order !== undefined) {
-      return buildSelectedStyle(scale, theme.colors.primaryAccent);
-    }
+    if (order !== undefined) return buildSelectedStyle(scale, theme.colors.primaryAccent);
     return buildUnselectedStyle(scale, theme.colors.secondaryText);
   }, [order, scale, theme.colors]);
 
-  if (order === undefined) {
-    return <View style={style} />;
-  }
+  if (order === undefined) return <View style={style} />;
 
   return (
     <View style={style}>

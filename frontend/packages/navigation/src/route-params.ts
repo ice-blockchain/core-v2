@@ -14,6 +14,7 @@ export type RootStackParamList = {
   Main: undefined;
   Onboarding: undefined;
   Catalog: undefined;
+  ChatPreview: undefined;
   ProxyTest: undefined;
   StorageTest: undefined;
   AuthFlow: undefined;

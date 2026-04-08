@@ -17,8 +17,9 @@ interface CarouselItem {
 
 function buildContainerStyle(scale: (n: number) => number): ViewStyle {
   return {
+    height: scale(50),
     paddingHorizontal: scale(16),
-    paddingVertical: scale(8),
+    marginVertical: scale(8),
   };
 }
 
@@ -26,7 +27,7 @@ export function AttachedMediaCarousel({ items, onRemove }: AttachedMediaCarousel
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const containerStyle = useMemo(() => buildContainerStyle(scale), [scale]);
-  const gap = useMemo(() => ({ gap: scale(8) }), [scale]);
+  const gap = useMemo(() => ({ gap: scale(16) }), [scale]);
 
   const data: CarouselItem[] = useMemo(
     () => items.map((item, index) => ({ uri: item.uri, index })),
