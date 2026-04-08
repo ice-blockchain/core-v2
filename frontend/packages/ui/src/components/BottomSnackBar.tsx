@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { View, Animated, Easing, Pressable } from "react-native";
 import type { ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
@@ -76,8 +76,16 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
   const { message, isVisible, onDismiss, durationMs = DEFAULT_DURATION } = props;
   const theme = useTheme();
   const { colors, scale } = theme;
+  const [isMounted, setIsMounted] = useState(false);
 
-  const handleHideComplete = useCallback(() => {}, []);
+  useEffect(() => {
+    if (isVisible) setIsMounted(true);
+  }, [isVisible]);
+
+  const handleHideComplete = useCallback(() => {
+    setIsMounted(false);
+  }, []);
+
   const progress = useSlideAnimation(isVisible, handleHideComplete);
   useAutoDismiss(isVisible, durationMs, onDismiss);
 
@@ -117,7 +125,7 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
     ],
   };
 
-if (!isVisible) return null;
+  if (!isMounted) return null;
 
   return (
     <Animated.View style={animatedStyle}>
