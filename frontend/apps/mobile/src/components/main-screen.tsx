@@ -5,13 +5,13 @@ import { useAppNavigation, Routes } from "@ion/navigation";
 import { FeedScreen } from "@ion/feed-ui";
 import { ChatTabScreen } from "./chat-tab-screen";
 import { WalletScreen } from "@ion/wallet-ui";
-import { ProfilePlaceholder } from "./placeholders/profile-placeholder";
+import { ProfileScreen } from "@ion/profile-ui";
 
 const SCREENS = {
   Feed: FeedScreen,
   Chat: ChatTabScreen,
   Wallet: WalletScreen,
-  Profile: ProfilePlaceholder,
+  Profile: ProfileScreen,
 };
 
 export function MainScreen() {

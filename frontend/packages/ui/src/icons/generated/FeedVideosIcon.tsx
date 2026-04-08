@@ -1,0 +1,12 @@
+// AUTO-GENERATED — do not edit manually. Run `pnpm generate:icons`.
+
+import Svg, { Path } from "react-native-svg";
+
+interface FeedVideosIconProps {
+  size?: number;
+  color: string;
+}
+
+export function FeedVideosIcon({ size = 24, color }: FeedVideosIconProps) {
+  return <Svg viewBox="0 0 24 24" width={size} height={size} fill="none"><Path stroke={color} strokeLinecap="round" strokeWidth={1.5} d="M3.002 11.56v.874c0 2.876 0 4.314.817 5.282q.225.267.5.485c.995.794 2.475.794 5.434.794s4.439 0 5.435-.794q.274-.218.499-.485c.817-.968.817-2.406.817-5.282v-.875c0-2.876 0-4.314-.817-5.282a3.6 3.6 0 0 0-.5-.485c-.995-.794-2.475-.794-5.434-.794s-4.439 0-5.435.794q-.274.22-.499.485c-.385.456-.588 1.017-.696 1.783m13.379 1.747.593-.288c1.751-.851 2.627-1.277 3.267-.892s.64 1.336.64 3.24v.255c0 1.903 0 2.855-.64 3.24-.64.384-1.516-.042-3.267-.893l-.593-.288zm-4.51-.425a1.5 1.5 0 0 1 0 2.165 1.61 1.61 0 0 1-2.228 0 1.5 1.5 0 0 1 0-2.165 1.61 1.61 0 0 1 2.229 0Z" /></Svg>;
+}

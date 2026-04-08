@@ -1636,6 +1636,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-pager-view (8.0.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - SwiftUIIntrospect (~> 1.0)
+    - Yoga
   - react-native-passkey (3.3.2):
     - hermes-engine
     - RCTRequired
@@ -2463,6 +2486,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - SwiftUIIntrospect (1.3.0)
   - TensorFlowLiteC (2.17.0):
     - TensorFlowLiteC/Core (= 2.17.0)
   - TensorFlowLiteC/Core (2.17.0)
@@ -2542,6 +2566,7 @@ DEPENDENCIES:
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
+  - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-passkey (from `../node_modules/react-native-passkey`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-video (from `../node_modules/react-native-video`)
@@ -2593,6 +2618,7 @@ SPEC REPOS:
   trunk:
     - lottie-ios
     - MMKVCore
+    - SwiftUIIntrospect
     - TensorFlowLiteC
 
 EXTERNAL SOURCES:
@@ -2697,6 +2723,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
+  react-native-pager-view:
+    :path: "../node_modules/react-native-pager-view"
   react-native-passkey:
     :path: "../node_modules/react-native-passkey"
   react-native-safe-area-context:
@@ -2843,6 +2871,7 @@ SPEC CHECKSUMS:
   react-native-get-random-values: a603782b2b222a34533c66371614790282dba3f1
   react-native-image-picker: 168d6972e50ea848defe4ac4c222faa9bc52aea0
   react-native-netinfo: f852c868bf5175e46165c7e4db48a204a95c3800
+  react-native-pager-view: adc7d78123fb395e03a70d19e8d75805b49838b5
   react-native-passkey: 55f5766cd41ab9d86fc4dd33ae5356b0229c77b9
   react-native-safe-area-context: ae7587b95fb580d1800c5b0b2a7bd48c2868e67a
   react-native-video: fd30887fff60629061769a21af574fd9dd52b2ff
@@ -2887,6 +2916,7 @@ SPEC CHECKSUMS:
   RNScreens: 6cb648bdad8fe9bee9259fe144df95b6d1d5b707
   RNSVG: c69f7709226108f5eb89b5aa8833c17a36345468
   RNWorklets: a94fef52b3445ead0fc4bbb0687cd17fc8999b65
+  SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   TensorFlowLiteC: eac6d689a8d391d1b202dc59e3d9165ba64aaf73
   TonStorage: 6383f8d41370461af1f9bfbd64fe723e8c50f2b0
   Yoga: c0b3f2c7e8d3e327e450223a2414ca3fa296b9a2

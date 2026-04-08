@@ -26,6 +26,7 @@ import { userSearchTranslations } from "@ion/user-search-ui";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
 import { CreatePostSheetScreen, feedTranslations } from "@ion/feed-ui";
+import { profileTranslations } from "@ion/profile-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
 import { CatalogScreen } from "./src/components/catalog-screen";
@@ -43,6 +44,7 @@ registerTranslations(i18n, mainShellTranslations);
 registerTranslations(i18n, feedTranslations);
 registerTranslations(i18n, walletUiTranslations);
 registerTranslations(i18n, userSearchTranslations);
+registerTranslations(i18n, profileTranslations);
 
 const screens = {
   Splash: SplashScreen,
