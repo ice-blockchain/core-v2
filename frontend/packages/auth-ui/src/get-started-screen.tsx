@@ -86,7 +86,7 @@ function useActionStyles() {
 function useHandleContinue(identity: ReturnType<typeof useIdentityKeyValidation>) {
   const appNavigation = useAppNavigation();
   return useCallback(() => {
-    if (!identity.value.trim()) return;
+    if (!(identity.value.trim().length > 0 && !identity.errorMessage)) return;
     requestAnimationFrame(() => {
       appNavigation.navigate(Routes.Sheet.Verify, {
         next: { name: Routes.Main, reset: true },
