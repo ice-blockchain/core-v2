@@ -158,12 +158,13 @@ func NewCoordinator(cfg CoordinatorConfig) (*Coordinator, error) {
 func (c *Coordinator) Start(ctx context.Context) error {
 	ctx, c.cancel = context.WithCancel(ctx)
 	c.ctx = ctx
-	c.started.Store(true)
 	c.logger.Info("cluster coordinator starting", "node_id", c.nodeID)
 
 	if err := c.publishNodeInfo(ctx); err != nil {
+		c.cancel()
 		return fmt.Errorf("publish node info: %w", err)
 	}
+	c.started.Store(true)
 
 	c.wg.Add(3)
 	go func() { defer c.wg.Done(); c.heartbeatLoop(ctx) }()

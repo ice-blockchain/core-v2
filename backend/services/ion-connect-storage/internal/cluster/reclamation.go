@@ -124,7 +124,12 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, deadNodeID string) error {
 	current := c.Owner(bagID)
 	if current != "" && current != deadNodeID {
-		return nil // already claimed by another active node
+		// Already claimed by another active node; clean up stale bynode key.
+		if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
+			c.logger.Error("delete stale bynode key", "dead_node", deadNodeID, "error", err)
+			return err
+		}
+		return nil
 	}
 
 	owned, err := c.OwnsOrClaim(ctx, bagID)
@@ -132,7 +137,12 @@ func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, dead
 		return err
 	}
 	if !owned {
-		return nil // another node won the claim
+		// Another node won the claim; clean up stale bynode key.
+		if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
+			c.logger.Error("delete stale bynode key after lost claim", "dead_node", deadNodeID, "error", err)
+			return err
+		}
+		return nil
 	}
 	if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
 		c.logger.Error("orphaned bynode key after claim",

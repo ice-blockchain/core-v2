@@ -81,16 +81,13 @@ func (rl *PeerRateLimiter) cleanupLoop() {
 		select {
 		case <-ticker.C:
 			cutoff := time.Now().Add(-10 * time.Minute).Unix()
-			var count int64
 			rl.peers.Range(func(key, value any) bool {
 				if value.(*peerEntry).lastAccess.Load() < cutoff {
 					rl.peers.Delete(key)
-				} else {
-					count++
+					rl.peerCount.Add(-1)
 				}
 				return true
 			})
-			rl.peerCount.Store(count)
 		case <-rl.done:
 			return
 		}

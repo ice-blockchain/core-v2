@@ -94,6 +94,14 @@ func TestParseTorrentInfoZeroPieceSize(t *testing.T) {
 	require.Contains(t, err.Error(), "piece_size is zero")
 }
 
+func TestParseTorrentInfoRejectsOverflowPieceCount(t *testing.T) {
+	// fileSize near uint64 max with small pieceSize should be rejected.
+	cell, err := BuildTorrentInfoCell(1, ^uint64(0), [32]byte{}, [32]byte{}, 0)
+	require.NoError(t, err)
+	_, err = parseTorrentInfoCell(cell, nil, testLogger())
+	require.ErrorContains(t, err, "exceeds maximum")
+}
+
 func TestMerkleTreeRoundTrip(t *testing.T) {
 	payload := make([]byte, 2*1024*1024) // 2MB
 	for i := range payload {

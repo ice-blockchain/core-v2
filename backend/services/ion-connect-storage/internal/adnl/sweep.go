@@ -175,20 +175,21 @@ func (s *sweeper) querySeeds(ctx context.Context, targetKey []byte, checked *syn
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, maxConcurrentKademliaQueries)
 
+seedLoop:
 	for _, seed := range s.seedNodes {
 		select {
 		case sem <- struct{}{}:
+			wg.Add(1)
+			go func(sn seedNode) {
+				defer func() { <-sem; wg.Done() }()
+				nodes := s.findNodesVia(ctx, sn.addr, sn.serverKey, targetKey, checked)
+				mu.Lock()
+				result = append(result, nodes...)
+				mu.Unlock()
+			}(seed)
 		case <-ctx.Done():
-			break
+			break seedLoop
 		}
-		wg.Add(1)
-		go func(sn seedNode) {
-			defer func() { <-sem; wg.Done() }()
-			nodes := s.findNodesVia(ctx, sn.addr, sn.serverKey, targetKey, checked)
-			mu.Lock()
-			result = append(result, nodes...)
-			mu.Unlock()
-		}(seed)
 	}
 	wg.Wait()
 	return result
@@ -200,22 +201,23 @@ func (s *sweeper) queryNodes(ctx context.Context, nodes []foundNode, targetKey [
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, maxConcurrentKademliaQueries)
 
+nodeLoop:
 	for _, n := range nodes {
 		select {
 		case sem <- struct{}{}:
+			wg.Add(1)
+			go func(fn foundNode) {
+				defer func() { <-sem; wg.Done() }()
+				addr := fn.peer.RemoteAddr()
+				key := fn.peer.GetPubKey()
+				discovered := s.findNodesVia(ctx, addr, key, targetKey, checked)
+				mu.Lock()
+				result = append(result, discovered...)
+				mu.Unlock()
+			}(n)
 		case <-ctx.Done():
-			break
+			break nodeLoop
 		}
-		wg.Add(1)
-		go func(fn foundNode) {
-			defer func() { <-sem; wg.Done() }()
-			addr := fn.peer.RemoteAddr()
-			key := fn.peer.GetPubKey()
-			discovered := s.findNodesVia(ctx, addr, key, targetKey, checked)
-			mu.Lock()
-			result = append(result, discovered...)
-			mu.Unlock()
-		}(n)
 	}
 	wg.Wait()
 	return result

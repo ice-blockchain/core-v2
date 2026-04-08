@@ -72,3 +72,29 @@ func TestCoordinatorHeartbeatWritten(t *testing.T) {
 	require.NoError(t, err)
 	require.InDelta(t, time.Now().Unix(), ts, 5)
 }
+
+func TestCoordinatorIsConnectedFalseBeforeStart(t *testing.T) {
+	coord := newTestCoordinator(t, "")
+	require.False(t, coord.IsConnected())
+}
+
+func TestCoordinatorIsConnectedTrueAfterStart(t *testing.T) {
+	coord := newTestCoordinator(t, "")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() { cancel(); coord.Stop() }()
+
+	require.NoError(t, coord.Start(ctx))
+	require.True(t, coord.IsConnected())
+}
+
+func TestCoordinatorIsConnectedFalseAfterStop(t *testing.T) {
+	coord := newTestCoordinator(t, "")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	require.NoError(t, coord.Start(ctx))
+	require.True(t, coord.IsConnected())
+
+	cancel()
+	coord.Stop()
+	require.False(t, coord.IsConnected())
+}

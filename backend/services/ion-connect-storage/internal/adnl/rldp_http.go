@@ -90,11 +90,13 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 		return fmt.Errorf("build http request: %w", err)
 	}
 	httpReq.Header.Set("X-RLDP-Peer-ID", peerPrefix)
+	httpReq = httpReq.WithContext(connCtx)
 
 	w := newResponseWriter()
 	b.engine.ServeHTTP(w, httpReq)
 
 	resp := buildTLResponse(w)
+	resp.NoPayload = true // default to no payload; only flip after successful reservation
 	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
 
 	bodySize := int64(w.body.Len())
@@ -139,16 +141,17 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 	}
 
 	chunk, isLast := extractChunk(payload.data, int(req.Seqno))
-	if isLast {
-		b.deletePayload(reqID)
-	}
 
-	return rl.SendAnswer(
+	err := rl.SendAnswer(
 		answerCtx,
 		query.MaxAnswerSize, query.Timeout,
 		query.ID, transferID,
 		&PayloadPart{Data: chunk, IsLast: isLast},
 	)
+	if isLast && err == nil {
+		b.deletePayload(reqID)
+	}
+	return err
 }
 
 // tryReservePayloadSlot increments the payload counter and byte tracker

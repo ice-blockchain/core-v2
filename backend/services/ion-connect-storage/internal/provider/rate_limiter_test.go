@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -129,4 +130,34 @@ func TestRateLimiterRejectsWhenMaxPeersReached(t *testing.T) {
 	req.RemoteAddr = "10.0.0.1:5678"
 	router.ServeHTTP(w, req)
 	require.Equal(t, http.StatusTooManyRequests, w.Code)
+}
+
+func TestCleanupDecrementsPeerCount(t *testing.T) {
+	rl := NewPeerRateLimiter(100, 10)
+	defer rl.Close()
+
+	staleTime := time.Now().Add(-20 * time.Minute).Unix()
+	freshTime := time.Now().Unix()
+
+	rl.peers.Store("stale-peer", rl.newEntry(staleTime))
+	rl.peers.Store("fresh-peer", rl.newEntry(freshTime))
+	rl.peerCount.Store(2)
+
+	// Simulate one cleanup tick.
+	cutoff := time.Now().Add(-10 * time.Minute).Unix()
+	rl.peers.Range(func(key, value any) bool {
+		if value.(*peerEntry).lastAccess.Load() < cutoff {
+			rl.peers.Delete(key)
+			rl.peerCount.Add(-1)
+		}
+		return true
+	})
+
+	require.Equal(t, int64(1), rl.peerCount.Load())
+
+	// Verify stale peer is gone, fresh peer remains.
+	_, staleExists := rl.peers.Load("stale-peer")
+	require.False(t, staleExists)
+	_, freshExists := rl.peers.Load("fresh-peer")
+	require.True(t, freshExists)
 }

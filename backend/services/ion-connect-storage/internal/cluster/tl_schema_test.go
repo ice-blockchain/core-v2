@@ -117,3 +117,29 @@ func TestParseTruncatedData(t *testing.T) {
 	_, err = ParseForwardPieceRequest(make([]byte, 10))
 	require.Error(t, err)
 }
+
+func TestParseForwardPieceRequestRejectsTrailingBytes(t *testing.T) {
+	req := ForwardPieceRequest{BagID: [32]byte{0x01}, PieceID: 1}
+	encoded := SerializeForwardPieceRequest(req)
+	// Append trailing byte
+	_, err := ParseForwardPieceRequest(append(encoded, 0xFF))
+	require.ErrorContains(t, err, "want 40")
+}
+
+func TestParseForwardPieceRequestRejectsNegativePieceID(t *testing.T) {
+	buf := make([]byte, 40)
+	binary.LittleEndian.PutUint32(buf[0:4], tlForwardPieceRequest)
+	// PieceID = -1 (0xFFFFFFFF as uint32)
+	binary.LittleEndian.PutUint32(buf[36:40], 0xFFFFFFFF)
+	_, err := ParseForwardPieceRequest(buf)
+	require.ErrorContains(t, err, "negative piece id")
+}
+
+func TestParseForwardPieceRequestExactSizeAccepted(t *testing.T) {
+	req := ForwardPieceRequest{BagID: [32]byte{0xAB}, PieceID: 100}
+	encoded := SerializeForwardPieceRequest(req)
+	require.Len(t, encoded, 40)
+	decoded, err := ParseForwardPieceRequest(encoded)
+	require.NoError(t, err)
+	require.Equal(t, req, decoded)
+}

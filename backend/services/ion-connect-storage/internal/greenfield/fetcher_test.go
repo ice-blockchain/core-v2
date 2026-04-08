@@ -35,20 +35,26 @@ func (m *mockGreenfieldClient) FGetObjectResumable(_ context.Context, _, _, _ st
 func (m *mockGreenfieldClient) Close() error { return nil }
 
 func TestFetcherCoalescesSegmentRequests(t *testing.T) {
-	mock := &mockGreenfieldClient{objectData: strings.Repeat("x", 1024)}
+	mock := &slowGreenfieldClient{
+		mockGreenfieldClient: mockGreenfieldClient{objectData: strings.Repeat("x", 1024)},
+		delay:                100 * time.Millisecond,
+	}
 	fetcher := NewFetcher(mock, testLogger())
 
 	var wg sync.WaitGroup
 	results := make([][]byte, 5)
 	errs := make([]error, 5)
+	start := make(chan struct{})
 
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
+			<-start
 			results[idx], errs[idx] = fetcher.FetchSegment(context.Background(), "b", "o", 0, nil)
 		}(i)
 	}
+	close(start)
 	wg.Wait()
 
 	for i := 0; i < 5; i++ {

@@ -179,7 +179,12 @@ func (b *pebbleBatch) Delete(_ context.Context, key ds.Key) error {
 }
 
 func (b *pebbleBatch) Commit(_ context.Context) error {
-	return b.batch.Commit(pebble.Sync)
+	err := b.batch.Commit(pebble.Sync)
+	closeErr := b.batch.Close()
+	if err != nil {
+		return err
+	}
+	return closeErr
 }
 
 // prefixUpperBound returns the upper bound for a prefix scan.

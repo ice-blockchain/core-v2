@@ -119,6 +119,7 @@ func (s *Server) Start(ctx context.Context) error {
 	if err := s.gateway.StartServer(bindAddr, 1); err != nil {
 		return fmt.Errorf("start ADNL gateway: %w", err)
 	}
+	s.gateway.SetConnectionHandler(s.handleNewConnection)
 
 	s.gateway.SetAddressList([]*address.UDP{{IP: s.externalIP, Port: int32(s.externalPort)}})
 
@@ -132,8 +133,6 @@ func (s *Server) Start(ctx context.Context) error {
 	if err := s.registerSelfInDHT(ctx); err != nil {
 		s.logger.Warn("initial DHT self-registration failed", "error", err)
 	}
-
-	s.gateway.SetConnectionHandler(s.handleNewConnection)
 
 	s.registrar.Start(ctx)
 	s.running.Store(true)

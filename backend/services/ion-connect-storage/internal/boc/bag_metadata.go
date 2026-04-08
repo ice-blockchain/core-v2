@@ -53,6 +53,9 @@ func ParseIonStorageBoC(data []byte, logger *slog.Logger) (*BagMetadata, error) 
 	if err != nil {
 		return nil, err
 	}
+	if [32]byte(merkleTree.Hash()) != meta.RootHash {
+		return nil, fmt.Errorf("merkle tree hash mismatch: got %x, want %x", merkleTree.Hash()[:8], meta.RootHash[:8])
+	}
 	meta.MerkleTree = merkleTree
 	offset = treeEnd
 
@@ -178,10 +181,14 @@ func parseTorrentInfoCell(root *cell.Cell, rawBoC []byte, logger *slog.Logger) (
 	if ps == 0 {
 		return nil, fmt.Errorf("piece_size is zero")
 	}
-	pieceCount := int((fileSize + uint64(ps) - 1) / uint64(ps))
-	if pieceCount > maxPieceCount {
-		return nil, fmt.Errorf("piece count %d exceeds maximum %d", pieceCount, maxPieceCount)
+	pieceCountU := fileSize / uint64(ps)
+	if fileSize%uint64(ps) != 0 {
+		pieceCountU++
 	}
+	if pieceCountU > uint64(math.MaxInt) || pieceCountU > uint64(maxPieceCount) {
+		return nil, fmt.Errorf("piece count %d exceeds maximum %d", pieceCountU, maxPieceCount)
+	}
+	pieceCount := int(pieceCountU)
 
 	var bagID [32]byte
 	copy(bagID[:], root.Hash())

@@ -95,6 +95,7 @@ func (h *Handler) fetchSegmentForPiece(ctx context.Context, bagID [32]byte, meta
 }
 
 // getOrFetchSegment checks segment cache, falls back to Greenfield fetch.
+// Uses singleflight to prevent concurrent fetches for the same segment.
 func (h *Handler) getOrFetchSegment(ctx context.Context, bagID [32]byte, meta *boc.BagMetadata, segIdx int) ([]byte, error) {
 	data, ok, err := h.segmentCache.GetSegment(bagID, segIdx)
 	if err != nil {
@@ -103,7 +104,18 @@ func (h *Handler) getOrFetchSegment(ctx context.Context, bagID [32]byte, meta *b
 	if ok {
 		return data, nil
 	}
-	return h.fetchAndCacheSegment(ctx, bagID, meta, segIdx)
+	key := fmt.Sprintf("%x:%d", bagID, segIdx)
+	result, err, _ := h.segmentFetchFlight.Do(key, func() (any, error) {
+		// Double-check cache after acquiring the flight slot.
+		if d, ok2, _ := h.segmentCache.GetSegment(bagID, segIdx); ok2 {
+			return d, nil
+		}
+		return h.fetchAndCacheSegment(ctx, bagID, meta, segIdx)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.([]byte), nil
 }
 
 const (

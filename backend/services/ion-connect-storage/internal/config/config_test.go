@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -128,4 +129,54 @@ func TestLoad_CommaSeparatedURLs(t *testing.T) {
 	cfg, err := Load()
 	require.NoError(t, err)
 	require.Equal(t, []string{"https://93.184.216.34", "https://93.184.216.35"}, cfg.GreenfieldRpcURLs)
+}
+
+func TestLoad_InvalidShardCount_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("SHARD_COUNT", "abc")
+	_, err := Load()
+	require.ErrorContains(t, err, "SHARD_COUNT")
+	require.ErrorContains(t, err, "invalid integer")
+}
+
+func TestLoad_InvalidCacheTTL_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("CACHE_TTL", "24hours")
+	_, err := Load()
+	require.ErrorContains(t, err, "CACHE_TTL")
+	require.ErrorContains(t, err, "invalid duration")
+}
+
+func TestLoad_InvalidHeartbeatInterval_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("HEARTBEAT_INTERVAL", "not-a-duration")
+	_, err := Load()
+	require.ErrorContains(t, err, "HEARTBEAT_INTERVAL")
+}
+
+func TestSecretFromEnvOrFile_UnreadableFile_Error(t *testing.T) {
+	t.Setenv("TEST_SECRET_FILE", "/nonexistent/path/to/secret")
+	t.Setenv("TEST_SECRET", "fallback-value")
+	_, err := secretFromEnvOrFile("TEST_SECRET")
+	require.Error(t, err)
+	require.ErrorContains(t, err, "TEST_SECRET_FILE")
+}
+
+func TestSecretFromEnvOrFile_ReadsFromFile(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/secret.txt"
+	require.NoError(t, os.WriteFile(path, []byte("  file-secret  \n"), 0o600))
+	t.Setenv("TEST_KEY_FILE", path)
+	t.Setenv("TEST_KEY", "env-value")
+	val, err := secretFromEnvOrFile("TEST_KEY")
+	require.NoError(t, err)
+	require.Equal(t, "file-secret", val)
+}
+
+func TestSecretFromEnvOrFile_FallsBackToEnv(t *testing.T) {
+	t.Setenv("TEST_KEY_FILE", "")
+	t.Setenv("TEST_KEY", "env-value")
+	val, err := secretFromEnvOrFile("TEST_KEY")
+	require.NoError(t, err)
+	require.Equal(t, "env-value", val)
 }

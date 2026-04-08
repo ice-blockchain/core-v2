@@ -39,6 +39,7 @@ type Handler struct {
 	overlayNodeBuilder func(overlayID []byte) (*overlay.Node, error)
 	logger             *slog.Logger
 	bagOpenFlight      singleflight.Group
+	segmentFetchFlight singleflight.Group
 }
 
 // HandlerConfig holds dependencies for creating a Handler.

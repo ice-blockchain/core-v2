@@ -71,6 +71,7 @@ func TestSegmentCacheConcurrentSegmentWrites(t *testing.T) {
 	_, _ = rand.Read(seg1)
 
 	var wg sync.WaitGroup
+	errs := make(chan error, 2)
 	wg.Add(2)
 	writeSegment := func(segIdx int, data []byte) {
 		defer wg.Done()
@@ -79,14 +80,20 @@ func TestSegmentCacheConcurrentSegmentWrites(t *testing.T) {
 			layout,
 			int64(segIdx)*1024,
 		)
-		_, err := dist.Write(data)
-		require.NoError(t, err)
-		require.NoError(t, dist.Close())
+		if _, wErr := dist.Write(data); wErr != nil {
+			errs <- wErr
+			return
+		}
+		errs <- dist.Close()
 	}
 
 	go writeSegment(0, seg0)
 	go writeSegment(1, seg1)
 	wg.Wait()
+	close(errs)
+	for wErr := range errs {
+		require.NoError(t, wErr)
+	}
 
 	dirPath := bagDirPath(cache.dir, bagID)
 	fullData, err := os.ReadFile(filepath.Join(dirPath, "big.dat"))

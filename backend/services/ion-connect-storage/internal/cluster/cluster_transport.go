@@ -268,6 +268,7 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 	}
 
 	var toReconnect [][32]byte
+	var successCount int
 	for range len(peers) {
 		r := <-results
 		if r.err != nil {
@@ -277,6 +278,7 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 			}
 			continue
 		}
+		successCount++
 		t.resetPeerFailures(r.addr)
 		if len(r.data) > 0 {
 			fetchCancel()
@@ -285,6 +287,12 @@ func (t *ClusterTransport) FetchBlockFromPeers(ctx context.Context, cidBytes []b
 		}
 	}
 	t.reconnectFailedPeers(toReconnect)
+	if successCount == 0 {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, fmt.Errorf("all %d peers failed with transport errors", len(peers))
+	}
 	return nil, fmt.Errorf("block not found on %d peers", len(peers))
 }
 

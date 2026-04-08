@@ -42,7 +42,10 @@ func (c Config) ClusterEnabled() bool {
 }
 
 func Load() (Config, error) {
-	adnlKey := secretFromEnvOrFile("ADNL_PRIVATE_KEY")
+	adnlKey, err := secretFromEnvOrFile("ADNL_PRIVATE_KEY")
+	if err != nil {
+		return Config{}, err
+	}
 	if err := validateAdnlKey(adnlKey); err != nil {
 		return Config{}, err
 	}
@@ -65,7 +68,10 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("ONLINEIO_ENV is required")
 	}
 
-	greenfieldPrivKey := secretFromEnvOrFile("GREENFIELD_PRIVATE_KEY")
+	greenfieldPrivKey, err := secretFromEnvOrFile("GREENFIELD_PRIVATE_KEY")
+	if err != nil {
+		return Config{}, err
+	}
 	if greenfieldPrivKey == "" {
 		return Config{}, fmt.Errorf("GREENFIELD_PRIVATE_KEY is required (set env var or GREENFIELD_PRIVATE_KEY_FILE)")
 	}
@@ -83,10 +89,22 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("ADNL_EXTERNAL_ADDR is required (e.g. 1.2.3.4:3278)")
 	}
 
-	cacheTTL := parseDuration("CACHE_TTL", 24*time.Hour)
-	shardIndex := parseInt("SHARD_INDEX", 0)
-	shardCount := parseInt("SHARD_COUNT", 1)
-	activeDHTLimit := parseInt("ACTIVE_DHT_LIMIT", 100000)
+	cacheTTL, err := parseDuration("CACHE_TTL", 24*time.Hour)
+	if err != nil {
+		return Config{}, err
+	}
+	shardIndex, err := parseInt("SHARD_INDEX", 0)
+	if err != nil {
+		return Config{}, err
+	}
+	shardCount, err := parseInt("SHARD_COUNT", 1)
+	if err != nil {
+		return Config{}, err
+	}
+	activeDHTLimit, err := parseInt("ACTIVE_DHT_LIMIT", 100000)
+	if err != nil {
+		return Config{}, err
+	}
 
 	if shardCount <= 0 {
 		return Config{}, fmt.Errorf("SHARD_COUNT must be positive, got %d", shardCount)
@@ -99,6 +117,23 @@ func Load() (Config, error) {
 	}
 	if cacheTTL <= 0 {
 		return Config{}, fmt.Errorf("CACHE_TTL must be positive, got %v", cacheTTL)
+	}
+
+	heartbeatInterval, err := parseDuration("HEARTBEAT_INTERVAL", 60*time.Second)
+	if err != nil {
+		return Config{}, err
+	}
+	reclamationInterval, err := parseDuration("RECLAMATION_INTERVAL", 5*time.Minute)
+	if err != nil {
+		return Config{}, err
+	}
+	staleHeartbeatTimeout, err := parseDuration("STALE_HEARTBEAT_TIMEOUT", 10*time.Minute)
+	if err != nil {
+		return Config{}, err
+	}
+	reclamationStartDelay, err := parseDuration("RECLAMATION_START_DELAY", 0)
+	if err != nil {
+		return Config{}, err
 	}
 
 	return Config{
@@ -116,10 +151,10 @@ func Load() (Config, error) {
 		ShardIndex:            shardIndex,
 		ShardCount:            shardCount,
 		ClusterOverlayID:      os.Getenv("CLUSTER_OVERLAY_ID"),
-		HeartbeatInterval:     parseDuration("HEARTBEAT_INTERVAL", 60*time.Second),
-		ReclamationInterval:   parseDuration("RECLAMATION_INTERVAL", 5*time.Minute),
-		StaleHeartbeatTimeout: parseDuration("STALE_HEARTBEAT_TIMEOUT", 10*time.Minute),
-		ReclamationStartDelay: parseDuration("RECLAMATION_START_DELAY", 0),
+		HeartbeatInterval:     heartbeatInterval,
+		ReclamationInterval:   reclamationInterval,
+		StaleHeartbeatTimeout: staleHeartbeatTimeout,
+		ReclamationStartDelay: reclamationStartDelay,
 		ActiveDHTLimit:        activeDHTLimit,
 		HttpPort:              envOrDefault("HTTP_PORT", "8080"),
 		MetricsPort:           os.Getenv("METRICS_PORT"),
@@ -222,44 +257,49 @@ func envOrDefault(key, fallback string) string {
 	return fallback
 }
 
-func parseInt(key string, fallback int) int {
+func parseInt(key string, fallback int) (int, error) {
 	v := os.Getenv(key)
 	if v == "" {
-		return fallback
+		return fallback, nil
 	}
 	n, err := strconv.Atoi(v)
 	if err != nil {
-		return fallback
+		return 0, fmt.Errorf("%s: invalid integer %q: %w", key, v, err)
 	}
-	return n
+	return n, nil
 }
 
-func parseDuration(key string, fallback time.Duration) time.Duration {
+func parseDuration(key string, fallback time.Duration) (time.Duration, error) {
 	v := os.Getenv(key)
 	if v == "" {
-		return fallback
+		return fallback, nil
 	}
 	d, err := time.ParseDuration(v)
 	if err != nil {
-		return fallback
+		return 0, fmt.Errorf("%s: invalid duration %q: %w", key, v, err)
 	}
-	return d
+	return d, nil
 }
 
 // secretFromEnvOrFile reads a secret from environment variable KEY, or from
 // the file path in KEY_FILE. File takes precedence when both are set.
 // This supports Docker secrets (mounted as files) without breaking env-var usage.
 // Warns if the file has group/other permission bits set.
-func secretFromEnvOrFile(key string) string {
-	if filePath := os.Getenv(key + "_FILE"); filePath != "" {
+func secretFromEnvOrFile(key string) (string, error) {
+	filePath := os.Getenv(key + "_FILE")
+	if filePath != "" {
 		info, statErr := os.Stat(filePath)
-		if statErr == nil && info.Mode().Perm()&0o077 != 0 {
+		if statErr != nil {
+			return "", fmt.Errorf("%s_FILE=%s: %w", key, filePath, statErr)
+		}
+		if info.Mode().Perm()&0o077 != 0 {
 			fmt.Fprintf(os.Stderr, "WARNING: secret file %s has unsafe permissions %04o (group/other bits set)\n", filePath, info.Mode().Perm())
 		}
 		data, err := os.ReadFile(filePath)
-		if err == nil {
-			return strings.TrimSpace(string(data))
+		if err != nil {
+			return "", fmt.Errorf("%s_FILE=%s: %w", key, filePath, err)
 		}
+		return strings.TrimSpace(string(data)), nil
 	}
-	return os.Getenv(key)
+	return os.Getenv(key), nil
 }

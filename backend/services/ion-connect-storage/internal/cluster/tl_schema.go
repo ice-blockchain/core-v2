@@ -140,8 +140,8 @@ func SerializeForwardPieceRequest(req ForwardPieceRequest) []byte {
 
 // ParseForwardPieceRequest decodes a piece forwarding request.
 func ParseForwardPieceRequest(data []byte) (ForwardPieceRequest, error) {
-	if len(data) < 40 {
-		return ForwardPieceRequest{}, fmt.Errorf("forward piece request too short: %d", len(data))
+	if len(data) != 40 {
+		return ForwardPieceRequest{}, fmt.Errorf("forward piece request size %d, want 40", len(data))
 	}
 	id := binary.LittleEndian.Uint32(data[0:4])
 	if id != tlForwardPieceRequest {
@@ -150,6 +150,9 @@ func ParseForwardPieceRequest(data []byte) (ForwardPieceRequest, error) {
 	var req ForwardPieceRequest
 	copy(req.BagID[:], data[4:36])
 	req.PieceID = int32(binary.LittleEndian.Uint32(data[36:40]))
+	if req.PieceID < 0 {
+		return ForwardPieceRequest{}, fmt.Errorf("negative piece id: %d", req.PieceID)
+	}
 	return req, nil
 }
 
