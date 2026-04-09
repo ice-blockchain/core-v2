@@ -7,12 +7,16 @@ import { ActionButtonsRow } from "../components/ActionButtonsRow";
 import { FriendsSection } from "../components/FriendsSection";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CoinsSection } from "../components/CoinsSection";
+import { WalletViewsSheet } from "../components/WalletViewsSheet";
 import { useWalletScreenStyles } from "./useWalletScreenStyles";
 
 export function WalletScreen() {
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isSheetVisible, setIsSheetVisible] = useState(false);
   const toggleBalance = useCallback(() => setIsBalanceVisible((p) => !p), []);
+  const openSheet = useCallback(() => setIsSheetVisible(true), []);
+  const closeSheet = useCallback(() => setIsSheetVisible(false), []);
   const s = useWalletScreenStyles(isScrolled);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -21,7 +25,7 @@ export function WalletScreen() {
 
   return (
     <View style={s.screen}>
-      <View style={s.headerWrapper}><WalletHeader /></View>
+      <View style={s.headerWrapper}><WalletHeader onWalletPress={openSheet} /></View>
       <ScrollView style={styles.scroll} contentContainerStyle={s.scrollContent} onScroll={handleScroll} scrollEventThrottle={16}>
         <View style={s.gap}>
           <View style={s.header}>
@@ -33,6 +37,7 @@ export function WalletScreen() {
           <CoinsSection />
         </View>
       </ScrollView>
+      <WalletViewsSheet isVisible={isSheetVisible} onClose={closeSheet} />
     </View>
   );
 }

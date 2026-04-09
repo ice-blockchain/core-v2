@@ -1,14 +1,14 @@
 # Wallet UI
 
-Pure UI package for the wallet tab screen — components, translations, assets. No business logic.
+UI package for the wallet tab screen — components, translations, assets. Includes wallet management flow (switcher, create, edit, delete) via a bottom sheet.
 
 ## Structure
 
 ```
 src/
   screens/       — WalletScreen (main wallet tab)
-  components/    — Reusable wallet UI components
-  assets/        — Raster images (portfolio banner, empty coins)
+  components/    — Wallet UI components including WalletViewsSheet and sub-views
+  assets/        — Raster images (portfolio banner, empty coins, wallet delete)
   translations/  — i18n strings (en, fr, de)
   types.ts       — Shared types (ContactData, CoinTabKey)
   index.ts       — Public API
@@ -22,9 +22,10 @@ src/
 
 ## Dependencies
 
-- `@ion/ui` — Design system primitives (Text, Icon, Avatar, useTheme, colorPalette)
+- `@ion/ui` — Design system primitives (Text, Icon, Button, TextField, BottomSheet, useTheme, colorPalette)
 - `@ion/localization` — Translation system (translate, TranslationResource)
+- `@ion/wallet` — Wallet management business logic (mock store, CRUD actions, hooks)
 
 ## Design
 
-Static/UI-only implementation from Figma. All data is hardcoded (mock contacts, zero balance). Action buttons are visual placeholders with no navigation wiring. All visual primitives come from `@ion/ui`. No hardcoded colors, fonts, or spacing.
+Wallet header pill opens a BottomSheet with multi-view navigation (switcher, manage, create, edit, delete confirmation). State machine managed via useState in WalletViewsSheet. All visual primitives from `@ion/ui`. No hardcoded colors, fonts, or spacing.

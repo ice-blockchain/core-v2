@@ -22,4 +22,7 @@ export const bridgeBannerImage: ImageSourcePropType = resolveAsset(
 export const emptyNftsImage: ImageSourcePropType = resolveAsset(
   require("./empty-nfts.png") as number,
 );
+export const walletDeleteImage: ImageSourcePropType = resolveAsset(
+  require("./wallet-delete.png") as number,
+);
 /* eslint-enable @typescript-eslint/no-var-requires */

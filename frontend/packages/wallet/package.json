@@ -1,5 +1,5 @@
 {
-  "name": "@ion/wallet-ui",
+  "name": "@ion/wallet",
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
@@ -11,19 +11,10 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@ion/localization": "workspace:*",
-    "@ion/ui": "workspace:*",
-    "@ion/wallet": "workspace:*"
-  },
   "peerDependencies": {
-    "@gorhom/bottom-sheet": ">=5",
-    "react": ">=19",
-    "react-native": ">=0.76",
-    "react-native-safe-area-context": ">=4.0.0"
+    "react": ">=19"
   },
   "devDependencies": {
-    "@testing-library/react": "^16.0.0",
     "@types/react": "^19.0.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
