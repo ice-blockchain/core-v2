@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { Modal, Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import type { ViewStyle } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
 import { useTheme } from "@ion/ui";
@@ -36,8 +36,12 @@ function useMenuAnimation(isVisible: boolean) {
   return useAnimatedStyle(() => ({ transform: [{ scale: scaleValue.value }], opacity: scaleValue.value }), [scaleValue]);
 }
 
+function buildOverlayStyle(): ViewStyle {
+  return { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 };
+}
+
 function buildBackdropStyle(): ViewStyle {
-  return { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "transparent" };
+  return { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 };
 }
 
 function buildMenuCardStyle(scale: (n: number) => number, bgColor: string, top: number): ViewStyle {
@@ -80,6 +84,7 @@ export function ConversationMoreMenu({ isVisible, anchorTop, onClose, onMute, on
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const animatedStyle = useMenuAnimation(isVisible);
+  const overlayStyle = useMemo(() => buildOverlayStyle(), []);
   const backdropStyle = useMemo(() => buildBackdropStyle(), []);
   const menuCardStyle = useMemo(
     () => buildMenuCardStyle(scale, theme.colors.secondaryBackground, anchorTop),
@@ -89,11 +94,11 @@ export function ConversationMoreMenu({ isVisible, anchorTop, onClose, onMute, on
   if (!isVisible) return null;
 
   return (
-    <Modal visible transparent animationType="none" statusBarTranslucent>
+    <View style={overlayStyle} pointerEvents="box-none">
       <Pressable style={backdropStyle} onPress={onClose} />
       <Animated.View style={[menuCardStyle, animatedStyle]}>
         <MoreMenuItems onClose={onClose} onMute={onMute} onBlock={onBlock} onDelete={onDelete} />
       </Animated.View>
-    </Modal>
+    </View>
   );
 }

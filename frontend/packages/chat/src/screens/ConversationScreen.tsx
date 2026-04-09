@@ -80,14 +80,12 @@ function noop() { /* placeholder for future implementation */ }
 export function ConversationScreen({ name, username, avatarUrl, isVerified, onBack }: ConversationScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const scale = theme.scale.scaleSize;
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [menuAnchorTop, setMenuAnchorTop] = useState(0);
   const [isPrivacySheetVisible, setIsPrivacySheetVisible] = useState(false);
+  const menuAnchorTop = insets.top + scale(48) + scale(4);
 
-  const handleMorePress = useCallback((buttonY: number, buttonHeight: number) => {
-    setMenuAnchorTop(buttonY + buttonHeight + 4);
-    setIsMenuVisible(true);
-  }, []);
+  const handleMorePress = useCallback(() => setIsMenuVisible(true), []);
   const handleMenuClose = useCallback(() => setIsMenuVisible(false), []);
   const handleLearnMore = useCallback(() => setIsPrivacySheetVisible(true), []);
   const handlePrivacyClose = useCallback(() => setIsPrivacySheetVisible(false), []);

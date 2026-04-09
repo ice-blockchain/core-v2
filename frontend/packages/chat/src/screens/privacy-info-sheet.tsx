@@ -13,7 +13,7 @@ interface PrivacyInfoSheetProps {
 }
 
 function buildContentStyle(scale: (n: number) => number): ViewStyle {
-  return { alignItems: "center", gap: scale(10), paddingHorizontal: scale(16) };
+  return { alignItems: "center", gap: scale(10), paddingHorizontal: scale(16), paddingBottom: scale(34) };
 }
 
 function buildTextContainerStyle(scale: (n: number) => number): ViewStyle {
@@ -49,7 +49,7 @@ function PrivacyInfoContent({ onClose }: { readonly onClose: () => void }) {
 
 export function PrivacyInfoSheet({ isVisible, onClose }: PrivacyInfoSheetProps) {
   return (
-    <FullscreenBottomSheet isVisible={isVisible} onClose={onClose} snapPoints={SNAP_POINTS}>
+    <FullscreenBottomSheet isVisible={isVisible} onClose={onClose} snapPoints={SNAP_POINTS} enableDynamicSizing>
       <PrivacyInfoContent onClose={onClose} />
     </FullscreenBottomSheet>
   );

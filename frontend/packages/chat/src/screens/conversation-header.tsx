@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Image, Pressable, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import {
@@ -16,7 +16,7 @@ interface ConversationHeaderProps {
   readonly avatarUrl: string | undefined;
   readonly isVerified: boolean | undefined;
   readonly onBack: () => void;
-  readonly onMorePress: (buttonY: number, buttonHeight: number) => void;
+  readonly onMorePress: () => void;
 }
 
 function useHeaderStyles() {
@@ -53,11 +53,6 @@ function HeaderAvatar({ name, avatarUrl }: { readonly name: string; readonly ava
 export function ConversationHeader({ name, username, avatarUrl, isVerified, onBack, onMorePress }: ConversationHeaderProps) {
   const theme = useTheme();
   const styles = useHeaderStyles();
-  const moreRef = useRef<View>(null);
-
-  const handleMorePress = useCallback(() => {
-    moreRef.current?.measureInWindow((...args: number[]) => onMorePress(args[1] ?? 0, args[3] ?? 0));
-  }, [onMorePress]);
 
   return (
     <View style={styles.container} testID="conversation-header">
@@ -76,7 +71,7 @@ export function ConversationHeader({ name, username, avatarUrl, isVerified, onBa
           </View>
         </View>
       </View>
-      <Pressable onPress={handleMorePress} ref={moreRef} testID="conversation-more-button">
+      <Pressable onPress={onMorePress} testID="conversation-more-button">
         <Icon name="more-popup" size={24} color={theme.colors.quaternaryText} />
       </Pressable>
     </View>
