@@ -28,4 +28,18 @@ export const walletUiEN = {
   cancelButton: "Cancel",
   toggleBalanceLabel: "Toggle balance visibility",
   scanButtonLabel: "Scan",
+  walletsTitle: "Wallets",
+  manageWalletsTitle: "Manage wallets",
+  manageWalletsButton: "Manage wallets",
+  createWalletTitle: "Create a new wallet",
+  createWalletButton: "Create a new wallet",
+  editWalletTitle: "Edit wallet",
+  walletNameLabel: "Wallet name",
+  saveButton: "Save",
+  deleteWalletButton: "Delete wallet",
+  deleteWalletConfirmTitle: "Delete wallet?",
+  deleteWalletConfirmDescription:
+    "All coins on this wallet will be lost. Are you sure you want to delete this wallet?",
+  deleteButton: "Delete",
+  switchWalletLabel: "Switch wallet, {{name}}",
 } as const;

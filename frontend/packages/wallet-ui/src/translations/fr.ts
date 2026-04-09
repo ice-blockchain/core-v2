@@ -30,4 +30,18 @@ export const walletUiFR: Record<keyof typeof walletUiEN, string> = {
   cancelButton: "Annuler",
   toggleBalanceLabel: "Basculer la visibilité du solde",
   scanButtonLabel: "Scanner",
+  walletsTitle: "Portefeuilles",
+  manageWalletsTitle: "Gérer les portefeuilles",
+  manageWalletsButton: "Gérer les portefeuilles",
+  createWalletTitle: "Créer un nouveau portefeuille",
+  createWalletButton: "Créer un nouveau portefeuille",
+  editWalletTitle: "Modifier le portefeuille",
+  walletNameLabel: "Nom du portefeuille",
+  saveButton: "Enregistrer",
+  deleteWalletButton: "Supprimer le portefeuille",
+  deleteWalletConfirmTitle: "Supprimer le portefeuille ?",
+  deleteWalletConfirmDescription:
+    "Tous les jetons de ce portefeuille seront perdus. Êtes-vous sûr de vouloir supprimer ce portefeuille ?",
+  deleteButton: "Supprimer",
+  switchWalletLabel: "Changer de portefeuille, {{name}}",
 };

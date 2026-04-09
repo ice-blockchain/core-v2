@@ -30,4 +30,18 @@ export const walletUiDE: Record<keyof typeof walletUiEN, string> = {
   cancelButton: "Abbrechen",
   toggleBalanceLabel: "Saldo-Sichtbarkeit umschalten",
   scanButtonLabel: "Scannen",
+  walletsTitle: "Wallets",
+  manageWalletsTitle: "Wallets verwalten",
+  manageWalletsButton: "Wallets verwalten",
+  createWalletTitle: "Neue Wallet erstellen",
+  createWalletButton: "Neue Wallet erstellen",
+  editWalletTitle: "Wallet bearbeiten",
+  walletNameLabel: "Wallet-Name",
+  saveButton: "Speichern",
+  deleteWalletButton: "Wallet löschen",
+  deleteWalletConfirmTitle: "Wallet löschen?",
+  deleteWalletConfirmDescription:
+    "Alle Coins in dieser Wallet gehen verloren. Sind Sie sicher, dass Sie diese Wallet löschen möchten?",
+  deleteButton: "Löschen",
+  switchWalletLabel: "Wallet wechseln, {{name}}",
 };

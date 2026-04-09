@@ -1,97 +1,83 @@
 import { StyleSheet } from "react-native";
 import type { ImageStyle, ViewStyle } from "react-native";
+import type { useTheme } from "@ion/ui";
 
-interface ThemeColors {
-  onTertiaryFill: string;
-  tertiaryBackground: string;
-  primaryAccent: string;
-}
+type Theme = ReturnType<typeof useTheme>;
 
-export function buildCardContainerStyle(
-  scale: (n: number) => number,
-  scaleRadius: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildCardContainerStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
     height: scale(120),
-    borderRadius: scaleRadius(16),
+    borderRadius: theme.radii.large,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.onTertiaryFill,
-    backgroundColor: colors.tertiaryBackground,
+    borderColor: theme.colors.onTertiaryFill,
+    backgroundColor: theme.colors.tertiaryBackground,
     overflow: "hidden",
   };
 }
 
-export function buildTextBlockStyle(
-  scale: (n: number) => number,
-): ViewStyle {
+export function buildTextBlockStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
-    left: scale(20),
+    left: theme.spacing.xl,
     width: scale(208),
-    gap: scale(8),
+    gap: theme.spacing.sm,
   };
 }
 
-export function buildCardImageStyle(
-  scale: (n: number) => number,
-): ImageStyle {
+export function buildCardImageStyle(theme: Theme): ImageStyle {
+  const scale = theme.scale.scaleSize;
   return {
     width: scale(80),
     height: scale(80),
-    top: scale(20),
-    right: scale(20),
+    top: theme.spacing.xl,
+    right: theme.spacing.xl,
   };
 }
 
-export function buildDotsContainerStyle(
-  scale: (n: number) => number,
-): ViewStyle {
+export function buildDotsContainerStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
     marginTop: scale(9),
-    gap: scale(4),
+    gap: theme.spacing.xs,
   };
 }
 
-export function buildActiveDotStyle(
-  scale: (n: number) => number,
-  scaleRadius: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildActiveDotStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
     width: scale(12),
     height: scale(3),
-    borderRadius: scaleRadius(2),
-    backgroundColor: colors.primaryAccent,
+    borderRadius: theme.scale.scaleRadius(2),
+    backgroundColor: theme.colors.primaryAccent,
   };
 }
 
-export function buildInactiveDotStyle(
-  scale: (n: number) => number,
-  scaleRadius: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildInactiveDotStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
     width: scale(6),
     height: scale(3),
-    borderRadius: scaleRadius(2),
-    backgroundColor: colors.onTertiaryFill,
+    borderRadius: theme.scale.scaleRadius(2),
+    backgroundColor: theme.colors.onTertiaryFill,
   };
 }
 
-export function buildDotsInsideStyle(
-  scale: (n: number) => number,
-): ViewStyle {
+export function buildDotsInsideStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
     position: "absolute",
     bottom: scale(9.5),
     left: 0,
     right: 0,
-    gap: scale(4),
+    gap: theme.spacing.xs,
   };
 }
 
-export function buildCarouselPaddingStyle(
-  scale: (n: number) => number,
-): ViewStyle {
-  return { paddingLeft: scale(16), paddingRight: scale(16), gap: scale(12) };
+export function buildCarouselPaddingStyle(theme: Theme): ViewStyle {
+  return {
+    paddingLeft: theme.spacing.lg,
+    paddingRight: theme.spacing.lg,
+    gap: theme.spacing.md,
+  };
 }

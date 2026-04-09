@@ -11,9 +11,12 @@ import { ArticlesIcon } from "./generated/ArticlesIcon";
 import { AtSignIcon } from "./generated/AtSignIcon";
 import { BackArrowIcon } from "./generated/BackArrowIcon";
 import { BadgeVerifyIcon } from "./generated/BadgeVerifyIcon";
+import { BlockDeleteIcon } from "./generated/BlockDeleteIcon";
 import { BlockEyeOffIcon } from "./generated/BlockEyeOffIcon";
 import { BlockEyeOnIcon } from "./generated/BlockEyeOnIcon";
 import { BlockchainIcon } from "./generated/BlockchainIcon";
+import { ButtonAddstrokeIcon } from "./generated/ButtonAddstrokeIcon";
+import { ButtonManageWalletIcon } from "./generated/ButtonManageWalletIcon";
 import { ButtonNextIcon } from "./generated/ButtonNextIcon";
 import { ButtonQrcodeIcon } from "./generated/ButtonQrcodeIcon";
 import { ButtonReceiveIcon } from "./generated/ButtonReceiveIcon";
@@ -117,9 +120,12 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "at-sign": AtSignIcon,
   "back-arrow": BackArrowIcon,
   "badge-verify": BadgeVerifyIcon,
+  "block-delete": BlockDeleteIcon,
   "block-eye-off": BlockEyeOffIcon,
   "block-eye-on": BlockEyeOnIcon,
   "blockchain": BlockchainIcon,
+  "button-addstroke": ButtonAddstrokeIcon,
+  "button-manage-wallet": ButtonManageWalletIcon,
   "button-next": ButtonNextIcon,
   "button-qrcode": ButtonQrcodeIcon,
   "button-receive": ButtonReceiveIcon,

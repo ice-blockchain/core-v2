@@ -20,11 +20,12 @@ function keyExtractor(item: ContactData) { return item.id; }
 function renderItem({ item }: { item: ContactData }) { return <ContactItem contact={item} />; }
 
 export function FriendsSection() {
-  const { colors, scale: { scaleSize: scale } } = useTheme();
-  const containerStyle = useMemo(() => buildContainerStyle(scale, colors), [scale, colors]);
-  const headerStyle = useMemo(() => buildHeaderStyle(scale), [scale]);
-  const listStyle = useMemo(() => buildListContentStyle(scale), [scale]);
-  const separatorStyle = useMemo<ViewStyle>(() => ({ width: scale(12) }), [scale]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const containerStyle = useMemo(() => buildContainerStyle(theme), [theme]);
+  const headerStyle = useMemo(() => buildHeaderStyle(theme), [theme]);
+  const listStyle = useMemo(() => buildListContentStyle(theme), [theme]);
+  const separatorStyle = useMemo<ViewStyle>(() => ({ width: theme.scale.scaleSize(12) }), [theme.scale]);
   const Separator = useMemo(
     () => function FriendSeparator() { return <View style={separatorStyle} />; },
     [separatorStyle],

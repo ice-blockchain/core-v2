@@ -1,33 +1,27 @@
 import type { ImageStyle, ViewStyle } from "react-native";
+import type { useTheme } from "@ion/ui";
 
-interface ThemeColors {
-  secondaryBackground: string;
-}
+type Theme = ReturnType<typeof useTheme>;
 
-export function buildContainerStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildContainerStyle(theme: Theme): ViewStyle {
   return {
-    backgroundColor: colors.secondaryBackground,
-    paddingHorizontal: scale(16),
-    paddingTop: scale(16),
-    paddingBottom: scale(16),
-    gap: scale(16),
+    backgroundColor: theme.colors.secondaryBackground,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    gap: theme.spacing.lg,
   };
 }
 
-export function buildEmptyImageStyle(
-  scale: (n: number) => number,
-): ImageStyle {
+export function buildEmptyImageStyle(theme: Theme): ImageStyle {
+  const scale = theme.scale.scaleSize;
   return { width: scale(48), height: scale(48) };
 }
 
-export function buildEmptyStateStyle(
-  scale: (n: number) => number,
-): ViewStyle {
+export function buildEmptyStateStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
-    gap: scale(8),
+    gap: theme.spacing.sm,
     paddingVertical: scale(65),
   };
 }

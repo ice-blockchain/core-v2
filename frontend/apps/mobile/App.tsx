@@ -22,7 +22,7 @@ import {
 } from "@ion/onboarding-ui";
 import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
-import { walletUiTranslations } from "@ion/wallet-ui";
+import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from "@ion/wallet-ui";
 import { userSearchTranslations } from "@ion/user-search-ui";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
@@ -72,6 +72,13 @@ const screens = {
   ConfirmPassword: ConfirmPasswordScreen,
   RestoreSuccess: RestoreSuccessScreen,
   GeneralError: GeneralErrorScreen,
+  walletViewScreens: {
+    Switcher: WalletViewSwitcherScreen,
+    Manage: ManageWalletViewsScreen,
+    Create: CreateWalletViewScreen,
+    Edit: EditWalletViewScreen,
+    DeleteConfirm: DeleteWalletViewConfirmScreen,
+  },
 };
 
 const authScreens = {

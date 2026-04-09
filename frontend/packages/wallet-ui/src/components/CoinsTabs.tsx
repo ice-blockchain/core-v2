@@ -13,7 +13,7 @@ interface CoinsTabsProps {
 export function CoinsTabs({ activeTab, onTabChange, onSearchPress }: CoinsTabsProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const tabGapStyle = useMemo(() => ({ gap: scale(20) }), [scale]);
+  const tabGapStyle = useMemo(() => ({ gap: theme.spacing.xl }), [theme.spacing.xl]);
 
   const coinsColor = activeTab === "coins" ? theme.colors.primaryText : theme.colors.tertiaryText;
   const nftsColor = activeTab === "nfts" ? theme.colors.primaryText : theme.colors.tertiaryText;

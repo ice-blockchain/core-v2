@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Platform, ScrollView, View } from "react-native";
 import type { LayoutChangeEvent } from "react-native";
 import { useTheme } from "@ion/ui";
 import type { CoinTabKey } from "../types";
@@ -16,7 +16,7 @@ export function CoinsSection() {
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<CoinTabKey>("coins");
   const [pageWidth, setPageWidth] = useState(0);
-  const { scrollRef, scrollToTab, onScrollEnd, onLayout } = useTabPager(setActiveTab);
+  const { scrollRef, scrollToTab, onScrollEnd, onScroll, onLayout } = useTabPager(setActiveTab);
   const search = useCoinsSectionSearch();
   const s = useCoinsSectionStyles(pageWidth);
   const handleLayout = useCallback((e: LayoutChangeEvent) => {
@@ -30,7 +30,8 @@ export function CoinsSection() {
       {search.isActive && <CoinSearchBar value={search.query} onChangeText={search.setQuery} onCancel={search.cancel} />}
       <ScrollView
         ref={scrollRef} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={onScrollEnd} onLayout={handleLayout} scrollEventThrottle={16}
+        onMomentumScrollEnd={onScrollEnd} onScroll={Platform.OS === "web" ? onScroll : undefined}
+        onLayout={handleLayout} scrollEventThrottle={16}
       >
         <View style={s.page}>
           <EmptyCoinsState imageStyle={s.emptyImage} stateStyle={s.emptyState} textColor={colors.tertiaryText} />

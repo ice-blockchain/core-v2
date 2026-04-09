@@ -9,6 +9,14 @@ export interface VerifyNextRoute {
   reset?: boolean;
 }
 
+export type WalletViewSheetParamList = {
+  WalletViewSwitcher: undefined;
+  WalletViewManage: undefined;
+  WalletViewCreate: undefined;
+  WalletViewEdit: { walletId: string };
+  WalletViewDeleteConfirm: { walletId: string };
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   GetStarted: undefined;
@@ -20,6 +28,7 @@ export type RootStackParamList = {
   StorageTest: undefined;
   AuthFlow: undefined;
   'Sheet/Auth': NavigatorScreenParams<AuthStackParamList> | undefined;
+  'Sheet/WalletViewManagement': NavigatorScreenParams<WalletViewSheetParamList> | undefined;
   'Sheet/NicknameReserved': undefined;
   'Sheet/IdentityKeyNameNote': undefined;
   'Sheet/Verify': { next: VerifyNextRoute; method?: VerifyMethodType; identityKeyName?: string };

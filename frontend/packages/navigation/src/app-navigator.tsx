@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './route-params';
 import type { AuthScreens } from './auth-sheet-navigator';
 import { AuthSheetNavigator } from './auth-sheet-navigator';
+import type { WalletViewScreens } from './wallet-view-sheet-navigator';
+import { WalletViewSheetNavigator } from './wallet-view-sheet-navigator';
 import { Routes } from './routes';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,7 @@ interface AppNavigatorScreens {
   MediaPicker?: ComponentType;
   GalleryPermissionDenied?: ComponentType;
   CameraPermissionDenied?: ComponentType;
+  walletViewScreens?: WalletViewScreens;
 }
 
 interface AppNavigatorProps {
@@ -53,8 +56,19 @@ function useAuthScreen(authScreens: AuthScreens) {
   );
 }
 
+function useWalletViewScreen(walletViewScreens?: WalletViewScreens) {
+  return useMemo(
+    () => walletViewScreens
+      ? function WalletViewManagementScreen() { return <WalletViewSheetNavigator screens={walletViewScreens} />; }
+      : undefined,
+    [walletViewScreens],
+  );
+}
+
+/* eslint-disable max-lines-per-function -- navigator registration is declarative */
 export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
   const Auth = useAuthScreen(authScreens);
+  const WalletView = useWalletViewScreen(s.walletViewScreens);
   return (
     <Stack.Navigator screenOptions={NAV}>
       <Stack.Screen name={Routes.Splash} component={s.Splash} />
@@ -65,6 +79,7 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}
       {s.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={s.AuthFlow} options={MODAL} />}
       <Stack.Screen name={Routes.Sheet.Auth} component={Auth} options={MODAL} />
+      {WalletView && <Stack.Screen name={Routes.Sheet.WalletViewManagement} component={WalletView} options={MODAL} />}
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={s.NicknameReserved} options={MODAL} />
       <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={s.IdentityKeyNameNote} options={MODAL} />
       <Stack.Screen name={Routes.Sheet.Verify} component={s.Verify} options={MODAL} />

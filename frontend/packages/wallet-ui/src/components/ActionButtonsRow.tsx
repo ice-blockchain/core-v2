@@ -6,11 +6,10 @@ import { ActionButton } from "./ActionButton";
 
 export function ActionButtonsRow() {
   const theme = useTheme();
-  const scale = theme.scale.scaleSize;
 
   const rowStyle = useMemo(
-    () => ({ gap: scale(12), paddingHorizontal: scale(16) }),
-    [scale],
+    () => ({ gap: theme.spacing.md, paddingHorizontal: theme.spacing.lg }),
+    [theme.spacing.md, theme.spacing.lg],
   );
 
   return (

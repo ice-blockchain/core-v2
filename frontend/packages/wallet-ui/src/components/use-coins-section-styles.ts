@@ -11,11 +11,11 @@ interface CoinsSectionStyles {
 }
 
 export function useCoinsSectionStyles(pageWidth: number): CoinsSectionStyles {
-  const { colors, scale: { scaleSize: scale } } = useTheme();
+  const theme = useTheme();
   return useMemo(() => ({
-    container: buildContainerStyle(scale, colors),
-    emptyImage: buildEmptyImageStyle(scale),
-    emptyState: buildEmptyStateStyle(scale),
+    container: buildContainerStyle(theme),
+    emptyImage: buildEmptyImageStyle(theme),
+    emptyState: buildEmptyStateStyle(theme),
     page: { width: pageWidth },
-  }), [scale, colors, pageWidth]);
+  }), [theme, pageWidth]);
 }
