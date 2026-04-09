@@ -405,6 +405,14 @@ jobs:
           fi
 
           if [[ -n "${ICE_CI_CD_BOT_GH_PAT:-}" ]]; then
+            # GitHub Actions runners don't have SSH keys for git@github.com URLs.
+            # When PAT auth is available, force HTTPS so match can clone via header auth.
+            if [[ "${MATCH_GIT_URL:-}" =~ ^git@github\.com:(.+)$ ]]; then
+              export MATCH_GIT_URL="https://github.com/${BASH_REMATCH[1]}"
+            elif [[ "${MATCH_GIT_URL:-}" =~ ^ssh://git@github\.com/(.+)$ ]]; then
+              export MATCH_GIT_URL="https://github.com/${BASH_REMATCH[1]}"
+            fi
+
             AUTH_USER="${ICE_CI_CD_BOT_GH_USERNAME:-x-access-token}"
             MATCH_GIT_BASIC_AUTHORIZATION="$(printf '%s' "${AUTH_USER}:${ICE_CI_CD_BOT_GH_PAT}" | base64)"
             export MATCH_GIT_BASIC_AUTHORIZATION
