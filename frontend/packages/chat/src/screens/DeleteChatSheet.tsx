@@ -12,7 +12,7 @@ export function DeleteChatSheet({ isVisible, onClose, onDelete }: DeleteChatShee
   const theme = useTheme();
 
   return (
-    <Modal visible={isVisible} transparent animationType="none">
+    <Modal visible={isVisible} transparent animationType="none" onRequestClose={onClose}>
       <FullscreenBottomSheet isVisible={isVisible} onClose={onClose} enableDynamicSizing>
         <View style={{ backgroundColor: theme.colors.secondaryBackground }}>
           <DeleteChatSheetContent onCancel={onClose} onDelete={onDelete} />

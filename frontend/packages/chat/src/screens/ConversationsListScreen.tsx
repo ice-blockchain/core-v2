@@ -88,7 +88,7 @@ interface ListSetupOptions {
 function useListSetup({ archiveFolder, isArchiveVisible, onConversationPress, contextMenu }: ListSetupOptions) {
   const renderItem = useCallback(({ item }: { readonly item: Conversation }) => (
     <Pressable
-      ref={(el) => contextMenu.setRowRef(item.id, el)}
+      ref={contextMenu.getRowRef(item.id)}
       onPress={() => onConversationPress?.(item)}
       onLongPress={() => { if (!item.isFolder) contextMenu.show(item); }}
     >

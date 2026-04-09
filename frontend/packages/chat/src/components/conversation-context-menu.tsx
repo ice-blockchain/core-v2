@@ -22,6 +22,7 @@ const MENU_GAP = 4;
 const ICON_SIZE = 20;
 const ROW_PAD_H = 12;
 const ROW_PAD_V = 2;
+const ESTIMATED_MENU_HEIGHT = 200;
 
 interface ConversationContextMenuProps {
   readonly state: ContextMenuState | null;
@@ -66,7 +67,7 @@ function computeMenuPosition(layout: ContextMenuState["layout"], scale: ScaleFun
   const padV = scale(ROW_PAD_V);
   const left = layout.x + layout.width + padH - menuWidth;
   const menuTop = layout.y + layout.height + padV + scale(MENU_GAP);
-  const estimatedMenuHeight = scale(200);
+  const estimatedMenuHeight = scale(ESTIMATED_MENU_HEIGHT);
   if (menuTop + estimatedMenuHeight > screen.height - scale(40)) {
     return { top: layout.y - padV - estimatedMenuHeight - scale(MENU_GAP), left };
   }
@@ -115,7 +116,10 @@ function MenuItems({ conversation, onClose, onArchive, onMute, onBlock, onDelete
   const scale = theme.scale.scaleSize;
   const iconSize = scale(ICON_SIZE);
 
-  const handleAction = (action: (c: Conversation) => void) => () => { onClose(); action(conversation); };
+  const handleAction = useCallback(
+    (action: (c: Conversation) => void) => () => { onClose(); action(conversation); },
+    [conversation, onClose],
+  );
 
   return (
     <>
@@ -131,8 +135,6 @@ export function ConversationContextMenu({ state, onClose, onArchive, onMute, onB
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const animatedStyle = useMenuAnimation(state !== null);
-  const handleBackdrop = useCallback(() => onClose(), [onClose]);
-
   const backdropStyle = useMemo(() => buildBackdropStyle(theme.colors.backgroundSheet), [theme.colors.backgroundSheet]);
   const menuCardStyle = useMemo(() => buildMenuCardStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors.secondaryBackground]);
   const cardBgStyle = useMemo(
@@ -146,7 +148,7 @@ export function ConversationContextMenu({ state, onClose, onArchive, onMute, onB
 
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent>
-      <Pressable style={backdropStyle} onPress={handleBackdrop} />
+      <Pressable style={backdropStyle} onPress={onClose} />
       <View style={cardBgStyle} pointerEvents="none" />
       <View style={rowOverlayStyle} pointerEvents="none">
         <ConversationRow conversation={state.conversation} />

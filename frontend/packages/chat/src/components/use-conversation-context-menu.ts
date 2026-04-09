@@ -6,9 +6,19 @@ import type { ContextMenuState } from "./context-menu-types";
 export function useConversationContextMenu() {
   const [state, setState] = useState<ContextMenuState | null>(null);
   const rowRefs = useRef<Record<string, View | null>>({});
+  const refCallbacks = useRef<Record<string, (ref: View | null) => void>>({});
 
-  const setRowRef = useCallback((id: string, ref: View | null) => {
-    rowRefs.current[id] = ref;
+  const getRowRef = useCallback((id: string) => {
+    if (!refCallbacks.current[id]) {
+      refCallbacks.current[id] = (ref: View | null) => {
+        if (ref) {
+          rowRefs.current[id] = ref;
+        } else {
+          delete rowRefs.current[id];
+        }
+      };
+    }
+    return refCallbacks.current[id];
   }, []);
 
   const show = useCallback((conversation: Conversation) => {
@@ -22,5 +32,5 @@ export function useConversationContextMenu() {
 
   const close = useCallback(() => setState(null), []);
 
-  return { state, show, close, setRowRef };
+  return { state, show, close, getRowRef };
 }
