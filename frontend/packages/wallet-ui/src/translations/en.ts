@@ -41,4 +41,5 @@ export const walletUiEN = {
   deleteWalletConfirmDescription:
     "All coins on this wallet will be lost. Are you sure you want to delete this wallet?",
   deleteButton: "Delete",
+  switchWalletLabel: "Switch wallet, {{name}}",
 } as const;

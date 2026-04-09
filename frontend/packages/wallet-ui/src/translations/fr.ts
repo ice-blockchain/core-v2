@@ -43,4 +43,5 @@ export const walletUiFR: Record<keyof typeof walletUiEN, string> = {
   deleteWalletConfirmDescription:
     "Tous les jetons de ce portefeuille seront perdus. Êtes-vous sûr de vouloir supprimer ce portefeuille ?",
   deleteButton: "Supprimer",
+  switchWalletLabel: "Changer de portefeuille, {{name}}",
 };

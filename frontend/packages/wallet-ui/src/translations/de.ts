@@ -43,4 +43,5 @@ export const walletUiDE: Record<keyof typeof walletUiEN, string> = {
   deleteWalletConfirmDescription:
     "Alle Coins in dieser Wallet gehen verloren. Sind Sie sicher, dass Sie diese Wallet löschen möchten?",
   deleteButton: "Löschen",
+  switchWalletLabel: "Wallet wechseln, {{name}}",
 };
