@@ -370,11 +370,27 @@ jobs:
         env:
           MATCH_KEYCHAIN_NAME: ${{ runner.temp }}/build.keychain-db
           MATCH_KEYCHAIN_PASSWORD: ""
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
           MOBILE_MATCH_GIT_URL: ${{ secrets.MOBILE_MATCH_GIT_URL }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           ICE_CI_CD_BOT_GH_USERNAME: ${{ secrets.ICE_CI_CD_BOT_GH_USERNAME }}
           ICE_CI_CD_BOT_GH_PAT: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
         run: |
+          SECRETS_FILE=".env.secrets"
+          if [[ ! -f "$SECRETS_FILE" ]]; then
+            FALLBACK_SECRETS_FILE="../../.secrets/frontend/${INPUT_ENVIRONMENT}/mobile/.env.secrets"
+            if [[ -f "$FALLBACK_SECRETS_FILE" ]]; then
+              SECRETS_FILE="$FALLBACK_SECRETS_FILE"
+            fi
+          fi
+
+          # setup-env.sh copies environment secrets to apps/mobile/.env.secrets.
+          # Source secrets here so match-related variables are available in this step too.
+          if [[ -f "$SECRETS_FILE" ]]; then
+            # shellcheck disable=SC1091
+            set -a && source "$SECRETS_FILE" && set +a
+          fi
+
           if [[ -z "${MATCH_GIT_URL:-}" ]]; then
             export MATCH_GIT_URL="${MOBILE_MATCH_GIT_URL:-}"
           fi
