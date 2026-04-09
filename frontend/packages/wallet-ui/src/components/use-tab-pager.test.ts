@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+
+vi.mock("react-native", () => ({
+  Platform: { OS: "web" },
+  StyleSheet: { create: (s: Record<string, unknown>) => s },
+}));
+
 import { useTabPager } from "./use-tab-pager";
 import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 
