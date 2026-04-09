@@ -525,6 +525,9 @@ importers:
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
+      '@ion/user-search':
+        specifier: workspace:*
+        version: link:../user-search
       '@ion/user-search-ui':
         specifier: workspace:*
         version: link:../user-search-ui
@@ -10762,9 +10765,7 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

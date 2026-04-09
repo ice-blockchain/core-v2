@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-export type ChatView = "list" | "edit" | "archive-list" | "archive-edit";
+export type ChatView = "list" | "edit" | "archive-list" | "archive-edit" | "conversation";
 
 export function useChatNavigation(setBottomNavHidden: (hidden: boolean) => void) {
   const [activeView, setActiveView] = useState<ChatView>("list");
@@ -10,6 +10,7 @@ export function useChatNavigation(setBottomNavHidden: (hidden: boolean) => void)
   const showArchive = useCallback(() => { setBottomNavHidden(false); setActiveView("archive-list"); }, [setBottomNavHidden]);
   const showArchiveEdit = useCallback(() => { setBottomNavHidden(true); setActiveView("archive-edit"); }, [setBottomNavHidden]);
   const showArchiveList = useCallback(() => { setBottomNavHidden(false); setActiveView("archive-list"); }, [setBottomNavHidden]);
+  const showConversation = useCallback(() => { setBottomNavHidden(true); setActiveView("conversation"); }, [setBottomNavHidden]);
 
-  return { activeView, showEdit, showList, showArchive, showArchiveEdit, showArchiveList };
+  return { activeView, showEdit, showList, showArchive, showArchiveEdit, showArchiveList, showConversation };
 }

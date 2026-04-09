@@ -75,7 +75,7 @@ function ActiveScreenContent({ activeScreen, isNewChatVisible, onCompose, onClos
     return (
       <>
         <EmptyConversationsListScreen onCompose={onCompose} />
-        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} />
+        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} onSelectUser={undefined} />
       </>
     );
   }
@@ -88,7 +88,7 @@ function ActiveScreenContent({ activeScreen, isNewChatVisible, onCompose, onClos
     return (
       <>
         <ConversationsListScreen onEdit={() => onSetScreen("conversations-edit")} onCompose={onCompose} />
-        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} />
+        <NewChatSheet isVisible={isNewChatVisible} onClose={onCloseSheet} onSelectUser={undefined} />
       </>
     );
   }

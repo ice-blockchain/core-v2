@@ -48,7 +48,7 @@ function ScreenHeader({ onEdit, onCompose }: {
   return (
     <View style={styles.header}>
       <Pressable onPress={onEdit} testID="edit-button">
-        <Text variant="subtitle2" color={theme.colors.sheetLine}>{translate("chat:editButton")}</Text>
+        <Text variant="subtitle2" color={theme.colors.primaryAccent}>{translate("chat:editButton")}</Text>
       </Pressable>
       <Text variant="subtitle2" style={styles.headerTitle}>{translate("chat:chatsTitle")}</Text>
       <Pressable onPress={onCompose} testID="compose-button">

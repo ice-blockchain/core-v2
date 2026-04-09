@@ -21,8 +21,11 @@ import { CameraIcon } from "./generated/CameraIcon";
 import { CategoriesFollowingIcon } from "./generated/CategoriesFollowingIcon";
 import { CategoriesForyouIcon } from "./generated/CategoriesForyouIcon";
 import { ChannelPrivateIcon } from "./generated/ChannelPrivateIcon";
+import { ChatAttachIcon } from "./generated/ChatAttachIcon";
+import { ChatBackIcon } from "./generated/ChatBackIcon";
 import { ChatBubbleIcon } from "./generated/ChatBubbleIcon";
 import { ChatCreatenewIcon } from "./generated/ChatCreatenewIcon";
+import { ChatMicrophoneIcon } from "./generated/ChatMicrophoneIcon";
 import { ChatOffIcon } from "./generated/ChatOffIcon";
 import { CheckGreenIcon } from "./generated/CheckGreenIcon";
 import { CheckboxOffIcon } from "./generated/CheckboxOffIcon";
@@ -127,8 +130,11 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "categories-following": CategoriesFollowingIcon,
   "categories-foryou": CategoriesForyouIcon,
   "channel-private": ChannelPrivateIcon,
+  "chat-attach": ChatAttachIcon,
+  "chat-back": ChatBackIcon,
   "chat-bubble": ChatBubbleIcon,
   "chat-createnew": ChatCreatenewIcon,
+  "chat-microphone": ChatMicrophoneIcon,
   "chat-off": ChatOffIcon,
   "check_green": CheckGreenIcon,
   "checkbox-off": CheckboxOffIcon,

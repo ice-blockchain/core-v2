@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { View } from "react-native";
+import { Image, View } from "react-native";
 import type { ViewStyle } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import type { Conversation } from "../types";
@@ -28,13 +28,19 @@ function buildUnreadBadgeStyle(backgroundColor: string): ViewStyle {
 const INFO_STYLE: ViewStyle = { flex: 1, gap: 2 };
 const TIME_COLUMN_STYLE: ViewStyle = { alignItems: "flex-end", justifyContent: "center", gap: 6, width: 40, alignSelf: "stretch" };
 
-function ConversationAvatar({ name }: { readonly name: string }) {
+function ConversationAvatar({ name, avatarUrl }: { readonly name: string; readonly avatarUrl: string | undefined }) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const avatarStyle = useMemo(
     () => buildAvatarStyle(scale, theme.colors.primaryBackground),
     [scale, theme.colors.primaryBackground],
   );
+
+  if (avatarUrl) {
+    const { width, height, borderRadius } = avatarStyle;
+    return <Image source={{ uri: avatarUrl }} style={{ width, height, borderRadius }} />;
+  }
+
   return (
     <View style={avatarStyle}>
       <Text variant="subtitle3" color={theme.colors.primaryAccent}>{name.charAt(0).toUpperCase()}</Text>
@@ -74,7 +80,7 @@ export function ConversationRow({ conversation }: { readonly conversation: Conve
   const rowStyle = useMemo(() => buildRowStyle(scale), [scale]);
   return (
     <View style={rowStyle}>
-      {conversation.isFolder ? <FolderAvatar /> : <ConversationAvatar name={conversation.name} />}
+      {conversation.isFolder ? <FolderAvatar /> : <ConversationAvatar name={conversation.name} avatarUrl={conversation.avatarUrl} />}
       <View style={INFO_STYLE}>
         <Text variant="subtitle3" numberOfLines={1}>{conversation.name}</Text>
         <Text variant="body2" color={theme.colors.onTertiaryBackground} numberOfLines={1}>{conversation.preview}</Text>
