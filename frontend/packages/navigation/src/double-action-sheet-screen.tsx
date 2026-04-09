@@ -112,7 +112,7 @@ export function DoubleActionSheetScreen({
   const { scale } = useTheme();
   const scaleSize = scale.scaleSize;
   const rowStyle = useMemo(() => buildButtonRowStyle(scaleSize), [scaleSize]);
-  const resolvedIcon = icon ?? buildSheetIcon(iconName!, scaleSize(80), iconColor);
+  const resolvedIcon = icon ?? (iconName ? buildSheetIcon(iconName, scaleSize(80), iconColor) : null);
 
   return (
     <DynamicSheet showClose={false} {...(onDismiss ? { onDismiss } : {})}>
