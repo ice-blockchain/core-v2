@@ -24,24 +24,26 @@ interface FormProps {
   onBack: () => void;
 }
 
-function EditWalletViewForm({ wallet, onNavigateToDelete, onBack }: FormProps) {
-  const theme = useTheme();
-  const scale = theme.scale.scaleSize;
+function useRenameHandler(walletId: string, name: string, onBack: () => void) {
   const notifications = useNotificationBar();
-  const [name, setName] = useState(wallet.name);
-  const [isFocused, setIsFocused] = useState(false);
-  const canSave = name.trim() !== wallet.name && name.trim().length > 0;
-
-  const handleSave = useCallback(() => {
+  const errorColor = useTheme().colors.attentionRed;
+  return useCallback(() => {
     try {
-      renameWalletView(wallet.id, name);
+      renameWalletView(walletId, name);
       onBack();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to rename wallet";
-      notifications.show({ message, backgroundColor: theme.colors.attentionRed });
+      notifications.show({ message, backgroundColor: errorColor });
     }
-  }, [wallet.id, name, onBack, notifications, theme.colors.attentionRed]);
+  }, [walletId, name, onBack, notifications, errorColor]);
+}
 
+function EditWalletViewForm({ wallet, onNavigateToDelete, onBack }: FormProps) {
+  const scale = useTheme().scale.scaleSize;
+  const [name, setName] = useState(wallet.name);
+  const [isFocused, setIsFocused] = useState(false);
+  const canSave = name.trim() !== wallet.name && name.trim().length > 0;
+  const handleSave = useRenameHandler(wallet.id, name, onBack);
   const containerStyle = useMemo(() => ({ gap: scale(16), padding: scale(16) }), [scale]);
 
   return (

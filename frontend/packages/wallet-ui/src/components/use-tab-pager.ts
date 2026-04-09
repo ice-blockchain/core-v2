@@ -15,10 +15,23 @@ function getOffsetX(e: NativeSyntheticEvent<NativeScrollEvent>) {
   return e.nativeEvent.contentOffset.x;
 }
 
+function useWebScrollDebounce(detectTab: (offsetX: number) => void) {
+  const webTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!IS_WEB) return;
+      if (webTimer.current) clearTimeout(webTimer.current);
+      webTimer.current = setTimeout(() => detectTab(getOffsetX(e)), SCROLL_DEBOUNCE_MS);
+    },
+    [detectTab],
+  );
+  useEffect(() => () => { if (webTimer.current) clearTimeout(webTimer.current); }, []);
+  return onScroll;
+}
+
 export function useTabPager(onTabChange: (tab: CoinTabKey) => void) {
   const scrollRef = useRef<ScrollView>(null);
   const pageWidth = useRef(0);
-  const webTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onLayout = useCallback((width: number) => { pageWidth.current = width; }, []);
   const scrollToTab = useCallback((tab: CoinTabKey) => {
     if (IS_WEB) onTabChange(tab);
@@ -35,18 +48,6 @@ export function useTabPager(onTabChange: (tab: CoinTabKey) => void) {
     (e: NativeSyntheticEvent<NativeScrollEvent>) => detectTab(getOffsetX(e)),
     [detectTab],
   );
-  const onScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (!IS_WEB) return;
-      if (webTimer.current) clearTimeout(webTimer.current);
-      webTimer.current = setTimeout(() => detectTab(getOffsetX(e)), SCROLL_DEBOUNCE_MS);
-    },
-    [detectTab],
-  );
-  useEffect(() => {
-    return () => {
-      if (webTimer.current) clearTimeout(webTimer.current);
-    };
-  }, []);
+  const onScroll = useWebScrollDebounce(detectTab);
   return { scrollRef, scrollToTab, onScrollEnd, onScroll, onLayout };
 }
