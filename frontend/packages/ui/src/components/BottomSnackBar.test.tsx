@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-describe("BottomSnackBar", () => {
+describe("BottomSnackBar exports", () => {
   it("exports a function component", async () => {
     const mod = await import("./BottomSnackBar");
     expect(typeof mod.BottomSnackBar).toBe("function");
@@ -12,24 +12,24 @@ describe("BottomSnackBar", () => {
   });
 });
 
-describe("BottomSnackBar auto-dismiss behavior", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
+describe("auto-dismiss fires after duration", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("fires callback after 3000ms default duration", () => {
+  it("fires callback after 3000ms", () => {
     const onDismiss = vi.fn();
     setTimeout(onDismiss, 3000);
     expect(onDismiss).not.toHaveBeenCalled();
     vi.advanceTimersByTime(3000);
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
+});
 
-  it("does not fire callback before duration elapses", () => {
+describe("auto-dismiss respects timing", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it("does not fire before duration elapses", () => {
     const onDismiss = vi.fn();
     setTimeout(onDismiss, 3000);
     vi.advanceTimersByTime(2999);
@@ -38,13 +38,17 @@ describe("BottomSnackBar auto-dismiss behavior", () => {
 
   it("respects custom duration", () => {
     const onDismiss = vi.fn();
-    const customDuration = 5000;
-    setTimeout(onDismiss, customDuration);
+    setTimeout(onDismiss, 5000);
     vi.advanceTimersByTime(4999);
     expect(onDismiss).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
+});
+
+describe("auto-dismiss cancellation", () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
 
   it("can be cancelled before firing", () => {
     const onDismiss = vi.fn();
