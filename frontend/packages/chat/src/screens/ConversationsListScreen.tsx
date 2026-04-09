@@ -6,13 +6,14 @@ import { HorizontalSeparator, Icon, SearchBar, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { buildHeaderStyle, buildScreenStyle, buildSearchContainerStyle } from "./empty-conversations-styles";
 
-const FLEX_ONE: ViewStyle = { flex: 1 };
-const isWeb = Platform.OS === "web";
 import { ConversationRow } from "../components/conversation-row";
 import { MOCK_CONVERSATIONS } from "../components/mock-conversations";
 import { ArchiveTileHeader } from "./archive-tile-header";
 import { useArchiveTileVisibility } from "./use-archive-pull-reveal";
 import type { Conversation } from "../types";
+
+const FLEX_ONE: ViewStyle = { flex: 1 };
+const isWeb = Platform.OS === "web";
 
 interface ScreenHeaderProps {
   readonly onEdit: () => void;

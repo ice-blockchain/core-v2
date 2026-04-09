@@ -12,11 +12,11 @@ export function useArchiveTileVisibility() {
   const lastChangeTime = useRef(0);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const now = Date.now();
-    if (now - lastChangeTime.current < COOLDOWN_MS) return;
     const offsetY = e.nativeEvent.contentOffset.y;
     const rawDelta = offsetY - lastOffsetY.current;
     lastOffsetY.current = offsetY;
+    const now = Date.now();
+    if (now - lastChangeTime.current < COOLDOWN_MS) return;
     const delta = isWeb ? -rawDelta : rawDelta;
     if (delta > DIRECTION_THRESHOLD) { setIsVisible(true); lastChangeTime.current = now; }
     else if (delta < -DIRECTION_THRESHOLD) { setIsVisible(false); lastChangeTime.current = now; }

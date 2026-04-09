@@ -7,7 +7,7 @@ export function useChatNavigation(setBottomNavHidden: (hidden: boolean) => void)
 
   const showEdit = useCallback(() => { setBottomNavHidden(true); setActiveView("edit"); }, [setBottomNavHidden]);
   const showList = useCallback(() => { setBottomNavHidden(false); setActiveView("list"); }, [setBottomNavHidden]);
-  const showArchive = useCallback(() => setActiveView("archive-list"), []);
+  const showArchive = useCallback(() => { setBottomNavHidden(false); setActiveView("archive-list"); }, [setBottomNavHidden]);
   const showArchiveEdit = useCallback(() => { setBottomNavHidden(true); setActiveView("archive-edit"); }, [setBottomNavHidden]);
   const showArchiveList = useCallback(() => { setBottomNavHidden(false); setActiveView("archive-list"); }, [setBottomNavHidden]);
 

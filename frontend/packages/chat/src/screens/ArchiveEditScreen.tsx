@@ -28,17 +28,17 @@ function ArchiveEditHeader({ onDone }: { readonly onDone: () => void }) {
   );
 }
 
-function useArchiveActions(handlers: { readonly onUnarchive: () => void; readonly onDelete: () => void; readonly useAll: boolean }): readonly ListEditAction[] {
+function useArchiveActions(handlers: { readonly onRead?: () => void; readonly onUnarchive: () => void; readonly onDelete: () => void; readonly useAll: boolean }): readonly ListEditAction[] {
   const theme = useTheme();
   const iconSize = theme.scale.scaleSize(20);
   const readLabel = handlers.useAll ? translate("chat:readAllActionAll") : translate("chat:readAllAction");
   const unarchiveLabel = handlers.useAll ? translate("chat:unarchiveActionAll") : translate("chat:unarchiveAction");
   const deleteLabel = handlers.useAll ? translate("chat:deleteActionAll") : translate("chat:deleteAction");
   return useMemo(() => [
-    { icon: (color: string) => <ChatReadAllIcon size={iconSize} color={color} />, label: readLabel, onPress: () => {} },
+    { icon: (color: string) => <ChatReadAllIcon size={iconSize} color={color} />, label: readLabel, onPress: handlers.onRead ?? (() => {}) },
     { icon: (color: string) => <ChatUnarchiveIcon size={iconSize} color={color} />, label: unarchiveLabel, onPress: handlers.onUnarchive },
     { icon: (color: string) => <TrashIcon size={iconSize} color={color} />, label: deleteLabel, onPress: handlers.onDelete, color: theme.colors.attentionRed },
-  ], [theme.colors.attentionRed, iconSize, readLabel, unarchiveLabel, deleteLabel, handlers.onUnarchive, handlers.onDelete]);
+  ], [theme.colors.attentionRed, iconSize, readLabel, unarchiveLabel, deleteLabel, handlers.onRead, handlers.onUnarchive, handlers.onDelete]);
 }
 
 type ArchiveListProps = {
@@ -68,20 +68,22 @@ function ArchiveSelectableList({ data, selectedIds, onToggle, contentStyle }: Ar
 interface ArchiveEditScreenProps {
   readonly conversations: readonly Conversation[];
   readonly onDone: () => void;
+  readonly onRead?: (ids: ReadonlySet<string>) => void;
   readonly onUnarchive?: (ids: ReadonlySet<string>) => void;
   readonly onDelete?: (ids: ReadonlySet<string>) => void;
 }
 
-export function ArchiveEditScreen({ conversations, onDone, onUnarchive, onDelete }: ArchiveEditScreenProps) {
+export function ArchiveEditScreen({ conversations, onDone, onRead, onUnarchive, onDelete }: ArchiveEditScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { selectedIds, toggleItem, deleteSheet } = useEditState();
   const styles = useEditScreenStyles();
   const allIds = useMemo(() => new Set(conversations.map((c) => c.id)), [conversations]);
   const targetIds = selectedIds.size === 0 ? allIds : selectedIds;
-  const useAll = selectedIds.size !== 1;
+  const useAll = selectedIds.size === 0;
+  const handleRead = useCallback(() => { onRead?.(targetIds); }, [onRead, targetIds]);
   const handleUnarchive = useCallback(() => { onUnarchive?.(targetIds); onDone(); }, [onUnarchive, targetIds, onDone]);
   const handleDeleteConfirm = useCallback(() => { onDelete?.(targetIds); deleteSheet.confirm(); onDone(); }, [onDelete, targetIds, deleteSheet, onDone]);
-  const actions = useArchiveActions({ onUnarchive: handleUnarchive, onDelete: deleteSheet.show, useAll });
+  const actions = useArchiveActions({ onRead: handleRead, onUnarchive: handleUnarchive, onDelete: deleteSheet.show, useAll });
 
   return (
     <>

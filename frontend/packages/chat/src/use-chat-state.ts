@@ -3,7 +3,10 @@ import type { Dispatch, SetStateAction } from "react";
 import type { Conversation } from "./types";
 import { MOCK_CONVERSATIONS, MOCK_ARCHIVED_CONVERSATIONS } from "./components/mock-conversations";
 
-type ConversationSetter = Dispatch<SetStateAction<readonly Conversation[]>>;
+interface ConversationState {
+  readonly conversations: readonly Conversation[];
+  readonly archived: readonly Conversation[];
+}
 
 function buildArchiveFolder(archived: readonly Conversation[]): Conversation {
   const names = archived.slice(0, 2).map((c) => c.name).join(", ");
@@ -20,41 +23,39 @@ function initialConversations(): readonly Conversation[] {
   return MOCK_CONVERSATIONS.filter((c) => !c.isFolder);
 }
 
-function useConversationMutations(setConversations: ConversationSetter, setArchived: ConversationSetter) {
+function useConversationMutations(setState: Dispatch<SetStateAction<ConversationState>>) {
   const archiveConversations = useCallback((ids: ReadonlySet<string>) => {
-    setConversations((prev) => {
-      const toArchive = prev.filter((c) => ids.has(c.id));
-      setArchived((archived) => [...toArchive, ...archived]);
-      return prev.filter((c) => !ids.has(c.id));
+    setState((prev) => {
+      const toArchive = prev.conversations.filter((c) => ids.has(c.id));
+      return { conversations: prev.conversations.filter((c) => !ids.has(c.id)), archived: [...toArchive, ...prev.archived] };
     });
-  }, [setConversations, setArchived]);
+  }, [setState]);
 
   const unarchiveConversations = useCallback((ids: ReadonlySet<string>) => {
-    setArchived((prev) => {
-      const toRestore = prev.filter((c) => ids.has(c.id));
-      setConversations((convs) => [...toRestore, ...convs]);
-      return prev.filter((c) => !ids.has(c.id));
+    setState((prev) => {
+      const toRestore = prev.archived.filter((c) => ids.has(c.id));
+      return { conversations: [...toRestore, ...prev.conversations], archived: prev.archived.filter((c) => !ids.has(c.id)) };
     });
-  }, [setConversations, setArchived]);
+  }, [setState]);
 
   const deleteConversations = useCallback(
-    (ids: ReadonlySet<string>) => setConversations((prev) => prev.filter((c) => !ids.has(c.id))),
-    [setConversations],
+    (ids: ReadonlySet<string>) => setState((prev) => ({ ...prev, conversations: prev.conversations.filter((c) => !ids.has(c.id)) })),
+    [setState],
   );
   const deleteArchivedConversations = useCallback(
-    (ids: ReadonlySet<string>) => setArchived((prev) => prev.filter((c) => !ids.has(c.id))),
-    [setArchived],
+    (ids: ReadonlySet<string>) => setState((prev) => ({ ...prev, archived: prev.archived.filter((c) => !ids.has(c.id)) })),
+    [setState],
   );
 
   return { archiveConversations, unarchiveConversations, deleteConversations, deleteArchivedConversations };
 }
 
 export function useChatState() {
-  const [conversations, setConversations] = useState<readonly Conversation[]>(initialConversations);
-  const [archivedConversations, setArchivedConversations] = useState<readonly Conversation[]>(MOCK_ARCHIVED_CONVERSATIONS);
+  const [state, setState] = useState<ConversationState>({ conversations: initialConversations(), archived: MOCK_ARCHIVED_CONVERSATIONS });
+  const { conversations, archived: archivedConversations } = state;
   const archiveFolder = useMemo(() => buildArchiveFolder(archivedConversations), [archivedConversations]);
   const displayConversations = useMemo(() => [archiveFolder, ...conversations], [archiveFolder, conversations]);
   const totalUnreadCount = useMemo(() => computeTotalUnread(conversations, archivedConversations), [conversations, archivedConversations]);
-  const mutations = useConversationMutations(setConversations, setArchivedConversations);
+  const mutations = useConversationMutations(setState);
   return { displayConversations, conversations, archiveFolder, archivedConversations, totalUnreadCount, ...mutations };
 }
