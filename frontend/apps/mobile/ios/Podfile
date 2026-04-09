@@ -46,5 +46,18 @@ target 'mobile' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26 ships a stricter Clang that rejects fmt 11.0.2's consteval usage.
+    # The detection block in base.h unconditionally redefines FMT_USE_CONSTEVAL
+    # (no #ifndef guard), so -D flags are ignored. Patch the source directly.
+    fmt_base = File.join(installer.sandbox.pod_dir('fmt'), 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base)
+      text = File.read(fmt_base)
+      patched = text.gsub('#  define FMT_USE_CONSTEVAL 1', '#  define FMT_USE_CONSTEVAL 0')
+      if patched != text
+        File.chmod(0644, fmt_base)
+        File.write(fmt_base, patched)
+      end
+    end
   end
 end

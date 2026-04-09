@@ -33,7 +33,7 @@ export function DeleteChatSheetContent({ onCancel, onDelete }: DeleteChatSheetCo
       <View style={textGroupStyle}>
         <Text variant="title">{translate("chat:deleteChatTitle")}</Text>
         <Text variant="body2" color={theme.colors.secondaryText} style={descriptionStyle}>
-          {translate("chat:deleteChatMessage")}
+          {translate("chat:deleteChatSingularMessage")}
         </Text>
       </View>
       <View style={buttonRowStyle}>

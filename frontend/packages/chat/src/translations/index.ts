@@ -21,7 +21,11 @@ const chatEN = {
   newChatEmptyState: "You have no contacts yet. Start by searching for users above",
   deleteChatTitle: "Delete chat?",
   deleteChatMessage: "Are you sure you want to delete all selected chats?",
+  deleteChatSingularMessage: "Are you sure you want to delete this chat?",
   cancelButton: "Cancel",
+  addToArchiveAction: "Add to archive",
+  muteAction: "Mute",
+  blockAction: "Block",
 };
 
 const chatFR = {
@@ -43,7 +47,11 @@ const chatFR = {
   newChatEmptyState: "Vous n'avez pas encore de contacts. Commencez par rechercher des utilisateurs ci-dessus",
   deleteChatTitle: "Supprimer la discussion ?",
   deleteChatMessage: "Voulez-vous vraiment supprimer toutes les discussions sélectionnées ?",
+  deleteChatSingularMessage: "Voulez-vous vraiment supprimer cette discussion ?",
   cancelButton: "Annuler",
+  addToArchiveAction: "Ajouter aux archives",
+  muteAction: "Muet",
+  blockAction: "Bloquer",
 };
 
 const chatDE = {
@@ -65,7 +73,11 @@ const chatDE = {
   newChatEmptyState: "Du hast noch keine Kontakte. Suche oben nach Benutzern",
   deleteChatTitle: "Chat löschen?",
   deleteChatMessage: "Möchtest du wirklich alle ausgewählten Chats löschen?",
+  deleteChatSingularMessage: "Möchtest du wirklich diesen Chat löschen?",
   cancelButton: "Abbrechen",
+  addToArchiveAction: "Zum Archiv hinzufugen",
+  muteAction: "Stummschalten",
+  blockAction: "Blockieren",
 };
 
 export const chatTranslations: readonly TranslationResource[] = [

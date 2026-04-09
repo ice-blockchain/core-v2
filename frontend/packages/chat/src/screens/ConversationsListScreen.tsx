@@ -7,6 +7,8 @@ import { translate } from "@ion/localization";
 import { buildHeaderStyle, buildScreenStyle, buildSearchContainerStyle } from "./empty-conversations-styles";
 
 import { ConversationRow } from "../components/conversation-row";
+import { ConversationContextMenu } from "../components/conversation-context-menu";
+import { useConversationContextMenu } from "../components/use-conversation-context-menu";
 import { MOCK_CONVERSATIONS } from "../components/mock-conversations";
 import { ArchiveTileHeader } from "./archive-tile-header";
 import { useArchiveTileVisibility } from "./use-archive-pull-reveal";
@@ -61,7 +63,14 @@ function useArchiveHeader(archiveFolder: Conversation | null | undefined, isVisi
   }, [archiveFolder, isVisible, onPress]);
 }
 
-interface ConversationsListProps {
+interface ConversationActions {
+  readonly onArchive?: (conversation: Conversation) => void;
+  readonly onMute?: (conversation: Conversation) => void;
+  readonly onBlock?: (conversation: Conversation) => void;
+  readonly onDelete?: (conversation: Conversation) => void;
+}
+
+interface ConversationsListProps extends ConversationActions {
   readonly conversations?: readonly Conversation[];
   readonly archiveFolder?: Conversation | null;
   readonly onEdit?: () => void;
@@ -69,40 +78,68 @@ interface ConversationsListProps {
   readonly onConversationPress?: (conversation: Conversation) => void;
 }
 
-function useListSetup(archiveFolder: Conversation | null | undefined, isArchiveVisible: boolean, onConversationPress?: (c: Conversation) => void) {
+interface ListSetupOptions {
+  readonly archiveFolder: Conversation | null | undefined;
+  readonly isArchiveVisible: boolean;
+  readonly onConversationPress: ((c: Conversation) => void) | undefined;
+  readonly contextMenu: ReturnType<typeof useConversationContextMenu>;
+}
+
+function useListSetup({ archiveFolder, isArchiveVisible, onConversationPress, contextMenu }: ListSetupOptions) {
   const renderItem = useCallback(({ item }: { readonly item: Conversation }) => (
-    <Pressable onPress={() => onConversationPress?.(item)}>
+    <Pressable
+      ref={contextMenu.getRowRef(item.id)}
+      onPress={() => onConversationPress?.(item)}
+      onLongPress={() => { if (!item.isFolder) contextMenu.show(item); }}
+    >
       <ConversationRow conversation={item} />
     </Pressable>
-  ), [onConversationPress]);
+  ), [onConversationPress, contextMenu]);
   return {
     listHeader: useArchiveHeader(archiveFolder, isArchiveVisible, onConversationPress),
     renderItem,
   };
 }
 
-export function ConversationsListScreen({ conversations, archiveFolder, onEdit, onCompose, onConversationPress }: ConversationsListProps) {
-  const { handleListLayout, ...styles } = useListScreenStyles();
+const NOOP = () => {};
+
+function useScreenSetup(props: ConversationsListProps) {
+  const { conversations, archiveFolder, onConversationPress } = props;
+  const styles = useListScreenStyles();
   const [searchQuery, setSearchQuery] = useState("");
   const { isVisible, handleScroll } = useArchiveTileVisibility();
-  const { listHeader, renderItem } = useListSetup(archiveFolder, isVisible, onConversationPress);
+  const contextMenu = useConversationContextMenu();
+  const { listHeader, renderItem } = useListSetup({ archiveFolder, isArchiveVisible: isVisible, onConversationPress, contextMenu });
+  const data = conversations ?? MOCK_CONVERSATIONS;
+  return { styles, searchQuery, setSearchQuery, handleScroll, contextMenu, listHeader, renderItem, data };
+}
+
+export function ConversationsListScreen(props: ConversationsListProps) {
+  const { onEdit, onCompose, onArchive, onMute, onBlock, onDelete } = props;
+  const setup = useScreenSetup(props);
+  const { styles, contextMenu } = setup;
   return (
     <View style={styles.screen}>
-      <ScreenHeader onEdit={onEdit ?? (() => {})} onCompose={onCompose ?? (() => {})} />
+      <ScreenHeader onEdit={onEdit ?? NOOP} onCompose={onCompose ?? NOOP} />
       <View style={styles.searchContainer}>
-        <SearchBar value={searchQuery} onChangeText={setSearchQuery} testID="chat-search" />
+        <SearchBar value={setup.searchQuery} onChangeText={setup.setSearchQuery} testID="chat-search" />
       </View>
       <FlatList
-        data={conversations ?? MOCK_CONVERSATIONS}
+        data={setup.data}
         keyExtractor={(item) => item.id}
         style={styles.list}
         contentContainerStyle={styles.listContent}
-        onLayout={handleListLayout}
-        ListHeaderComponent={listHeader}
+        onLayout={styles.handleListLayout}
+        ListHeaderComponent={setup.listHeader}
         ItemSeparatorComponent={HorizontalSeparator}
-        onScroll={handleScroll}
+        onScroll={setup.handleScroll}
         scrollEventThrottle={16}
-        renderItem={renderItem}
+        renderItem={setup.renderItem}
+      />
+      <ConversationContextMenu
+        state={contextMenu.state} onClose={contextMenu.close}
+        onArchive={onArchive ?? NOOP} onMute={onMute ?? NOOP}
+        onBlock={onBlock ?? NOOP} onDelete={onDelete ?? NOOP}
       />
     </View>
   );
