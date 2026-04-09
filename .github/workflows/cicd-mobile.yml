@@ -160,6 +160,79 @@ jobs:
           find apps/mobile/node_modules -name "hermesc" -type f -exec chmod +x {} +
           find apps/mobile/node_modules -name "*.sh" -path "*/react-native/*" -exec chmod +x {} +
 
+      - name: Setup Android SDK path
+        run: |
+          echo "::group::Runner environment diagnostics"
+          echo "Runner: $(hostname)"
+          echo "User: $(whoami)"
+          echo "ANDROID_HOME=${ANDROID_HOME:-<not set>}"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-<not set>}"
+          echo "JAVA_HOME=${JAVA_HOME:-<not set>}"
+          echo "::endgroup::"
+          for candidate in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" "$HOME/Library/Android/sdk" "/opt/homebrew/share/android-commandlinetools" "/usr/local/share/android-commandlinetools"; do
+            if [[ -n "$candidate" && -d "$candidate" ]]; then
+              echo "ANDROID_HOME=$candidate" >> "$GITHUB_ENV"
+              echo "sdk.dir=$candidate" > apps/mobile/android/local.properties
+              echo "Found Android SDK at: $candidate"
+              ls "$candidate" || true
+              exit 0
+            fi
+          done
+          echo "::error::Android SDK not found. Install it on the runner or set ANDROID_HOME."
+          echo "Searched: \$ANDROID_HOME, \$ANDROID_SDK_ROOT, \$HOME/Library/Android/sdk, /opt/homebrew/share/android-commandlinetools, /usr/local/share/android-commandlinetools"
+          exit 1
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: frontend/packages/ton-storage/native/tonutils-storage-bridge/go.mod
+          cache: false
+
+      - name: Build tonutils-storage Android bridge
+        working-directory: frontend/packages/ton-storage/native/tonutils-storage-bridge
+        run: |
+          OUT_DIR="../../android/src/main/jniLibs/arm64-v8a"
+          OUT_SO="$OUT_DIR/libtonutils-storage.so"
+          if [[ -f "$OUT_SO" ]]; then
+            echo "tonutils-storage Android library already exists: $OUT_SO"
+            exit 0
+          fi
+
+          if [[ -z "${ANDROID_HOME:-}" || ! -d "${ANDROID_HOME}/ndk" ]]; then
+            echo "::error::ANDROID_HOME/ndk not found; cannot build tonutils-storage Android bridge."
+            exit 1
+          fi
+
+          if [[ -z "${ANDROID_NDK_HOME:-}" ]]; then
+            ANDROID_NDK_HOME="$(find "${ANDROID_HOME}/ndk" -mindepth 1 -maxdepth 1 -type d | sort -Vr | head -n 1)"
+            export ANDROID_NDK_HOME
+          fi
+
+          if [[ -z "${ANDROID_NDK_HOME:-}" || ! -d "${ANDROID_NDK_HOME}" ]]; then
+            echo "::error::Could not resolve ANDROID_NDK_HOME from ${ANDROID_HOME}/ndk."
+            exit 1
+          fi
+
+          TOOLCHAIN=""
+          for host in darwin-x86_64 darwin-arm64; do
+            candidate="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/${host}/bin/aarch64-linux-android24-clang"
+            if [[ -x "$candidate" ]]; then
+              TOOLCHAIN="$candidate"
+              break
+            fi
+          done
+          if [[ -z "$TOOLCHAIN" ]]; then
+            echo "::error::aarch64 Android clang toolchain not found under ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt."
+            exit 1
+          fi
+
+          mkdir -p "$OUT_DIR"
+          CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
+            CC="$TOOLCHAIN" \
+            go build -buildmode=c-shared -o "$OUT_SO" .
+
+          ls -lh "$OUT_SO"
+
       - name: Build Android
         working-directory: frontend/apps/mobile/android
         env:
@@ -257,7 +330,32 @@ jobs:
 
       - name: Install CocoaPods
         working-directory: frontend/apps/mobile/ios
-        run: bundle exec pod install
+        run: |
+          # CocoaPods 1.16.x can intermittently crash with:
+          # "ArgumentError - pathname contains null byte" (CocoaPods/CocoaPods#12798).
+          # Retry clean installs a few times when that specific flake appears.
+          set -o pipefail
+          ATTEMPT=1
+          MAX_ATTEMPTS=3
+          while [[ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]]; do
+            echo "pod install attempt ${ATTEMPT}/${MAX_ATTEMPTS}"
+            rm -rf Pods Podfile.lock
+            if bundle exec pod install 2>&1 | tee /tmp/pod-install.log; then
+              exit 0
+            fi
+
+            if grep -q "pathname contains null byte" /tmp/pod-install.log; then
+              echo "::warning::CocoaPods null-byte flake detected, retrying clean pod install..."
+              ATTEMPT=$((ATTEMPT + 1))
+              continue
+            fi
+
+            echo "::error::pod install failed with a non-retryable error."
+            exit 1
+          done
+
+          echo "::error::pod install failed after ${MAX_ATTEMPTS} attempts due to CocoaPods null-byte flake."
+          exit 1
 
       - name: Setup signing keychain
         run: |
@@ -272,10 +370,32 @@ jobs:
         env:
           MATCH_KEYCHAIN_NAME: ${{ runner.temp }}/build.keychain-db
           MATCH_KEYCHAIN_PASSWORD: ""
-          MATCH_GIT_URL: ${{ secrets.MOBILE_MATCH_GIT_URL }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ format('{0}:{1}', secrets.ICE_CI_CD_BOT_GH_USERNAME, secrets.ICE_CI_CD_BOT_GH_PAT) }}
+          MOBILE_MATCH_GIT_URL: ${{ secrets.MOBILE_MATCH_GIT_URL }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          ICE_CI_CD_BOT_GH_USERNAME: ${{ secrets.ICE_CI_CD_BOT_GH_USERNAME }}
+          ICE_CI_CD_BOT_GH_PAT: ${{ secrets.ICE_CI_CD_BOT_GH_PAT }}
         run: |
-          export MATCH_GIT_BASIC_AUTHORIZATION=$(echo -n "$MATCH_GIT_BASIC_AUTHORIZATION" | base64)
+          if [[ -z "${MATCH_GIT_URL:-}" ]]; then
+            export MATCH_GIT_URL="${MOBILE_MATCH_GIT_URL:-}"
+          fi
+
+          if [[ -z "${MATCH_GIT_URL:-}" ]]; then
+            if grep -q "^[[:space:]]*git_url(" fastlane/Matchfile; then
+              unset MATCH_GIT_URL
+            else
+              echo "::error::MATCH_GIT_URL is missing. Set MOBILE_MATCH_GIT_URL (or MATCH_GIT_URL) secret, or configure git_url(...) in fastlane/Matchfile."
+              exit 1
+            fi
+          fi
+
+          if [[ -n "${ICE_CI_CD_BOT_GH_PAT:-}" ]]; then
+            AUTH_USER="${ICE_CI_CD_BOT_GH_USERNAME:-x-access-token}"
+            MATCH_GIT_BASIC_AUTHORIZATION="$(printf '%s' "${AUTH_USER}:${ICE_CI_CD_BOT_GH_PAT}" | base64)"
+            export MATCH_GIT_BASIC_AUTHORIZATION
+          else
+            unset MATCH_GIT_BASIC_AUTHORIZATION
+          fi
+
           bundle exec fastlane ios fetch_certs
 
       - name: Allow codesign access
