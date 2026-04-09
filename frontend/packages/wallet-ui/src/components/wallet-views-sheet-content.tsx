@@ -68,10 +68,12 @@ function CreateWalletViewContent({ setView }: { setView: (v: WalletViewSheetView
   const containerStyle = useMemo(() => ({ padding: scale(16) }), [scale]);
 
   const handleSubmit = useCallback(() => {
-    setIsSubmitting(true);
-    createWalletView(name);
-    setIsSubmitting(false);
-    setView({ type: "manage" });
+    try {
+      createWalletView(name);
+      setView({ type: "manage" });
+    } catch {
+      setIsSubmitting(false);
+    }
   }, [name, setView]);
 
   return (

@@ -32,8 +32,12 @@ function EditWalletViewForm({ wallet, onNavigateToDelete, onBack }: FormProps) {
   const canSave = name.trim() !== wallet.name && name.trim().length > 0;
 
   const handleSave = useCallback(() => {
-    renameWalletView(wallet.id, name);
-    onBack();
+    try {
+      renameWalletView(wallet.id, name);
+      onBack();
+    } catch {
+      // rename failed — stay on form
+    }
   }, [wallet.id, name, onBack]);
 
   const containerStyle = useMemo(() => ({ gap: scale(16), padding: scale(16) }), [scale]);

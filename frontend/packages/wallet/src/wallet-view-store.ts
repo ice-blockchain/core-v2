@@ -42,6 +42,15 @@ export function setActiveWalletViewId(id: string): void {
   emitChange();
 }
 
+export function batchUpdate(
+  nextViews: readonly WalletView[],
+  nextActiveId: string,
+): void {
+  walletViews = nextViews;
+  activeWalletViewId = nextActiveId;
+  emitChange();
+}
+
 // Reset store to initial state (for testing).
 export function resetWalletViewStore(): void {
   walletViews = [

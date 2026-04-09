@@ -1,8 +1,7 @@
 import type { WalletView } from "./types";
 import {
   walletViewStore,
-  setWalletViews,
-  setActiveWalletViewId,
+  batchUpdate,
   getNextId,
 } from "./wallet-view-store";
 
@@ -26,7 +25,6 @@ export function createWalletView(name: string): WalletView {
     isMain: false,
   };
 
-  setWalletViews([...current, walletView]);
-  setActiveWalletViewId(walletView.id);
+  batchUpdate([...current, walletView], walletView.id);
   return walletView;
 }

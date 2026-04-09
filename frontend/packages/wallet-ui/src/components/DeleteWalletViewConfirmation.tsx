@@ -16,8 +16,12 @@ export function DeleteWalletViewConfirmation({ walletId, onCancel, onDeleted }: 
   const scale = theme.scale.scaleSize;
 
   const handleDelete = useCallback(() => {
-    deleteWalletView(walletId);
-    onDeleted();
+    try {
+      deleteWalletView(walletId);
+      onDeleted();
+    } catch {
+      // delete failed — stay on confirmation
+    }
   }, [walletId, onDeleted]);
 
   const imageSize = useMemo(() => ({ width: scale(80), height: scale(80) }), [scale]);

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView } from "react-native";
 import type { CoinTabKey } from "../types";
@@ -42,5 +42,10 @@ export function useTabPager(onTabChange: (tab: CoinTabKey) => void) {
     },
     [detectTab],
   );
+  useEffect(() => {
+    return () => {
+      if (webTimer.current) clearTimeout(webTimer.current);
+    };
+  }, []);
   return { scrollRef, scrollToTab, onScrollEnd, onScroll, onLayout };
 }

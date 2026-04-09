@@ -1,7 +1,7 @@
 import {
   walletViewStore,
   setWalletViews,
-  setActiveWalletViewId,
+  batchUpdate,
 } from "./wallet-view-store";
 
 export function deleteWalletView(walletId: string): void {
@@ -19,9 +19,11 @@ export function deleteWalletView(walletId: string): void {
   }
 
   const remaining = current.filter((w) => w.id !== walletId);
-  setWalletViews(remaining);
+  const activeId = walletViewStore.getActiveWalletViewId();
 
-  if (walletViewStore.getActiveWalletViewId() === walletId && remaining[0]) {
-    setActiveWalletViewId(remaining[0].id);
+  if (activeId === walletId && remaining[0]) {
+    batchUpdate(remaining, remaining[0].id);
+  } else {
+    setWalletViews(remaining);
   }
 }
