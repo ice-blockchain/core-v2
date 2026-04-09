@@ -12,23 +12,20 @@ import {
 } from "./wallet-screen-styles";
 
 export function useWalletScreenStyles(isScrolled: boolean) {
-  const { colors, scale: { scaleSize: scale } } = useTheme();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const shadow = useMemo(
-    () => buildHeaderShadowStyle(scale, colors),
-    [scale, colors],
-  );
+  const shadow = useMemo(() => buildHeaderShadowStyle(theme), [theme]);
 
   return useMemo(() => ({
-    screen: [buildScreenContainerStyle(colors), { paddingTop: insets.top }],
+    screen: [buildScreenContainerStyle(theme), { paddingTop: insets.top }],
     headerWrapper: [
-      buildHeaderWrapperStyle(scale, colors),
+      buildHeaderWrapperStyle(theme),
       isScrolled ? shadow : undefined,
     ],
-    header: buildHeaderSectionStyle(scale, colors),
-    banner: buildBannerWrapperStyle(scale, colors),
+    header: buildHeaderSectionStyle(theme),
+    banner: buildBannerWrapperStyle(theme),
     scrollContent: buildScrollContentStyle(),
-    gap: buildGapStyle(scale, colors),
-  }), [colors, scale, insets.top, isScrolled, shadow]);
+    gap: buildGapStyle(theme),
+  }), [theme, insets.top, isScrolled, shadow]);
 }

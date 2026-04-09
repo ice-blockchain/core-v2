@@ -13,10 +13,12 @@
   },
   "dependencies": {
     "@ion/localization": "workspace:*",
+    "@ion/navigation": "workspace:*",
     "@ion/ui": "workspace:*",
     "@ion/wallet": "workspace:*"
   },
   "peerDependencies": {
+    "@react-navigation/native": ">=7",
     "@gorhom/bottom-sheet": ">=5",
     "react": ">=19",
     "react-native": ">=0.76",

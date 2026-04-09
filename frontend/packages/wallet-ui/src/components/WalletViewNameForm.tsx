@@ -12,10 +12,9 @@ interface WalletViewNameFormProps {
 
 export function WalletViewNameForm({ value, onChangeText, onSubmit, isSubmitting }: WalletViewNameFormProps) {
   const theme = useTheme();
-  const scale = theme.scale.scaleSize;
   const isDisabled = !value.trim() || isSubmitting;
 
-  const containerStyle = useMemo(() => ({ gap: scale(16) }), [scale]);
+  const containerStyle = useMemo(() => ({ gap: theme.spacing.lg }), [theme.spacing.lg]);
 
   return (
     <View style={containerStyle}>

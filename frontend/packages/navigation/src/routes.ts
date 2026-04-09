@@ -10,6 +10,7 @@ export const Routes = {
 
   Sheet: {
     Auth: 'Sheet/Auth',
+    WalletViewManagement: 'Sheet/WalletViewManagement',
     NicknameReserved: 'Sheet/NicknameReserved',
     IdentityKeyNameNote: 'Sheet/IdentityKeyNameNote',
     Verify: 'Sheet/Verify',
@@ -25,6 +26,14 @@ export const Routes = {
     MediaPicker: 'Sheet/MediaPicker',
     GalleryPermissionDenied: 'Sheet/GalleryPermissionDenied',
     CameraPermissionDenied: 'Sheet/CameraPermissionDenied',
+  },
+
+  WalletView: {
+    Switcher: 'WalletViewSwitcher',
+    Manage: 'WalletViewManage',
+    Create: 'WalletViewCreate',
+    Edit: 'WalletViewEdit',
+    DeleteConfirm: 'WalletViewDeleteConfirm',
   },
 
   Auth: {

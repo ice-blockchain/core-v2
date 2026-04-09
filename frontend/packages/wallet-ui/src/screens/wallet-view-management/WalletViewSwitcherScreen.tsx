@@ -3,15 +3,12 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useWalletViews, useActiveWalletView, switchWalletView } from "@ion/wallet";
-import { WalletViewListItem } from "./WalletViewListItem";
+import { useWalletViewNavigation } from "@ion/navigation";
+import { WalletViewListItem } from "../../components/WalletViewListItem";
 
-interface WalletViewSwitcherViewProps {
-  onNavigateToManage: () => void;
-}
-
-export function WalletViewSwitcherView({ onNavigateToManage }: WalletViewSwitcherViewProps) {
+export function WalletViewSwitcherScreen() {
   const theme = useTheme();
-  const scale = theme.scale.scaleSize;
+  const walletViewNav = useWalletViewNavigation();
   const walletViews = useWalletViews();
   const activeWallet = useActiveWalletView();
 
@@ -21,45 +18,58 @@ export function WalletViewSwitcherView({ onNavigateToManage }: WalletViewSwitche
       try {
         switchWalletView(walletId);
       } catch {
-        // wallet not found — ignore
+        // wallet view not found — ignore
       }
     },
     [activeWallet.id],
   );
 
-  const containerStyle = useMemo(() => ({ gap: scale(16), padding: scale(16) }), [scale]);
+  const containerStyle = useMemo(
+    () => ({ gap: theme.spacing.lg, padding: theme.spacing.lg }),
+    [theme.spacing.lg],
+  );
   const manageButtonStyle = useMemo(() => buildManageButtonStyle(theme), [theme]);
 
   return (
     <View style={containerStyle}>
       <WalletViewList walletViews={walletViews} activeId={activeWallet.id} onPress={handleWalletPress} />
-      <TouchableOpacity style={[styles.centeredRow, manageButtonStyle]} onPress={onNavigateToManage} accessibilityRole="button">
-        <Icon name="button-manage-wallet" size={scale(24)} color={theme.colors.primaryAccent} />
+      <TouchableOpacity style={[styles.centeredRow, manageButtonStyle]} onPress={walletViewNav.openManage} accessibilityRole="button">
+        <Icon name="button-manage-wallet" size={theme.scale.scaleSize(24)} color={theme.colors.primaryAccent} />
         <Text variant="body" color={theme.colors.primaryText}>{translate("walletUi:manageWalletsButton")}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-function WalletViewList({ walletViews, activeId, onPress }: { walletViews: readonly { id: string; name: string; balance: string; isMain: boolean }[]; activeId: string; onPress: (id: string) => void }) {
+interface WalletViewListProps {
+  walletViews: readonly { id: string; name: string; balance: string; isMain: boolean }[];
+  activeId: string;
+  onPress: (walletId: string) => void;
+}
+
+function WalletViewList({ walletViews, activeId, onPress }: WalletViewListProps) {
   return (
     <>
       {walletViews.map((wallet) => (
-        <WalletViewListItem key={wallet.id} wallet={wallet} mode={wallet.id === activeId ? "selected" : "unselected"} onPress={() => onPress(wallet.id)} />
+        <WalletViewListItem
+          key={wallet.id}
+          wallet={wallet}
+          mode={wallet.id === activeId ? "selected" : "unselected"}
+          onPress={onPress}
+        />
       ))}
     </>
   );
 }
 
 function buildManageButtonStyle(theme: ReturnType<typeof useTheme>) {
-  const scale = theme.scale.scaleSize;
   return {
     backgroundColor: theme.colors.tertiaryBackground,
-    borderRadius: theme.scale.scaleRadius(16),
+    borderRadius: theme.radii.large,
     borderWidth: 1,
     borderColor: theme.colors.onSecondaryBackground,
-    height: scale(54),
-    gap: scale(9),
+    height: theme.scale.scaleSize(54),
+    gap: theme.scale.scaleSize(9),
   };
 }
 

@@ -1,36 +1,26 @@
 import type { ViewStyle } from "react-native";
+import type { useTheme } from "@ion/ui";
 
-interface ThemeColors {
-  secondaryBackground: string;
-  primaryBackground: string;
-  shadow: string;
+type Theme = ReturnType<typeof useTheme>;
+
+export function buildScreenContainerStyle(theme: Theme): ViewStyle {
+  return { flex: 1, backgroundColor: theme.colors.secondaryBackground };
 }
 
-export function buildScreenContainerStyle(
-  colors: ThemeColors,
-): ViewStyle {
-  return { flex: 1, backgroundColor: colors.secondaryBackground };
-}
-
-export function buildHeaderSectionStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildHeaderSectionStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
-    backgroundColor: colors.secondaryBackground,
-    paddingTop: scale(8),
+    backgroundColor: theme.colors.secondaryBackground,
+    paddingTop: theme.spacing.sm,
     paddingBottom: scale(18),
     gap: scale(14),
   };
 }
 
-export function buildBannerWrapperStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildBannerWrapperStyle(theme: Theme): ViewStyle {
   return {
-    backgroundColor: colors.secondaryBackground,
-    paddingVertical: scale(16),
+    backgroundColor: theme.colors.secondaryBackground,
+    paddingVertical: theme.spacing.lg,
   };
 }
 
@@ -38,23 +28,18 @@ export function buildScrollContentStyle(): ViewStyle {
   return { paddingBottom: 0 };
 }
 
-export function buildHeaderWrapperStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildHeaderWrapperStyle(theme: Theme): ViewStyle {
   return {
-    backgroundColor: colors.secondaryBackground,
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(8),
+    backgroundColor: theme.colors.secondaryBackground,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
   };
 }
 
-export function buildHeaderShadowStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildHeaderShadowStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
-    shadowColor: colors.shadow,
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: scale(4) },
     shadowOpacity: 1,
     shadowRadius: scale(10),
@@ -62,9 +47,6 @@ export function buildHeaderShadowStyle(
   };
 }
 
-export function buildGapStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
-  return { gap: scale(4), backgroundColor: colors.primaryBackground };
+export function buildGapStyle(theme: Theme): ViewStyle {
+  return { gap: theme.spacing.xs, backgroundColor: theme.colors.primaryBackground };
 }

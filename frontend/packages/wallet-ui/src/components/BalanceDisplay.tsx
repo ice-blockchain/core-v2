@@ -16,11 +16,13 @@ function getBalanceState(isVisible: boolean) {
 }
 
 export function BalanceDisplay({ isBalanceVisible, onToggleVisibility }: BalanceDisplayProps) {
-  const { colors, scale: { scaleSize: scale } } = useTheme();
+  const theme = useTheme();
+  const { colors } = theme;
+  const scale = theme.scale.scaleSize;
   const { iconName, balanceText } = getBalanceState(isBalanceVisible);
 
   const labelRowStyle = useMemo(() => ({ gap: scale(5) }), [scale]);
-  const gapStyle = useMemo(() => ({ gap: scale(4) }), [scale]);
+  const gapStyle = useMemo(() => ({ gap: theme.spacing.xs }), [theme.spacing.xs]);
 
   return (
     <View style={[styles.container, gapStyle]}>

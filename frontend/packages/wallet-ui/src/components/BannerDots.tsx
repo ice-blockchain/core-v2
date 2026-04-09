@@ -15,14 +15,14 @@ interface BannerDotsProps {
 }
 
 export function BannerDots({ count, activeIndex, inside }: BannerDotsProps) {
-  const { colors, scale: { scaleSize: scale, scaleRadius } } = useTheme();
+  const theme = useTheme();
 
   const containerStyle = useMemo(
-    () => (inside ? buildDotsInsideStyle(scale) : buildDotsContainerStyle(scale)),
-    [scale, inside],
+    () => (inside ? buildDotsInsideStyle(theme) : buildDotsContainerStyle(theme)),
+    [theme, inside],
   );
-  const activeDot = useMemo(() => buildActiveDotStyle(scale, scaleRadius, colors), [scale, scaleRadius, colors]);
-  const inactiveDot = useMemo(() => buildInactiveDotStyle(scale, scaleRadius, colors), [scale, scaleRadius, colors]);
+  const activeDot = useMemo(() => buildActiveDotStyle(theme), [theme]);
+  const inactiveDot = useMemo(() => buildInactiveDotStyle(theme), [theme]);
 
   const dots = Array.from({ length: count }, (_, i) => i);
 

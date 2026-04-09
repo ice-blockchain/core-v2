@@ -1,29 +1,26 @@
 import type { ViewStyle } from "react-native";
+import type { useTheme } from "@ion/ui";
 
-interface ThemeColors {
-  secondaryBackground: string;
-}
+type Theme = ReturnType<typeof useTheme>;
 
-export function buildContainerStyle(
-  scale: (n: number) => number,
-  colors: ThemeColors,
-): ViewStyle {
+export function buildContainerStyle(theme: Theme): ViewStyle {
+  const scale = theme.scale.scaleSize;
   return {
     height: scale(140),
-    backgroundColor: colors.secondaryBackground,
+    backgroundColor: theme.colors.secondaryBackground,
   };
 }
 
-export function buildHeaderStyle(scale: (n: number) => number): ViewStyle {
+export function buildHeaderStyle(theme: Theme): ViewStyle {
   return {
-    paddingHorizontal: scale(16),
-    paddingTop: scale(16),
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
   };
 }
 
-export function buildListContentStyle(scale: (n: number) => number): ViewStyle {
+export function buildListContentStyle(theme: Theme): ViewStyle {
   return {
-    paddingHorizontal: scale(16),
-    marginTop: scale(12),
+    paddingHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.md,
   };
 }

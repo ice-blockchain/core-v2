@@ -12,16 +12,15 @@ interface WalletHeaderProps {
 export function WalletHeader({ onWalletPress }: WalletHeaderProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const scaleRadius = theme.scale.scaleRadius;
   const activeWallet = useActiveWalletView();
 
-  const pillStyle = useMemo(() => buildPillStyle(scale, scaleRadius, theme.colors), [scale, scaleRadius, theme.colors]);
-  const scanStyle = useMemo(() => buildScanButtonStyle(scale, scaleRadius, theme.colors), [scale, scaleRadius, theme.colors]);
+  const pillStyle = useMemo(() => buildPillStyle(theme), [theme]);
+  const scanStyle = useMemo(() => buildScanButtonStyle(theme), [theme]);
   const walletBoxStyle = useMemo(
-    () => ({ width: scale(28), height: scale(28), borderRadius: scaleRadius(8), backgroundColor: colorPalette.darkBlue }),
-    [scale, scaleRadius],
+    () => ({ width: scale(28), height: scale(28), borderRadius: theme.radii.small, backgroundColor: colorPalette.darkBlue }),
+    [scale, theme.radii.small],
   );
-  const innerGap = useMemo(() => ({ gap: scale(8) }), [scale]);
+  const innerGap = useMemo(() => ({ gap: theme.spacing.sm }), [theme.spacing.sm]);
 
   return (
     <View style={styles.container}>

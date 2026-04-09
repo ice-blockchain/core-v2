@@ -17,12 +17,13 @@ type BannerItem = (typeof BANNER_DATA)[number];
 const ITEM_COUNT = BANNER_DATA.length;
 
 export function BannerCarousel() {
-  const scale = useTheme().scale.scaleSize;
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
   const { width: windowWidth } = useWindowDimensions();
   const cardWidth = windowWidth - scale(32);
   const snap = cardWidth + scale(12);
   const [activeIndex, setActiveIndex] = useState(0);
-  const contentStyle = useMemo(() => buildCarouselPaddingStyle(scale), [scale]);
+  const contentStyle = useMemo(() => buildCarouselPaddingStyle(theme), [theme]);
   const cardStyle = useMemo<ViewStyle>(() => ({ width: cardWidth }), [cardWidth]);
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const raw = Math.round(e.nativeEvent.contentOffset.x / snap);

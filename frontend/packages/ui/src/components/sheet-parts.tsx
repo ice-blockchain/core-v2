@@ -10,12 +10,14 @@ const HANDLE_CONTAINER_STYLE = {
   paddingBottom: 8,
 } as const;
 
-export function SheetBackdrop(props: BottomSheetBackdropProps) {
+type SheetBackdropPressBehavior = 'none' | 'close' | 'collapse';
+
+export function SheetBackdrop({ pressBehavior = 'close', ...props }: BottomSheetBackdropProps & { pressBehavior?: SheetBackdropPressBehavior }) {
   const theme = useTheme();
   return (
     <BottomSheetBackdrop
       {...props}
-      pressBehavior="close"
+      pressBehavior={pressBehavior}
       appearsOnIndex={0}
       disappearsOnIndex={-1}
       style={[props.style, { backgroundColor: theme.colors.backgroundSheet }]}

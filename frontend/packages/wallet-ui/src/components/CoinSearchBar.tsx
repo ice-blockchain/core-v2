@@ -11,8 +11,7 @@ interface CoinSearchBarProps {
 
 export function CoinSearchBar({ value, onChangeText, onCancel }: CoinSearchBarProps) {
   const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-  const gapStyle = useMemo(() => ({ gap: scale(12) }), [scale]);
+  const gapStyle = useMemo(() => ({ gap: theme.spacing.md }), [theme.spacing.md]);
 
   return (
     <View style={[styles.container, gapStyle]}>

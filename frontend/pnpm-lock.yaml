@@ -375,6 +375,9 @@ importers:
       '@ion/user-search-ui':
         specifier: workspace:*
         version: link:../../packages/user-search-ui
+      '@ion/wallet':
+        specifier: workspace:*
+        version: link:../../packages/wallet
       '@ion/wallet-ui':
         specifier: workspace:*
         version: link:../../packages/wallet-ui
@@ -1542,12 +1545,18 @@ importers:
       '@ion/localization':
         specifier: workspace:*
         version: link:../localization
+      '@ion/navigation':
+        specifier: workspace:*
+        version: link:../navigation
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
       '@ion/wallet':
         specifier: workspace:*
         version: link:../wallet
+      '@react-navigation/native':
+        specifier: '>=7'
+        version: 7.2.2(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       react:
         specifier: '>=19'
         version: 19.2.4

@@ -6,9 +6,10 @@ import { emptyNftsImage } from "../assets/wallet-images";
 import { buildEmptyImageStyle, buildEmptyStateStyle } from "./coins-section-styles";
 
 export function EmptyNftsState() {
-  const { colors, scale: { scaleSize: scale } } = useTheme();
-  const imageStyle = useMemo(() => buildEmptyImageStyle(scale), [scale]);
-  const stateStyle = useMemo(() => buildEmptyStateStyle(scale), [scale]);
+  const theme = useTheme();
+  const { colors } = theme;
+  const imageStyle = useMemo(() => buildEmptyImageStyle(theme), [theme]);
+  const stateStyle = useMemo(() => buildEmptyStateStyle(theme), [theme]);
 
   return (
     <View style={[styles.container, stateStyle]}>

@@ -1,22 +1,21 @@
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import { Routes, useSheetNavigation } from "@ion/navigation";
 import { WalletHeader } from "../components/WalletHeader";
 import { BalanceDisplay } from "../components/BalanceDisplay";
 import { ActionButtonsRow } from "../components/ActionButtonsRow";
 import { FriendsSection } from "../components/FriendsSection";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CoinsSection } from "../components/CoinsSection";
-import { WalletViewsSheet } from "../components/WalletViewsSheet";
 import { useWalletScreenStyles } from "./useWalletScreenStyles";
 
 export function WalletScreen() {
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isSheetVisible, setIsSheetVisible] = useState(false);
+  const navigation = useSheetNavigation();
   const toggleBalance = useCallback(() => setIsBalanceVisible((p) => !p), []);
-  const openSheet = useCallback(() => setIsSheetVisible(true), []);
-  const closeSheet = useCallback(() => setIsSheetVisible(false), []);
+  const openSheet = useCallback(() => navigation.navigate(Routes.Sheet.WalletViewManagement), [navigation]);
   const s = useWalletScreenStyles(isScrolled);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -37,7 +36,6 @@ export function WalletScreen() {
           <CoinsSection />
         </View>
       </ScrollView>
-      <WalletViewsSheet isVisible={isSheetVisible} onClose={closeSheet} />
     </View>
   );
 }

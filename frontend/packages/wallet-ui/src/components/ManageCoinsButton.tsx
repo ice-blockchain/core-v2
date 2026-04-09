@@ -6,16 +6,15 @@ import { translate } from "@ion/localization";
 export function ManageCoinsButton() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
-  const scaleRadius = theme.scale.scaleRadius;
 
   const buttonStyle = useMemo(
     () => ({
       height: scale(56),
-      borderRadius: scaleRadius(16),
+      borderRadius: theme.radii.large,
       backgroundColor: theme.colors.tertiaryBackground,
       gap: scale(9),
     }),
-    [scale, scaleRadius, theme.colors],
+    [scale, theme.radii.large, theme.colors],
   );
 
   return (

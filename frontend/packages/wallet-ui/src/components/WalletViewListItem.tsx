@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon, Text, useTheme, colorPalette } from "@ion/ui";
 import type { WalletView } from "@ion/wallet";
@@ -8,7 +8,7 @@ type WalletViewListItemMode = "selected" | "unselected" | "manage";
 interface WalletViewListItemProps {
   wallet: WalletView;
   mode: WalletViewListItemMode;
-  onPress: () => void;
+  onPress: (walletId: string) => void;
 }
 
 export function WalletViewListItem({ wallet, mode, onPress }: WalletViewListItemProps) {
@@ -17,16 +17,18 @@ export function WalletViewListItem({ wallet, mode, onPress }: WalletViewListItem
   const containerStyle = useMemo(() => buildContainerStyle(theme, mode), [theme, mode]);
   const iconBoxStyle = useMemo(() => buildIconBoxStyle(scale, theme.scale.scaleRadius), [scale, theme.scale.scaleRadius]);
   const leftGap = useMemo(() => ({ gap: scale(10) }), [scale]);
+  const textGap = useMemo(() => ({ gap: theme.spacing.xxs }), [theme.spacing.xxs]);
   const nameColor = mode === "selected" ? colorPalette.white : theme.colors.primaryText;
   const balanceColor = mode === "selected" ? theme.colors.onColors : theme.colors.tertiaryText;
+  const handlePress = useCallback(() => onPress(wallet.id), [onPress, wallet.id]);
 
   return (
-    <TouchableOpacity style={[styles.container, containerStyle]} onPress={onPress} accessibilityRole="button">
+    <TouchableOpacity style={[styles.container, containerStyle]} onPress={handlePress} accessibilityRole="button">
       <View style={[styles.leftSection, leftGap]}>
         <View style={[styles.center, iconBoxStyle]}>
           <Icon name="wallet" size={scale(24)} color={colorPalette.white} />
         </View>
-        <View style={styles.textGroup}>
+        <View style={textGap}>
           <Text variant="body" color={nameColor}>{wallet.name}</Text>
           <Text variant="caption3" color={balanceColor}>{wallet.balance}</Text>
         </View>
@@ -60,8 +62,11 @@ function buildIconBoxStyle(scale: (n: number) => number, scaleRadius: (n: number
 }
 
 function buildContainerStyle(theme: ReturnType<typeof useTheme>, mode: WalletViewListItemMode) {
-  const scale = theme.scale.scaleSize;
-  const base = { paddingVertical: scale(11), paddingHorizontal: scale(16), borderRadius: theme.scale.scaleRadius(16) };
+  const base = {
+    paddingVertical: theme.scale.scaleSize(11),
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radii.large,
+  };
   if (mode === "selected") return { ...base, backgroundColor: theme.colors.primaryAccent };
   return { ...base, backgroundColor: theme.colors.tertiaryBackground, borderWidth: 1, borderColor: theme.colors.onSecondaryBackground };
 }
@@ -70,5 +75,4 @@ const styles = StyleSheet.create({
   container: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   leftSection: { flexDirection: "row", alignItems: "center", flex: 1 },
   center: { alignItems: "center", justifyContent: "center" },
-  textGroup: { gap: 2 },
 });

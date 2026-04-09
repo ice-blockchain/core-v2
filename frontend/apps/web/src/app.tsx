@@ -23,7 +23,7 @@ import { chatTranslations } from '@ion/chat';
 import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
 import { feedTranslations } from '@ion/feed-ui';
-import { walletUiTranslations } from '@ion/wallet-ui';
+import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from '@ion/wallet-ui';
 import { profileTranslations } from '@ion/profile-ui';
 import { HomeScreen, homeTranslations } from '@ion/home-ui';
 import { SplashScreen } from './components/splash-screen';
@@ -60,6 +60,13 @@ const screens = {
   ConfirmPassword: ConfirmPasswordScreen,
   RestoreSuccess: RestoreSuccessScreen,
   GeneralError: GeneralErrorScreen,
+  walletViewScreens: {
+    Switcher: WalletViewSwitcherScreen,
+    Manage: ManageWalletViewsScreen,
+    Create: CreateWalletViewScreen,
+    Edit: EditWalletViewScreen,
+    DeleteConfirm: DeleteWalletViewConfirmScreen,
+  },
 };
 
 const authScreens = {
