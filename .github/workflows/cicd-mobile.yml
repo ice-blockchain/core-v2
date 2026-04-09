@@ -333,12 +333,13 @@ jobs:
         run: |
           # CocoaPods 1.16.x can intermittently crash with:
           # "ArgumentError - pathname contains null byte" (CocoaPods/CocoaPods#12798).
-          # Retry clean installs a few times when that specific flake appears.
+          # Retry clean installs with aggressive cache cleanup when that specific flake appears.
           set -o pipefail
           ATTEMPT=1
-          MAX_ATTEMPTS=3
+          MAX_ATTEMPTS=6
           while [[ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]]; do
             echo "pod install attempt ${ATTEMPT}/${MAX_ATTEMPTS}"
+            rm -rf ~/Library/Caches/CocoaPods ~/.cocoapods/repos/trunk
             rm -rf Pods Podfile.lock
             if bundle exec pod install 2>&1 | tee /tmp/pod-install.log; then
               exit 0
@@ -347,6 +348,7 @@ jobs:
             if grep -q "pathname contains null byte" /tmp/pod-install.log; then
               echo "::warning::CocoaPods null-byte flake detected, retrying clean pod install..."
               ATTEMPT=$((ATTEMPT + 1))
+              sleep 3
               continue
             fi
 
