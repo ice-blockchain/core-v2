@@ -102,6 +102,38 @@ func TestParseTorrentInfoRejectsOverflowPieceCount(t *testing.T) {
 	require.ErrorContains(t, err, "exceeds maximum")
 }
 
+func TestParseRejectsTrailingDataWithZeroHeaderSize(t *testing.T) {
+	// Build a valid .ionstorage, then rebuild the TorrentInfo cell with
+	// HeaderSize=0 while keeping the trailing header bytes. The parser
+	// must reject this as "unexpected trailing data."
+	payload := make([]byte, 1024)
+	header := SingleFileHeader("data", uint64(len(payload)))
+	_, validData := MustBuildIonStorageBoC(t, payload, PieceSize, header)
+
+	// Parse valid data to get the original metadata fields.
+	validMeta, err := ParseIonStorageBoC(validData, testLogger())
+	require.NoError(t, err)
+
+	// Rebuild TorrentInfo cell with HeaderSize=0.
+	zeroHdrCell, err := BuildTorrentInfoCell(
+		validMeta.PieceSize, validMeta.FileSize,
+		validMeta.RootHash, validMeta.HeaderHash, 0, // HeaderSize=0
+	)
+	require.NoError(t, err)
+
+	// Reconstruct .ionstorage: version + new TorrentInfo BoC + original merkle tree BoC + original header bytes.
+	newInfoBoC := zeroHdrCell.ToBOC()
+	merkleBoC := validMeta.MerkleTree.ToBOC()
+	headerBytes, err := SerializeTorrentHeader(header)
+	require.NoError(t, err)
+
+	crafted := BuildIonStorageBytes(newInfoBoC, merkleBoC, headerBytes)
+
+	_, err = ParseIonStorageBoC(crafted, testLogger())
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unexpected trailing data")
+}
+
 func TestMerkleTreeRoundTrip(t *testing.T) {
 	payload := make([]byte, 2*1024*1024) // 2MB
 	for i := range payload {

@@ -46,26 +46,40 @@ func (c *Coordinator) verifyClaim(ctx context.Context, bagID boc.BagID) bool {
 func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, t *ClusterTransport, bagID boc.BagID) bool {
 	activeNodes := c.ActiveNodeCount()
 	results := t.QueryPeerOwnership(ctx, bagID)
-	if len(results) == 0 {
-		c.logger.Warn("quorum check: no peers responded", "bag", bagID[:4])
-		return false
+	ok, reason := evaluateQuorum(results, activeNodes, c.nodeID)
+	if !ok {
+		c.logger.Warn("quorum check failed",
+			"reason", reason, "responses", len(results), "active", activeNodes, "bag", bagID[:4])
 	}
-	minResponses := activeNodes / 2
+	return ok
+}
+
+// evaluateQuorum decides whether peer responses confirm ownership.
+// activeNodes includes self; results are remote peer responses only.
+// Requires at least (activeNodes-1)/2 responses (majority of remote peers)
+// and majority agreement among responders.
+func evaluateQuorum(results []string, activeNodes int, nodeID string) (bool, string) {
+	if len(results) == 0 {
+		return false, "no peers responded"
+	}
+	remotePeers := activeNodes - 1 // exclude self
+	minResponses := remotePeers / 2
 	if minResponses < 1 {
 		minResponses = 1
 	}
 	if len(results) < minResponses {
-		c.logger.Warn("quorum check: insufficient responses",
-			"got", len(results), "need", minResponses, "active", activeNodes, "bag", bagID[:4])
-		return false
+		return false, "insufficient responses"
 	}
 	agree := 0
 	for _, owner := range results {
-		if owner == c.nodeID {
+		if owner == nodeID {
 			agree++
 		}
 	}
-	return agree > len(results)/2
+	if agree <= len(results)/2 {
+		return false, "no majority agreement"
+	}
+	return true, ""
 }
 
 // rollbackClaim undoes a failed ownership claim. Removes the orphaned keys

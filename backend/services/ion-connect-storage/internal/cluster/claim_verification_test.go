@@ -129,6 +129,47 @@ func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
 	require.Equal(t, 1, coord.OwnedCount())
 }
 
+func TestEvaluateQuorumRejectsNoResponses(t *testing.T) {
+	ok, reason := evaluateQuorum(nil, 5, "self")
+	require.False(t, ok)
+	require.Equal(t, "no peers responded", reason)
+}
+
+func TestEvaluateQuorumRejectsInsufficientResponses(t *testing.T) {
+	// 5 active nodes -> 4 remote peers -> need at least 4/2=2 responses.
+	ok, reason := evaluateQuorum([]string{"self"}, 5, "self")
+	require.False(t, ok)
+	require.Equal(t, "insufficient responses", reason)
+}
+
+func TestEvaluateQuorumAcceptsMajority(t *testing.T) {
+	// 5 active nodes, 3 responses, 2 agree -> 2 > 3/2=1 -> pass.
+	ok, _ := evaluateQuorum([]string{"self", "self", "other"}, 5, "self")
+	require.True(t, ok)
+}
+
+func TestEvaluateQuorumRejectsNoMajority(t *testing.T) {
+	// 5 active nodes, 3 responses, only 1 agrees -> 1 > 3/2=1 is false.
+	ok, reason := evaluateQuorum([]string{"self", "other", "other"}, 5, "self")
+	require.False(t, ok)
+	require.Equal(t, "no majority agreement", reason)
+}
+
+func TestEvaluateQuorumTwoNodeCluster(t *testing.T) {
+	// 2 active nodes -> 1 remote peer -> need at least 1 response.
+	// 1 response agreeing -> pass.
+	ok, _ := evaluateQuorum([]string{"self"}, 2, "self")
+	require.True(t, ok)
+}
+
+func TestEvaluateQuorumThreeNodesPartitionedMinority(t *testing.T) {
+	// 3 active nodes -> 2 remote peers -> need at least 1 response.
+	// 1 compromised peer confirms attacker, but that's 1 > 1/2=0 -> passes.
+	// This is acceptable: self + 1 peer = 2/3 majority.
+	ok, _ := evaluateQuorum([]string{"self"}, 3, "self")
+	require.True(t, ok)
+}
+
 func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	ctx := t.Context()
