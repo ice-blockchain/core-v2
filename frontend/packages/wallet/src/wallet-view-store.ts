@@ -38,6 +38,7 @@ export function setWalletViews(next: readonly WalletView[]): void {
 }
 
 export function setActiveWalletViewId(id: string): void {
+  if (activeWalletViewId === id) return;
   activeWalletViewId = id;
   emitChange();
 }

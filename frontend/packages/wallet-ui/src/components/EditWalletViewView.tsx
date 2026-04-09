@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { Button, Icon, Text, TextField, useTheme } from "@ion/ui";
+import { Button, Icon, Text, TextField, useNotificationBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useWalletViews, renameWalletView } from "@ion/wallet";
 
@@ -27,6 +27,7 @@ interface FormProps {
 function EditWalletViewForm({ wallet, onNavigateToDelete, onBack }: FormProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const notifications = useNotificationBar();
   const [name, setName] = useState(wallet.name);
   const [isFocused, setIsFocused] = useState(false);
   const canSave = name.trim() !== wallet.name && name.trim().length > 0;
@@ -35,10 +36,11 @@ function EditWalletViewForm({ wallet, onNavigateToDelete, onBack }: FormProps) {
     try {
       renameWalletView(wallet.id, name);
       onBack();
-    } catch {
-      // rename failed — stay on form
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to rename wallet";
+      notifications.show({ message, backgroundColor: theme.colors.attentionRed });
     }
-  }, [wallet.id, name, onBack]);
+  }, [wallet.id, name, onBack, notifications, theme.colors.attentionRed]);
 
   const containerStyle = useMemo(() => ({ gap: scale(16), padding: scale(16) }), [scale]);
 

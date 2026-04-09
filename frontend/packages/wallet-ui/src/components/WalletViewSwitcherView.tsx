@@ -17,7 +17,12 @@ export function WalletViewSwitcherView({ onNavigateToManage }: WalletViewSwitche
 
   const handleWalletPress = useCallback(
     (walletId: string) => {
-      if (walletId !== activeWallet.id) switchWalletView(walletId);
+      if (walletId === activeWallet.id) return;
+      try {
+        switchWalletView(walletId);
+      } catch {
+        // wallet not found — ignore
+      }
     },
     [activeWallet.id],
   );

@@ -5,7 +5,7 @@ import {
   getNextId,
 } from "./wallet-view-store";
 
-const MAX_WALLET_VIEWS = 2;
+export const MAX_WALLET_VIEWS = 2;
 
 export function createWalletView(name: string): WalletView {
   const trimmedName = name.trim();

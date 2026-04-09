@@ -25,7 +25,7 @@ export function WalletHeader({ onWalletPress }: WalletHeaderProps) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={[styles.pill, pillStyle]} onPress={onWalletPress} accessibilityLabel={activeWallet.name} accessibilityRole="button">
+      <TouchableOpacity style={[styles.pill, pillStyle]} onPress={onWalletPress} accessibilityLabel={`Switch wallet, ${activeWallet.name}`} accessibilityRole="button">
         <View style={[styles.innerGroup, innerGap]}>
           <View style={[styles.center, walletBoxStyle]}>
             <Icon name="wallet" size={scale(16)} color={colorPalette.white} />

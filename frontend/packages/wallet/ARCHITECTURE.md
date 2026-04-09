@@ -4,7 +4,7 @@ Wallet management business logic. Currently uses an in-memory mock store that wi
 
 ## Structure
 
-```
+```text
 src/
   types.ts                    — WalletView, WalletViewStore types
   wallet-view-store.ts        — In-memory mock store with reactive updates

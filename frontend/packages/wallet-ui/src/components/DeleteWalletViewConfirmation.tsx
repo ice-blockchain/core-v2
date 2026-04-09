@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { Image, Platform, StyleSheet, View } from "react-native";
-import { Button, Text, useTheme } from "@ion/ui";
+import { Button, Text, useNotificationBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { deleteWalletView } from "@ion/wallet";
 import { walletDeleteImage } from "../assets/wallet-images";
@@ -14,15 +14,17 @@ interface DeleteWalletViewConfirmationProps {
 export function DeleteWalletViewConfirmation({ walletId, onCancel, onDeleted }: DeleteWalletViewConfirmationProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const notifications = useNotificationBar();
 
   const handleDelete = useCallback(() => {
     try {
       deleteWalletView(walletId);
       onDeleted();
-    } catch {
-      // delete failed — stay on confirmation
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete wallet";
+      notifications.show({ message, backgroundColor: theme.colors.attentionRed });
     }
-  }, [walletId, onDeleted]);
+  }, [walletId, onDeleted, notifications, theme.colors.attentionRed]);
 
   const imageSize = useMemo(() => ({ width: scale(80), height: scale(80) }), [scale]);
   const containerStyle = useMemo(() => ({ padding: scale(16), gap: scale(6) }), [scale]);

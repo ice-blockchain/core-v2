@@ -28,4 +28,4 @@ src/
 
 ## Design
 
-Wallet header pill opens a BottomSheet with multi-view navigation (switcher, manage, create, edit, delete confirmation). State machine managed via useState in WalletViewsSheet. All visual primitives from `@ion/ui`. No hardcoded colors, fonts, or spacing.
+Wallet header pill opens a BottomSheet with multi-view navigation (switcher, manage, create, edit, delete confirmation). State machine managed via useState in WalletViewsSheetContent. All visual primitives from `@ion/ui`. No hardcoded colors, fonts, or spacing.

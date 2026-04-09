@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { Platform, ScrollView, View } from "react-native";
 import type { LayoutChangeEvent } from "react-native";
 import { useTheme } from "@ion/ui";
 import type { CoinTabKey } from "../types";
@@ -30,7 +30,7 @@ export function CoinsSection() {
       {search.isActive && <CoinSearchBar value={search.query} onChangeText={search.setQuery} onCancel={search.cancel} />}
       <ScrollView
         ref={scrollRef} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={onScrollEnd} onScroll={onScroll}
+        onMomentumScrollEnd={onScrollEnd} onScroll={Platform.OS === "web" ? onScroll : undefined}
         onLayout={handleLayout} scrollEventThrottle={16}
       >
         <View style={s.page}>

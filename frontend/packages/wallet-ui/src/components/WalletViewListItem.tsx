@@ -36,10 +36,12 @@ export function WalletViewListItem({ wallet, mode, onPress }: WalletViewListItem
   );
 }
 
+const ROTATED_ICON_STYLE = { transform: [{ rotate: "-90deg" as const }] };
+
 function WalletViewListItemRight({ mode, scale }: { mode: WalletViewListItemMode; scale: (n: number) => number }) {
   if (mode === "manage") {
     return (
-      <View style={{ transform: [{ rotate: "-90deg" }] }}>
+      <View style={ROTATED_ICON_STYLE}>
         <Icon name="chevron-down" size={scale(20)} />
       </View>
     );

@@ -5,6 +5,7 @@ import type { CoinTabKey } from "../types";
 
 const TAB_INDICES: Record<CoinTabKey, number> = { coins: 0, nfts: 1 };
 const IS_WEB = Platform.OS === "web";
+const SCROLL_DEBOUNCE_MS = 150;
 
 function resolveTab(offsetX: number, width: number): CoinTabKey {
   return Math.round(offsetX / width) === 0 ? "coins" : "nfts";
@@ -38,7 +39,7 @@ export function useTabPager(onTabChange: (tab: CoinTabKey) => void) {
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (!IS_WEB) return;
       if (webTimer.current) clearTimeout(webTimer.current);
-      webTimer.current = setTimeout(() => detectTab(getOffsetX(e)), 150);
+      webTimer.current = setTimeout(() => detectTab(getOffsetX(e)), SCROLL_DEBOUNCE_MS);
     },
     [detectTab],
   );

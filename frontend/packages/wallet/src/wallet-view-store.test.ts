@@ -23,9 +23,10 @@ describe("walletViewStore", () => {
 
   it("notifies subscribers on reset", () => {
     const listener = vi.fn();
-    walletViewStore.subscribe(listener);
+    const unsubscribe = walletViewStore.subscribe(listener);
     resetWalletViewStore();
     expect(listener).toHaveBeenCalled();
+    unsubscribe();
   });
 
   it("unsubscribes when returned function is called", () => {

@@ -25,7 +25,8 @@ export function BannerCarousel() {
   const contentStyle = useMemo(() => buildCarouselPaddingStyle(scale), [scale]);
   const cardStyle = useMemo<ViewStyle>(() => ({ width: cardWidth }), [cardWidth]);
   const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / snap));
+    const raw = Math.round(e.nativeEvent.contentOffset.x / snap);
+    setActiveIndex(Math.max(0, Math.min(raw, ITEM_COUNT - 1)));
   }, [snap]);
   const renderItem = useCallback(
     ({ item }: { item: BannerItem }) => renderBannerCard(item, cardStyle, activeIndex),

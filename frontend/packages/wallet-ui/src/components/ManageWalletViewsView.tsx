@@ -2,10 +2,8 @@ import { useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { useWalletViews } from "@ion/wallet";
+import { useWalletViews, MAX_WALLET_VIEWS } from "@ion/wallet";
 import { WalletViewListItem } from "./WalletViewListItem";
-
-const MAX_WALLET_VIEWS = 2;
 
 interface ManageWalletViewsViewProps {
   onNavigateToCreate: () => void;

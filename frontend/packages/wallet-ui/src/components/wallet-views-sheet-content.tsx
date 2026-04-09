@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTheme } from "@ion/ui";
+import { useNotificationBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { createWalletView } from "@ion/wallet";
 import { WalletViewSheetHeader } from "./WalletViewSheetHeader";
@@ -64,17 +64,21 @@ function SheetViewContent({ view, setView }: { view: WalletViewSheetView; setVie
 function CreateWalletViewContent({ setView }: { setView: (v: WalletViewSheetView) => void }) {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const scale = useTheme().scale.scaleSize;
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
+  const notifications = useNotificationBar();
   const containerStyle = useMemo(() => ({ padding: scale(16) }), [scale]);
 
   const handleSubmit = useCallback(() => {
     try {
       createWalletView(name);
       setView({ type: "manage" });
-    } catch {
+    } catch (error) {
       setIsSubmitting(false);
+      const message = error instanceof Error ? error.message : "Failed to create wallet";
+      notifications.show({ message, backgroundColor: theme.colors.attentionRed });
     }
-  }, [name, setView]);
+  }, [name, setView, notifications, theme.colors.attentionRed]);
 
   return (
     <View style={containerStyle}>
