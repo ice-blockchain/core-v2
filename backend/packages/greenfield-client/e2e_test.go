@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 	sptypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,8 +59,10 @@ func TestE2E_SubscribeAndReceiveEvent(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
+	query, err := DefaultQuery("dev")
+	require.NoError(t, err)
 	eventCh, err := client.Subscribe(ctx, SubscribeOpts{
-		Query: DefaultQuery("dev"),
+		Query: query,
 	})
 	require.NoError(t, err)
 
@@ -131,7 +133,7 @@ func TestE2E_CatchUpBlockRange(t *testing.T) {
 
 	c := &client{
 		rpcURLs: []string{catchUpTestLCDURL},
-		log:     zerolog.New(zerolog.NewTestWriter(t)),
+		log:     slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})),
 	}
 	c.gwClient = gateway.NewClient(catchUpTestLCDURL)
 

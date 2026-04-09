@@ -3,6 +3,7 @@ package greenfieldclient
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
@@ -12,7 +13,6 @@ import (
 	"github.com/akuity/grpc-gateway-client/pkg/grpc/gateway"
 	gnfdclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	gnfdtypes "github.com/bnb-chain/greenfield-go-sdk/types"
-	"github.com/rs/zerolog"
 )
 
 const gatewayTimeout = 30 * time.Second
@@ -22,7 +22,7 @@ type client struct {
 	rpcURLs    []string
 	rpcIndex   atomic.Uint64
 	subscribed atomic.Bool
-	log        zerolog.Logger
+	log        *slog.Logger
 
 	account    *gnfdtypes.Account
 	clientsMu  sync.RWMutex
@@ -48,10 +48,16 @@ func New(cfg Config) (Client, error) {
 		return nil, fmt.Errorf("create greenfield sdk client: %w", err)
 	}
 
+	logger := cfg.Logger
+	if logger == nil {
+		logger = slog.New(slog.DiscardHandler)
+	}
+
 	c := &client{
-		cfg:        cfg,
-		rpcURLs:    cfg.RpcURLs,
-		log:        cfg.Logger.With().Str("component", "greenfield-client").Logger(),
+		cfg:     cfg,
+		rpcURLs: cfg.RpcURLs,
+		log:     logger.With("component", "greenfield-client"),
+
 		account:    account,
 		gnfdClient: gnfd,
 	}
@@ -93,7 +99,7 @@ func (c *client) rotateGateway() {
 	c.clientsMu.Unlock()
 
 	if err != nil {
-		c.log.Error().Err(err).Str("url", url).Msg("failed to rotate greenfield client")
+		c.log.Error("failed to rotate greenfield client", "error", err, "url", url)
 	}
 }
 

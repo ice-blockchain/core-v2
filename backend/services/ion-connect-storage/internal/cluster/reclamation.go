@@ -1,0 +1,212 @@
+package cluster
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
+	ds "github.com/ipfs/go-datastore"
+	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/zeebo/xxh3"
+)
+
+const reclaimBatchSize = 1000
+
+// StartReclamation begins the dead node detection and bag reclamation loop.
+// Runs until ctx is cancelled. Should be called as a goroutine.
+func (c *Coordinator) StartReclamation(ctx context.Context) {
+	// Wait before first reclamation cycle so CRDT heartbeats from other
+	// nodes have time to propagate. Without this delay a freshly joined
+	// node would immediately classify peers as dead.
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(c.cfg.ReclamationStartDelay):
+	}
+
+	ticker := time.NewTicker(c.cfg.ReclamationInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			c.runReclamationCycle(ctx)
+		}
+	}
+}
+
+func (c *Coordinator) runReclamationCycle(ctx context.Context) {
+	active, dead := listActiveNodes(c.crdt, c.cfg.StaleHeartbeatTimeout, c.publicKeyResolver(), c.logger)
+	if len(dead) == 0 {
+		return
+	}
+
+	if c.metrics != nil {
+		c.metrics.NodesActive.Set(float64(len(active)))
+	}
+
+	for _, deadNodeID := range dead {
+		if !c.isResponsibleForReclamation(deadNodeID, active) {
+			continue
+		}
+		c.reclaimBagsFromNode(ctx, deadNodeID)
+	}
+}
+
+// isResponsibleForReclamation checks if this node is XOR-closest to the dead node
+// among all active nodes. Only the closest node reclaims to prevent thundering herd.
+func (c *Coordinator) isResponsibleForReclamation(deadNodeID string, activeNodes []string) bool {
+	if len(activeNodes) == 0 {
+		return false
+	}
+
+	deadHash := simpleHash(deadNodeID)
+	myDistance := xorDistance(simpleHash(c.nodeID), deadHash)
+	for _, nodeID := range activeNodes {
+		if nodeID == c.nodeID {
+			continue
+		}
+		otherDistance := xorDistance(simpleHash(nodeID), deadHash)
+		if otherDistance < myDistance {
+			return false
+		}
+		if otherDistance == myDistance && nodeID < c.nodeID {
+			return false // deterministic tiebreak on nodeID
+		}
+	}
+	return true
+}
+
+// reclaimBagsFromNode scans bynode/<deadNodeID>/ prefix and claims orphaned bags.
+// Processes at most reclaimBatchSize bags per cycle; remaining bags are picked up
+// in subsequent reclamation cycles.
+func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string) {
+	prefix := ByNodePrefix(deadNodeID)
+	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: prefix, KeysOnly: true, Limit: reclaimBatchSize})
+	if err != nil {
+		c.logger.Error("query dead node bags", "dead_node", deadNodeID, "error", err)
+		return
+	}
+	defer results.Close()
+
+	var reclaimed int
+	for r := range results.Next() {
+		if r.Error != nil {
+			continue
+		}
+		bagID := extractBagIDFromByNodeKey(r.Key, deadNodeID)
+		if bagID == (boc.BagID{}) {
+			continue
+		}
+
+		if err := c.reclaimSingleBag(ctx, bagID, deadNodeID); err != nil {
+			c.logger.Warn("reclaim bag", "bag_id_prefix", bagID[:4], "error", err)
+			continue
+		}
+		reclaimed++
+	}
+
+	if reclaimed > 0 {
+		c.logger.Info("reclaimed bags from dead node",
+			"dead_node", deadNodeID, "count", reclaimed)
+	}
+
+	// Only clean up node metadata when all bags have been reclaimed.
+	if c.countNodeBags(ctx, deadNodeID) == 0 {
+		c.cleanupDeadNodeKeys(ctx, deadNodeID)
+	}
+}
+
+// reclaimSingleBag reclaims a bag from a dead node. Uses OwnsOrClaim (with
+// post-claim verification) to prevent counter drift when multiple nodes race
+// to reclaim the same bag.
+func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID boc.BagID, deadNodeID string) error {
+	current := c.Owner(bagID)
+	if current != "" && current != deadNodeID {
+		// Already claimed by another active node; clean up stale bynode key.
+		if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
+			c.logger.Error("delete stale bynode key", "dead_node", deadNodeID, "error", err)
+			return err
+		}
+		return nil
+	}
+
+	owned, err := c.OwnsOrClaim(ctx, bagID)
+	if err != nil {
+		return err
+	}
+	if !owned {
+		// Another node won the claim; clean up stale bynode key.
+		if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
+			c.logger.Error("delete stale bynode key after lost claim", "dead_node", deadNodeID, "error", err)
+			return err
+		}
+		return nil
+	}
+	if err := c.crdt.Delete(ctx, ds.NewKey(ByNodeKey(deadNodeID, bagID))); err != nil {
+		c.logger.Error("orphaned bynode key after claim",
+			"dead_node", deadNodeID,
+			"bag_id_prefix", fmt.Sprintf("%x", bagID[:4]),
+			"error", err)
+		return err
+	}
+	return nil
+}
+
+// countNodeBags returns the number of bynode/ keys remaining for a node.
+func (c *Coordinator) countNodeBags(ctx context.Context, nodeID string) int {
+	results, err := c.crdt.Query(ctx, dsq.Query{Prefix: ByNodePrefix(nodeID), KeysOnly: true})
+	if err != nil {
+		return 1 // assume non-zero on error to be safe
+	}
+	defer results.Close()
+	count := 0
+	for r := range results.Next() {
+		if r.Error == nil {
+			count++
+		}
+	}
+	return count
+}
+
+func (c *Coordinator) cleanupDeadNodeKeys(ctx context.Context, deadNodeID string) {
+	_ = c.crdt.Delete(ctx, ds.NewKey(HeartbeatKey(deadNodeID)))
+	_ = c.crdt.Delete(ctx, ds.NewKey(NodeInfoKey(deadNodeID)))
+}
+
+func extractBagIDFromByNodeKey(key string, nodeID string) boc.BagID {
+	// Key format: /bynode/<nodeID>/<hex-bagID>
+	prefix := "/" + ByNodePrefix(nodeID)
+	if len(key) <= len(prefix) {
+		return boc.BagID{}
+	}
+	hexStr := key[len(prefix):]
+	if len(hexStr) != 64 {
+		return boc.BagID{}
+	}
+	decoded, err := decodeHexToBytes(hexStr, 32)
+	if err != nil {
+		return boc.BagID{}
+	}
+	var bagID boc.BagID
+	copy(bagID[:], decoded)
+	return bagID
+}
+
+// simpleHash produces a uint64 hash from a string for XOR distance calculation.
+func simpleHash(s string) uint64 {
+	return xxh3.HashString(s)
+}
+
+func xorDistance(a, b uint64) uint64 {
+	return a ^ b
+}
+
+// listActiveNodesFromCRDT is used by reclamation and ActiveNodeCount.
+// Already defined in coordinator.go.
+
+// Ensure import is used by the query in reclaimBagsFromNode.
+var _ dsq.Query

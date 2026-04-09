@@ -1,0 +1,222 @@
+package index
+
+import (
+	"context"
+	"encoding/hex"
+	"fmt"
+	"log/slog"
+	"strings"
+	"time"
+
+	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
+)
+
+const (
+	eventTypeSetTag       = "greenfield.storage.EventSetTag"
+	eventTypeCreateObject = "greenfield.storage.EventCreateObject"
+	eventTypeUpdateObject = "greenfield.storage.EventUpdateObjectContent"
+
+	maxBucketNameLen = 255
+	maxObjectNameLen = 1024
+)
+
+// OwnershipChecker decides whether this node should own a bag.
+type OwnershipChecker interface {
+	OwnsOrClaim(ctx context.Context, bagID boc.BagID) (bool, error)
+}
+
+// Subscriber consumes Greenfield events and populates the bag index.
+type Subscriber struct {
+	client           greenfieldclient.Client
+	persister        *Persister
+	ownershipChecker OwnershipChecker
+	env              string
+	logger           *slog.Logger
+}
+
+// NewSubscriber creates a Subscriber.
+func NewSubscriber(
+	client greenfieldclient.Client,
+	persister *Persister,
+	ownershipChecker OwnershipChecker,
+	env string,
+	logger *slog.Logger,
+) *Subscriber {
+	return &Subscriber{
+		client:           client,
+		persister:        persister,
+		ownershipChecker: ownershipChecker,
+		env:              env,
+		logger:           logger,
+	}
+}
+
+// Run starts the subscription loop. Blocks until ctx is cancelled.
+func (s *Subscriber) Run(ctx context.Context) error {
+	lastHeight, err := s.persister.LoadLastHeight()
+	if err != nil {
+		return err
+	}
+
+	s.logger.Info("starting subscriber", "last_height", lastHeight)
+
+	query, err := greenfieldclient.BagIndexQuery(s.env)
+	if err != nil {
+		return fmt.Errorf("build query: %w", err)
+	}
+	ch, err := s.client.Subscribe(ctx, greenfieldclient.SubscribeOpts{
+		LastHeight: lastHeight,
+		Query:      query,
+	})
+	if err != nil {
+		return err
+	}
+
+	for txEvent := range ch {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if err := s.ProcessEvent(ctx, txEvent); err != nil {
+			s.logger.Error("process event", "height", txEvent.Height, "error", err)
+		}
+	}
+
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return fmt.Errorf("greenfield subscription closed unexpectedly")
+}
+
+// ProcessEvent correlates EventCreateObject/EventUpdateObjectContent with
+// EventSetTag to build (bagID -> BagLocation) entries.
+func (s *Subscriber) ProcessEvent(ctx context.Context, txEvent *greenfieldclient.TxEvent) error {
+	entries := s.collectEntries(ctx, txEvent)
+	return s.persister.PersistBagsAndHeight(entries, txEvent.Height)
+}
+
+// objectKey uniquely identifies an object within a transaction.
+type objectKey struct {
+	bucket string
+	object string
+}
+
+// collectEntries correlates SetTag events (with ion-bag-id) against
+// CreateObject/UpdateObject events in the same transaction. Only SetTag
+// events whose resource GRN matches a CreateObject or UpdateObject are indexed.
+func (s *Subscriber) collectEntries(ctx context.Context, txEvent *greenfieldclient.TxEvent) []BagEntry {
+	knownObjects := collectKnownObjects(txEvent)
+	if len(knownObjects) == 0 {
+		return nil
+	}
+
+	var entries []BagEntry
+	for _, e := range txEvent.Events {
+		if e.Type != eventTypeSetTag {
+			continue
+		}
+		ste, err := greenfieldclient.ExtractSetTagEvent(e)
+		if err != nil || ste.BucketName == "" || ste.ObjectName == "" {
+			continue
+		}
+		if !isValidBucketName(ste.BucketName) || !isValidObjectName(ste.ObjectName) {
+			s.logger.Warn("invalid bucket/object name",
+				"bucket", ste.BucketName, "object", ste.ObjectName)
+			continue
+		}
+
+		key := objectKey{bucket: ste.BucketName, object: ste.ObjectName}
+		if _, matched := knownObjects[key]; !matched {
+			continue
+		}
+
+		bagIDHex := findTagValue(ste.Tags, "ion-bag-id")
+		if bagIDHex == "" {
+			continue
+		}
+		bagID, err := decodeBagID(bagIDHex)
+		if err != nil {
+			s.logger.Warn("invalid ion-bag-id hex", "value", bagIDHex, "error", err)
+			continue
+		}
+
+		// Attempt to claim ownership. All nodes index the bag regardless
+		// of ownership so that forwarding nodes can load metadata and
+		// serve pieces via the owner. Timeout must accommodate the
+		// deterministic stagger (up to 2s per node) + verifyClaim (~3.5s)
+		// + retries in OwnsOrClaim.
+		claimCtx, claimCancel := context.WithTimeout(ctx, 30*time.Second)
+		owned, err := s.ownershipChecker.OwnsOrClaim(claimCtx, bagID)
+		claimCancel()
+		if err != nil {
+			s.logger.Warn("ownership check failed", "bag_id", bagIDHex, "error", err)
+		}
+
+		loc := BagLocation{BucketName: ste.BucketName, ObjectName: ste.ObjectName}
+
+		s.logger.Info("indexed bag",
+			"bag_id", bagIDHex,
+			"bucket", loc.BucketName,
+			"object", loc.ObjectName,
+			"height", txEvent.Height,
+			"owned", owned,
+		)
+
+		entries = append(entries, BagEntry{BagID: bagID, Location: loc})
+	}
+
+	return entries
+}
+
+// collectKnownObjects builds a set of (bucket, object) pairs from
+// EventCreateObject and EventUpdateObjectContent events in the transaction.
+func collectKnownObjects(txEvent *greenfieldclient.TxEvent) map[objectKey]struct{} {
+	objects := make(map[objectKey]struct{})
+	for _, e := range txEvent.Events {
+		switch e.Type {
+		case eventTypeCreateObject:
+			parsed, err := greenfieldclient.ExtractCreateObjectEvent(txEvent, e)
+			if err != nil {
+				continue
+			}
+			objects[objectKey{bucket: parsed.BucketName, object: parsed.ObjectName}] = struct{}{}
+		case eventTypeUpdateObject:
+			parsed, err := greenfieldclient.ExtractUpdateObjectContentEvent(txEvent, e)
+			if err != nil {
+				continue
+			}
+			objects[objectKey{bucket: parsed.BucketName, object: parsed.ObjectName}] = struct{}{}
+		}
+	}
+	return objects
+}
+
+func findTagValue(tags []greenfieldclient.TagEntry, key string) string {
+	for _, t := range tags {
+		if t.Key == key {
+			return t.Value
+		}
+	}
+	return ""
+}
+
+func decodeBagID(hexStr string) (boc.BagID, error) {
+	var bagID boc.BagID
+	b, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return bagID, err
+	}
+	if len(b) != 32 {
+		return bagID, hex.ErrLength
+	}
+	copy(bagID[:], b)
+	return bagID, nil
+}
+
+func isValidBucketName(name string) bool {
+	return len(name) <= maxBucketNameLen && !strings.Contains(name, "\x00")
+}
+
+func isValidObjectName(name string) bool {
+	return len(name) <= maxObjectNameLen && !strings.Contains(name, "\x00")
+}

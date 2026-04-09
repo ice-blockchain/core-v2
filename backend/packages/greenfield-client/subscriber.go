@@ -59,7 +59,7 @@ func (c *client) subscribeLoop(
 		}
 
 		if err != nil {
-			c.log.Warn().Err(err).Dur("backoff", backoff).Msg("subscription error, reconnecting")
+			c.log.Warn("subscription error, reconnecting", "error", err, "backoff", backoff)
 		}
 
 		select {
@@ -155,18 +155,18 @@ func (c *client) processEvents(
 			}
 			txEvent, parseErr := parseTxResult(result)
 			if parseErr != nil {
-				c.log.Warn().Err(parseErr).Msg("parse tx result")
+				c.log.Warn("parse tx result", "error", parseErr)
 				continue
 			}
 			if txEvent == nil {
 				continue
 			}
 
-			c.log.Debug().
-				Int64("height", txEvent.Height).
-				Str("tx", txEvent.TxHash).
-				Int("events", len(txEvent.Events)).
-				Msg("received ws event")
+			c.log.Debug("received ws event",
+				"height", txEvent.Height,
+				"tx", txEvent.TxHash,
+				"events", len(txEvent.Events),
+			)
 
 			if txEvent.Height > lastHeight.Load() {
 				lastHeight.Store(txEvent.Height)

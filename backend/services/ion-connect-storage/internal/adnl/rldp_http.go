@@ -1,0 +1,289 @@
+package adnl
+
+import (
+	"context"
+	"encoding/hex"
+	"fmt"
+	"log/slog"
+	"math"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/puzpuzpuz/xsync/v4"
+	"github.com/xssnick/tonutils-go/adnl/overlay"
+	"github.com/xssnick/tonutils-go/adnl/rldp"
+)
+
+const (
+	payloadTTL           = 30 * time.Second
+	reaperInterval       = 10 * time.Second
+	chunkSize            = 1 << 20
+	maxPendingPayloads   = 500
+	maxTotalPayloadBytes = 500 << 20 // 500 MB aggregate limit
+	maxRLDPDeadline      = 60 * time.Second
+	rldpGracePeriod      = 5 * time.Second
+)
+
+// RLDPHTTPBridge forwards HTTP-over-RLDP requests to a gin.Engine.
+type RLDPHTTPBridge struct {
+	engine            *gin.Engine
+	logger            *slog.Logger
+	payloads          *xsync.Map[string, *pendingPayload]
+	payloadMu         sync.Mutex
+	payloadCount      int64
+	totalPayloadBytes int64
+	cancel            context.CancelFunc
+}
+
+type pendingPayload struct {
+	data      []byte
+	size      int64
+	createdAt time.Time
+}
+
+// NewRLDPHTTPBridge creates a bridge that routes RLDP HTTP requests
+// through the given Gin engine. Starts a background reaper goroutine.
+func NewRLDPHTTPBridge(ctx context.Context, engine *gin.Engine, logger *slog.Logger) *RLDPHTTPBridge {
+	ctx, cancel := context.WithCancel(ctx)
+	b := &RLDPHTTPBridge{
+		engine:   engine,
+		logger:   logger,
+		payloads: xsync.NewMap[string, *pendingPayload](),
+		cancel:   cancel,
+	}
+	go b.reapStalePayloads(ctx)
+	return b
+}
+
+// Stop cancels the background reaper.
+func (b *RLDPHTTPBridge) Stop() {
+	b.cancel()
+}
+
+// MakeRLDPQueryHandler returns a handler for the overlay
+// RLDPWrapper rootQueryHandler slot (non-overlay RLDP queries).
+// connCtx is cancelled when the peer disconnects, preventing zombie handlers.
+// peerID is the connecting peer's ADNL ID, used to namespace payload keys
+// so that one peer cannot retrieve another peer's pending response payloads.
+func (b *RLDPHTTPBridge) MakeRLDPQueryHandler(connCtx context.Context, rl *overlay.RLDPWrapper, peerID []byte) func([]byte, *rldp.Query) error {
+	peerPrefix := hex.EncodeToString(peerID)
+	return func(transferID []byte, query *rldp.Query) (retErr error) {
+		defer recoverPanic(b.logger, &retErr)
+		switch req := query.Data.(type) {
+		case Request:
+			return b.handleHTTPRequest(connCtx, rl, query, transferID, req, peerPrefix)
+		case GetNextPayloadPart:
+			return b.handlePayloadPart(connCtx, rl, query, transferID, req, peerPrefix)
+		}
+		return nil
+	}
+}
+
+func (b *RLDPHTTPBridge) handleHTTPRequest(
+	connCtx context.Context, rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req Request, peerPrefix string,
+) error {
+	httpReq, err := buildHTTPRequest(req)
+	if err != nil {
+		return fmt.Errorf("build http request: %w", err)
+	}
+	httpReq.Header.Set("X-RLDP-Peer-ID", peerPrefix)
+	httpReq = httpReq.WithContext(connCtx)
+
+	w := newResponseWriter()
+	b.engine.ServeHTTP(w, httpReq)
+
+	resp := buildTLResponse(w)
+	resp.NoPayload = true // default to no payload; only flip after successful reservation
+	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
+
+	bodySize := int64(w.body.Len())
+	if bodySize > 0 && b.tryReservePayloadSlot(bodySize) {
+		b.payloads.Store(reqID, &pendingPayload{
+			data:      w.body.Bytes(),
+			size:      bodySize,
+			createdAt: time.Now(),
+		})
+		resp.NoPayload = false
+	}
+
+	deadline := clampDeadline(query.Timeout)
+	answerCtx, answerCancel := context.WithDeadline(connCtx, deadline)
+	defer answerCancel()
+	sendErr := rl.SendAnswer(
+		answerCtx,
+		query.MaxAnswerSize, query.Timeout,
+		query.ID, transferID, &resp,
+	)
+	if sendErr != nil && !resp.NoPayload {
+		b.deletePayload(reqID)
+	}
+	return sendErr
+}
+
+func (b *RLDPHTTPBridge) handlePayloadPart(
+	connCtx context.Context, rl *overlay.RLDPWrapper, query *rldp.Query, transferID []byte, req GetNextPayloadPart, peerPrefix string,
+) error {
+	deadline := clampDeadline(query.Timeout)
+	answerCtx, answerCancel := context.WithDeadline(connCtx, deadline)
+	defer answerCancel()
+
+	reqID := peerPrefix + ":" + hex.EncodeToString(req.ID)
+	payload, ok := b.payloads.Load(reqID)
+	if !ok || time.Since(payload.createdAt) > payloadTTL {
+		if ok {
+			b.deletePayload(reqID)
+		}
+		return rl.SendAnswer(
+			answerCtx,
+			query.MaxAnswerSize, query.Timeout,
+			query.ID, transferID,
+			&PayloadPart{IsLast: true},
+		)
+	}
+
+	chunk, isLast := extractChunk(payload.data, int(req.Seqno), int(req.MaxChunkSize))
+
+	err := rl.SendAnswer(
+		answerCtx,
+		query.MaxAnswerSize, query.Timeout,
+		query.ID, transferID,
+		&PayloadPart{Data: chunk, IsLast: isLast},
+	)
+	if isLast && err == nil {
+		b.deletePayload(reqID)
+	}
+	return err
+}
+
+// tryReservePayloadSlot increments the payload counter and byte tracker
+// under a single lock so both limits are enforced atomically.
+func (b *RLDPHTTPBridge) tryReservePayloadSlot(size int64) bool {
+	b.payloadMu.Lock()
+	defer b.payloadMu.Unlock()
+	if b.payloadCount >= maxPendingPayloads {
+		return false
+	}
+	if b.totalPayloadBytes+size > maxTotalPayloadBytes {
+		return false
+	}
+	b.payloadCount++
+	b.totalPayloadBytes += size
+	return true
+}
+
+// deletePayload removes a payload and decrements both counters under lock.
+func (b *RLDPHTTPBridge) deletePayload(reqID string) {
+	if p, loaded := b.payloads.LoadAndDelete(reqID); loaded {
+		b.payloadMu.Lock()
+		b.payloadCount--
+		b.totalPayloadBytes -= p.size
+		b.payloadMu.Unlock()
+	}
+}
+
+func (b *RLDPHTTPBridge) reapStalePayloads(ctx context.Context) {
+	ticker := time.NewTicker(reaperInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			now := time.Now()
+			b.payloads.Range(func(key string, p *pendingPayload) bool {
+				if now.Sub(p.createdAt) > payloadTTL {
+					b.deletePayload(key)
+				}
+				return true
+			})
+		}
+	}
+}
+
+const (
+	maxURLLength    = 16 * 1024 // 16 KB
+	maxMethodLength = 32
+	maxHeaderCount  = 100
+	maxHeaderSize   = 8192 // 8 KB per header name+value
+)
+
+func buildHTTPRequest(req Request) (*http.Request, error) {
+	if len(req.URL) > maxURLLength {
+		return nil, fmt.Errorf("URL too long: %d bytes", len(req.URL))
+	}
+	if len(req.Method) > maxMethodLength {
+		return nil, fmt.Errorf("method too long: %d bytes", len(req.Method))
+	}
+	if len(req.Headers) > maxHeaderCount {
+		return nil, fmt.Errorf("too many headers: %d", len(req.Headers))
+	}
+	// RLDP-HTTP operates over ADNL: only relative paths are valid.
+	// Reject absolute URLs to prevent SSRF via scheme://host targets.
+	if !strings.HasPrefix(req.URL, "/") {
+		return nil, fmt.Errorf("URL must be a relative path: %q", req.URL)
+	}
+	if strings.Contains(req.URL, "://") {
+		return nil, fmt.Errorf("URL must not contain a scheme: %q", req.URL)
+	}
+	httpReq, err := http.NewRequest(req.Method, req.URL, nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, h := range req.Headers {
+		if len(h.Name)+len(h.Value) > maxHeaderSize {
+			return nil, fmt.Errorf("header too large: %d bytes", len(h.Name)+len(h.Value))
+		}
+		httpReq.Header.Add(h.Name, h.Value)
+	}
+	return httpReq, nil
+}
+
+func buildTLResponse(w *responseWriter) Response {
+	headers := make([]Header, 0, len(w.headers))
+	for name, values := range w.headers {
+		for _, v := range values {
+			headers = append(headers, Header{Name: name, Value: v})
+		}
+	}
+	return Response{
+		Version:    "HTTP/1.1",
+		StatusCode: int32(w.code),
+		Reason:     http.StatusText(w.code),
+		Headers:    headers,
+		NoPayload:  w.body.Len() == 0,
+	}
+}
+
+// clampDeadline constrains an untrusted unix timestamp to [now-grace, now+max].
+func clampDeadline(unixTS uint32) time.Time {
+	deadline := time.Unix(int64(unixTS), 0)
+	now := time.Now()
+	earliest := now.Add(-rldpGracePeriod)
+	latest := now.Add(maxRLDPDeadline)
+	if deadline.Before(earliest) || deadline.After(latest) {
+		return latest
+	}
+	return deadline
+}
+
+func extractChunk(data []byte, seqno int, maxChunkSize int) ([]byte, bool) {
+	size := chunkSize
+	if maxChunkSize > 0 && maxChunkSize < size {
+		size = maxChunkSize
+	}
+	if size <= 0 || seqno < 0 || seqno > math.MaxInt/size {
+		return nil, true
+	}
+	offset := seqno * size
+	if offset >= len(data) {
+		return nil, true
+	}
+	end := offset + size
+	if end >= len(data) {
+		return data[offset:], true
+	}
+	return data[offset:end], false
+}

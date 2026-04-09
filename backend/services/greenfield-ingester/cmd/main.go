@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	greenfieldclient "github.com/AudiusProject/ion/packages/greenfield-client"
-	"github.com/AudiusProject/ion/services/greenfield-ingester/internal/config"
-	"github.com/AudiusProject/ion/services/greenfield-ingester/internal/ingester"
+	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/greenfield-ingester/internal/config"
+	"github.com/ice-blockchain/ion/services/greenfield-ingester/internal/ingester"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
@@ -75,7 +76,7 @@ func main() {
 		RpcURLs:    cfg.GreenfieldRpcURLs,
 		ChainID:    cfg.GreenfieldChainID,
 		PrivateKey: cfg.GreenfieldPrivKey,
-		Logger:     log,
+		Logger:     slog.New(slog.NewJSONHandler(os.Stderr, nil)),
 	})
 	if err != nil {
 		log.Fatal().Err(err).Msg("create greenfield client")

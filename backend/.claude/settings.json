@@ -29,5 +29,9 @@
       "Bash(git submodule*)",
       "Bash(ls*)"
     ]
+  },
+  "skipDangerousModePermissionPrompt": false,
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true
   }
 }

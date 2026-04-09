@@ -13,9 +13,11 @@ import (
 const (
 	msgTypeCreateObject        = "/greenfield.storage.MsgCreateObject"
 	msgTypeUpdateObjectContent = "/greenfield.storage.MsgUpdateObjectContent"
+	msgTypeSetTag              = "/greenfield.storage.MsgSetTag"
 
 	eventTypeCreateObject        = "greenfield.storage.EventCreateObject"
 	eventTypeUpdateObjectContent = "greenfield.storage.EventUpdateObjectContent"
+	eventTypeSetTag              = "greenfield.storage.EventSetTag"
 )
 
 func (c *client) catchUp(
@@ -133,6 +135,16 @@ func messageToABCIEvent(msg txMessage) (ABCIEvent, bool) {
 		attrs["checksums"] = joinChecksums(msg.ExpectChecksums)
 		attrs["version"] = msg.Version
 		return ABCIEvent{Type: eventTypeUpdateObjectContent, Attributes: attrs}, true
+
+	case msgTypeSetTag:
+		attrs["resource"] = msg.Resource
+		if msg.Tags != nil {
+			tagsJSON, err := json.Marshal(msg.Tags)
+			if err == nil {
+				attrs["tags"] = string(tagsJSON)
+			}
+		}
+		return ABCIEvent{Type: eventTypeSetTag, Attributes: attrs}, true
 
 	default:
 		return ABCIEvent{}, false
