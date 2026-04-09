@@ -162,19 +162,11 @@ jobs:
 
       - name: Setup Android SDK path
         run: |
-          echo "::group::Runner environment diagnostics"
-          echo "Runner: $(hostname)"
-          echo "User: $(whoami)"
-          echo "ANDROID_HOME=${ANDROID_HOME:-<not set>}"
-          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-<not set>}"
-          echo "JAVA_HOME=${JAVA_HOME:-<not set>}"
-          echo "::endgroup::"
           for candidate in "$ANDROID_HOME" "$ANDROID_SDK_ROOT" "$HOME/Library/Android/sdk" "/opt/homebrew/share/android-commandlinetools" "/usr/local/share/android-commandlinetools"; do
             if [[ -n "$candidate" && -d "$candidate" ]]; then
               echo "ANDROID_HOME=$candidate" >> "$GITHUB_ENV"
               echo "sdk.dir=$candidate" > apps/mobile/android/local.properties
-              echo "Found Android SDK at: $candidate"
-              ls "$candidate" || true
+              echo "Using Android SDK at: $candidate"
               exit 0
             fi
           done
@@ -398,12 +390,8 @@ jobs:
           fi
 
           if [[ -z "${MATCH_GIT_URL:-}" ]]; then
-            if grep -q "^[[:space:]]*git_url(" fastlane/Matchfile; then
-              unset MATCH_GIT_URL
-            else
-              echo "::error::MATCH_GIT_URL is missing. Set MOBILE_MATCH_GIT_URL (or MATCH_GIT_URL) secret, or configure git_url(...) in fastlane/Matchfile."
-              exit 1
-            fi
+            echo "::error::MATCH_GIT_URL is missing. Set MOBILE_MATCH_GIT_URL (or MATCH_GIT_URL) secret."
+            exit 1
           fi
 
           if [[ -n "${ICE_CI_CD_BOT_GH_PAT:-}" ]]; then
