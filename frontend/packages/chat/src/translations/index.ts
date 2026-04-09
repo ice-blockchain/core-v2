@@ -22,6 +22,9 @@ const chatEN = {
   deleteChatTitle: "Delete chat?",
   deleteChatMessage: "Are you sure you want to delete all selected chats?",
   cancelButton: "Cancel",
+  addToArchiveAction: "Add to archive",
+  muteAction: "Mute",
+  blockAction: "Block",
 };
 
 const chatFR = {
@@ -44,6 +47,9 @@ const chatFR = {
   deleteChatTitle: "Supprimer la discussion ?",
   deleteChatMessage: "Voulez-vous vraiment supprimer toutes les discussions sélectionnées ?",
   cancelButton: "Annuler",
+  addToArchiveAction: "Ajouter aux archives",
+  muteAction: "Muet",
+  blockAction: "Bloquer",
 };
 
 const chatDE = {
@@ -66,6 +72,9 @@ const chatDE = {
   deleteChatTitle: "Chat löschen?",
   deleteChatMessage: "Möchtest du wirklich alle ausgewählten Chats löschen?",
   cancelButton: "Abbrechen",
+  addToArchiveAction: "Zum Archiv hinzufugen",
+  muteAction: "Stummschalten",
+  blockAction: "Blockieren",
 };
 
 export const chatTranslations: readonly TranslationResource[] = [

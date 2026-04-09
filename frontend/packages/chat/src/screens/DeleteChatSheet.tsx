@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { Modal, View } from "react-native";
 import { FullscreenBottomSheet, useTheme } from "@ion/ui";
 import { DeleteChatSheetContent } from "./delete-chat-sheet-content";
 
@@ -12,10 +12,12 @@ export function DeleteChatSheet({ isVisible, onClose, onDelete }: DeleteChatShee
   const theme = useTheme();
 
   return (
-    <FullscreenBottomSheet isVisible={isVisible} onClose={onClose} enableDynamicSizing>
-      <View style={{ backgroundColor: theme.colors.secondaryBackground }}>
-        <DeleteChatSheetContent onCancel={onClose} onDelete={onDelete} />
-      </View>
-    </FullscreenBottomSheet>
+    <Modal visible={isVisible} transparent animationType="none">
+      <FullscreenBottomSheet isVisible={isVisible} onClose={onClose} enableDynamicSizing>
+        <View style={{ backgroundColor: theme.colors.secondaryBackground }}>
+          <DeleteChatSheetContent onCancel={onClose} onDelete={onDelete} />
+        </View>
+      </FullscreenBottomSheet>
+    </Modal>
   );
 }
