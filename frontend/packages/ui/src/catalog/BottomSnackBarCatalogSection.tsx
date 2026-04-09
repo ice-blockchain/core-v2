@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "../theme/ThemeProvider";
 import { View } from "react-native";
 import { Button } from "../components/Button";
 import { BottomSnackBar } from "../components/BottomSnackBar";
@@ -6,6 +7,7 @@ import { CatalogSection } from "./CatalogSection";
 
 export function BottomSnackBarCatalogSection() {
   const [isVisible, setIsVisible] = useState(false);
+  const theme = useTheme();
 
   return (
     <CatalogSection title="Bottom Snack Bar">
@@ -15,7 +17,7 @@ export function BottomSnackBarCatalogSection() {
         label="Show Snack Bar"
         onPress={() => setIsVisible(true)}
       />
-      <View style={{ marginTop: 16 }}>
+      <View style={{ marginTop: theme.spacing.lg }}>
         <BottomSnackBar
           message="Buy crypto easily. Coming soon."
           isVisible={isVisible}
