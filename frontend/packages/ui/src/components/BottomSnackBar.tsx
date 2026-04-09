@@ -134,8 +134,8 @@ export function BottomSnackBar(props: BottomSnackBarProps) {
 
   const animatedStyle = {
     opacity: progress,
-    transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
-  };
+transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [scaleSize(20), 0] }) }],  
+};
 
   return (
     <Animated.View style={animatedStyle}>
