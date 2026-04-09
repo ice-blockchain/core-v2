@@ -20,6 +20,7 @@ import {
 import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen, IdentityKeyNameNoteScreen } from '@ion/auth-ui';
 import { splashTranslations } from '@ion/splash-ui';
 import { chatTranslations } from '@ion/chat';
+import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
 import { feedTranslations } from '@ion/feed-ui';
 import { walletUiTranslations } from '@ion/wallet-ui';
@@ -35,6 +36,7 @@ registerTranslations(i18n, onboardingTranslations);
 registerTranslations(i18n, authTranslations);
 registerTranslations(i18n, splashTranslations);
 registerTranslations(i18n, chatTranslations);
+registerTranslations(i18n, userSearchTranslations);
 registerTranslations(i18n, mainShellTranslations);
 registerTranslations(i18n, feedTranslations);
 registerTranslations(i18n, walletUiTranslations);

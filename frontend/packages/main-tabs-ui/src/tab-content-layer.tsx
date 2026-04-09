@@ -19,8 +19,10 @@ export function TabContentLayer({ screens, activeTab }: TabContentLayerProps) {
     <View style={FILL}>
       {TAB_KEYS.map((key, index) => {
         const Screen = screens[key];
+        const isActive = index === activeTab;
+        if (!isActive) return null;
         return (
-          <View key={key} style={styles[index]}>
+          <View key={key} style={styles[index]} pointerEvents="auto">
             <Screen />
           </View>
         );

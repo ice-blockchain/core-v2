@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { Keyboard, Pressable, TextInput as RNTextInput, View } from "react-native";
 import { IONLoader, Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
@@ -64,12 +64,15 @@ function ClearButton({ onPress, scale }: { onPress: () => void; scale: (n: numbe
 
 function SearchInput({ value, onChangeText, styles, onFocus, onBlur, isLoading, testID }: SearchInputProps) {
   const { theme, scale } = styles;
+  const inputRef = useRef<RNTextInput>(null);
   const hasText = value.length > 0;
+  const handleClear = useCallback(() => { onChangeText(""); inputRef.current?.focus(); }, [onChangeText]);
   return (
     <View style={styles.field}>
       <View style={styles.inputSection}>
         <Icon name="field-search" size={scale(16)} color={theme.colors.tertiaryText} />
         <RNTextInput
+          ref={inputRef}
           value={value}
           onChangeText={onChangeText}
           placeholder={translate("userSearch:searchPlaceholder")}
@@ -84,7 +87,7 @@ function SearchInput({ value, onChangeText, styles, onFocus, onBlur, isLoading, 
       </View>
       {isLoading
         ? <IONLoader variant="light" size={scale(20)} />
-        : hasText && <ClearButton onPress={() => onChangeText("")} scale={scale} />
+        : hasText && <ClearButton onPress={handleClear} scale={scale} />
       }
     </View>
   );

@@ -6,15 +6,14 @@ import { translate } from "@ion/localization";
 import { buildHeaderStyle } from "./empty-conversations-styles";
 import { useEditScreenStyles } from "./use-edit-screen-styles";
 import { ConversationRow } from "../components/conversation-row";
-import { MOCK_CONVERSATIONS } from "../components/mock-conversations";
 import { ChatReadAllIcon } from "../icons/ChatReadAllIcon";
-import { ChatArchiveIcon } from "../icons/ChatArchiveIcon";
+import { ChatUnarchiveIcon } from "../icons/ChatUnarchiveIcon";
 import { TrashIcon } from "../icons/TrashIcon";
 import { DeleteChatSheet } from "./DeleteChatSheet";
 import { useEditState } from "../use-edit-state";
 import type { Conversation } from "../types";
 
-function ScreenHeader({ onDone }: { readonly onDone: () => void }) {
+function ArchiveEditHeader({ onDone }: { readonly onDone: () => void }) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const headerStyle = useMemo(() => buildHeaderStyle(scale), [scale]);
@@ -23,33 +22,33 @@ function ScreenHeader({ onDone }: { readonly onDone: () => void }) {
       <Pressable onPress={onDone} testID="done-button">
         <Text variant="subtitle2" color={theme.colors.primaryAccent}>{translate("chat:doneButton")}</Text>
       </Pressable>
-      <Text variant="subtitle2">{translate("chat:chatsTitle")}</Text>
+      <Text variant="subtitle2">{translate("chat:archiveTitle")}</Text>
       <View style={{ width: 40 }} />
     </View>
   );
 }
 
-function useEditActions(handlers: { readonly onRead?: () => void; readonly onArchive: () => void; readonly onDelete: () => void; readonly useAll: boolean }): readonly ListEditAction[] {
+function useArchiveActions(handlers: { readonly onRead?: () => void; readonly onUnarchive: () => void; readonly onDelete: () => void; readonly useAll: boolean }): readonly ListEditAction[] {
   const theme = useTheme();
   const iconSize = theme.scale.scaleSize(20);
   const readLabel = handlers.useAll ? translate("chat:readAllActionAll") : translate("chat:readAllAction");
-  const archiveLabel = handlers.useAll ? translate("chat:archiveActionAll") : translate("chat:archiveAction");
+  const unarchiveLabel = handlers.useAll ? translate("chat:unarchiveActionAll") : translate("chat:unarchiveAction");
   const deleteLabel = handlers.useAll ? translate("chat:deleteActionAll") : translate("chat:deleteAction");
   return useMemo(() => [
     { icon: (color: string) => <ChatReadAllIcon size={iconSize} color={color} />, label: readLabel, onPress: handlers.onRead ?? (() => {}) },
-    { icon: (color: string) => <ChatArchiveIcon size={iconSize} color={color} />, label: archiveLabel, onPress: handlers.onArchive },
+    { icon: (color: string) => <ChatUnarchiveIcon size={iconSize} color={color} />, label: unarchiveLabel, onPress: handlers.onUnarchive },
     { icon: (color: string) => <TrashIcon size={iconSize} color={color} />, label: deleteLabel, onPress: handlers.onDelete, color: theme.colors.attentionRed },
-  ], [theme.colors.attentionRed, iconSize, readLabel, archiveLabel, deleteLabel, handlers.onRead, handlers.onArchive, handlers.onDelete]);
+  ], [theme.colors.attentionRed, iconSize, readLabel, unarchiveLabel, deleteLabel, handlers.onRead, handlers.onUnarchive, handlers.onDelete]);
 }
 
-type EditableListProps = {
+type ArchiveListProps = {
   readonly data: readonly Conversation[];
   readonly selectedIds: ReadonlySet<string>;
   readonly onToggle: (id: string) => void;
   readonly contentStyle: object;
 };
 
-function EditableConversationsList({ data, selectedIds, onToggle, contentStyle }: EditableListProps) {
+function ArchiveSelectableList({ data, selectedIds, onToggle, contentStyle }: ArchiveListProps) {
   return (
     <FlatList
       data={data}
@@ -57,48 +56,43 @@ function EditableConversationsList({ data, selectedIds, onToggle, contentStyle }
       contentContainerStyle={contentStyle}
       ListHeaderComponent={HorizontalSeparator}
       ItemSeparatorComponent={HorizontalSeparator}
-      renderItem={({ item }) =>
-        item.isFolder ? (
+      renderItem={({ item }) => (
+        <SelectableListItem isSelected={selectedIds.has(item.id)} onToggle={() => onToggle(item.id)}>
           <ConversationRow conversation={item} />
-        ) : (
-          <SelectableListItem isSelected={selectedIds.has(item.id)} onToggle={() => onToggle(item.id)}>
-            <ConversationRow conversation={item} />
-          </SelectableListItem>
-        )
-      }
+        </SelectableListItem>
+      )}
     />
   );
 }
 
-interface ConversationsEditScreenProps {
-  readonly conversations?: readonly Conversation[];
-  readonly onDone?: () => void;
+interface ArchiveEditScreenProps {
+  readonly conversations: readonly Conversation[];
+  readonly onDone: () => void;
   readonly onRead?: (ids: ReadonlySet<string>) => void;
-  readonly onArchive?: (ids: ReadonlySet<string>) => void;
+  readonly onUnarchive?: (ids: ReadonlySet<string>) => void;
   readonly onDelete?: (ids: ReadonlySet<string>) => void;
 }
 
-export function ConversationsEditScreen({ conversations, onDone, onRead, onArchive, onDelete }: ConversationsEditScreenProps) {
+export function ArchiveEditScreen({ conversations, onDone, onRead, onUnarchive, onDelete }: ArchiveEditScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const data = conversations ?? MOCK_CONVERSATIONS;
   const { selectedIds, toggleItem, deleteSheet } = useEditState();
   const styles = useEditScreenStyles();
-  const allIds = useMemo(() => new Set(data.filter((c) => !c.isFolder).map((c) => c.id)), [data]);
+  const allIds = useMemo(() => new Set(conversations.map((c) => c.id)), [conversations]);
   const targetIds = selectedIds.size === 0 ? allIds : selectedIds;
   const useAll = selectedIds.size === 0;
   const handleRead = useCallback(() => { onRead?.(targetIds); }, [onRead, targetIds]);
-  const handleArchive = useCallback(() => { onArchive?.(targetIds); onDone?.(); }, [onArchive, targetIds, onDone]);
-  const handleDeleteConfirm = useCallback(() => { onDelete?.(targetIds); deleteSheet.confirm(); onDone?.(); }, [onDelete, targetIds, deleteSheet, onDone]);
-  const actions = useEditActions({ onRead: handleRead, onArchive: handleArchive, onDelete: deleteSheet.show, useAll });
+  const handleUnarchive = useCallback(() => { onUnarchive?.(targetIds); onDone(); }, [onUnarchive, targetIds, onDone]);
+  const handleDeleteConfirm = useCallback(() => { onDelete?.(targetIds); deleteSheet.confirm(); onDone(); }, [onDelete, targetIds, deleteSheet, onDone]);
+  const actions = useArchiveActions({ onRead: handleRead, onUnarchive: handleUnarchive, onDelete: deleteSheet.show, useAll });
 
   return (
     <>
       <View style={styles.screen}>
-        <ScreenHeader onDone={onDone ?? (() => {})} />
+        <ArchiveEditHeader onDone={onDone} />
         <View style={styles.searchContainer}>
-          <SearchBar value={searchQuery} onChangeText={setSearchQuery} testID="edit-search" />
+          <SearchBar value={searchQuery} onChangeText={setSearchQuery} testID="archive-edit-search" />
         </View>
-        <EditableConversationsList data={data} selectedIds={selectedIds} onToggle={toggleItem} contentStyle={styles.content} />
+        <ArchiveSelectableList data={conversations} selectedIds={selectedIds} onToggle={toggleItem} contentStyle={styles.content} />
         <ListEditActionsBar actions={actions} style={styles.bottomPadding} />
       </View>
       <DeleteChatSheet isVisible={deleteSheet.isVisible} onClose={deleteSheet.close} onDelete={handleDeleteConfirm} />

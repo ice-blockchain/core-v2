@@ -8,4 +8,6 @@ const resolveAsset = (asset: number): ImageSourcePropType => ({
 
 export const emptySearchImage: ImageSourcePropType = resolveAsset(require("../assets/empty-search.png") as number);
 export const searchHintImage: ImageSourcePropType = resolveAsset(require("../assets/search-hint.png") as number);
+export const emptySearchDarkImage: ImageSourcePropType = resolveAsset(require("../assets/empty-search-dark.png") as number);
+export const searchHintDarkImage: ImageSourcePropType = resolveAsset(require("../assets/search-hint-dark.png") as number);
 /* eslint-enable @typescript-eslint/no-var-requires */

@@ -4,4 +4,5 @@ export type Conversation = {
   readonly preview: string;
   readonly time: string;
   readonly unreadCount?: number;
+  readonly isFolder?: boolean;
 };

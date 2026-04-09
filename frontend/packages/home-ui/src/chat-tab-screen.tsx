@@ -1,39 +1,37 @@
 import { useCallback, useEffect, useState } from "react";
-import { ConversationsListScreen, ConversationsEditScreen, NewChatSheet } from "@ion/chat";
+import {
+  ConversationsListScreen, ConversationsEditScreen, NewChatSheet,
+  ArchiveListScreen, ArchiveEditScreen, useChatState, useChatNavigation,
+} from "@ion/chat";
+import type { Conversation } from "@ion/chat";
 import { useBottomNav } from "@ion/main-tabs-ui";
 
-type ChatView = "list" | "edit";
-
 export function ChatTabScreen() {
-  const [activeView, setActiveView] = useState<ChatView>("list");
+  const { setBottomNavHidden, setChatBadgeCount } = useBottomNav();
+  const chat = useChatState();
+  const nav = useChatNavigation(setBottomNavHidden);
   const [isNewChatVisible, setIsNewChatVisible] = useState(false);
-  const { setBottomNavHidden } = useBottomNav();
 
-  useEffect(() => {
-    return () => setBottomNavHidden(false);
-  }, [setBottomNavHidden]);
+  useEffect(() => setChatBadgeCount(chat.totalUnreadCount), [chat.totalUnreadCount, setChatBadgeCount]);
+  useEffect(() => () => setBottomNavHidden(false), [setBottomNavHidden]);
 
-  const handleEdit = useCallback(() => {
-    setBottomNavHidden(true);
-    setActiveView("edit");
-  }, [setBottomNavHidden]);
+  const handleConversationPress = useCallback((c: Conversation) => {
+    if (c.isFolder) nav.showArchive();
+  }, [nav]);
 
-  const handleDone = useCallback(() => {
-    setBottomNavHidden(false);
-    setActiveView("list");
-  }, [setBottomNavHidden]);
-
-  const handleCompose = useCallback(() => setIsNewChatVisible(true), []);
-  const handleCloseSheet = useCallback(() => setIsNewChatVisible(false), []);
-
-  if (activeView === "edit") {
-    return <ConversationsEditScreen onDone={handleDone} />;
+  if (nav.activeView === "edit") {
+    return <ConversationsEditScreen conversations={chat.displayConversations} onDone={nav.showList} onArchive={chat.archiveConversations} onDelete={chat.deleteConversations} />;
   }
-
+  if (nav.activeView === "archive-list") {
+    return <ArchiveListScreen conversations={chat.archivedConversations} onBack={nav.showList} onEdit={nav.showArchiveEdit} />;
+  }
+  if (nav.activeView === "archive-edit") {
+    return <ArchiveEditScreen conversations={chat.archivedConversations} onDone={nav.showArchiveList} onUnarchive={chat.unarchiveConversations} onDelete={chat.deleteArchivedConversations} />;
+  }
   return (
     <>
-      <ConversationsListScreen onEdit={handleEdit} onCompose={handleCompose} />
-      <NewChatSheet isVisible={isNewChatVisible} onClose={handleCloseSheet} />
+      <ConversationsListScreen conversations={chat.conversations} archiveFolder={chat.archiveFolder} onEdit={nav.showEdit} onCompose={() => setIsNewChatVisible(true)} onConversationPress={handleConversationPress} />
+      <NewChatSheet isVisible={isNewChatVisible} onClose={() => setIsNewChatVisible(false)} />
     </>
   );
 }
