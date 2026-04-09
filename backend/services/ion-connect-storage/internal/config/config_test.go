@@ -218,7 +218,7 @@ func TestLoad_FileSchemeGlobalConfig_DotOnly_Error(t *testing.T) {
 	setRequiredEnv(t)
 	t.Setenv("GLOBAL_CONFIG_URL", "file:///.")
 	_, err := Load()
-	require.ErrorContains(t, err, "must point to a file")
+	require.ErrorContains(t, err, "outside working directory")
 }
 
 func TestSecretFromEnvOrFile_UnreadableFile_Error(t *testing.T) {

@@ -117,6 +117,7 @@ func startTestServer(t *testing.T, ctx context.Context) *ionadnl.Server {
 		}
 		return server.Start(ctx)
 	})
+	server.MarkReady()
 
 	t.Cleanup(func() {
 		_ = server.Stop(context.Background())

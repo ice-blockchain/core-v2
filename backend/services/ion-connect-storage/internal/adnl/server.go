@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/address"
 	"github.com/xssnick/tonutils-go/adnl/dht"
@@ -22,7 +23,14 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-const defaultMaxConnections = 10_000
+const (
+	defaultMaxConnections = 10_000
+
+	dhtSelfTTL            = 1 * time.Hour
+	dhtSelfRefreshEvery   = 45 * time.Minute
+	dhtSelfInitialBackoff = 5 * time.Second
+	dhtSelfMaxBackoff     = 5 * time.Minute
+)
 
 type ServerConfig struct {
 	AdnlPrivateKey  string
@@ -57,6 +65,8 @@ type Server struct {
 	httpBridge        *RLDPHTTPBridge
 	cluster           atomic.Pointer[clusterConfig]
 	privateKey        ed25519.PrivateKey
+	selfRegCancel     context.CancelFunc
+	selfRegDone       chan struct{}
 	port              int
 	externalIP        net.IP
 	externalPort      int
@@ -133,9 +143,10 @@ func (s *Server) Start(ctx context.Context) error {
 		"external_addr", formatAddresses(addrList),
 	)
 
-	if err := s.registerSelfInDHT(ctx); err != nil {
-		s.logger.Warn("initial DHT self-registration failed", "error", err)
-	}
+	s.selfRegDone = make(chan struct{})
+	regCtx, regCancel := context.WithCancel(ctx)
+	s.selfRegCancel = regCancel
+	go s.runSelfRegistration(regCtx)
 
 	s.registrar.Start(ctx)
 	s.running.Store(true)
@@ -145,12 +156,48 @@ func (s *Server) Start(ctx context.Context) error {
 	return nil
 }
 
+func (s *Server) runSelfRegistration(ctx context.Context) {
+	defer close(s.selfRegDone)
+
+	s.registerWithBackoff(ctx)
+
+	ticker := time.NewTicker(dhtSelfRefreshEvery)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.registerWithBackoff(ctx)
+		}
+	}
+}
+
+func (s *Server) registerWithBackoff(ctx context.Context) {
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = dhtSelfInitialBackoff
+	b.MaxInterval = dhtSelfMaxBackoff
+	b.MaxElapsedTime = 0 // retry indefinitely until ctx is cancelled
+
+	err := backoff.Retry(func() error {
+		err := s.registerSelfInDHT(ctx)
+		if err != nil {
+			s.logger.Warn("DHT self-registration failed, retrying", "error", err)
+		}
+		return err
+	}, backoff.WithContext(b, ctx))
+	if err != nil && ctx.Err() != nil {
+		s.logger.Info("DHT self-registration stopped", "reason", ctx.Err())
+	}
+}
+
 func (s *Server) registerSelfInDHT(ctx context.Context) error {
 	addrList := s.gateway.GetAddressList()
 	storeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	replicas, _, err := s.dhtClient.StoreAddress(storeCtx, addrList, 1*time.Hour, s.privateKey, 5)
+	replicas, _, err := s.dhtClient.StoreAddress(storeCtx, addrList, dhtSelfTTL, s.privateKey, 5)
 	if err != nil {
 		return err
 	}
@@ -160,6 +207,13 @@ func (s *Server) registerSelfInDHT(ctx context.Context) error {
 
 func (s *Server) Stop(_ context.Context) error {
 	s.running.Store(false)
+
+	if s.selfRegCancel != nil {
+		s.selfRegCancel()
+		<-s.selfRegDone
+		s.logger.Info("DHT self-registration stopped")
+	}
+
 	s.logger.Info("stopping DHT registrar")
 	s.registrar.Stop()
 
