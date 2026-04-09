@@ -26,6 +26,13 @@ const chatEN = {
   addToArchiveAction: "Add to archive",
   muteAction: "Mute",
   blockAction: "Block",
+  encryptedMessage: "Messages and voices are end-to-end encrypted.",
+  learnMore: "Learn more",
+  writeMessagePlaceholder: "Write a message...",
+  today: "Today",
+  informationTitle: "Information",
+  privacyTitle: "Privacy First, Always",
+  privacyDescription: "Your chats are private and encrypted by default. We prioritize your privacy, and your conversations are protected with end-to-end encryption.",
 };
 
 const chatFR = {
@@ -52,6 +59,13 @@ const chatFR = {
   addToArchiveAction: "Ajouter aux archives",
   muteAction: "Muet",
   blockAction: "Bloquer",
+  encryptedMessage: "Les messages et les voix sont chiffres de bout en bout.",
+  learnMore: "En savoir plus",
+  writeMessagePlaceholder: "Ecrire un message...",
+  today: "Aujourd'hui",
+  informationTitle: "Information",
+  privacyTitle: "La confidentialite avant tout",
+  privacyDescription: "Vos discussions sont privees et chiffrees par defaut. Nous accordons la priorite a votre vie privee, et vos conversations sont protegees par un chiffrement de bout en bout.",
 };
 
 const chatDE = {
@@ -78,6 +92,13 @@ const chatDE = {
   addToArchiveAction: "Zum Archiv hinzufugen",
   muteAction: "Stummschalten",
   blockAction: "Blockieren",
+  encryptedMessage: "Nachrichten und Sprachnachrichten sind Ende-zu-Ende-verschlusselt.",
+  learnMore: "Mehr erfahren",
+  writeMessagePlaceholder: "Nachricht schreiben...",
+  today: "Heute",
+  informationTitle: "Information",
+  privacyTitle: "Datenschutz an erster Stelle",
+  privacyDescription: "Ihre Chats sind standardmassig privat und verschlusselt. Wir legen Wert auf Ihre Privatsphare, und Ihre Unterhaltungen sind durch Ende-zu-Ende-Verschlusselung geschutzt.",
 };
 
 export const chatTranslations: readonly TranslationResource[] = [
