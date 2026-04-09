@@ -406,17 +406,23 @@ jobs:
             fi
           fi
 
-          if [[ -n "${ICE_CI_CD_BOT_GH_PAT:-}" ]]; then
-            # GitHub Actions runners don't have SSH keys for git@github.com URLs.
-            # When PAT auth is available, force HTTPS so match can clone via header auth.
+          # GitHub Actions runners don't have SSH keys for git@github.com URLs.
+          # If HTTPS auth is available, normalize GitHub SSH URLs to HTTPS.
+          if [[ -n "${MATCH_GIT_BASIC_AUTHORIZATION:-}" || -n "${ICE_CI_CD_BOT_GH_PAT:-}" ]]; then
             if [[ "${MATCH_GIT_URL:-}" =~ ^git@github\.com:(.+)$ ]]; then
               export MATCH_GIT_URL="https://github.com/${BASH_REMATCH[1]}"
             elif [[ "${MATCH_GIT_URL:-}" =~ ^ssh://git@github\.com/(.+)$ ]]; then
               export MATCH_GIT_URL="https://github.com/${BASH_REMATCH[1]}"
             fi
+          fi
 
+          # Prefer explicit MATCH_GIT_BASIC_AUTHORIZATION from .env.secrets.
+          # Fall back to ICE_CI_CD_BOT_GH_PAT only when explicit auth is absent.
+          if [[ -n "${MATCH_GIT_BASIC_AUTHORIZATION:-}" ]]; then
+            export MATCH_GIT_BASIC_AUTHORIZATION
+          elif [[ -n "${ICE_CI_CD_BOT_GH_PAT:-}" ]]; then
             AUTH_USER="${ICE_CI_CD_BOT_GH_USERNAME:-x-access-token}"
-            MATCH_GIT_BASIC_AUTHORIZATION="$(printf '%s' "${AUTH_USER}:${ICE_CI_CD_BOT_GH_PAT}" | base64)"
+            MATCH_GIT_BASIC_AUTHORIZATION="$(printf '%s' "${AUTH_USER}:${ICE_CI_CD_BOT_GH_PAT}" | base64 | tr -d '\n')"
             export MATCH_GIT_BASIC_AUTHORIZATION
           else
             unset MATCH_GIT_BASIC_AUTHORIZATION
