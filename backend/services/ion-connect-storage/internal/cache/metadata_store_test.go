@@ -37,6 +37,7 @@ func buildTestBoC(t *testing.T) ([]byte, boc.BagID) {
 }
 
 func TestMetadataStorePutAndGet(t *testing.T) {
+	t.Parallel()
 	db := openTestDB(t)
 	store := NewMetadataStore(db, nil, nil, testLogger())
 
@@ -51,6 +52,7 @@ func TestMetadataStorePutAndGet(t *testing.T) {
 }
 
 func TestMetadataStoreGetNotFoundInIndexReturnsError(t *testing.T) {
+	t.Parallel()
 	db := openTestDB(t)
 	persister := index.NewPersister(db)
 	fetcher := greenfield.NewFetcher(&noopGreenfieldClient{}, testLogger())
@@ -64,6 +66,7 @@ func TestMetadataStoreGetNotFoundInIndexReturnsError(t *testing.T) {
 }
 
 func TestMetadataStoreGetFetchesOnCacheMiss(t *testing.T) {
+	t.Parallel()
 	db := openTestDB(t)
 	rawBoC, bagID := buildTestBoC(t)
 	persister := index.NewPersister(db)

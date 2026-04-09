@@ -47,13 +47,19 @@ func TestBlockKeyUsesHexEncoding(t *testing.T) {
 }
 
 func TestValidateNodeID(t *testing.T) {
-	require.NoError(t, ValidateNodeID("node-alpha"))
-	require.NoError(t, ValidateNodeID("Node_123"))
+	// Valid: 64 hex characters (hex-encoded ed25519 public key)
+	require.NoError(t, ValidateNodeID("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"))
+	require.NoError(t, ValidateNodeID("0000000000000000000000000000000000000000000000000000000000000000"))
+	// Invalid: empty
 	require.Error(t, ValidateNodeID(""))
+	// Invalid: wrong length
+	require.Error(t, ValidateNodeID("node-alpha"))
+	require.Error(t, ValidateNodeID("abcdef"))
+	// Invalid: right length but not hex
+	require.Error(t, ValidateNodeID("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"))
+	// Invalid: injection attempts
 	require.Error(t, ValidateNodeID("node/injected"))
 	require.Error(t, ValidateNodeID("../own/target"))
-	require.Error(t, ValidateNodeID("node\x00id"))
-	require.Error(t, ValidateNodeID("node id"))
 }
 
 func TestSignedOwnershipRejectsForgedClaim(t *testing.T) {

@@ -101,6 +101,12 @@ func (c *SegmentCache) SegmentWriter(bagID boc.BagID, segmentIndex int) (io.Writ
 	if segmentIndex < 0 || int64(segmentIndex) > maxSegmentIndex {
 		return nil, fmt.Errorf("segment index %d out of safe range", segmentIndex)
 	}
+	if bag.layout.TotalSize > 0 {
+		maxBagSegment := int((bag.layout.TotalSize - 1) / uint64(boc.SegmentSize))
+		if segmentIndex > maxBagSegment {
+			return nil, fmt.Errorf("segment index %d exceeds bag segment count (max %d)", segmentIndex, maxBagSegment)
+		}
+	}
 	startOffset := int64(segmentIndex) * int64(boc.SegmentSize)
 	return newSegmentDistributor(bag.dirPath, bag.layout, startOffset), nil
 }

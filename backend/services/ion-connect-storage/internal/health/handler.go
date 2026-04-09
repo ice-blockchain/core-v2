@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"golang.org/x/sync/singleflight"
 )
 
 // ClusterChecker reports cluster health.
@@ -79,16 +80,18 @@ func makeHealthHandler(deps Deps) gin.HandlerFunc {
 	}
 }
 
+var dbProbeGroup singleflight.Group
+
 // probePebbleDBWithTimeout runs the PebbleDB probe with a timeout to prevent
 // a hung disk I/O from blocking the health endpoint indefinitely.
+// Uses singleflight to prevent goroutine pile-up from concurrent health checks.
 func probePebbleDBWithTimeout(db *pebble.DB, timeout time.Duration) error {
-	done := make(chan error, 1)
-	go func() {
-		done <- probePebbleDB(db)
-	}()
+	ch := dbProbeGroup.DoChan("probe", func() (any, error) {
+		return nil, probePebbleDB(db)
+	})
 	select {
-	case err := <-done:
-		return err
+	case res := <-ch:
+		return res.Err
 	case <-time.After(timeout):
 		return fmt.Errorf("pebbledb probe timed out after %v", timeout)
 	}

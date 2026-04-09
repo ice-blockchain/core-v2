@@ -112,11 +112,15 @@ func (b *RLDPHTTPBridge) handleHTTPRequest(
 	deadline := clampDeadline(query.Timeout)
 	answerCtx, answerCancel := context.WithDeadline(connCtx, deadline)
 	defer answerCancel()
-	return rl.SendAnswer(
+	sendErr := rl.SendAnswer(
 		answerCtx,
 		query.MaxAnswerSize, query.Timeout,
 		query.ID, transferID, &resp,
 	)
+	if sendErr != nil && !resp.NoPayload {
+		b.deletePayload(reqID)
+	}
+	return sendErr
 }
 
 func (b *RLDPHTTPBridge) handlePayloadPart(
@@ -140,7 +144,7 @@ func (b *RLDPHTTPBridge) handlePayloadPart(
 		)
 	}
 
-	chunk, isLast := extractChunk(payload.data, int(req.Seqno))
+	chunk, isLast := extractChunk(payload.data, int(req.Seqno), int(req.MaxChunkSize))
 
 	err := rl.SendAnswer(
 		answerCtx,
@@ -265,15 +269,19 @@ func clampDeadline(unixTS uint32) time.Time {
 	return deadline
 }
 
-func extractChunk(data []byte, seqno int) ([]byte, bool) {
-	if seqno < 0 || seqno > math.MaxInt/chunkSize {
+func extractChunk(data []byte, seqno int, maxChunkSize int) ([]byte, bool) {
+	size := chunkSize
+	if maxChunkSize > 0 && maxChunkSize < size {
+		size = maxChunkSize
+	}
+	if size <= 0 || seqno < 0 || seqno > math.MaxInt/size {
 		return nil, true
 	}
-	offset := seqno * chunkSize
+	offset := seqno * size
 	if offset >= len(data) {
 		return nil, true
 	}
-	end := offset + chunkSize
+	end := offset + size
 	if end >= len(data) {
 		return data[offset:], true
 	}

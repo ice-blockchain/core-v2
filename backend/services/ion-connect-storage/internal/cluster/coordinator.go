@@ -122,6 +122,9 @@ func NewCoordinator(cfg CoordinatorConfig) (*Coordinator, error) {
 	if err := ValidateNodeID(cfg.NodeID); err != nil {
 		return nil, fmt.Errorf("invalid node ID: %w", err)
 	}
+	if len(cfg.PrivateKey) != ed25519.PrivateKeySize {
+		return nil, fmt.Errorf("invalid private key: expected %d bytes, got %d", ed25519.PrivateKeySize, len(cfg.PrivateKey))
+	}
 	cfg.applyDefaults()
 
 	pebbleDS := NewPebbleDatastore(cfg.DB, "crdt/")

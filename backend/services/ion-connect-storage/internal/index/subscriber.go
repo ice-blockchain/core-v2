@@ -82,17 +82,16 @@ func (s *Subscriber) Run(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return fmt.Errorf("greenfield subscription closed unexpectedly")
 }
 
 // ProcessEvent correlates EventCreateObject/EventUpdateObjectContent with
 // EventSetTag to build (bagID -> BagLocation) entries.
 func (s *Subscriber) ProcessEvent(ctx context.Context, txEvent *greenfieldclient.TxEvent) error {
 	entries := s.collectEntries(ctx, txEvent)
-	if len(entries) == 0 {
-		return nil
-	}
-
 	return s.persister.PersistBagsAndHeight(entries, txEvent.Height)
 }
 

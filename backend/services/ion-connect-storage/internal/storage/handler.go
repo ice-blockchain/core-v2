@@ -190,6 +190,7 @@ func (h *Handler) verifyForwardedPiece(ctx context.Context, bagID boc.BagID, pie
 func (h *Handler) handleAddUpdateFromTL(ctx context.Context, bagID boc.BagID, payload []byte) ([]byte, error) {
 	// Parse validates the request format; fields are intentionally unused
 	// because handleAddUpdate is a stub that only returns Ok.
+	// TODO: pass seqNo, confirmedSeqNo, wantPeers to handleAddUpdate when implemented.
 	_, _, _, err := parseAddUpdateRequest(payload)
 	if err != nil {
 		return nil, err

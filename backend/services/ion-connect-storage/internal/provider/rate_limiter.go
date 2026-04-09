@@ -88,8 +88,9 @@ func (rl *PeerRateLimiter) cleanupLoop() {
 			cutoff := time.Now().Add(-10 * time.Minute).Unix()
 			rl.peers.Range(func(key, value any) bool {
 				if value.(*peerEntry).lastAccess.Load() < cutoff {
-					rl.peers.Delete(key)
-					rl.peerCount.Add(-1)
+					if _, deleted := rl.peers.LoadAndDelete(key); deleted {
+						rl.peerCount.Add(-1)
+					}
 				}
 				return true
 			})

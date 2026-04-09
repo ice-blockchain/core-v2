@@ -91,16 +91,17 @@ func VerifyNodeInfo(data []byte) (ed25519.PublicKey, error) {
 	return ed25519.PublicKey(pubKeyBytes), nil
 }
 
-// ValidateNodeID rejects node IDs that could cause CRDT key injection.
-// Only alphanumeric characters, hyphens, and underscores are allowed.
+// ValidateNodeID enforces that node IDs are hex-encoded ed25519 public keys.
+// This binds the identity to the signing key and prevents spoofing.
 func ValidateNodeID(id string) error {
 	if id == "" {
 		return fmt.Errorf("node ID must not be empty")
 	}
-	for _, c := range id {
-		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_') {
-			return fmt.Errorf("node ID contains invalid character: %c", c)
-		}
+	if len(id) != ed25519.PublicKeySize*2 {
+		return fmt.Errorf("node ID must be %d hex characters (hex-encoded public key), got %d", ed25519.PublicKeySize*2, len(id))
+	}
+	if _, err := hex.DecodeString(id); err != nil {
+		return fmt.Errorf("node ID must be valid hex: %w", err)
 	}
 	return nil
 }

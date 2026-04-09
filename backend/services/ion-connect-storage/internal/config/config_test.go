@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/ed25519"
+	"encoding/hex"
 	"os"
 	"testing"
 	"time"
@@ -8,14 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func randomHexKey(t *testing.T) string {
+	t.Helper()
+	_, priv, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+	return hex.EncodeToString(priv.Seed())
+}
+
 func setRequiredEnv(t *testing.T) {
 	t.Helper()
-	t.Setenv("ADNL_PRIVATE_KEY", "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")
+	t.Setenv("ADNL_PRIVATE_KEY", randomHexKey(t))
+	t.Setenv("ADNL_PRIVATE_KEY_FILE", "")
 	t.Setenv("PORT", "3278")
 	t.Setenv("ADNL_EXTERNAL_ADDR", "1.2.3.4:3278")
 	t.Setenv("GLOBAL_CONFIG_URL", "https://67.29.155.42/testnet-global.config.json")
 	t.Setenv("GREENFIELD_RPC_URLS", "https://93.184.216.34")
-	t.Setenv("GREENFIELD_PRIVATE_KEY", "b1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1b2")
+	t.Setenv("GREENFIELD_PRIVATE_KEY", randomHexKey(t))
+	t.Setenv("GREENFIELD_PRIVATE_KEY_FILE", "")
 	t.Setenv("ONLINEIO_ENV", "dev")
 }
 
@@ -23,7 +34,7 @@ func TestLoad_AllRequired_Success(t *testing.T) {
 	setRequiredEnv(t)
 	cfg, err := Load()
 	require.NoError(t, err)
-	require.Equal(t, "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", cfg.AdnlPrivateKey)
+	require.Len(t, cfg.AdnlPrivateKey, 64, "ADNL private key should be 64 hex chars")
 	require.Equal(t, 3278, cfg.AdnlPort)
 	require.Equal(t, "1.2.3.4:3278", cfg.AdnlExternalAddr)
 	require.Equal(t, "https://67.29.155.42/testnet-global.config.json", cfg.GlobalConfigURL)
@@ -152,6 +163,62 @@ func TestLoad_InvalidHeartbeatInterval_Error(t *testing.T) {
 	t.Setenv("HEARTBEAT_INTERVAL", "not-a-duration")
 	_, err := Load()
 	require.ErrorContains(t, err, "HEARTBEAT_INTERVAL")
+}
+
+func TestLoad_FileSchemeGlobalConfig_InCurrentDir(t *testing.T) {
+	setRequiredEnv(t)
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Setenv("GLOBAL_CONFIG_URL", "file://"+cwd+"/global-config.json")
+	cfg, loadErr := Load()
+	require.NoError(t, loadErr)
+	require.Equal(t, "file://"+cwd+"/global-config.json", cfg.GlobalConfigURL)
+}
+
+func TestLoad_FileSchemeGlobalConfig_OutsideDir_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("GLOBAL_CONFIG_URL", "file:///etc/passwd")
+	_, err := Load()
+	require.ErrorContains(t, err, "outside working directory")
+}
+
+func TestLoad_FileSchemeGlobalConfig_Traversal_Error(t *testing.T) {
+	setRequiredEnv(t)
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Setenv("GLOBAL_CONFIG_URL", "file://"+cwd+"/../../../etc/passwd")
+	_, loadErr := Load()
+	require.ErrorContains(t, loadErr, "outside working directory")
+}
+
+func TestLoad_FileSchemeGlobalConfig_Root_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("GLOBAL_CONFIG_URL", "file:///")
+	_, err := Load()
+	require.ErrorContains(t, err, "outside working directory")
+}
+
+func TestLoad_FileSchemeGlobalConfig_DotSlashTraversal_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("GLOBAL_CONFIG_URL", "file://./../../../etc/passwd")
+	_, err := Load()
+	require.ErrorContains(t, err, "outside working directory")
+}
+
+func TestLoad_FileSchemeGlobalConfig_CwdItself_Error(t *testing.T) {
+	setRequiredEnv(t)
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	t.Setenv("GLOBAL_CONFIG_URL", "file://"+cwd)
+	_, loadErr := Load()
+	require.ErrorContains(t, loadErr, "must point to a file")
+}
+
+func TestLoad_FileSchemeGlobalConfig_DotOnly_Error(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("GLOBAL_CONFIG_URL", "file:///.")
+	_, err := Load()
+	require.ErrorContains(t, err, "must point to a file")
 }
 
 func TestSecretFromEnvOrFile_UnreadableFile_Error(t *testing.T) {

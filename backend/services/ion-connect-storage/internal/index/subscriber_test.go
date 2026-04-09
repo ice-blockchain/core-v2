@@ -119,10 +119,10 @@ func TestProcessEvent_SkipsTxWithoutBagID(t *testing.T) {
 	err := s.ProcessEvent(context.Background(), txEvent)
 	require.NoError(t, err)
 
-	// Height should not be persisted (no entries)
+	// Height is always persisted to prevent replay, even with no bag entries.
 	h, err := p.LoadLastHeight()
 	require.NoError(t, err)
-	require.Equal(t, int64(0), h)
+	require.Equal(t, int64(100), h)
 }
 
 func TestProcessEvent_MultipleObjectsInOneTx(t *testing.T) {

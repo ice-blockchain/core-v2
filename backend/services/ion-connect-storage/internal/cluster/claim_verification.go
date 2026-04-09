@@ -63,7 +63,7 @@ func evaluateQuorum(results []string, activeNodes int, nodeID string) (bool, str
 		return false, "no peers responded"
 	}
 	remotePeers := activeNodes - 1 // exclude self
-	minResponses := remotePeers / 2
+	minResponses := (remotePeers + 1) / 2
 	if minResponses < 1 {
 		minResponses = 1
 	}

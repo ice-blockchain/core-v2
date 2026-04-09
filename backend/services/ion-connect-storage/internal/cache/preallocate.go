@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,6 +20,9 @@ func preallocateFiles(dirPath string, layout BagFileLayout) error {
 	}
 	var totalSize uint64
 	for _, f := range layout.Files {
+		if f.Size > math.MaxUint64-totalSize {
+			return fmt.Errorf("bag total size overflows uint64")
+		}
 		totalSize += f.Size
 		if totalSize > maxPreallocTotalSize {
 			return fmt.Errorf("bag total size %d exceeds max %d", totalSize, maxPreallocTotalSize)

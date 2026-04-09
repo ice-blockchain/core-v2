@@ -14,14 +14,14 @@ import (
 
 func TestExtractChunkNegativeSeqno(t *testing.T) {
 	data := make([]byte, chunkSize*2)
-	chunk, isLast := extractChunk(data, -1)
+	chunk, isLast := extractChunk(data, -1, 0)
 	require.Nil(t, chunk)
 	require.True(t, isLast)
 }
 
 func TestExtractChunkOverflowSeqno(t *testing.T) {
 	data := make([]byte, chunkSize)
-	chunk, isLast := extractChunk(data, math.MaxInt32)
+	chunk, isLast := extractChunk(data, math.MaxInt32, 0)
 	require.Nil(t, chunk)
 	require.True(t, isLast)
 }
@@ -30,7 +30,7 @@ func TestExtractChunkMaxIntSeqnoRejectsOverflow(t *testing.T) {
 	data := make([]byte, chunkSize)
 	// math.MaxInt / chunkSize + 1 would overflow when multiplied by chunkSize
 	hugeSeqno := math.MaxInt/chunkSize + 1
-	chunk, isLast := extractChunk(data, hugeSeqno)
+	chunk, isLast := extractChunk(data, hugeSeqno, 0)
 	require.Nil(t, chunk)
 	require.True(t, isLast)
 }
@@ -39,7 +39,7 @@ func TestExtractChunkBoundarySeqnoSafe(t *testing.T) {
 	data := make([]byte, chunkSize)
 	// Exactly at the limit -- won't overflow but exceeds data length
 	boundarySeqno := math.MaxInt / chunkSize
-	chunk, isLast := extractChunk(data, boundarySeqno)
+	chunk, isLast := extractChunk(data, boundarySeqno, 0)
 	require.Nil(t, chunk)
 	require.True(t, isLast)
 }
@@ -49,14 +49,14 @@ func TestExtractChunkValidFirst(t *testing.T) {
 	for i := range data {
 		data[i] = byte(i)
 	}
-	chunk, isLast := extractChunk(data, 0)
+	chunk, isLast := extractChunk(data, 0, 0)
 	require.Equal(t, chunkSize, len(chunk))
 	require.False(t, isLast)
 }
 
 func TestExtractChunkValidLast(t *testing.T) {
 	data := make([]byte, chunkSize+100)
-	chunk, isLast := extractChunk(data, 1)
+	chunk, isLast := extractChunk(data, 1, 0)
 	require.Equal(t, 100, len(chunk))
 	require.True(t, isLast)
 }

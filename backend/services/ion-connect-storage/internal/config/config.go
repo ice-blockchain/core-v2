@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -214,22 +215,50 @@ func parseRpcURLs(raw string) ([]string, error) {
 	return urls, nil
 }
 
-// validateURL rejects non-HTTP(S) schemes and private/metadata IP addresses to prevent SSRF.
-// For hostnames, resolves DNS and validates all returned IPs to prevent DNS rebinding.
+// validateURL accepts http(s) URLs (with SSRF checks) and file:// URLs
+// restricted to the current working directory.
 func validateURL(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %w", err)
 	}
-	if u.Scheme != "https" && u.Scheme != "http" {
-		return fmt.Errorf("URL scheme must be http or https, got %q", u.Scheme)
+	switch u.Scheme {
+	case "file":
+		return validateFileURL(u.Path)
+	case "http", "https":
+		return validateNetworkURL(u)
+	default:
+		return fmt.Errorf("URL scheme must be http, https, or file, got %q", u.Scheme)
 	}
+}
+
+func validateFileURL(path string) error {
+	if path == "" {
+		return fmt.Errorf("file:// URL has empty path")
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("cannot determine working directory: %w", err)
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("cannot resolve file path: %w", err)
+	}
+	if abs == cwd {
+		return fmt.Errorf("file:// path must point to a file, not the directory itself")
+	}
+	if !strings.HasPrefix(abs, cwd+string(filepath.Separator)) {
+		return fmt.Errorf("file:// path %q is outside working directory %q", abs, cwd)
+	}
+	return nil
+}
+
+func validateNetworkURL(u *url.URL) error {
 	host := u.Hostname()
 	ip := net.ParseIP(host)
 	if ip != nil {
 		return validateIP(host, ip)
 	}
-	// Hostname: resolve and validate all IPs to prevent DNS rebinding.
 	ips, err := net.LookupIP(host)
 	if err != nil {
 		return fmt.Errorf("cannot resolve hostname %q: %w", host, err)

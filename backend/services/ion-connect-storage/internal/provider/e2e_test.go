@@ -57,7 +57,7 @@ func TestE2E_ProviderIndexOverRLDP(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	t.Run("known bag returns 200 with provider", func(t *testing.T) {
-		resp, body := sendHTTPOverRLDP(t, peer, "GET", "/bags/"+hex.EncodeToString(testBagID[:]))
+		resp, body := sendHTTPOverRLDP(ctx, t, peer, "GET", "/bags/"+hex.EncodeToString(testBagID[:]))
 		t.Logf("response: %d %s", resp.StatusCode, resp.Reason)
 		require.EqualValues(t, 200, resp.StatusCode)
 
@@ -69,12 +69,12 @@ func TestE2E_ProviderIndexOverRLDP(t *testing.T) {
 
 	t.Run("unknown bag returns 404", func(t *testing.T) {
 		unknownBag := boc.BagID{0x01}
-		resp, _ := sendHTTPOverRLDP(t, peer, "GET", "/bags/"+hex.EncodeToString(unknownBag[:]))
+		resp, _ := sendHTTPOverRLDP(ctx, t, peer, "GET", "/bags/"+hex.EncodeToString(unknownBag[:]))
 		require.EqualValues(t, 404, resp.StatusCode)
 	})
 }
 
-func sendHTTPOverRLDP(t *testing.T, peer adnl.Peer, method, url string) (ionadnl.Response, []byte) {
+func sendHTTPOverRLDP(ctx context.Context, t *testing.T, peer adnl.Peer, method, url string) (ionadnl.Response, []byte) {
 	t.Helper()
 
 	rl := rldp.NewClientV2(peer)
@@ -84,7 +84,7 @@ func sendHTTPOverRLDP(t *testing.T, peer adnl.Peer, method, url string) (ionadnl
 
 	t.Logf("sending %s %s over RLDP...", method, url)
 	var resp ionadnl.Response
-	err = rl.DoQuery(context.Background(), rldpMaxAnswerSize, &ionadnl.Request{
+	err = rl.DoQuery(ctx, rldpMaxAnswerSize, &ionadnl.Request{
 		ID:      reqID,
 		Method:  method,
 		URL:     url,
@@ -98,7 +98,7 @@ func sendHTTPOverRLDP(t *testing.T, peer adnl.Peer, method, url string) (ionadnl
 	}
 
 	var part ionadnl.PayloadPart
-	err = rl.DoQuery(context.Background(), rldpMaxAnswerSize, &ionadnl.GetNextPayloadPart{
+	err = rl.DoQuery(ctx, rldpMaxAnswerSize, &ionadnl.GetNextPayloadPart{
 		ID:           reqID,
 		Seqno:        0,
 		MaxChunkSize: 1 << 20,
