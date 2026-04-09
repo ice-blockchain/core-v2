@@ -5,7 +5,6 @@ import { useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { portfolioBannerImage, swapBannerImage, bridgeBannerImage } from "../assets/wallet-images";
 import { BannerCard } from "./BannerCard";
-import { BannerDots } from "./BannerDots";
 import { buildCarouselPaddingStyle } from "./banner-carousel-styles";
 
 const BANNER_DATA = [
@@ -29,30 +28,30 @@ export function BannerCarousel() {
     setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / snap));
   }, [snap]);
   const renderItem = useCallback(
-    ({ item }: { item: BannerItem }) => renderBannerCard(item, cardStyle),
-    [cardStyle],
+    ({ item }: { item: BannerItem }) => renderBannerCard(item, cardStyle, activeIndex),
+    [cardStyle, activeIndex],
   );
 
   return (
-    <View>
-      <FlatList
-        data={BANNER_DATA} renderItem={renderItem} keyExtractor={extractKey}
-        horizontal snapToInterval={snap} snapToAlignment="start"
-        decelerationRate="fast" showsHorizontalScrollIndicator={false}
-        onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={contentStyle}
-      />
-      <BannerDots count={ITEM_COUNT} activeIndex={activeIndex} />
-    </View>
+    <FlatList
+      data={BANNER_DATA} renderItem={renderItem} keyExtractor={extractKey}
+      horizontal snapToInterval={snap} snapToAlignment="start"
+      decelerationRate="fast" showsHorizontalScrollIndicator={false}
+      onScroll={onScroll} scrollEventThrottle={16}
+      contentContainerStyle={contentStyle}
+    />
   );
 }
 
-function renderBannerCard(item: BannerItem, style: ViewStyle) {
+function renderBannerCard(item: BannerItem, style: ViewStyle, activeIndex: number) {
   return (
     <View style={style}>
       <BannerCard
         title={translate(`walletUi:${item.titleKey}`)}
         description={translate(`walletUi:${item.descKey}`)}
         image={item.image}
+        dotCount={ITEM_COUNT}
+        activeIndex={activeIndex}
       />
     </View>
   );

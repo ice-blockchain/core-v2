@@ -1,33 +1,46 @@
 import { useCallback, useRef } from "react";
+import { Platform } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView } from "react-native";
 import type { CoinTabKey } from "../types";
 
 const TAB_INDICES: Record<CoinTabKey, number> = { coins: 0, nfts: 1 };
+const IS_WEB = Platform.OS === "web";
+
+function resolveTab(offsetX: number, width: number): CoinTabKey {
+  return Math.round(offsetX / width) === 0 ? "coins" : "nfts";
+}
+
+function getOffsetX(e: NativeSyntheticEvent<NativeScrollEvent>) {
+  return e.nativeEvent.contentOffset.x;
+}
 
 export function useTabPager(onTabChange: (tab: CoinTabKey) => void) {
   const scrollRef = useRef<ScrollView>(null);
   const pageWidth = useRef(0);
-
-  const onLayout = useCallback((width: number) => {
-    pageWidth.current = width;
-  }, []);
-
+  const webTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onLayout = useCallback((width: number) => { pageWidth.current = width; }, []);
   const scrollToTab = useCallback((tab: CoinTabKey) => {
-    scrollRef.current?.scrollTo({
-      x: TAB_INDICES[tab] * pageWidth.current,
-      animated: true,
-    });
-  }, []);
-
-  const onScrollEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (IS_WEB) onTabChange(tab);
+    scrollRef.current?.scrollTo({ x: TAB_INDICES[tab] * pageWidth.current, animated: true });
+  }, [onTabChange]);
+  const detectTab = useCallback(
+    (offsetX: number) => {
       if (pageWidth.current === 0) return;
-      const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth.current);
-      const tab: CoinTabKey = index === 0 ? "coins" : "nfts";
-      onTabChange(tab);
+      onTabChange(resolveTab(offsetX, pageWidth.current));
     },
     [onTabChange],
   );
-
-  return { scrollRef, scrollToTab, onScrollEnd, onLayout };
+  const onScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => detectTab(getOffsetX(e)),
+    [detectTab],
+  );
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!IS_WEB) return;
+      if (webTimer.current) clearTimeout(webTimer.current);
+      webTimer.current = setTimeout(() => detectTab(getOffsetX(e)), 150);
+    },
+    [detectTab],
+  );
+  return { scrollRef, scrollToTab, onScrollEnd, onScroll, onLayout };
 }

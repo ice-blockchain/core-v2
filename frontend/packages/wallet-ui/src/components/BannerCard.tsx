@@ -7,14 +7,17 @@ import {
   buildTextBlockStyle,
   buildCardImageStyle,
 } from "./banner-carousel-styles";
+import { BannerDots } from "./BannerDots";
 
 interface BannerCardProps {
   title: string;
   description: string;
   image: ImageSourcePropType;
+  dotCount: number;
+  activeIndex: number;
 }
 
-export function BannerCard({ title, description, image }: BannerCardProps) {
+export function BannerCard({ title, description, image, dotCount, activeIndex }: BannerCardProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const scaleRadius = theme.scale.scaleRadius;
@@ -33,6 +36,7 @@ export function BannerCard({ title, description, image }: BannerCardProps) {
         <Text variant="body2" color={theme.colors.primaryText}>{description}</Text>
       </View>
       <Image source={image} style={[styles.image, imageStyle]} />
+      <BannerDots count={dotCount} activeIndex={activeIndex} inside />
     </View>
   );
 }
