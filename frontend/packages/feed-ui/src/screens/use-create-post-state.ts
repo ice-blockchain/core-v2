@@ -32,14 +32,11 @@ export function useCreatePostState() {
   const handleGalleryPress = useCallback(async () => {
     try {
       const permission = await requestGalleryPermission();
-      const nav = navigation.navigate as (...args: unknown[]) => void;
       if (permission === 'granted' || permission === 'limited') {
-        nav(Routes.Sheet.MediaPicker, { onComplete: handleMediaSelected });
+        navigation.navigate(Routes.Sheet.MediaPicker, { onComplete: handleMediaSelected });
         return;
       }
-      if (permission === 'permanently_denied') {
-        nav(Routes.Sheet.GalleryPermissionDenied);
-      }
+      navigation.navigate(Routes.Sheet.GalleryPermissionDenied);
     } catch (error) {
       console.error('Failed to request gallery permission', error);
     }

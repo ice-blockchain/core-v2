@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import type { DeviceAsset } from '@ion/feed';
 
 const PAGE_SIZE = 30;
@@ -15,7 +15,7 @@ function usePaginationRefs() {
   const cursorRef = useRef<string | undefined>(undefined);
   const hasMoreRef = useRef(true);
   const isLoadingRef = useRef(false);
-  return { cursorRef, hasMoreRef, isLoadingRef };
+  return useMemo(() => ({ cursorRef, hasMoreRef, isLoadingRef }), [cursorRef, hasMoreRef, isLoadingRef]);
 }
 
 interface LoadInitialDeps {
@@ -26,6 +26,7 @@ interface LoadInitialDeps {
 
 function useLoadInitial({ fetchPhotos, refs, setters }: LoadInitialDeps) {
   return useCallback(async () => {
+    if (refs.isLoadingRef.current) return;
     setters.setIsLoading(true);
     refs.isLoadingRef.current = true;
     try {

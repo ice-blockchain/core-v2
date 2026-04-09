@@ -12,7 +12,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@ion/localization": "workspace:*"
+    "@ion/localization": "workspace:*",
+    "@ion/feed": "workspace:*"
   },
   "peerDependencies": {
     "@ion/ui": "workspace:*",
