@@ -1,9 +1,13 @@
 package storage
 
-import "context"
+import (
+	"context"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
+)
 
 // handleAddUpdate handles storage.addUpdate RPC.
 // Responds with Ok.
-func (h *Handler) handleAddUpdate(_ context.Context, _ [32]byte) ([]byte, error) {
+func (h *Handler) handleAddUpdate(_ context.Context, _ boc.BagID) ([]byte, error) {
 	return serializeOkResponse(), nil
 }

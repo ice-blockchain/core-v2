@@ -3,6 +3,7 @@ package greenfieldclient
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
@@ -21,7 +22,7 @@ type client struct {
 	rpcURLs    []string
 	rpcIndex   atomic.Uint64
 	subscribed atomic.Bool
-	log        Logger
+	log        *slog.Logger
 
 	account    *gnfdtypes.Account
 	clientsMu  sync.RWMutex
@@ -49,13 +50,13 @@ func New(cfg Config) (Client, error) {
 
 	logger := cfg.Logger
 	if logger == nil {
-		logger = &nopLogger{}
+		logger = slog.New(slog.DiscardHandler)
 	}
 
 	c := &client{
 		cfg:     cfg,
 		rpcURLs: cfg.RpcURLs,
-		log:     logger.With().Str("component", "greenfield-client").Logger(),
+		log:     logger.With("component", "greenfield-client"),
 
 		account:    account,
 		gnfdClient: gnfd,
@@ -98,7 +99,7 @@ func (c *client) rotateGateway() {
 	c.clientsMu.Unlock()
 
 	if err != nil {
-		c.log.Error().Err(err).Str("url", url).Msg("failed to rotate greenfield client")
+		c.log.Error("failed to rotate greenfield client", "error", err, "url", url)
 	}
 }
 

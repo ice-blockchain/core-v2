@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 // RegisterRoutes adds provider index routes to the given router.
@@ -44,8 +45,8 @@ func handleLookupBag(providerIndex *ProviderIndex) gin.HandlerFunc {
 	}
 }
 
-func parseBagIDHex(hexStr string) ([32]byte, error) {
-	var bagID [32]byte
+func parseBagIDHex(hexStr string) (boc.BagID, error) {
+	var bagID boc.BagID
 	b, err := hex.DecodeString(hexStr)
 	if err != nil {
 		return bagID, err

@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRecoverPanic_CatchesPanicString(t *testing.T) {
+	t.Parallel()
 	var retErr error
 	func() {
 		defer recoverPanic(testLogger(), &retErr)
@@ -20,6 +22,7 @@ func TestRecoverPanic_CatchesPanicString(t *testing.T) {
 }
 
 func TestRecoverPanic_CatchesPanicError(t *testing.T) {
+	t.Parallel()
 	var retErr error
 	func() {
 		defer recoverPanic(testLogger(), &retErr)
@@ -31,6 +34,7 @@ func TestRecoverPanic_CatchesPanicError(t *testing.T) {
 }
 
 func TestRecoverPanic_NoPanicPreservesNilError(t *testing.T) {
+	t.Parallel()
 	var retErr error
 	func() {
 		defer recoverPanic(testLogger(), &retErr)
@@ -40,6 +44,7 @@ func TestRecoverPanic_NoPanicPreservesNilError(t *testing.T) {
 }
 
 func TestRecoverPanic_NoPanicPreservesExistingError(t *testing.T) {
+	t.Parallel()
 	retErr := fmt.Errorf("original error")
 	func() {
 		defer recoverPanic(testLogger(), &retErr)
@@ -49,6 +54,7 @@ func TestRecoverPanic_NoPanicPreservesExistingError(t *testing.T) {
 }
 
 func TestRecoverPanic_CatchesNilPointerPanic(t *testing.T) {
+	t.Parallel()
 	var retErr error
 	func() {
 		defer recoverPanic(testLogger(), &retErr)
@@ -61,10 +67,11 @@ func TestRecoverPanic_CatchesNilPointerPanic(t *testing.T) {
 }
 
 func TestOverlayManager_HandleIncomingQueryPanicRecovery(t *testing.T) {
+	t.Parallel()
 	m := newOverlayManager(10, testLogger())
-	bagID := [32]byte{99}
+	bagID := boc.BagID{99}
 
-	m.SetQueryHandler(func(_ context.Context, _ [32]byte, _ []byte) ([]byte, error) {
+	m.SetQueryHandler(func(_ context.Context, _ boc.BagID, _ []byte) ([]byte, error) {
 		panic("handler exploded")
 	})
 	_ = m.Join(context.Background(), bagID)

@@ -1,13 +1,13 @@
 module github.com/ice-blockchain/ion/services/greenfield-ingester
 
-go 1.24.4
+go 1.26
 
 require (
-	github.com/ice-blockchain/ion/packages/greenfield-client v0.0.0
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/bnb-chain/greenfield v1.9.1
 	github.com/bnb-chain/greenfield-go-sdk v1.7.4
 	github.com/cosmos/cosmos-sdk v0.47.10
+	github.com/ice-blockchain/ion/packages/greenfield-client v0.0.0
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rs/zerolog v1.29.1
 	github.com/stretchr/testify v1.9.0

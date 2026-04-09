@@ -7,6 +7,7 @@ import (
 )
 
 func TestExtractCreateObjectEvent_Valid(t *testing.T) {
+	t.Parallel()
 	txEvent := &TxEvent{Height: 29331798, TxHash: "90B5A508"}
 	abciEvent := ABCIEvent{
 		Type: "greenfield.storage.EventCreateObject",
@@ -26,10 +27,11 @@ func TestExtractCreateObjectEvent_Valid(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test-bucket", result.BucketName)
 	require.Equal(t, "test-object.json", result.ObjectName)
-	require.Equal(t, uint64(1024), result.PayloadSize)
+	require.EqualValues(t, 1024, result.PayloadSize)
 }
 
 func TestExtractCreateObjectEvent_MissingBucket(t *testing.T) {
+	t.Parallel()
 	txEvent := &TxEvent{Height: 100, TxHash: "abc"}
 	abciEvent := ABCIEvent{
 		Type:       "greenfield.storage.EventCreateObject",
@@ -40,6 +42,7 @@ func TestExtractCreateObjectEvent_MissingBucket(t *testing.T) {
 }
 
 func TestExtractSetTagEvent_Valid(t *testing.T) {
+	t.Parallel()
 	abciEvent := ABCIEvent{
 		Type: "greenfield.storage.EventSetTag",
 		Attributes: map[string]string{
@@ -58,6 +61,7 @@ func TestExtractSetTagEvent_Valid(t *testing.T) {
 }
 
 func TestExtractSetTagEvent_MissingResource(t *testing.T) {
+	t.Parallel()
 	abciEvent := ABCIEvent{
 		Type:       "greenfield.storage.EventSetTag",
 		Attributes: map[string]string{"tags": `{"tags":[]}`},
@@ -67,6 +71,7 @@ func TestExtractSetTagEvent_MissingResource(t *testing.T) {
 }
 
 func TestExtractSetTagEvent_InvalidTagsJSON(t *testing.T) {
+	t.Parallel()
 	abciEvent := ABCIEvent{
 		Type: "greenfield.storage.EventSetTag",
 		Attributes: map[string]string{
@@ -79,6 +84,7 @@ func TestExtractSetTagEvent_InvalidTagsJSON(t *testing.T) {
 }
 
 func TestParseObjectGRN_Valid(t *testing.T) {
+	t.Parallel()
 	bucket, object, ok := ParseObjectGRN("grn:o::mybucket/myobject")
 	require.True(t, ok)
 	require.Equal(t, "mybucket", bucket)
@@ -86,6 +92,7 @@ func TestParseObjectGRN_Valid(t *testing.T) {
 }
 
 func TestParseObjectGRN_NestedPath(t *testing.T) {
+	t.Parallel()
 	bucket, object, ok := ParseObjectGRN("grn:o::mybucket/path/to/object")
 	require.True(t, ok)
 	require.Equal(t, "mybucket", bucket)
@@ -93,27 +100,34 @@ func TestParseObjectGRN_NestedPath(t *testing.T) {
 }
 
 func TestParseObjectGRN_BucketResource(t *testing.T) {
+	t.Parallel()
 	_, _, ok := ParseObjectGRN("grn:b::mybucket")
 	require.False(t, ok)
 }
 
 func TestParseObjectGRN_Empty(t *testing.T) {
+	t.Parallel()
 	_, _, ok := ParseObjectGRN("")
 	require.False(t, ok)
 }
 
 func TestParseObjectGRN_NoSlash(t *testing.T) {
+	t.Parallel()
 	_, _, ok := ParseObjectGRN("grn:o::bucketonly")
 	require.False(t, ok)
 }
 
 func TestBagIndexQuery_Valid(t *testing.T) {
-	q := BagIndexQuery("dev")
+	t.Parallel()
+	q, err := BagIndexQuery("dev")
+	require.NoError(t, err)
 	require.Contains(t, q, "CONTAINS 'dev'")
 	require.Contains(t, q, "CONTAINS 'ion-bag-id'")
 	require.Contains(t, q, "tm.event='Tx'")
 }
 
 func TestBagIndexQuery_InvalidEnv(t *testing.T) {
-	require.Panics(t, func() { BagIndexQuery("INVALID!") })
+	t.Parallel()
+	_, err := BagIndexQuery("INVALID!")
+	require.Error(t, err)
 }

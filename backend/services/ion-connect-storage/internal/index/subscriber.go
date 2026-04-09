@@ -3,11 +3,13 @@ package index
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
 
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 const (
@@ -21,7 +23,7 @@ const (
 
 // OwnershipChecker decides whether this node should own a bag.
 type OwnershipChecker interface {
-	OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error)
+	OwnsOrClaim(ctx context.Context, bagID boc.BagID) (bool, error)
 }
 
 // Subscriber consumes Greenfield events and populates the bag index.
@@ -59,7 +61,10 @@ func (s *Subscriber) Run(ctx context.Context) error {
 
 	s.logger.Info("starting subscriber", "last_height", lastHeight)
 
-	query := greenfieldclient.BagIndexQuery(s.env)
+	query, err := greenfieldclient.BagIndexQuery(s.env)
+	if err != nil {
+		return fmt.Errorf("build query: %w", err)
+	}
 	ch, err := s.client.Subscribe(ctx, greenfieldclient.SubscribeOpts{
 		LastHeight: lastHeight,
 		Query:      query,
@@ -196,8 +201,8 @@ func findTagValue(tags []greenfieldclient.TagEntry, key string) string {
 	return ""
 }
 
-func decodeBagID(hexStr string) ([32]byte, error) {
-	var bagID [32]byte
+func decodeBagID(hexStr string) (boc.BagID, error) {
+	var bagID boc.BagID
 	b, err := hex.DecodeString(hexStr)
 	if err != nil {
 		return bagID, err

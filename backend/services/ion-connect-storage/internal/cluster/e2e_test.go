@@ -197,7 +197,7 @@ func TestE2E_ConcurrentClaimSingleWinner(t *testing.T) {
 
 // --- helpers ---
 
-func waitForBagIndexedOnAnyNode(t *testing.T, nodes []*clusterNode, bagID [32]byte, timeout time.Duration) {
+func waitForBagIndexedOnAnyNode(t *testing.T, nodes []*clusterNode, bagID boc.BagID, timeout time.Duration) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -212,7 +212,7 @@ func waitForBagIndexedOnAnyNode(t *testing.T, nodes []*clusterNode, bagID [32]by
 	t.Fatalf("bag %s not indexed on any node within %s", hex.EncodeToString(bagID[:8]), timeout)
 }
 
-func findOwner(nodes []*clusterNode, bagID [32]byte) *clusterNode {
+func findOwner(nodes []*clusterNode, bagID boc.BagID) *clusterNode {
 	for _, n := range nodes {
 		if n.coordinator.OwnsBag(bagID) {
 			return n

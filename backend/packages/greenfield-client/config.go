@@ -2,6 +2,7 @@ package greenfieldclient
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 )
 
@@ -13,7 +14,7 @@ type Config struct {
 	RpcURLs    []string
 	ChainID    string
 	PrivateKey string
-	Logger     Logger
+	Logger     *slog.Logger
 }
 
 // SenderTagKey returns the tag key used to identify the environment.
@@ -23,24 +24,24 @@ func SenderTagKey() string {
 
 // DefaultQuery returns the default Tendermint query for the given environment.
 // onlineIOEnv must contain only lowercase alphanumeric characters and hyphens.
-func DefaultQuery(onlineIOEnv string) string {
+func DefaultQuery(onlineIOEnv string) (string, error) {
 	if !ValidEnvPattern.MatchString(onlineIOEnv) {
-		panic(fmt.Sprintf("DefaultQuery: invalid onlineIOEnv %q", onlineIOEnv))
+		return "", fmt.Errorf("DefaultQuery: invalid onlineIOEnv %q", onlineIOEnv)
 	}
 	return fmt.Sprintf(
 		"tm.event='Tx' AND greenfield.storage.EventSetTag.tags CONTAINS '%s'",
 		onlineIOEnv,
-	)
+	), nil
 }
 
 // BagIndexQuery returns a Tendermint subscription query that filters for
 // transactions containing both the environment tag and an ion-bag-id tag.
-func BagIndexQuery(onlineIOEnv string) string {
+func BagIndexQuery(onlineIOEnv string) (string, error) {
 	if !ValidEnvPattern.MatchString(onlineIOEnv) {
-		panic(fmt.Sprintf("BagIndexQuery: invalid onlineIOEnv %q", onlineIOEnv))
+		return "", fmt.Errorf("BagIndexQuery: invalid onlineIOEnv %q", onlineIOEnv)
 	}
 	return fmt.Sprintf(
 		"tm.event='Tx' AND greenfield.storage.EventSetTag.tags CONTAINS '%s' AND greenfield.storage.EventSetTag.tags CONTAINS 'ion-bag-id'",
 		onlineIOEnv,
-	)
+	), nil
 }

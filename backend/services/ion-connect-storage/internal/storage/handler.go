@@ -18,14 +18,14 @@ import (
 
 // LocalOwnershipChecker checks if this node owns a bag.
 type LocalOwnershipChecker interface {
-	OwnsBag(bagID [32]byte) bool
+	OwnsBag(bagID boc.BagID) bool
 }
 
 // PieceForwarder forwards piece requests to owning nodes.
 type PieceForwarder interface {
-	ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
+	ForwardGetPiece(ctx context.Context, bagID boc.BagID, pieceID int) (data []byte, proof []byte, err error)
 	// ForwardRawQuery forwards any raw TL query to the bag owner and returns the raw response.
-	ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
+	ForwardRawQuery(ctx context.Context, bagID boc.BagID, rawQuery []byte) ([]byte, error)
 }
 
 // Handler implements TON Storage protocol RPC methods.
@@ -72,6 +72,15 @@ func NewHandler(cfg HandlerConfig) (*Handler, error) {
 	if cfg.Logger == nil {
 		return nil, fmt.Errorf("handler: Logger is required")
 	}
+	if cfg.SegmentCache == nil {
+		return nil, fmt.Errorf("handler: SegmentCache is required")
+	}
+	if cfg.Fetcher == nil {
+		return nil, fmt.Errorf("handler: Fetcher is required")
+	}
+	if cfg.Index == nil {
+		return nil, fmt.Errorf("handler: Index is required")
+	}
 	return &Handler{
 		metadataStore:      cfg.MetadataStore,
 		segmentCache:       cfg.SegmentCache,
@@ -87,7 +96,7 @@ func NewHandler(cfg HandlerConfig) (*Handler, error) {
 // HandleOverlayQuery dispatches a TL-encoded query to the appropriate handler.
 // Called by the overlay manager when an RLDP query arrives for a known overlay.
 // The bagID is resolved from overlayID by the overlay manager before calling this.
-func (h *Handler) HandleOverlayQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+func (h *Handler) HandleOverlayQuery(ctx context.Context, bagID boc.BagID, rawQuery []byte) ([]byte, error) {
 	constructorID, payload, err := parseTLConstructorID(rawQuery)
 	if err != nil {
 		return nil, fmt.Errorf("parse TL constructor: %w", err)
@@ -125,7 +134,7 @@ func (h *Handler) HandleOverlayQuery(ctx context.Context, bagID [32]byte, rawQue
 	}
 }
 
-func (h *Handler) handleGetPieceFromTL(ctx context.Context, bagID [32]byte, payload []byte) ([]byte, error) {
+func (h *Handler) handleGetPieceFromTL(ctx context.Context, bagID boc.BagID, payload []byte) ([]byte, error) {
 	pieceID, err := parseGetPieceRequest(payload)
 	if err != nil {
 		return nil, err
@@ -139,7 +148,7 @@ func (h *Handler) handleGetPieceFromTL(ctx context.Context, bagID [32]byte, payl
 	return h.handleGetPiece(ctx, bagID, int(pieceID))
 }
 
-func (h *Handler) handleForwardedPiece(ctx context.Context, bagID [32]byte, pieceID int) ([]byte, error) {
+func (h *Handler) handleForwardedPiece(ctx context.Context, bagID boc.BagID, pieceID int) ([]byte, error) {
 	data, proof, err := h.pieceForwarder.ForwardGetPiece(ctx, bagID, pieceID)
 	if err != nil {
 		return nil, fmt.Errorf("forward piece %d: %w", pieceID, err)
@@ -152,7 +161,7 @@ func (h *Handler) handleForwardedPiece(ctx context.Context, bagID [32]byte, piec
 
 // verifyForwardedPiece checks both the Merkle proof structure and the data hash
 // to prevent a compromised cluster node from serving corrupted data.
-func (h *Handler) verifyForwardedPiece(ctx context.Context, bagID [32]byte, pieceID int, proof []byte, data []byte) error {
+func (h *Handler) verifyForwardedPiece(ctx context.Context, bagID boc.BagID, pieceID int, proof []byte, data []byte) error {
 	if len(proof) == 0 {
 		return fmt.Errorf("empty proof")
 	}
@@ -178,7 +187,9 @@ func (h *Handler) verifyForwardedPiece(ctx context.Context, bagID [32]byte, piec
 	return nil
 }
 
-func (h *Handler) handleAddUpdateFromTL(ctx context.Context, bagID [32]byte, payload []byte) ([]byte, error) {
+func (h *Handler) handleAddUpdateFromTL(ctx context.Context, bagID boc.BagID, payload []byte) ([]byte, error) {
+	// Parse validates the request format; fields are intentionally unused
+	// because handleAddUpdate is a stub that only returns Ok.
 	_, _, _, err := parseAddUpdateRequest(payload)
 	if err != nil {
 		return nil, err
@@ -195,6 +206,6 @@ func (h *Handler) handlePingFromTL(payload []byte) ([]byte, error) {
 }
 
 // ensureBagLoaded fetches and caches bag metadata if not already present.
-func (h *Handler) ensureBagLoaded(ctx context.Context, bagID [32]byte) (*boc.BagMetadata, error) {
+func (h *Handler) ensureBagLoaded(ctx context.Context, bagID boc.BagID) (*boc.BagMetadata, error) {
 	return h.metadataStore.GetBagMetadata(ctx, bagID)
 }

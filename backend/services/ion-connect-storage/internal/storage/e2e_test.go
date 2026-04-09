@@ -79,7 +79,7 @@ func verifyDownloadedContent(t *testing.T, torrent *tonstorage.Torrent, payload 
 	require.True(t, bytes.Equal(got, payload), "payload mismatch: got %d bytes, want %d", len(got), len(payload))
 }
 
-func verifySegmentCache(t *testing.T, env *storage.SeederEnv, bagID [32]byte, objectName string, payload []byte) {
+func verifySegmentCache(t *testing.T, env *storage.SeederEnv, bagID boc.BagID, objectName string, payload []byte) {
 	t.Helper()
 
 	segmentCount := (len(payload) + boc.SegmentSize - 1) / boc.SegmentSize
@@ -101,7 +101,7 @@ func verifySegmentCache(t *testing.T, env *storage.SeederEnv, bagID [32]byte, ob
 	require.Equal(t, int64(len(payload)), info.Size(), "cached file size mismatch")
 }
 
-func verifyMetadataStore(t *testing.T, ctx context.Context, env *storage.SeederEnv, bagID [32]byte, meta *boc.BagMetadata) {
+func verifyMetadataStore(t *testing.T, ctx context.Context, env *storage.SeederEnv, bagID boc.BagID, meta *boc.BagMetadata) {
 	t.Helper()
 
 	hasMeta, err := env.MetadataStore.HasBagMetadata(bagID)

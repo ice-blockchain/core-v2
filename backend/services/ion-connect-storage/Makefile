@@ -7,10 +7,10 @@ build:
 	CGO_ENABLED=0 go build -ldflags="-s -w" -o $(BINARY) ./cmd
 
 test:
-	go run gotest.tools/gotestsum@latest -f github-actions --rerun-fails=3 --packages="./..." -- -timeout 5m -count=1 -cover -covermode atomic
+	go tool gotestsum -f github-actions --rerun-fails=3 --packages="./..." -- -timeout 5m -count=1 -cover -covermode atomic
 
 test-e2e:
-	go run gotest.tools/gotestsum@latest -f github-actions --rerun-fails=3 --packages="./..." --rerun-fails-run-root-test -- -timeout 120s -tags e2e -v
+	go tool gotestsum -f github-actions --rerun-fails=3 --packages="./..." --rerun-fails-run-root-test -- -timeout 120s -tags e2e -v
 
 vet:
 	go vet ./...

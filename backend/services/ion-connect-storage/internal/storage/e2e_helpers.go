@@ -121,7 +121,7 @@ func setupSeederServerInternal(
 	fetcher := greenfield.NewFetcher(gfClient, logger)
 	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
 	cacheDir := t.TempDir()
-	segmentCache := cache.NewSegmentCache(cacheDir, time.Hour, func(bagID [32]byte) {
+	segmentCache := cache.NewSegmentCache(cacheDir, time.Hour, func(bagID boc.BagID) {
 		server.DHTRegistrar().Deregister(bagID)
 		_ = server.OverlayManager().Leave(bagID)
 	}, logger)
@@ -130,7 +130,7 @@ func setupSeederServerInternal(
 	copy(adnlAddr[:], server.Gateway().GetID())
 
 	providerIndex := provider.NewProviderIndex(db, adnlAddr, coord, logger)
-	persister.SetOnBagIndexed(func(bagID [32]byte) {
+	persister.SetOnBagIndexed(func(bagID boc.BagID) {
 		if pErr := providerIndex.Register(bagID); pErr != nil {
 			logger.Error("provider register failed", "error", pErr)
 		}
@@ -197,7 +197,7 @@ func setupSeederServerInternal(
 }
 
 // WaitForBagIndexed polls until a bag appears in the persister index.
-func WaitForBagIndexed(t *testing.T, persister *index.Persister, bagID [32]byte, timeout time.Duration) {
+func WaitForBagIndexed(t *testing.T, persister *index.Persister, bagID boc.BagID, timeout time.Duration) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -211,7 +211,7 @@ func WaitForBagIndexed(t *testing.T, persister *index.Persister, bagID [32]byte,
 }
 
 // SetupDownloader creates a tonutils-storage downloader client.
-func SetupDownloader(t *testing.T, bagID [32]byte, dhtClient *dht.Client) (*tonstorage.Torrent, *tonstorage.Server) {
+func SetupDownloader(t *testing.T, bagID boc.BagID, dhtClient *dht.Client) (*tonstorage.Torrent, *tonstorage.Server) {
 	t.Helper()
 
 	_, key, err := ed25519.GenerateKey(rand.Reader)

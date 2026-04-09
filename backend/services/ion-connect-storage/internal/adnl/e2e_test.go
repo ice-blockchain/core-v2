@@ -19,6 +19,7 @@ import (
 	"time"
 
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/dht"
@@ -58,6 +59,10 @@ var (
 func detectTestExternalIP(t *testing.T) string {
 	t.Helper()
 	externalIPOnce.Do(func() {
+		if ip := os.Getenv("TEST_EXTERNAL_IP"); ip != "" {
+			cachedExternalIP = ip
+			return
+		}
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.Get("https://api.ipify.org")
 		if err != nil {
@@ -72,7 +77,7 @@ func detectTestExternalIP(t *testing.T) string {
 	return cachedExternalIP
 }
 
-func testOverlayKey(bagID [32]byte) []byte {
+func testOverlayKey(bagID boc.BagID) []byte {
 	return bagID[:]
 }
 
@@ -178,7 +183,7 @@ func TestE2E_DHTRegistrarRegistersBag(t *testing.T) {
 
 	server := startTestServer(t, ctx)
 
-	testBagID := [32]byte{0xDE, 0xAD, 0xBE, 0xEF}
+	testBagID := boc.BagID{0xDE, 0xAD, 0xBE, 0xEF}
 	overlayKey := testOverlayKey(testBagID)
 
 	retryWithBackoff(t, 3, func() error {
@@ -209,7 +214,7 @@ func TestE2E_OverlayManagerJoinsBagOverlay(t *testing.T) {
 
 	server := startTestServer(t, ctx)
 
-	testBagID := [32]byte{0xCA, 0xFE, 0xBA, 0xBE}
+	testBagID := boc.BagID{0xCA, 0xFE, 0xBA, 0xBE}
 	overlayKey := testOverlayKey(testBagID)
 
 	// Register bag in DHT so external clients can find us

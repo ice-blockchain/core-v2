@@ -15,6 +15,7 @@ import (
 	sptypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storagetypes "github.com/bnb-chain/greenfield/x/storage/types"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,7 +37,7 @@ func CreateE2EClient(t *testing.T, privKey string) greenfieldclient.Client {
 		RpcURLs:    []string{E2ERPCURL},
 		ChainID:    E2EChainID,
 		PrivateKey: privKey,
-		Logger:     greenfieldclient.NewSlogAdapter(E2ELogger()),
+		Logger:     E2ELogger(),
 	})
 	require.NoError(t, err)
 	return c
@@ -46,7 +47,7 @@ func CreateE2EClient(t *testing.T, privKey string) greenfieldclient.Client {
 func UploadToGreenfield(
 	t *testing.T, ctx context.Context,
 	privKey, bucketName, objectName string,
-	payload, ionStorageData []byte, bagID [32]byte,
+	payload, ionStorageData []byte, bagID boc.BagID,
 ) {
 	t.Helper()
 	account, err := gnfdtypes.NewAccountFromPrivateKey("e2e", privKey)
@@ -84,7 +85,7 @@ func pickReachableSP(t *testing.T, ctx context.Context, client gnfdclient.IClien
 	return ""
 }
 
-func uploadE2EObject(t *testing.T, ctx context.Context, client gnfdclient.IClient, bucket, object string, payload []byte, bagID [32]byte) {
+func uploadE2EObject(t *testing.T, ctx context.Context, client gnfdclient.IClient, bucket, object string, payload []byte, bagID boc.BagID) {
 	t.Helper()
 	tags := &storagetypes.ResourceTags{
 		Tags: []storagetypes.ResourceTags_Tag{

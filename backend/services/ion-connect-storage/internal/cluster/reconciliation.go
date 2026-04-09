@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	crdt "github.com/ipfs/go-ds-crdt"
@@ -114,7 +115,7 @@ func (c *Coordinator) reconcileOwnedCount(ctx context.Context) {
 			continue
 		}
 		bagID := extractBagIDFromByNodeKey(r.Key, c.nodeID)
-		if bagID == ([32]byte{}) {
+		if bagID == (boc.BagID{}) {
 			continue
 		}
 		if c.Owner(bagID) == c.nodeID {

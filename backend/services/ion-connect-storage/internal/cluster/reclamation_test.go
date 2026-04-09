@@ -3,6 +3,7 @@ package cluster
 import (
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,7 +57,7 @@ func TestResponsibilityRingSingleNode(t *testing.T) {
 
 func TestExtractBagIDFromByNodeKey(t *testing.T) {
 	nodeID := "test-node"
-	bagID := [32]byte{0xAB, 0xCD, 0xEF}
+	bagID := boc.BagID{0xAB, 0xCD, 0xEF}
 	key := "/" + ByNodeKey(nodeID, bagID)
 
 	extracted := extractBagIDFromByNodeKey(key, nodeID)
@@ -65,7 +66,7 @@ func TestExtractBagIDFromByNodeKey(t *testing.T) {
 
 func TestExtractBagIDInvalidKey(t *testing.T) {
 	result := extractBagIDFromByNodeKey("/invalid", "node")
-	require.Equal(t, [32]byte{}, result)
+	require.Equal(t, boc.BagID{}, result)
 }
 
 func TestSimpleHashDeterministic(t *testing.T) {

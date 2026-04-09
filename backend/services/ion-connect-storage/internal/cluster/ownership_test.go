@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ func TestClaimAndOwnsBag(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x01}
+	bagID := boc.BagID{0x01}
 	require.False(t, coord.OwnsBag(bagID))
 
 	err := coord.ClaimBag(ctx, bagID)
@@ -32,7 +33,7 @@ func TestReleaseBag(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x02}
+	bagID := boc.BagID{0x02}
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 	require.True(t, coord.OwnsBag(bagID))
 
@@ -47,7 +48,7 @@ func TestOwnsOrClaimUnclaimed(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x03}
+	bagID := boc.BagID{0x03}
 	owned, err := coord.OwnsOrClaim(ctx, bagID)
 	require.NoError(t, err)
 	require.True(t, owned)
@@ -61,7 +62,7 @@ func TestOwnsOrClaimAlreadyOwned(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x04}
+	bagID := boc.BagID{0x04}
 	// Simulate another node owning this bag with a fresh signed heartbeat.
 	// writeSignedOwnershipAsNode also writes self-certifying nodeinfo.
 	foreignNodeID, foreignPriv := writeSignedOwnershipAsNode(t, coord, "", bagID)
@@ -80,7 +81,7 @@ func TestOwnerUnknownBag(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	require.Equal(t, "", coord.Owner([32]byte{0xFF}))
+	require.Equal(t, "", coord.Owner(boc.BagID{0xFF}))
 }
 
 func TestNodeADNLAddress(t *testing.T) {
@@ -101,21 +102,21 @@ func TestMultipleBagsClaimed(t *testing.T) {
 	defer func() { cancel(); coord.Stop() }()
 
 	for i := 0; i < 10; i++ {
-		bagID := [32]byte{byte(i)}
+		bagID := boc.BagID{byte(i)}
 		require.NoError(t, coord.ClaimBag(ctx, bagID))
 	}
 	// ClaimBag no longer increments counter; verify bags are owned.
 	for i := 0; i < 10; i++ {
-		require.True(t, coord.OwnsBag([32]byte{byte(i)}))
+		require.True(t, coord.OwnsBag(boc.BagID{byte(i)}))
 	}
 
 	// Release 3.
 	for i := 0; i < 3; i++ {
-		bagID := [32]byte{byte(i)}
+		bagID := boc.BagID{byte(i)}
 		require.NoError(t, coord.ReleaseBag(ctx, bagID))
 	}
 	for i := 0; i < 3; i++ {
-		require.False(t, coord.OwnsBag([32]byte{byte(i)}))
+		require.False(t, coord.OwnsBag(boc.BagID{byte(i)}))
 	}
 }
 
@@ -125,7 +126,7 @@ func TestOwnerRejectsStaleTimestamp(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x10}
+	bagID := boc.BagID{0x10}
 	bagHex := hexEncode(bagID[:])
 
 	// Write ownership claim with a timestamp older than StaleHeartbeatTimeout.
@@ -143,7 +144,7 @@ func TestOwnerAcceptsFreshTimestamp(t *testing.T) {
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x11}
+	bagID := boc.BagID{0x11}
 	// ClaimBag uses time.Now(), which is within the freshness window.
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 	require.Equal(t, coord.nodeID, coord.Owner(bagID))
@@ -161,7 +162,7 @@ func TestOwnedCountConsistencyUnderConcurrency(t *testing.T) {
 	// Claim several bags so reconciliation has work.
 	const bagCount = 5
 	for i := range bagCount {
-		bagID := [32]byte{byte(0x20 + i)}
+		bagID := boc.BagID{byte(0x20 + i)}
 		owned, err := coord.OwnsOrClaim(ctx, bagID)
 		require.NoError(t, err)
 		require.True(t, owned)
@@ -173,7 +174,7 @@ func TestOwnedCountConsistencyUnderConcurrency(t *testing.T) {
 		defer close(done)
 		coord.reconcileOwnedCount(ctx)
 	}()
-	releaseBag := [32]byte{byte(0x20)}
+	releaseBag := boc.BagID{byte(0x20)}
 	require.NoError(t, coord.ReleaseBag(ctx, releaseBag))
 	<-done
 

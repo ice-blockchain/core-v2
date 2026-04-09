@@ -2,20 +2,23 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"net"
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/gin-gonic/gin"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cache"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/config"
@@ -66,7 +69,7 @@ func main() {
 	adnlAddr := adnlAddrFromGateway(server)
 	providerIndex := provider.NewProviderIndex(db, adnlAddr, coord, logger)
 
-	persister.SetOnBagIndexed(func(bagID [32]byte) {
+	persister.SetOnBagIndexed(func(bagID boc.BagID) {
 		if err := providerIndex.Register(bagID); err != nil {
 			logger.Error("provider register failed", "error", err)
 		}
@@ -79,7 +82,7 @@ func main() {
 	privateEngine := createPrivateEngine(gfClient, db, server, coord, m, cfg)
 
 	metadataStore := cache.NewMetadataStore(db, fetcher, persister, logger)
-	segmentCache := cache.NewSegmentCache(cfg.CacheDir, cfg.CacheTTL, func(bagID [32]byte) {
+	segmentCache := cache.NewSegmentCache(cfg.CacheDir, cfg.CacheTTL, func(bagID boc.BagID) {
 		server.DHTRegistrar().Deregister(bagID)
 		if err := server.OverlayManager().Leave(bagID); err != nil {
 			logger.Warn("failed to leave overlay on cache eviction", "bag", fmt.Sprintf("%x", bagID[:4]), "error", err)
@@ -121,22 +124,19 @@ func main() {
 
 	// Subscriber starts AFTER coordinator to avoid indexing without CRDT claims.
 	sub := index.NewSubscriber(gfClient, persister, coord, cfg.OnlineIOEnv, logger)
-	var subscriberWg sync.WaitGroup
-	subscriberWg.Add(1)
-	go func() {
-		defer subscriberWg.Done()
+
+	var wg errgroup.Group
+	wg.Go(func() error {
 		if err := sub.Run(ctx); err != nil && ctx.Err() == nil {
 			logger.Error("subscriber failed", "error", err)
 		}
-	}()
-
-	var httpWg sync.WaitGroup
-	httpWg.Add(1)
-	go func() {
-		defer httpWg.Done()
-		health.StartServer(ctx, privateEngine, "127.0.0.1:"+cfg.HttpPort, logger)
-	}()
-	startSeparateMetricsServer(ctx, cfg, m, &httpWg, logger)
+		return nil
+	})
+	wg.Go(func() error {
+		health.StartServer(ctx, privateEngine, net.JoinHostPort("127.0.0.1", cfg.HttpPort), logger)
+		return nil
+	})
+	startSeparateMetricsServer(ctx, cfg, m, &wg, logger)
 
 	logger.Info("ion-connect-storage started")
 	<-ctx.Done()
@@ -144,10 +144,9 @@ func main() {
 	logger.Info("shutdown signal received")
 	bridge.Stop()
 	rateLimiter.Close()
-	subscriberWg.Wait()
+	_ = wg.Wait()
 	coord.Stop()
 	shutdownServer(server, logger)
-	httpWg.Wait()
 	logger.Info("ion-connect-storage stopped")
 }
 
@@ -220,7 +219,7 @@ func openBagIndex(cfg config.Config, logger *slog.Logger) (*pebble.DB, greenfiel
 		RpcURLs:    cfg.GreenfieldRpcURLs,
 		ChainID:    cfg.GreenfieldChainID,
 		PrivateKey: cfg.GreenfieldPrivKey,
-		Logger:     greenfieldclient.NewSlogAdapter(logger),
+		Logger:     logger,
 	})
 	if err != nil {
 		db.Close()
@@ -307,17 +306,16 @@ func createPrivateEngine(
 	return engine
 }
 
-func startSeparateMetricsServer(ctx context.Context, cfg config.Config, m *metrics.Metrics, wg *sync.WaitGroup, logger *slog.Logger) {
+func startSeparateMetricsServer(ctx context.Context, cfg config.Config, m *metrics.Metrics, wg *errgroup.Group, logger *slog.Logger) {
 	if cfg.MetricsPort == "" || cfg.MetricsPort == cfg.HttpPort {
 		return
 	}
 	metricsEngine := gin.New()
 	metrics.RegisterRoutes(metricsEngine, m.Registry())
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		health.StartServer(ctx, metricsEngine, "127.0.0.1:"+cfg.MetricsPort, logger)
-	}()
+	wg.Go(func() error {
+		health.StartServer(ctx, metricsEngine, net.JoinHostPort("127.0.0.1", cfg.MetricsPort), logger)
+		return nil
+	})
 }
 
 func parseExternalAddr(addr string) (string, int) {
@@ -330,11 +328,5 @@ func parseExternalAddr(addr string) (string, int) {
 }
 
 func hexEncodeAddr(addr [32]byte) string {
-	const hex = "0123456789abcdef"
-	out := make([]byte, 64)
-	for i, v := range addr {
-		out[i*2] = hex[v>>4]
-		out[i*2+1] = hex[v&0x0f]
-	}
-	return string(out)
+	return hex.EncodeToString(addr[:])
 }

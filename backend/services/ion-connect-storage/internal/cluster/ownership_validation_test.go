@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +16,7 @@ import (
 func TestValidatedOwnerReturnsSelfWithoutHeartbeatCheck(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
-	bagID := [32]byte{0xaa, 0xbb}
+	bagID := boc.BagID{0xaa, 0xbb}
 
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
@@ -25,7 +26,7 @@ func TestValidatedOwnerReturnsSelfWithoutHeartbeatCheck(t *testing.T) {
 
 func TestValidatedOwnerRejectsNodeWithoutHeartbeat(t *testing.T) {
 	coord := newTestCoordinator(t, "")
-	bagID := [32]byte{0xcc, 0xdd}
+	bagID := boc.BagID{0xcc, 0xdd}
 
 	// Foreign node claims ownership but has no heartbeat.
 	writeSignedOwnershipAsNode(t, coord, "", bagID)
@@ -37,7 +38,7 @@ func TestValidatedOwnerRejectsNodeWithoutHeartbeat(t *testing.T) {
 func TestValidatedOwnerAcceptsAliveNode(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
-	bagID := [32]byte{0xee, 0xff}
+	bagID := boc.BagID{0xee, 0xff}
 
 	// Foreign node claims ownership and has a fresh signed heartbeat.
 	foreignNodeID, foreignPriv := writeSignedOwnershipAsNode(t, coord, "", bagID)
@@ -51,7 +52,7 @@ func TestValidatedOwnerAcceptsAliveNode(t *testing.T) {
 func TestValidatedOwnerRejectsStaleHeartbeat(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
-	bagID := [32]byte{0x11, 0x22}
+	bagID := boc.BagID{0x11, 0x22}
 
 	// Foreign node with stale signed heartbeat.
 	staleTimestamp := time.Now().Unix() - int64(coord.cfg.StaleHeartbeatTimeout.Seconds()) - 10
@@ -169,7 +170,7 @@ func TestIsNodeAliveRejectsFutureTimestamp(t *testing.T) {
 func TestOwnerRejectsFutureTimestampOwnership(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	ctx := context.Background()
-	bagID := [32]byte{0xfa, 0xce}
+	bagID := boc.BagID{0xfa, 0xce}
 
 	// Write ownership claim with far-future timestamp.
 	futureTS := time.Now().Unix() + maxClockSkew + 100

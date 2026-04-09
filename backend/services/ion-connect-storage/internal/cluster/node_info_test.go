@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +23,7 @@ func TestNodeInfoRoundTrip(t *testing.T) {
 }
 
 func TestCRDTKeyFormats(t *testing.T) {
-	bagID := [32]byte{0xAB, 0xCD}
+	bagID := boc.BagID{0xAB, 0xCD}
 	nodeID := "node-alpha"
 
 	require.Equal(t, "own/abcd000000000000000000000000000000000000000000000000000000000000", OwnershipKey(bagID))

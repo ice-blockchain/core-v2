@@ -3,12 +3,15 @@ package cluster
 import (
 	"context"
 	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"math/rand/v2"
 	"strings"
 	"time"
 
 	ds "github.com/ipfs/go-datastore"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 const (
@@ -18,7 +21,7 @@ const (
 
 // ClaimBag adds this node's ownership claim for a bag.
 // Writes dual keys: own/<bagID> -> nodeID and bynode/<nodeID>/<bagID> -> "".
-func (c *Coordinator) ClaimBag(ctx context.Context, bagID [32]byte) error {
+func (c *Coordinator) ClaimBag(ctx context.Context, bagID boc.BagID) error {
 	byNodeKey := ds.NewKey(ByNodeKey(c.nodeID, bagID))
 	ownerKey := ds.NewKey(OwnershipKey(bagID))
 
@@ -38,7 +41,7 @@ func (c *Coordinator) ClaimBag(ctx context.Context, bagID [32]byte) error {
 }
 
 // ReleaseBag removes this node's ownership claim.
-func (c *Coordinator) ReleaseBag(ctx context.Context, bagID [32]byte) error {
+func (c *Coordinator) ReleaseBag(ctx context.Context, bagID boc.BagID) error {
 	ownerKey := ds.NewKey(OwnershipKey(bagID))
 	byNodeKey := ds.NewKey(ByNodeKey(c.nodeID, bagID))
 
@@ -59,7 +62,7 @@ func (c *Coordinator) ReleaseBag(ctx context.Context, bagID [32]byte) error {
 }
 
 // OwnsBag checks if this node currently owns a bag.
-func (c *Coordinator) OwnsBag(bagID [32]byte) bool {
+func (c *Coordinator) OwnsBag(bagID boc.BagID) bool {
 	owner := c.Owner(bagID)
 	return owner == c.nodeID
 }
@@ -75,7 +78,7 @@ func (c *Coordinator) baseContext() context.Context {
 
 // Owner returns the nodeID that owns a bag, or empty string if unclaimed.
 // Verifies the ed25519 signature on the ownership claim to prevent forgery.
-func (c *Coordinator) Owner(bagID [32]byte) string {
+func (c *Coordinator) Owner(bagID boc.BagID) string {
 	ctx, cancel := context.WithTimeout(c.baseContext(), ownerQueryTimeout)
 	defer cancel()
 	val, err := c.crdt.Get(ctx, ds.NewKey(OwnershipKey(bagID)))
@@ -113,7 +116,7 @@ func (c *Coordinator) Owner(bagID [32]byte) string {
 // simultaneously (CRDT convergence race). Each node gets a different
 // delay based on hash(nodeID+bagID), breaking the symmetry that causes
 // all claimants to collide repeatedly.
-func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID [32]byte) (bool, error) {
+func (c *Coordinator) OwnsOrClaim(ctx context.Context, bagID boc.BagID) (bool, error) {
 	// Deterministic per-node delay so different nodes stagger their claims.
 	// Uses a slot based on hash(nodeID+bagID) mod activeNodes, multiplied
 	// by the verifyClaim total duration. This ensures the fastest node
@@ -217,30 +220,5 @@ func decodeHexToBytes(hexStr string, expectedLen int) ([]byte, error) {
 	if len(hexStr) != expectedLen*2 {
 		return nil, fmt.Errorf("hex string length %d, expected %d", len(hexStr), expectedLen*2)
 	}
-	dst := make([]byte, expectedLen)
-	for i := 0; i < expectedLen; i++ {
-		hi, ok := hexVal(hexStr[i*2])
-		if !ok {
-			return nil, fmt.Errorf("invalid hex char at position %d: %c", i*2, hexStr[i*2])
-		}
-		lo, ok := hexVal(hexStr[i*2+1])
-		if !ok {
-			return nil, fmt.Errorf("invalid hex char at position %d: %c", i*2+1, hexStr[i*2+1])
-		}
-		dst[i] = hi<<4 | lo
-	}
-	return dst, nil
-}
-
-func hexVal(b byte) (byte, bool) {
-	switch {
-	case b >= '0' && b <= '9':
-		return b - '0', true
-	case b >= 'a' && b <= 'f':
-		return b - 'a' + 10, true
-	case b >= 'A' && b <= 'F':
-		return b - 'A' + 10, true
-	default:
-		return 0, false
-	}
+	return hex.DecodeString(hexStr)
 }

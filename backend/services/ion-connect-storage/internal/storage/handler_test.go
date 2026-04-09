@@ -189,21 +189,21 @@ type mockTamperedForwarder struct {
 	proof []byte
 }
 
-func (m *mockTamperedForwarder) ForwardGetPiece(_ context.Context, _ [32]byte, _ int) ([]byte, []byte, error) {
+func (m *mockTamperedForwarder) ForwardGetPiece(_ context.Context, _ boc.BagID, _ int) ([]byte, []byte, error) {
 	return m.data, m.proof, nil
 }
 
-func (m *mockTamperedForwarder) ForwardRawQuery(_ context.Context, _ [32]byte, _ []byte) ([]byte, error) {
+func (m *mockTamperedForwarder) ForwardRawQuery(_ context.Context, _ boc.BagID, _ []byte) ([]byte, error) {
 	return nil, nil
 }
 
 type mockNonOwner struct{}
 
-func (m *mockNonOwner) OwnsBag(_ [32]byte) bool { return false }
+func (m *mockNonOwner) OwnsBag(_ boc.BagID) bool { return false }
 
 // createHandlerWithPayload builds a handler with in-memory metadata (no Greenfield).
 // The fetcher is nil-client so getPiece will use segment cache directly.
-func createHandlerWithPayload(t *testing.T, payloadSize int) (*storage.Handler, [32]byte, *boc.BagMetadata) {
+func createHandlerWithPayload(t *testing.T, payloadSize int) (*storage.Handler, boc.BagID, *boc.BagMetadata) {
 	t.Helper()
 	payload := make([]byte, payloadSize)
 	for i := range payload {
@@ -212,7 +212,7 @@ func createHandlerWithPayload(t *testing.T, payloadSize int) (*storage.Handler, 
 	return createHandlerWithSpecificPayload(t, payload)
 }
 
-func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Handler, [32]byte, *boc.BagMetadata) {
+func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Handler, boc.BagID, *boc.BagMetadata) {
 	t.Helper()
 	logger := testLogger()
 	header := boc.SingleFileHeader("data", uint64(len(payload)))
@@ -268,7 +268,7 @@ func createHandlerWithSpecificPayload(t *testing.T, payload []byte) (*storage.Ha
 
 // populateSegmentCache writes payload data into segment cache.
 // Note: the handler expects segment data to be raw Greenfield payload (no header).
-func populateSegmentCache(t *testing.T, sc *cache.SegmentCache, bagID [32]byte, payload, headerBytes []byte) {
+func populateSegmentCache(t *testing.T, sc *cache.SegmentCache, bagID boc.BagID, payload, headerBytes []byte) {
 	t.Helper()
 	for segIdx := 0; segIdx*boc.SegmentSize < len(payload); segIdx++ {
 		start := segIdx * boc.SegmentSize

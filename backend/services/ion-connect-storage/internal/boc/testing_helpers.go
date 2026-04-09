@@ -9,7 +9,7 @@ import (
 )
 
 // MustBuildIonStorageBoC is a test helper that calls BuildIonStorageBoC and fails on error.
-func MustBuildIonStorageBoC(t *testing.T, payload []byte, pieceSize uint32, header *TorrentHeader) ([32]byte, []byte) {
+func MustBuildIonStorageBoC(t *testing.T, payload []byte, pieceSize uint32, header *TorrentHeader) (BagID, []byte) {
 	t.Helper()
 	bagID, data, err := BuildIonStorageBoC(payload, pieceSize, header)
 	if err != nil {
@@ -47,10 +47,10 @@ func MustBuildTorrentInfoCell(t *testing.T, pieceSize uint32, fileSize uint64, r
 // Pieces are hashed over headerBytes + payload (matching tonutils-storage).
 // FileSize = len(headerBytes) + len(payload).
 // Greenfield stores only the raw payload; header is embedded in .ionstorage.
-func BuildIonStorageBoC(payload []byte, pieceSize uint32, header *TorrentHeader) ([32]byte, []byte, error) {
+func BuildIonStorageBoC(payload []byte, pieceSize uint32, header *TorrentHeader) (BagID, []byte, error) {
 	headerBytes, err := SerializeTorrentHeader(header)
 	if err != nil {
-		return [32]byte{}, nil, fmt.Errorf("serialize header: %w", err)
+		return BagID{}, nil, fmt.Errorf("serialize header: %w", err)
 	}
 
 	fullData := append(headerBytes, payload...)
@@ -68,10 +68,10 @@ func BuildIonStorageBoC(payload []byte, pieceSize uint32, header *TorrentHeader)
 		rootHash, headerHash, uint64(len(headerBytes)),
 	)
 	if err != nil {
-		return [32]byte{}, nil, err
+		return BagID{}, nil, err
 	}
 
-	var bagID [32]byte
+	var bagID BagID
 	copy(bagID[:], torrentInfoCell.Hash())
 
 	torrentInfoBoC := torrentInfoCell.ToBOC()

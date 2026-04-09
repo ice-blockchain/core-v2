@@ -29,7 +29,7 @@ func openTestDB(t *testing.T) *pebble.DB {
 	return db
 }
 
-func buildTestBoC(t *testing.T) ([]byte, [32]byte) {
+func buildTestBoC(t *testing.T) ([]byte, boc.BagID) {
 	t.Helper()
 	payload := make([]byte, 1024)
 	bagID, rawBoC := boc.MustBuildIonStorageBoC(t, payload, boc.PieceSize, boc.SingleFileHeader("test-object", uint64(len(payload))))
@@ -43,7 +43,7 @@ func TestMetadataStorePutAndGet(t *testing.T) {
 	rawBoC, bagID := buildTestBoC(t)
 	require.NoError(t, store.PutBagMetadata(bagID, rawBoC))
 
-	meta, err := store.GetBagMetadata(context.Background(), bagID)
+	meta, err := store.GetBagMetadata(t.Context(), bagID)
 	require.NoError(t, err)
 	require.Equal(t, bagID, meta.BagID)
 	require.NotNil(t, meta.Header)
@@ -56,9 +56,9 @@ func TestMetadataStoreGetNotFoundInIndexReturnsError(t *testing.T) {
 	fetcher := greenfield.NewFetcher(&noopGreenfieldClient{}, testLogger())
 	store := NewMetadataStore(db, fetcher, persister, testLogger())
 
-	var bagID [32]byte
+	var bagID boc.BagID
 	bagID[0] = 0xAA
-	_, err := store.GetBagMetadata(context.Background(), bagID)
+	_, err := store.GetBagMetadata(t.Context(), bagID)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "bag not found in index")
 }
@@ -75,13 +75,13 @@ func TestMetadataStoreGetFetchesOnCacheMiss(t *testing.T) {
 	fetcher := greenfield.NewFetcher(mock, testLogger())
 	store := NewMetadataStore(db, fetcher, persister, testLogger())
 
-	meta, err := store.GetBagMetadata(context.Background(), bagID)
+	meta, err := store.GetBagMetadata(t.Context(), bagID)
 	require.NoError(t, err)
 	require.Equal(t, bagID, meta.BagID)
 	require.True(t, mock.getObjectCalls.Load() > 0)
 
 	callsBefore := mock.getObjectCalls.Load()
-	meta2, err := store.GetBagMetadata(context.Background(), bagID)
+	meta2, err := store.GetBagMetadata(t.Context(), bagID)
 	require.NoError(t, err)
 	require.Equal(t, bagID, meta2.BagID)
 	require.Equal(t, callsBefore, mock.getObjectCalls.Load())
@@ -108,7 +108,7 @@ func TestMetadataStoreHas(t *testing.T) {
 	db := openTestDB(t)
 	store := NewMetadataStore(db, nil, nil, testLogger())
 
-	var emptyID [32]byte
+	var emptyID boc.BagID
 	has, err := store.HasBagMetadata(emptyID)
 	require.NoError(t, err)
 	require.False(t, has)
@@ -124,7 +124,7 @@ func TestMetadataStoreKeyIsolation(t *testing.T) {
 	db := openTestDB(t)
 	store := NewMetadataStore(db, nil, nil, testLogger())
 
-	var bagID [32]byte
+	var bagID boc.BagID
 	bagID[0] = 0xBB
 	idxKey := make([]byte, len("idx/bag/")+32)
 	copy(idxKey, "idx/bag/")
@@ -138,18 +138,18 @@ func TestMetadataStoreKeyIsolation(t *testing.T) {
 
 func TestValidateBagMetadataRejectsMismatchedBagID(t *testing.T) {
 	meta := &boc.BagMetadata{
-		BagID:      [32]byte{0x01},
+		BagID:      boc.BagID{0x01},
 		PieceSize:  boc.PieceSize,
 		FileSize:   1024,
 		PieceCount: 1,
 	}
-	err := validateBagMetadata([32]byte{0x02}, meta)
+	err := validateBagMetadata(boc.BagID{0x02}, meta)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "bag ID mismatch")
 }
 
 func TestValidateBagMetadataRejectsZeroPieceSize(t *testing.T) {
-	id := [32]byte{0x01}
+	id := boc.BagID{0x01}
 	meta := &boc.BagMetadata{
 		BagID:      id,
 		PieceSize:  0,
@@ -162,7 +162,7 @@ func TestValidateBagMetadataRejectsZeroPieceSize(t *testing.T) {
 }
 
 func TestValidateBagMetadataRejectsZeroPieceCount(t *testing.T) {
-	id := [32]byte{0x01}
+	id := boc.BagID{0x01}
 	meta := &boc.BagMetadata{
 		BagID:      id,
 		PieceSize:  boc.PieceSize,
@@ -175,7 +175,7 @@ func TestValidateBagMetadataRejectsZeroPieceCount(t *testing.T) {
 }
 
 func TestValidateBagMetadataRejectsHeaderExceedingFile(t *testing.T) {
-	id := [32]byte{0x01}
+	id := boc.BagID{0x01}
 	meta := &boc.BagMetadata{
 		BagID:      id,
 		PieceSize:  boc.PieceSize,
@@ -189,7 +189,7 @@ func TestValidateBagMetadataRejectsHeaderExceedingFile(t *testing.T) {
 }
 
 func TestValidateBagMetadataAcceptsValid(t *testing.T) {
-	id := [32]byte{0x01}
+	id := boc.BagID{0x01}
 	meta := &boc.BagMetadata{
 		BagID:      id,
 		PieceSize:  boc.PieceSize,

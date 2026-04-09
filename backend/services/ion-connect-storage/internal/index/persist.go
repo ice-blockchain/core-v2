@@ -8,6 +8,7 @@ import (
 
 	"github.com/cockroachdb/pebble/v2"
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 const (
@@ -24,26 +25,26 @@ type BagLocation struct {
 
 // BagEntry pairs a bag ID with its location for batch persistence.
 type BagEntry struct {
-	BagID    [32]byte
+	BagID    boc.BagID
 	Location BagLocation
 }
 
 // BagIndexedCallback is called after a new bag is successfully persisted.
-type BagIndexedCallback func(bagID [32]byte)
+type BagIndexedCallback func(bagID boc.BagID)
 
 // Persister provides a two-tier bag index: in-memory LRU cache for fast reads
 // backed by PebbleDB for durability. LookupBag checks memory first, falls back
 // to PebbleDB (populating memory on hit). PersistBagsAndHeight writes to both.
 type Persister struct {
 	db           *pebble.DB
-	index        *lru.Cache[[32]byte, BagLocation]
+	index        *lru.Cache[boc.BagID, BagLocation]
 	cbMu         sync.RWMutex
 	onBagIndexed BagIndexedCallback
 }
 
 // NewPersister creates a Persister backed by the given PebbleDB instance.
 func NewPersister(db *pebble.DB) *Persister {
-	cache, _ := lru.New[[32]byte, BagLocation](maxCachedBagLoc)
+	cache, _ := lru.New[boc.BagID, BagLocation](maxCachedBagLoc)
 	return &Persister{
 		db:    db,
 		index: cache,
@@ -78,7 +79,7 @@ func (p *Persister) LoadLastHeight() (int64, error) {
 // Checks the in-memory index first, falls back to PebbleDB.
 // On PebbleDB hit, the entry is promoted to the in-memory index.
 // Returns false if the bag is not found in either tier.
-func (p *Persister) LookupBag(bagID [32]byte) (BagLocation, bool, error) {
+func (p *Persister) LookupBag(bagID boc.BagID) (BagLocation, bool, error) {
 	if loc, ok := p.index.Get(bagID); ok {
 		return loc, true, nil
 	}
@@ -144,7 +145,7 @@ func (p *Persister) PersistBagsAndHeight(entries []BagEntry, height int64) error
 	return nil
 }
 
-func makeBagKey(bagID [32]byte) []byte {
+func makeBagKey(bagID boc.BagID) []byte {
 	key := make([]byte, len(bagKeyPrefix)+32)
 	copy(key, bagKeyPrefix)
 	copy(key[len(bagKeyPrefix):], bagID[:])

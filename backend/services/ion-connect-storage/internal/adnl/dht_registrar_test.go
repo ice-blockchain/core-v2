@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 )
@@ -36,17 +37,18 @@ func generateTestKey(t *testing.T) ed25519.PrivateKey {
 }
 
 func TestDHTRegistrar_RegisterDeregister(t *testing.T) {
+	t.Parallel()
 	mock := &mockDHTStorer{}
 	key := generateTestKey(t)
 	reg := newDHTRegistrar(mock, nil, 100, key, testLogger())
 
-	bag1 := [32]byte{1}
-	bag2 := [32]byte{2}
-	bag3 := [32]byte{3}
+	bag1 := boc.BagID{1}
+	bag2 := boc.BagID{2}
+	bag3 := boc.BagID{3}
 
-	require.NoError(t, reg.Register(context.Background(), bag1))
-	require.NoError(t, reg.Register(context.Background(), bag2))
-	require.NoError(t, reg.Register(context.Background(), bag3))
+	require.NoError(t, reg.Register(t.Context(), bag1))
+	require.NoError(t, reg.Register(t.Context(), bag2))
+	require.NoError(t, reg.Register(t.Context(), bag3))
 	require.Equal(t, 3, reg.Count())
 	require.Equal(t, 3, mock.storeCount)
 
@@ -55,27 +57,29 @@ func TestDHTRegistrar_RegisterDeregister(t *testing.T) {
 }
 
 func TestDHTRegistrar_LRUEviction(t *testing.T) {
+	t.Parallel()
 	mock := &mockDHTStorer{}
 	key := generateTestKey(t)
 	reg := newDHTRegistrar(mock, nil, 2, key, testLogger())
 
-	_ = reg.Register(context.Background(), [32]byte{1})
-	_ = reg.Register(context.Background(), [32]byte{2})
-	_ = reg.Register(context.Background(), [32]byte{3})
+	_ = reg.Register(t.Context(), boc.BagID{1})
+	_ = reg.Register(t.Context(), boc.BagID{2})
+	_ = reg.Register(t.Context(), boc.BagID{3})
 
 	require.Equal(t, 2, reg.Count())
 }
 
 func TestDHTRegistrar_RegionIndex(t *testing.T) {
+	t.Parallel()
 	mock := &mockDHTStorer{}
 	key := generateTestKey(t)
 	reg := newDHTRegistrar(mock, nil, 100, key, testLogger())
 
-	bag1 := [32]byte{1}
-	bag2 := [32]byte{2}
+	bag1 := boc.BagID{1}
+	bag2 := boc.BagID{2}
 
-	_ = reg.Register(context.Background(), bag1)
-	_ = reg.Register(context.Background(), bag2)
+	_ = reg.Register(t.Context(), bag1)
+	_ = reg.Register(t.Context(), bag2)
 
 	region1 := overlayRegion(bag1)
 	region2 := overlayRegion(bag2)
@@ -91,22 +95,23 @@ func TestDHTRegistrar_RegionIndex(t *testing.T) {
 }
 
 func TestDHTRegistrar_LRUEvictionCleansRegionIndex(t *testing.T) {
+	t.Parallel()
 	mock := &mockDHTStorer{}
 	key := generateTestKey(t)
 	reg := newDHTRegistrar(mock, nil, 2, key, testLogger())
 
-	bag1 := [32]byte{1}
-	bag2 := [32]byte{2}
-	bag3 := [32]byte{3}
+	bag1 := boc.BagID{1}
+	bag2 := boc.BagID{2}
+	bag3 := boc.BagID{3}
 
-	_ = reg.Register(context.Background(), bag1)
-	_ = reg.Register(context.Background(), bag2)
+	_ = reg.Register(t.Context(), bag1)
+	_ = reg.Register(t.Context(), bag2)
 
 	region1 := overlayRegion(bag1)
 	require.NotEmpty(t, reg.bagsInRegion(region1))
 
 	// Evicts bag1
-	_ = reg.Register(context.Background(), bag3)
+	_ = reg.Register(t.Context(), bag3)
 	require.Equal(t, 2, reg.Count())
 
 	// bag1 should be gone from region index
@@ -117,8 +122,9 @@ func TestDHTRegistrar_LRUEvictionCleansRegionIndex(t *testing.T) {
 }
 
 func TestComputeOverlayID_Deterministic(t *testing.T) {
-	bag1 := [32]byte{0x00}
-	bag2 := [32]byte{0xFF}
+	t.Parallel()
+	bag1 := boc.BagID{0x00}
+	bag2 := boc.BagID{0xFF}
 
 	key1 := computeOverlayKey(bag1)
 	key2 := computeOverlayKey(bag2)
@@ -129,11 +135,12 @@ func TestComputeOverlayID_Deterministic(t *testing.T) {
 }
 
 func TestDHTRegistrar_StopClean(t *testing.T) {
+	t.Parallel()
 	mock := &mockDHTStorer{}
 	key := generateTestKey(t)
 	reg := newDHTRegistrar(mock, nil, 100, key, testLogger())
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	reg.Start(ctx)
 	cancel()
 
@@ -151,6 +158,7 @@ func TestDHTRegistrar_StopClean(t *testing.T) {
 }
 
 func TestXorAffinity(t *testing.T) {
+	t.Parallel()
 	a := make([]byte, 32)
 	b := make([]byte, 32)
 
@@ -165,6 +173,7 @@ func TestXorAffinity(t *testing.T) {
 }
 
 func TestRegionCenterKey(t *testing.T) {
+	t.Parallel()
 	key := regionCenterKey(0xAB)
 	require.Len(t, key, 32)
 	require.Equal(t, byte(0xAB), key[0])

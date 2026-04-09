@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -119,7 +120,7 @@ func TestParseTruncatedData(t *testing.T) {
 }
 
 func TestParseForwardPieceRequestRejectsTrailingBytes(t *testing.T) {
-	req := ForwardPieceRequest{BagID: [32]byte{0x01}, PieceID: 1}
+	req := ForwardPieceRequest{BagID: boc.BagID{0x01}, PieceID: 1}
 	encoded := SerializeForwardPieceRequest(req)
 	// Append trailing byte
 	_, err := ParseForwardPieceRequest(append(encoded, 0xFF))
@@ -136,7 +137,7 @@ func TestParseForwardPieceRequestRejectsNegativePieceID(t *testing.T) {
 }
 
 func TestParseForwardPieceRequestExactSizeAccepted(t *testing.T) {
-	req := ForwardPieceRequest{BagID: [32]byte{0xAB}, PieceID: 100}
+	req := ForwardPieceRequest{BagID: boc.BagID{0xAB}, PieceID: 100}
 	encoded := SerializeForwardPieceRequest(req)
 	require.Len(t, encoded, 40)
 	decoded, err := ParseForwardPieceRequest(encoded)

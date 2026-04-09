@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cockroachdb/pebble/v2"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +20,7 @@ func TestPersistBagsAndHeight_SingleEntry(t *testing.T) {
 	db := openTestDB(t)
 	p := NewPersister(db)
 
-	bagID := [32]byte{1, 2, 3}
+	bagID := boc.BagID{1, 2, 3}
 	loc := BagLocation{BucketName: "bucket-a", ObjectName: "object-a"}
 
 	err := p.PersistBagsAndHeight([]BagEntry{{BagID: bagID, Location: loc}}, 100)
@@ -40,9 +41,9 @@ func TestPersistBagsAndHeight_MultipleEntries(t *testing.T) {
 	p := NewPersister(db)
 
 	entries := []BagEntry{
-		{BagID: [32]byte{1}, Location: BagLocation{"b1", "o1"}},
-		{BagID: [32]byte{2}, Location: BagLocation{"b2", "o2"}},
-		{BagID: [32]byte{3}, Location: BagLocation{"b3", "o3"}},
+		{BagID: boc.BagID{1}, Location: BagLocation{"b1", "o1"}},
+		{BagID: boc.BagID{2}, Location: BagLocation{"b2", "o2"}},
+		{BagID: boc.BagID{3}, Location: BagLocation{"b3", "o3"}},
 	}
 
 	err := p.PersistBagsAndHeight(entries, 500)
@@ -73,7 +74,7 @@ func TestLookupBag_NotFound(t *testing.T) {
 	db := openTestDB(t)
 	p := NewPersister(db)
 
-	_, found, err := p.LookupBag([32]byte{99})
+	_, found, err := p.LookupBag(boc.BagID{99})
 	require.NoError(t, err)
 	require.False(t, found)
 }
@@ -82,7 +83,7 @@ func TestPersistBagsAndHeight_OverwritesBag(t *testing.T) {
 	db := openTestDB(t)
 	p := NewPersister(db)
 
-	bagID := [32]byte{42}
+	bagID := boc.BagID{42}
 	loc1 := BagLocation{"bucket-old", "object-old"}
 	loc2 := BagLocation{"bucket-new", "object-new"}
 

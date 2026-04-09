@@ -10,6 +10,7 @@ import (
 	"time"
 
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/xssnick/tonutils-go/adnl"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/adnl/rldp"
@@ -26,8 +27,8 @@ const (
 
 // BagOwnershipChecker checks bag ownership state.
 type BagOwnershipChecker interface {
-	OwnsBag(bagID [32]byte) bool
-	Owner(bagID [32]byte) string
+	OwnsBag(bagID boc.BagID) bool
+	Owner(bagID boc.BagID) string
 }
 
 // ClusterMemberResolver checks whether an ADNL address belongs to a
@@ -37,10 +38,10 @@ type ClusterMemberResolver interface {
 }
 
 // PieceHandler serves a local piece request (used for forwarded pieces).
-type PieceHandler func(ctx context.Context, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
+type PieceHandler func(ctx context.Context, bagID boc.BagID, pieceID int) (data []byte, proof []byte, err error)
 
 // RawQueryHandler handles a raw storage overlay query locally.
-type RawQueryHandler func(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
+type RawQueryHandler func(ctx context.Context, bagID boc.BagID, rawQuery []byte) ([]byte, error)
 
 // handlerBundle holds all handler references that are set before the server
 // starts accepting queries. Stored as a single atomic.Pointer to avoid

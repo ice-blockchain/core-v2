@@ -56,9 +56,13 @@ func (i *Ingester) Run(ctx context.Context) error {
 
 	i.log.Info().Int64("height", subscribeHeight).Msg("starting ingester")
 
+	query, err := greenfieldclient.DefaultQuery(i.onlineIOEnv)
+	if err != nil {
+		return fmt.Errorf("build query: %w", err)
+	}
 	eventCh, err := i.client.Subscribe(ctx, greenfieldclient.SubscribeOpts{
 		LastHeight: subscribeHeight,
-		Query:      greenfieldclient.DefaultQuery(i.onlineIOEnv),
+		Query:      query,
 	})
 	if err != nil {
 		return fmt.Errorf("subscribe: %w", err)

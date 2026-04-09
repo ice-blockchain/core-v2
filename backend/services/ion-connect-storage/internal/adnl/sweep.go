@@ -13,11 +13,12 @@ import (
 	"github.com/xssnick/tonutils-go/adnl/keys"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/tl"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
 	kClosest                     = 7
-	queryTimeout                 = 3 * time.Second
+	queryTimeout                 = 10 * time.Second
 	maxConcurrentKademliaQueries = 20
 )
 
@@ -103,22 +104,16 @@ func (s *sweeper) batchStore(ctx context.Context, peers []adnl.Peer, values []*d
 	var wg sync.WaitGroup
 	var stored int32
 	var storedMu sync.Mutex
-	sem := make(chan struct{}, maxConcurrentStores)
+	sem := semaphore.NewWeighted(maxConcurrentStores)
 
 	for _, peer := range peers {
 		for _, val := range values {
-			select {
-			case <-ctx.Done():
-				wg.Wait()
-				if stored == 0 {
-					return fmt.Errorf("no values stored: %w", ctx.Err())
-				}
-				return nil
-			case sem <- struct{}{}:
+			if err := sem.Acquire(ctx, 1); err != nil {
+				break
 			}
 			wg.Add(1)
 			go func(p adnl.Peer, v *dht.Value) {
-				defer func() { <-sem; wg.Done() }()
+				defer func() { sem.Release(1); wg.Done() }()
 				if err := storeSingleValue(ctx, p, v); err == nil {
 					storedMu.Lock()
 					stored++
@@ -173,23 +168,20 @@ func (s *sweeper) querySeeds(ctx context.Context, targetKey []byte, checked *syn
 	var result []foundNode
 	var mu sync.Mutex
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, maxConcurrentKademliaQueries)
+	sem := semaphore.NewWeighted(maxConcurrentKademliaQueries)
 
-seedLoop:
 	for _, seed := range s.seedNodes {
-		select {
-		case sem <- struct{}{}:
-			wg.Add(1)
-			go func(sn seedNode) {
-				defer func() { <-sem; wg.Done() }()
-				nodes := s.findNodesVia(ctx, sn.addr, sn.serverKey, targetKey, checked)
-				mu.Lock()
-				result = append(result, nodes...)
-				mu.Unlock()
-			}(seed)
-		case <-ctx.Done():
-			break seedLoop
+		if err := sem.Acquire(ctx, 1); err != nil {
+			break
 		}
+		wg.Add(1)
+		go func(sn seedNode) {
+			defer func() { sem.Release(1); wg.Done() }()
+			nodes := s.findNodesVia(ctx, sn.addr, sn.serverKey, targetKey, checked)
+			mu.Lock()
+			result = append(result, nodes...)
+			mu.Unlock()
+		}(seed)
 	}
 	wg.Wait()
 	return result
@@ -199,25 +191,22 @@ func (s *sweeper) queryNodes(ctx context.Context, nodes []foundNode, targetKey [
 	var result []foundNode
 	var mu sync.Mutex
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, maxConcurrentKademliaQueries)
+	sem := semaphore.NewWeighted(maxConcurrentKademliaQueries)
 
-nodeLoop:
 	for _, n := range nodes {
-		select {
-		case sem <- struct{}{}:
-			wg.Add(1)
-			go func(fn foundNode) {
-				defer func() { <-sem; wg.Done() }()
-				addr := fn.peer.RemoteAddr()
-				key := fn.peer.GetPubKey()
-				discovered := s.findNodesVia(ctx, addr, key, targetKey, checked)
-				mu.Lock()
-				result = append(result, discovered...)
-				mu.Unlock()
-			}(n)
-		case <-ctx.Done():
-			break nodeLoop
+		if err := sem.Acquire(ctx, 1); err != nil {
+			break
 		}
+		wg.Add(1)
+		go func(fn foundNode) {
+			defer func() { sem.Release(1); wg.Done() }()
+			addr := fn.peer.RemoteAddr()
+			key := fn.peer.GetPubKey()
+			discovered := s.findNodesVia(ctx, addr, key, targetKey, checked)
+			mu.Lock()
+			result = append(result, discovered...)
+			mu.Unlock()
+		}(n)
 	}
 	wg.Wait()
 	return result

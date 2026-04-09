@@ -13,6 +13,7 @@ import (
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/adnl/rldp"
 	"github.com/xssnick/tonutils-go/tl"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -20,6 +21,16 @@ const (
 	queryHandlerTimeout        = 30 * time.Second
 	maxQuerySize               = 256 * 1024 // 256KB per-query payload limit
 )
+
+// handlerContext groups dependencies shared across ADNL/RLDP query handlers.
+type handlerContext struct {
+	overlays         *OverlayManager
+	clusterOverlayID [32]byte
+	clusterHandler   ClusterQueryHandler
+	memberChecker    ClusterMemberChecker
+	querySem         *semaphore.Weighted
+	logger           *slog.Logger
+}
 
 // handleNewConnection is called when a new ADNL peer connects.
 func (s *Server) handleNewConnection(client adnl.Peer) error {
@@ -39,24 +50,31 @@ func (s *Server) handleNewConnection(client adnl.Peer) error {
 		s.activeConnections.Add(-1)
 	})
 	cc := s.loadClusterConfig()
-	setupOverlayRLDP(client, s.overlays, s.httpBridge, connCtx, cc.overlayID, cc.queryHandler, cc.memberChecker, s.querySemaphore, s.logger)
+	hc := handlerContext{
+		overlays:         s.overlays,
+		clusterOverlayID: cc.overlayID,
+		clusterHandler:   cc.queryHandler,
+		memberChecker:    cc.memberChecker,
+		querySem:         s.querySemaphore,
+		logger:           s.logger,
+	}
+	setupOverlayRLDP(client, hc, s.httpBridge, connCtx)
 	return nil
 }
 
-func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHTTPBridge, connCtx context.Context, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, querySem chan struct{}, logger *slog.Logger) {
+func setupOverlayRLDP(client adnl.Peer, hc handlerContext, bridge *RLDPHTTPBridge, connCtx context.Context) {
 	peerID := client.GetID()
 	extADNL := overlay.CreateExtendedADNL(client)
 	rl := overlay.CreateExtendedRLDP(rldp.NewClientV2(extADNL))
 
 	extADNL.SetQueryHandler(func(query *adnl.MessageQuery) (retErr error) {
-		defer recoverPanic(logger, &retErr)
+		defer recoverPanic(hc.logger, &retErr)
 
-		select {
-		case querySem <- struct{}{}:
-			defer func() { <-querySem }()
-		default:
+		if !hc.querySem.TryAcquire(1) {
 			return fmt.Errorf("query concurrency limit reached")
 		}
+		defer hc.querySem.Release(1)
+
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
 
@@ -64,9 +82,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 			return client.Answer(ctx, query.ID, &Capabilities{Value: capabilityRLDP2})
 		}
 		// Handle cluster queries sent without overlay wrapping (block exchange).
-		if clusterHandler != nil {
-			if memberChecker == nil || !memberChecker.IsClusterMember(peerID) {
-				logger.Debug("rejected cluster query from non-member peer", "peer", hex.EncodeToString(peerID[:8]))
+		if hc.clusterHandler != nil {
+			if hc.memberChecker == nil || !hc.memberChecker.IsClusterMember(peerID) {
+				hc.logger.Debug("rejected cluster query from non-member peer", "peer", hex.EncodeToString(peerID[:8]))
 				return nil
 			}
 			rawQuery := extractRawTL(query.Data)
@@ -74,9 +92,9 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 				return fmt.Errorf("query too large: %d bytes", len(rawQuery))
 			}
 			if rawQuery != nil && len(rawQuery) >= 4 {
-				resp, err := clusterHandler(ctx, rawQuery)
+				resp, err := hc.clusterHandler(ctx, rawQuery)
 				if err != nil {
-					logger.Debug("root cluster query handler error", "error", err)
+					hc.logger.Debug("root cluster query handler error", "error", err)
 					return err
 				}
 				if resp != nil {
@@ -84,31 +102,29 @@ func setupOverlayRLDP(client adnl.Peer, overlays *OverlayManager, bridge *RLDPHT
 				}
 			}
 		}
-		logger.Debug("unhandled root ADNL query", "type", fmt.Sprintf("%T", query.Data))
+		hc.logger.Debug("unhandled root ADNL query", "type", fmt.Sprintf("%T", query.Data))
 		return nil
 	})
-	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(overlays, extADNL, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, querySem, logger))
-	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(overlays, rl, clusterOverlayID, clusterHandler, memberChecker, peerID, querySem, logger))
+	extADNL.SetOnUnknownOverlayQuery(makeADNLHandler(hc, extADNL, rl, peerID))
+	rl.SetOnUnknownOverlayQuery(makeRLDPHandler(hc, rl, peerID))
 
 	if bridge != nil {
 		rl.SetOnQuery(bridge.MakeRLDPQueryHandler(connCtx, rl, client.GetID()))
 	}
 
-	logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
+	hc.logger.Debug("new ADNL connection", "peer", hex.EncodeToString(client.GetID()))
 }
 
 // makeADNLHandler routes overlay queries. Cluster overlay goes to clusterHandler;
 // storage overlays go to OverlayManager.
-func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, querySem chan struct{}, logger *slog.Logger) func(query *adnl.MessageQuery) error {
+func makeADNLHandler(hc handlerContext, peer *overlay.ADNLWrapper, rl *overlay.RLDPWrapper, peerID []byte) func(query *adnl.MessageQuery) error {
 	return func(query *adnl.MessageQuery) (retErr error) {
-		defer recoverPanic(logger, &retErr)
+		defer recoverPanic(hc.logger, &retErr)
 
-		select {
-		case querySem <- struct{}{}:
-			defer func() { <-querySem }()
-		default:
+		if !hc.querySem.TryAcquire(1) {
 			return fmt.Errorf("query concurrency limit reached")
 		}
+		defer hc.querySem.Release(1)
 
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
@@ -129,12 +145,12 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 			return fmt.Errorf("query too large: %d bytes", len(rawQuery))
 		}
 
-		if clusterHandler != nil && overlayID == clusterOverlayID {
-			if memberChecker == nil || !memberChecker.IsClusterMember(peerID) {
-				logger.Debug("rejected overlay cluster query from non-member")
+		if hc.clusterHandler != nil && overlayID == hc.clusterOverlayID {
+			if hc.memberChecker == nil || !hc.memberChecker.IsClusterMember(peerID) {
+				hc.logger.Debug("rejected overlay cluster query from non-member")
 				return nil
 			}
-			resp, err := clusterHandler(ctx, rawQuery)
+			resp, err := hc.clusterHandler(ctx, rawQuery)
 			if err != nil {
 				return err
 			}
@@ -144,9 +160,9 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 			return nil
 		}
 
-		checkPingAndNotify(rawQuery, overlays, rl, overlayIDBytes, overlayID)
+		checkPingAndNotify(rawQuery, hc.overlays, rl, overlayIDBytes, overlayID)
 
-		resp, err := overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
+		resp, err := hc.overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
 		if err != nil {
 			return err
 		}
@@ -155,23 +171,21 @@ func makeADNLHandler(overlays *OverlayManager, peer *overlay.ADNLWrapper, rl *ov
 	}
 }
 
-func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, clusterOverlayID [32]byte, clusterHandler ClusterQueryHandler, memberChecker ClusterMemberChecker, peerID []byte, querySem chan struct{}, logger *slog.Logger) func(transferID []byte, query *rldp.Query) error {
+func makeRLDPHandler(hc handlerContext, peer *overlay.RLDPWrapper, peerID []byte) func(transferID []byte, query *rldp.Query) error {
 	return func(transferID []byte, query *rldp.Query) (retErr error) {
-		defer recoverPanic(logger, &retErr)
+		defer recoverPanic(hc.logger, &retErr)
 
-		select {
-		case querySem <- struct{}{}:
-			defer func() { <-querySem }()
-		default:
+		if !hc.querySem.TryAcquire(1) {
 			return fmt.Errorf("query concurrency limit reached")
 		}
+		defer hc.querySem.Release(1)
 
 		ctx, cancel := context.WithTimeout(context.Background(), queryHandlerTimeout)
 		defer cancel()
 
 		req, overlayIDBytes := overlay.UnwrapQuery(query.Data)
 		if overlayIDBytes == nil || len(overlayIDBytes) != 32 {
-			logger.Debug("RLDP: no valid overlay in query")
+			hc.logger.Debug("RLDP: no valid overlay in query")
 			return nil
 		}
 
@@ -186,12 +200,12 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 			return fmt.Errorf("query too large: %d bytes", len(rawQuery))
 		}
 
-		if clusterHandler != nil && overlayID == clusterOverlayID {
-			if memberChecker == nil || !memberChecker.IsClusterMember(peerID) {
-				logger.Debug("rejected RLDP cluster query from non-member")
+		if hc.clusterHandler != nil && overlayID == hc.clusterOverlayID {
+			if hc.memberChecker == nil || !hc.memberChecker.IsClusterMember(peerID) {
+				hc.logger.Debug("rejected RLDP cluster query from non-member")
 				return nil
 			}
-			resp, err := clusterHandler(ctx, rawQuery)
+			resp, err := hc.clusterHandler(ctx, rawQuery)
 			if err != nil {
 				return err
 			}
@@ -201,9 +215,9 @@ func makeRLDPHandler(overlays *OverlayManager, peer *overlay.RLDPWrapper, cluste
 			return peer.SendAnswer(ctx, query.MaxAnswerSize, query.Timeout, query.ID, transferID, tl.Raw(resp))
 		}
 
-		resp, err := overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
+		resp, err := hc.overlays.HandleIncomingQuery(ctx, overlayID, rawQuery)
 		if err != nil {
-			logger.Debug("RLDP overlay query failed", "error", err)
+			hc.logger.Debug("RLDP overlay query failed", "error", err)
 			return err
 		}
 
@@ -229,6 +243,8 @@ func checkPingAndNotify(rawQuery []byte, overlays *OverlayManager, rl *overlay.R
 
 // recoverPanic catches panics in query handlers and converts them to errors.
 // This prevents a single malformed message from crashing the ADNL server.
+// retErr is a *error (pointer to error interface) so the deferred call can
+// assign the recovered error to the caller's named return value.
 func recoverPanic(logger *slog.Logger, retErr *error) {
 	if r := recover(); r != nil {
 		logger.Error("panic in query handler", "recover", r)

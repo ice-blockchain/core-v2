@@ -3,6 +3,8 @@ package cluster
 import (
 	"encoding/binary"
 	"fmt"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 // TL constructor IDs for cluster protocols.
@@ -117,6 +119,9 @@ func ParseBlockResponse(data []byte) ([]byte, bool, error) {
 		}
 		return data[8 : 8+length], true, nil
 	case tlBlockNotFound:
+		if len(data) != 4 {
+			return nil, false, fmt.Errorf("block not found response size %d, want 4", len(data))
+		}
 		return nil, false, nil
 	default:
 		return nil, false, fmt.Errorf("unexpected block response constructor: 0x%08x", id)
@@ -125,7 +130,7 @@ func ParseBlockResponse(data []byte) ([]byte, bool, error) {
 
 // ForwardPieceRequest holds a piece forwarding request.
 type ForwardPieceRequest struct {
-	BagID   [32]byte
+	BagID   boc.BagID
 	PieceID int32
 }
 
@@ -186,6 +191,9 @@ func ParsePieceResponse(data []byte) ([]byte, []byte, bool, error) {
 	case tlPieceResponse:
 		return parsePieceResponsePayload(data)
 	case tlPieceNotFound:
+		if len(data) != 4 {
+			return nil, nil, false, fmt.Errorf("piece not found response size %d, want 4", len(data))
+		}
 		return nil, nil, false, nil
 	default:
 		return nil, nil, false, fmt.Errorf("unexpected piece response constructor: 0x%08x", id)

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/zeebo/xxh3"
 )
 
 const reclaimBatchSize = 1000
@@ -96,7 +98,7 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 			continue
 		}
 		bagID := extractBagIDFromByNodeKey(r.Key, deadNodeID)
-		if bagID == ([32]byte{}) {
+		if bagID == (boc.BagID{}) {
 			continue
 		}
 
@@ -121,7 +123,7 @@ func (c *Coordinator) reclaimBagsFromNode(ctx context.Context, deadNodeID string
 // reclaimSingleBag reclaims a bag from a dead node. Uses OwnsOrClaim (with
 // post-claim verification) to prevent counter drift when multiple nodes race
 // to reclaim the same bag.
-func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID [32]byte, deadNodeID string) error {
+func (c *Coordinator) reclaimSingleBag(ctx context.Context, bagID boc.BagID, deadNodeID string) error {
 	current := c.Owner(bagID)
 	if current != "" && current != deadNodeID {
 		// Already claimed by another active node; clean up stale bynode key.
@@ -175,34 +177,28 @@ func (c *Coordinator) cleanupDeadNodeKeys(ctx context.Context, deadNodeID string
 	_ = c.crdt.Delete(ctx, ds.NewKey(NodeInfoKey(deadNodeID)))
 }
 
-func extractBagIDFromByNodeKey(key string, nodeID string) [32]byte {
+func extractBagIDFromByNodeKey(key string, nodeID string) boc.BagID {
 	// Key format: /bynode/<nodeID>/<hex-bagID>
 	prefix := "/" + ByNodePrefix(nodeID)
 	if len(key) <= len(prefix) {
-		return [32]byte{}
+		return boc.BagID{}
 	}
 	hexStr := key[len(prefix):]
 	if len(hexStr) != 64 {
-		return [32]byte{}
+		return boc.BagID{}
 	}
 	decoded, err := decodeHexToBytes(hexStr, 32)
 	if err != nil {
-		return [32]byte{}
+		return boc.BagID{}
 	}
-	var bagID [32]byte
+	var bagID boc.BagID
 	copy(bagID[:], decoded)
 	return bagID
 }
 
 // simpleHash produces a uint64 hash from a string for XOR distance calculation.
 func simpleHash(s string) uint64 {
-	// FNV-1a inspired hash for deterministic XOR distance.
-	var h uint64 = 14695981039346656037
-	for i := 0; i < len(s); i++ {
-		h ^= uint64(s[i])
-		h *= 1099511628211
-	}
-	return h
+	return xxh3.HashString(s)
 }
 
 func xorDistance(a, b uint64) uint64 {

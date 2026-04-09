@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -75,7 +76,7 @@ func main() {
 		RpcURLs:    cfg.GreenfieldRpcURLs,
 		ChainID:    cfg.GreenfieldChainID,
 		PrivateKey: cfg.GreenfieldPrivKey,
-		Logger:     greenfieldclient.NewZerologAdapter(log),
+		Logger:     slog.New(slog.NewJSONHandler(os.Stderr, nil)),
 	})
 	if err != nil {
 		log.Fatal().Err(err).Msg("create greenfield client")

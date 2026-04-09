@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -15,7 +16,7 @@ const (
 // verifyClaim waits for CRDT convergence and checks if this node won the
 // ownership claim. Performs multiple reads with exponential backoff.
 // Returns true only if all reads confirm this node as owner.
-func (c *Coordinator) verifyClaim(ctx context.Context, bagID [32]byte) bool {
+func (c *Coordinator) verifyClaim(ctx context.Context, bagID boc.BagID) bool {
 	baseDelay := c.cfg.ClaimVerifyDelay
 	if baseDelay == 0 {
 		baseDelay = defaultClaimDelay
@@ -40,11 +41,22 @@ func (c *Coordinator) verifyClaim(ctx context.Context, bagID [32]byte) bool {
 }
 
 // quorumConfirmOwnership asks connected peers who they believe owns a bag.
-// Returns true only if a majority of responding peers agree this node owns it.
-func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, t *ClusterTransport, bagID [32]byte) bool {
+// Returns true only if enough peers responded (based on total active nodes)
+// and a majority of responding peers agree this node owns it.
+func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, t *ClusterTransport, bagID boc.BagID) bool {
+	activeNodes := c.ActiveNodeCount()
 	results := t.QueryPeerOwnership(ctx, bagID)
 	if len(results) == 0 {
 		c.logger.Warn("quorum check: no peers responded", "bag", bagID[:4])
+		return false
+	}
+	minResponses := activeNodes / 2
+	if minResponses < 1 {
+		minResponses = 1
+	}
+	if len(results) < minResponses {
+		c.logger.Warn("quorum check: insufficient responses",
+			"got", len(results), "need", minResponses, "active", activeNodes, "bag", bagID[:4])
 		return false
 	}
 	agree := 0
@@ -60,7 +72,7 @@ func (c *Coordinator) quorumConfirmOwnership(ctx context.Context, t *ClusterTran
 // to prevent stale entries. Only deletes the ownership key if this node
 // still owns it -- prevents the loser's rollback from destroying the
 // winner's legitimate claim in a race.
-func (c *Coordinator) rollbackClaim(ctx context.Context, bagID [32]byte) {
+func (c *Coordinator) rollbackClaim(ctx context.Context, bagID boc.BagID) {
 	if c.metrics != nil {
 		c.metrics.ConflictsResolved.Inc()
 	}

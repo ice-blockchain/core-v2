@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 // maxClockSkew is the maximum allowed difference between a timestamp and
@@ -26,6 +28,8 @@ type NodeInfo struct {
 	PublicKey   string `json:"publicKey,omitempty"`
 	Signature   string `json:"signature,omitempty"`
 }
+
+// JSON encoding is used for cluster node info. It is human-readable and sufficient for the cluster protocol.
 
 // MarshalNodeInfo serializes NodeInfo to JSON bytes.
 func MarshalNodeInfo(info NodeInfo) ([]byte, error) {
@@ -112,12 +116,12 @@ const (
 )
 
 // OwnershipKey returns the CRDT key for bag ownership lookup.
-func OwnershipKey(bagID [32]byte) string {
+func OwnershipKey(bagID boc.BagID) string {
 	return prefixOwnership + hexEncode(bagID[:])
 }
 
 // ByNodeKey returns the CRDT key for per-node bag enumeration.
-func ByNodeKey(nodeID string, bagID [32]byte) string {
+func ByNodeKey(nodeID string, bagID boc.BagID) string {
 	return prefixByNode + nodeID + "/" + hexEncode(bagID[:])
 }
 
@@ -224,13 +228,7 @@ func ComputeClusterOverlayID(clusterID string) [32]byte {
 	return sha256.Sum256([]byte("ion-cluster-overlay:" + clusterID))
 }
 
-// hexEncode is a minimal hex encoder to avoid importing encoding/hex.
+// hexEncode encodes bytes to a lowercase hex string.
 func hexEncode(b []byte) string {
-	const hex = "0123456789abcdef"
-	out := make([]byte, len(b)*2)
-	for i, v := range b {
-		out[i*2] = hex[v>>4]
-		out[i*2+1] = hex[v&0x0f]
-	}
-	return string(out)
+	return hex.EncodeToString(b)
 }

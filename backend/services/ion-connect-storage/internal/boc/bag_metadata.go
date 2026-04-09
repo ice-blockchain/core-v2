@@ -1,6 +1,7 @@
 package boc
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"log/slog"
@@ -14,9 +15,12 @@ const (
 	maxBocSectionSize = 100 << 20 // 100 MB max per BoC section
 )
 
+// BagID is a 32-byte identifier for a TON Storage bag.
+type BagID [32]byte
+
 // BagMetadata holds parsed .ionstorage BoC fields.
 type BagMetadata struct {
-	BagID       [32]byte
+	BagID       BagID
 	PieceSize   uint32
 	FileSize    uint64
 	HeaderSize  uint64
@@ -60,7 +64,18 @@ func ParseIonStorageBoC(data []byte, logger *slog.Logger) (*BagMetadata, error) 
 	offset = treeEnd
 
 	if offset < len(data) {
-		header, err := ParseTorrentHeader(data[offset:])
+		rawHeader := data[offset:]
+		if meta.HeaderSize == 0 {
+			return nil, fmt.Errorf("unexpected trailing data (%d bytes) with zero header size", len(rawHeader))
+		}
+		if uint64(len(rawHeader)) != meta.HeaderSize {
+			return nil, fmt.Errorf("header size mismatch: got %d, want %d", len(rawHeader), meta.HeaderSize)
+		}
+		headerHash := sha256.Sum256(rawHeader)
+		if headerHash != meta.HeaderHash {
+			return nil, fmt.Errorf("header hash mismatch: got %x, want %x", headerHash[:8], meta.HeaderHash[:8])
+		}
+		header, err := ParseTorrentHeader(rawHeader)
 		if err != nil {
 			return nil, fmt.Errorf("parse embedded header: %w", err)
 		}
@@ -190,7 +205,7 @@ func parseTorrentInfoCell(root *cell.Cell, rawBoC []byte, logger *slog.Logger) (
 	}
 	pieceCount := int(pieceCountU)
 
-	var bagID [32]byte
+	var bagID BagID
 	copy(bagID[:], root.Hash())
 
 	logger.Debug("parsed .ionstorage metadata",

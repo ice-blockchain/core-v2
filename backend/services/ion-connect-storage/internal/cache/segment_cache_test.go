@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func bagDirPath(cacheDir string, bagID [32]byte) string {
+func bagDirPath(cacheDir string, bagID boc.BagID) string {
 	return filepath.Join(cacheDir, hex.EncodeToString(bagID[:]))
 }
 
@@ -29,8 +29,8 @@ func testLayout() BagFileLayout {
 	}
 }
 
-func testBagID() [32]byte {
-	var id [32]byte
+func testBagID() boc.BagID {
+	var id boc.BagID
 	id[0] = 0xDE
 	id[1] = 0xAD
 	return id
@@ -79,7 +79,7 @@ func TestSegmentCacheWriteAndReadSegment(t *testing.T) {
 
 func TestSegmentCacheGetMiss(t *testing.T) {
 	cache := NewSegmentCache(t.TempDir(), time.Hour, nil, testLogger())
-	var bagID [32]byte
+	var bagID boc.BagID
 	_, ok, err := cache.GetSegment(bagID, 0)
 	require.NoError(t, err)
 	require.False(t, ok)
@@ -124,7 +124,7 @@ func TestSegmentCacheTeeReaderPattern(t *testing.T) {
 	require.Equal(t, original, cached)
 
 	// Also verify using TeeReader the other direction: source -> buf with tee to cache
-	bagID2 := [32]byte{0x02}
+	bagID2 := boc.BagID{0x02}
 	require.NoError(t, cache.OpenBag(bagID2, layout))
 	wc2, err := cache.SegmentWriter(bagID2, 0)
 	require.NoError(t, err)
@@ -162,10 +162,10 @@ func TestSegmentWriterRejectsOverflowIndex(t *testing.T) {
 
 func TestSegmentCacheEvictionDeletesDirectory(t *testing.T) {
 	var mu sync.Mutex
-	var evictedBagID [32]byte
+	var evictedBagID boc.BagID
 	var evicted atomic.Bool
 
-	cache := NewSegmentCache(t.TempDir(), 50*time.Millisecond, func(bagID [32]byte) {
+	cache := NewSegmentCache(t.TempDir(), 50*time.Millisecond, func(bagID boc.BagID) {
 		mu.Lock()
 		evictedBagID = bagID
 		mu.Unlock()

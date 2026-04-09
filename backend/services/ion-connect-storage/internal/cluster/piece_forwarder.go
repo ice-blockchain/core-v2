@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 // PeerForwarder forwards requests to owning peers via the cluster transport.
 type PeerForwarder interface {
-	ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) (data []byte, proof []byte, err error)
-	ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error)
+	ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID boc.BagID, pieceID int) (data []byte, proof []byte, err error)
+	ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID boc.BagID, rawQuery []byte) ([]byte, error)
 }
 
 // OwnerLookup resolves bag ownership and node addresses.
 type OwnerLookup interface {
-	Owner(bagID [32]byte) string
+	Owner(bagID boc.BagID) string
 	NodeADNLAddress(nodeID string) (adnlAddr [32]byte, ip string, port int, found bool)
 }
 
@@ -38,7 +40,7 @@ func NewPieceForwarder(transport PeerForwarder, lookup OwnerLookup, metrics *Clu
 }
 
 // ForwardGetPiece forwards a piece request to the owning node.
-func (f *PieceForwarder) ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
+func (f *PieceForwarder) ForwardGetPiece(ctx context.Context, bagID boc.BagID, pieceID int) ([]byte, []byte, error) {
 	start := time.Now()
 
 	ownerNodeID := f.lookup.Owner(bagID)
@@ -61,7 +63,7 @@ func (f *PieceForwarder) ForwardGetPiece(ctx context.Context, bagID [32]byte, pi
 }
 
 // ForwardRawQuery forwards a raw storage query to the bag owner.
-func (f *PieceForwarder) ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+func (f *PieceForwarder) ForwardRawQuery(ctx context.Context, bagID boc.BagID, rawQuery []byte) ([]byte, error) {
 	ownerNodeID := f.lookup.Owner(bagID)
 	if ownerNodeID == "" {
 		return nil, fmt.Errorf("no owner for bag %x", bagID[:8])

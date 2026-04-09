@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/xssnick/tonutils-go/adnl/keys"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/liteclient"
+	"golang.org/x/sync/semaphore"
 )
 
 const defaultMaxConnections = 10_000
@@ -58,7 +61,7 @@ type Server struct {
 	externalIP        net.IP
 	externalPort      int
 	maxConnections    int
-	querySemaphore    chan struct{}
+	querySemaphore    *semaphore.Weighted
 	activeConnections atomic.Int64
 	running           atomic.Bool
 	ready             atomic.Bool
@@ -76,10 +79,10 @@ func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*
 		return nil, fmt.Errorf("parse ADNL_EXTERNAL_ADDR: %w", err)
 	}
 
-	logger.Info("fetching global config", "url", config.GlobalConfigURL)
-	globalCfg, err := liteclient.GetConfigFromUrl(ctx, config.GlobalConfigURL)
+	logger.Info("loading global config", "url", config.GlobalConfigURL)
+	globalCfg, err := loadGlobalConfig(ctx, config.GlobalConfigURL)
 	if err != nil {
-		return nil, fmt.Errorf("fetch global config: %w", err)
+		return nil, err
 	}
 
 	gateway := adnl.NewGateway(privateKey)
@@ -109,7 +112,7 @@ func NewServer(ctx context.Context, config ServerConfig, logger *slog.Logger) (*
 		externalIP:     externalIP,
 		externalPort:   externalPort,
 		maxConnections: maxConn,
-		querySemaphore: make(chan struct{}, maxConn),
+		querySemaphore: semaphore.NewWeighted(int64(maxConn)),
 		logger:         logger,
 	}, nil
 }
@@ -212,18 +215,34 @@ func (s *Server) SetHTTPBridge(b *RLDPHTTPBridge) { s.httpBridge = b }
 // SetClusterOverlay registers a handler for the cluster overlay.
 // Queries arriving on this overlay ID are routed to the handler instead of OverlayManager.
 func (s *Server) SetClusterOverlay(overlayID [32]byte, handler ClusterQueryHandler) {
-	cfg := s.loadClusterConfig()
-	cfg.overlayID = overlayID
-	cfg.queryHandler = handler
-	s.cluster.Store(&cfg)
+	for {
+		old := s.cluster.Load()
+		var cfg clusterConfig
+		if old != nil {
+			cfg = *old
+		}
+		cfg.overlayID = overlayID
+		cfg.queryHandler = handler
+		if s.cluster.CompareAndSwap(old, &cfg) {
+			return
+		}
+	}
 }
 
 // SetClusterMemberChecker registers a checker that verifies whether
 // a peer is an authorized cluster member before routing cluster queries.
 func (s *Server) SetClusterMemberChecker(checker ClusterMemberChecker) {
-	cfg := s.loadClusterConfig()
-	cfg.memberChecker = checker
-	s.cluster.Store(&cfg)
+	for {
+		old := s.cluster.Load()
+		var cfg clusterConfig
+		if old != nil {
+			cfg = *old
+		}
+		cfg.memberChecker = checker
+		if s.cluster.CompareAndSwap(old, &cfg) {
+			return
+		}
+	}
 }
 
 // loadClusterConfig returns a copy of the current cluster config.
@@ -273,6 +292,25 @@ func parseExternalAddr(raw string) (net.IP, int, error) {
 	return ip, port, nil
 }
 
+// loadGlobalConfig loads the TON global config from a URL or a local file.
+// If the URL starts with "file://", it reads from the local filesystem;
+// otherwise it fetches over HTTP.
+func loadGlobalConfig(ctx context.Context, rawURL string) (*liteclient.GlobalConfig, error) {
+	if strings.HasPrefix(rawURL, "file://") {
+		filePath := strings.TrimPrefix(rawURL, "file://")
+		cfg, err := liteclient.GetConfigFromFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("read local global config: %w", err)
+		}
+		return cfg, nil
+	}
+	cfg, err := liteclient.GetConfigFromUrl(ctx, rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("fetch global config: %w", err)
+	}
+	return cfg, nil
+}
+
 func extractSeedNodes(cfg *liteclient.GlobalConfig) []seedNode {
 	var seeds []seedNode
 	for _, node := range cfg.DHT.StaticNodes.Nodes {
@@ -308,7 +346,7 @@ func formatAddresses(list address.List) string {
 		if i > 0 {
 			result += ", "
 		}
-		result += net.JoinHostPort(addr.IP.String(), fmt.Sprintf("%d", addr.Port))
+		result += net.JoinHostPort(addr.IP.String(), strconv.Itoa(int(addr.Port)))
 	}
 	return result
 }

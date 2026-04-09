@@ -203,7 +203,7 @@ func TestE2E_SubscriberIndexesBagWithMetadata(t *testing.T) {
 		RpcURLs:    []string{e2eRPCURL},
 		ChainID:    e2eChainID,
 		PrivateKey: privateKey,
-		Logger:     greenfieldclient.NewSlogAdapter(logger),
+		Logger:     logger,
 	})
 	require.NoError(t, err)
 	defer gfClient.Close()

@@ -9,6 +9,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.10
 	github.com/gin-gonic/gin v1.10.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
+	github.com/ice-blockchain/ion/packages/adnl v0.0.0
 	github.com/ice-blockchain/ion/packages/greenfield-client v0.0.0-00010101000000-000000000000
 	github.com/ipfs/boxo v0.37.0
 	github.com/ipfs/go-block-format v0.2.3
@@ -22,6 +23,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	github.com/xssnick/tonutils-go v1.16.0
 	github.com/xssnick/tonutils-storage v1.4.0
+	github.com/zeebo/xxh3 v1.1.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/time v0.15.0
 )
@@ -36,6 +38,7 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/bnb-chain/greenfield-cosmos-sdk v1.9.2
 	github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/iavl => github.com/bnb-chain/greenfield-iavl v0.20.1
+	github.com/ice-blockchain/ion/packages/adnl => ../../packages/adnl
 	github.com/ice-blockchain/ion/packages/greenfield-client => ../../packages/greenfield-client
 	github.com/supranational/blst => github.com/supranational/blst v0.3.16
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7

@@ -9,8 +9,10 @@ import (
 
 	lru "github.com/hashicorp/golang-lru/v2"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/tl"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -24,11 +26,11 @@ type SessionInitiator struct {
 	handler   *Handler
 	logger    *slog.Logger
 	initiated *lru.Cache[sessionKey, struct{}]
-	sem       chan struct{}
+	sem       *semaphore.Weighted
 }
 
 type sessionKey struct {
-	bagID     [32]byte
+	bagID     boc.BagID
 	sessionID int64
 }
 
@@ -42,34 +44,33 @@ func NewSessionInitiator(handler *Handler, logger *slog.Logger) (*SessionInitiat
 		handler:   handler,
 		logger:    logger,
 		initiated: cache,
-		sem:       make(chan struct{}, maxConcurrentInits),
+		sem:       semaphore.NewWeighted(maxConcurrentInits),
 	}, nil
 }
 
 // OnNewSession is the callback for OverlayManager.SetSessionCallback.
 // Sends UpdateInit back to the peer in a goroutine.
-func (s *SessionInitiator) OnNewSession(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID [32]byte, sessionID int64) {
+func (s *SessionInitiator) OnNewSession(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID boc.BagID, sessionID int64) {
 	key := sessionKey{bagID: bagID, sessionID: sessionID}
 
-	select {
-	case s.sem <- struct{}{}:
-		// Check inside semaphore to prevent duplicate goroutines from the
-		// TOCTOU race where two callers both pass a pre-semaphore Get check.
-		if _, ok := s.initiated.Get(key); ok {
-			<-s.sem
-			return
-		}
-		s.initiated.Add(key, struct{}{})
-		go func() {
-			defer func() { <-s.sem }()
-			s.sendUpdateInit(rldp, overlayIDBytes, bagID, sessionID)
-		}()
-	default:
+	if !s.sem.TryAcquire(1) {
 		s.logger.Warn("session init throttled, too many concurrent inits")
+		return
 	}
+	// Check inside semaphore to prevent duplicate goroutines from the
+	// TOCTOU race where two callers both pass a pre-semaphore Get check.
+	if _, ok := s.initiated.Get(key); ok {
+		s.sem.Release(1)
+		return
+	}
+	s.initiated.Add(key, struct{}{})
+	go func() {
+		defer s.sem.Release(1)
+		s.sendUpdateInit(rldp, overlayIDBytes, bagID, sessionID)
+	}()
 }
 
-func (s *SessionInitiator) sendUpdateInit(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID [32]byte, sessionID int64) {
+func (s *SessionInitiator) sendUpdateInit(rldp ionadnl.RLDPDoQueryer, overlayIDBytes []byte, bagID boc.BagID, sessionID int64) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 

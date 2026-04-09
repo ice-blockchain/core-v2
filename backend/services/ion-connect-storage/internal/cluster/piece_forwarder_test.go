@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,11 +15,11 @@ type mockPeerForwarder struct {
 	err   error
 }
 
-func (m *mockPeerForwarder) ForwardPieceViaPeer(_ context.Context, _ [32]byte, _ [32]byte, _ int) ([]byte, []byte, error) {
+func (m *mockPeerForwarder) ForwardPieceViaPeer(_ context.Context, _ [32]byte, _ boc.BagID, _ int) ([]byte, []byte, error) {
 	return m.data, m.proof, m.err
 }
 
-func (m *mockPeerForwarder) ForwardRawQuery(_ context.Context, _ [32]byte, _ [32]byte, _ []byte) ([]byte, error) {
+func (m *mockPeerForwarder) ForwardRawQuery(_ context.Context, _ [32]byte, _ boc.BagID, _ []byte) ([]byte, error) {
 	return nil, nil
 }
 
@@ -27,7 +28,7 @@ type mockOwnerLookup struct {
 	adnlAddr    [32]byte
 }
 
-func (m *mockOwnerLookup) Owner(_ [32]byte) string {
+func (m *mockOwnerLookup) Owner(_ boc.BagID) string {
 	return m.ownerNodeID
 }
 
@@ -46,7 +47,7 @@ func TestForwardGetPieceSuccess(t *testing.T) {
 	lookup := &mockOwnerLookup{ownerNodeID: "owner-1", adnlAddr: [32]byte{0x01}}
 
 	forwarder := NewPieceForwarder(transport, lookup, nil, nil)
-	data, proof, err := forwarder.ForwardGetPiece(context.Background(), [32]byte{0xAA}, 5)
+	data, proof, err := forwarder.ForwardGetPiece(context.Background(), boc.BagID{0xAA}, 5)
 	require.NoError(t, err)
 	require.Equal(t, []byte("piece-payload"), data)
 	require.Equal(t, []byte("merkle-proof"), proof)
@@ -57,7 +58,7 @@ func TestForwardGetPieceNoOwner(t *testing.T) {
 	lookup := &mockOwnerLookup{ownerNodeID: ""}
 
 	forwarder := NewPieceForwarder(transport, lookup, nil, nil)
-	_, _, err := forwarder.ForwardGetPiece(context.Background(), [32]byte{0xCC}, 0)
+	_, _, err := forwarder.ForwardGetPiece(context.Background(), boc.BagID{0xCC}, 0)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "no owner")
 }
@@ -67,7 +68,7 @@ func TestForwardGetPieceNetworkError(t *testing.T) {
 	lookup := &mockOwnerLookup{ownerNodeID: "owner-1", adnlAddr: [32]byte{0x01}}
 
 	forwarder := NewPieceForwarder(transport, lookup, nil, nil)
-	_, _, err := forwarder.ForwardGetPiece(context.Background(), [32]byte{0xDD}, 0)
+	_, _, err := forwarder.ForwardGetPiece(context.Background(), boc.BagID{0xDD}, 0)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "forward to owner")
 }

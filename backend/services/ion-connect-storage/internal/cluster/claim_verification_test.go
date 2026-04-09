@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,7 @@ import (
 // writeSignedOwnershipAsNode writes a signed ownership claim for bagID from
 // a newly generated node. Derives nodeID from the ed25519 key (matching
 // production behaviour). Returns the derived nodeID and private key.
-func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, _ string, bagID [32]byte) (string, ed25519.PrivateKey) {
+func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, _ string, bagID boc.BagID) (string, ed25519.PrivateKey) {
 	t.Helper()
 	_, privKey, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
@@ -24,20 +25,20 @@ func writeSignedOwnershipAsNode(t *testing.T, coord *Coordinator, _ string, bagI
 	info := NodeInfo{}
 	infoBytes, err := MarshalSignedNodeInfo(info, privKey)
 	require.NoError(t, err)
-	require.NoError(t, coord.crdt.Put(context.Background(), ds.NewKey(NodeInfoKey(nodeID)), infoBytes))
+	require.NoError(t, coord.crdt.Put(t.Context(), ds.NewKey(NodeInfoKey(nodeID)), infoBytes))
 
 	// Write signed ownership.
 	bagHex := hexEncode(bagID[:])
 	val := FormatSignedOwnership(bagHex, nodeID, time.Now().Unix(), privKey)
-	require.NoError(t, coord.crdt.Put(context.Background(), ds.NewKey(OwnershipKey(bagID)), val))
+	require.NoError(t, coord.crdt.Put(t.Context(), ds.NewKey(OwnershipKey(bagID)), val))
 	return nodeID, privKey
 }
 
 func TestVerifyClaimSucceedsWhenOwner(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
-	ctx := context.Background()
-	bagID := [32]byte{0x01}
+	ctx := t.Context()
+	bagID := boc.BagID{0x01}
 
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 	require.True(t, coord.verifyClaim(ctx, bagID))
@@ -46,8 +47,8 @@ func TestVerifyClaimSucceedsWhenOwner(t *testing.T) {
 func TestVerifyClaimFailsWhenOverwritten(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
-	ctx := context.Background()
-	bagID := [32]byte{0x02}
+	ctx := t.Context()
+	bagID := boc.BagID{0x02}
 
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
@@ -60,8 +61,8 @@ func TestVerifyClaimFailsWhenOverwritten(t *testing.T) {
 func TestVerifyClaimRespectsContextCancellation(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 1 * time.Second
-	ctx, cancel := context.WithCancel(context.Background())
-	bagID := [32]byte{0x03}
+	ctx, cancel := context.WithCancel(t.Context())
+	bagID := boc.BagID{0x03}
 
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 	cancel()
@@ -71,8 +72,8 @@ func TestVerifyClaimRespectsContextCancellation(t *testing.T) {
 
 func TestRollbackClaimDeletesBynodeKey(t *testing.T) {
 	coord := newTestCoordinator(t, "")
-	ctx := context.Background()
-	bagID := [32]byte{0x04}
+	ctx := t.Context()
+	bagID := boc.BagID{0x04}
 
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
 
@@ -89,8 +90,8 @@ func TestRollbackClaimDeletesBynodeKey(t *testing.T) {
 
 func TestRollbackDoesNotDeleteWinnerOwnership(t *testing.T) {
 	coord := newTestCoordinator(t, "")
-	ctx := context.Background()
-	bagID := [32]byte{0x06}
+	ctx := t.Context()
+	bagID := boc.BagID{0x06}
 
 	// Loser claims the bag.
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
@@ -107,11 +108,11 @@ func TestRollbackDoesNotDeleteWinnerOwnership(t *testing.T) {
 func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
 	coord := newTestCoordinator(t, "")
 	coord.cfg.ClaimVerifyDelay = 10 * time.Millisecond
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	require.NoError(t, coord.Start(ctx))
 	defer func() { cancel(); coord.Stop() }()
 
-	bagID := [32]byte{0x07}
+	bagID := boc.BagID{0x07}
 
 	// Bare ClaimBag should NOT increment counter.
 	require.NoError(t, coord.ClaimBag(ctx, bagID))
@@ -130,8 +131,8 @@ func TestCounterOnlyIncrementsAfterVerification(t *testing.T) {
 
 func TestReconcileRemovesStaleBynodeKeys(t *testing.T) {
 	coord := newTestCoordinator(t, "")
-	ctx := context.Background()
-	bagID := [32]byte{0x05}
+	ctx := t.Context()
+	bagID := boc.BagID{0x05}
 
 	// Create bynode key for this node, but ownership points to another node.
 	require.NoError(t, coord.crdt.Put(ctx, ds.NewKey(ByNodeKey(coord.nodeID, bagID)), nil))

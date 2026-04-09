@@ -42,14 +42,14 @@ func NewMetadataStore(
 }
 
 // PutBagMetadata stores raw .ionstorage BoC bytes keyed by bag ID.
-func (s *MetadataStore) PutBagMetadata(bagID [32]byte, rawBoC []byte) error {
+func (s *MetadataStore) PutBagMetadata(bagID boc.BagID, rawBoC []byte) error {
 	return s.db.Set(makeMetadataKey(bagID), rawBoC, pebble.Sync)
 }
 
 // GetBagMetadata retrieves and parses bag metadata.
 // Checks PebbleDB first. On miss, looks up the bag location in the index,
 // fetches .ionstorage from Greenfield, caches it, and returns the parsed result.
-func (s *MetadataStore) GetBagMetadata(ctx context.Context, bagID [32]byte) (*boc.BagMetadata, error) {
+func (s *MetadataStore) GetBagMetadata(ctx context.Context, bagID boc.BagID) (*boc.BagMetadata, error) {
 	rawBoC, found, err := s.loadFromDB(bagID)
 	if err != nil {
 		return nil, err
@@ -84,12 +84,12 @@ func (s *MetadataStore) GetBagMetadata(ctx context.Context, bagID [32]byte) (*bo
 }
 
 // DeleteBagMetadata removes cached metadata for a bag.
-func (s *MetadataStore) DeleteBagMetadata(bagID [32]byte) error {
+func (s *MetadataStore) DeleteBagMetadata(bagID boc.BagID) error {
 	return s.db.Delete(makeMetadataKey(bagID), pebble.Sync)
 }
 
 // HasBagMetadata checks if metadata exists in the cache.
-func (s *MetadataStore) HasBagMetadata(bagID [32]byte) (bool, error) {
+func (s *MetadataStore) HasBagMetadata(bagID boc.BagID) (bool, error) {
 	_, closer, err := s.db.Get(makeMetadataKey(bagID))
 	if err == pebble.ErrNotFound {
 		return false, nil
@@ -101,7 +101,7 @@ func (s *MetadataStore) HasBagMetadata(bagID [32]byte) (bool, error) {
 	return true, nil
 }
 
-func (s *MetadataStore) loadFromDB(bagID [32]byte) ([]byte, bool, error) {
+func (s *MetadataStore) loadFromDB(bagID boc.BagID) ([]byte, bool, error) {
 	val, closer, err := s.db.Get(makeMetadataKey(bagID))
 	if err == pebble.ErrNotFound {
 		return nil, false, nil
@@ -115,7 +115,7 @@ func (s *MetadataStore) loadFromDB(bagID [32]byte) ([]byte, bool, error) {
 	return data, true, nil
 }
 
-func (s *MetadataStore) fetchAndCache(ctx context.Context, bagID [32]byte) (*boc.BagMetadata, error) {
+func (s *MetadataStore) fetchAndCache(ctx context.Context, bagID boc.BagID) (*boc.BagMetadata, error) {
 	loc, found, err := s.index.LookupBag(bagID)
 	if err != nil {
 		return nil, fmt.Errorf("lookup bag for metadata fetch: %w", err)
@@ -141,7 +141,7 @@ func (s *MetadataStore) fetchAndCache(ctx context.Context, bagID [32]byte) (*boc
 }
 
 // validateBagMetadata checks that fetched metadata is consistent before caching.
-func validateBagMetadata(expectedBagID [32]byte, meta *boc.BagMetadata) error {
+func validateBagMetadata(expectedBagID boc.BagID, meta *boc.BagMetadata) error {
 	if meta.BagID != expectedBagID {
 		return fmt.Errorf("bag ID mismatch: expected %x, got %x", expectedBagID, meta.BagID)
 	}
@@ -160,7 +160,7 @@ func validateBagMetadata(expectedBagID [32]byte, meta *boc.BagMetadata) error {
 	return nil
 }
 
-func makeMetadataKey(bagID [32]byte) []byte {
+func makeMetadataKey(bagID boc.BagID) []byte {
 	key := make([]byte, len(metadataKeyPrefix)+32)
 	copy(key, metadataKeyPrefix)
 	copy(key[len(metadataKeyPrefix):], bagID[:])

@@ -1,6 +1,6 @@
 module github.com/ice-blockchain/ion/packages/greenfield-client
 
-go 1.24.4
+go 1.26
 
 require (
 	github.com/akuity/grpc-gateway-client v0.0.0-20240912082144-55a48e8b4b89
@@ -8,7 +8,6 @@ require (
 	github.com/bnb-chain/greenfield-go-sdk v1.7.4
 	github.com/cometbft/cometbft v0.38.6
 	github.com/cosmos/cosmos-sdk v0.47.10
-	github.com/rs/zerolog v1.29.1
 	github.com/stretchr/testify v1.8.4
 )
 
@@ -106,6 +105,7 @@ require (
 	github.com/prysmaticlabs/eth2-types v0.0.0-20210303084904-c9735a06829d // indirect
 	github.com/prysmaticlabs/prysm v0.0.0-20220124113610-e26cde5e091b // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/rs/zerolog v1.29.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

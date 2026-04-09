@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/pebble/v2"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 	dsq "github.com/ipfs/go-datastore/query"
 	crdt "github.com/ipfs/go-ds-crdt"
@@ -81,7 +82,7 @@ type Coordinator struct {
 }
 
 // ForwardGetPiece delegates to the piece forwarder.
-func (c *Coordinator) ForwardGetPiece(ctx context.Context, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
+func (c *Coordinator) ForwardGetPiece(ctx context.Context, bagID boc.BagID, pieceID int) ([]byte, []byte, error) {
 	f := c.pieceForwarder.Load()
 	if f == nil {
 		return nil, nil, fmt.Errorf("piece forwarder not configured")
@@ -90,7 +91,7 @@ func (c *Coordinator) ForwardGetPiece(ctx context.Context, bagID [32]byte, piece
 }
 
 // ForwardRawQuery delegates to the piece forwarder.
-func (c *Coordinator) ForwardRawQuery(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+func (c *Coordinator) ForwardRawQuery(ctx context.Context, bagID boc.BagID, rawQuery []byte) ([]byte, error) {
 	f := c.pieceForwarder.Load()
 	if f == nil {
 		return nil, fmt.Errorf("piece forwarder not configured")

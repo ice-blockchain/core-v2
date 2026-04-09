@@ -6,15 +6,16 @@ import (
 	"log/slog"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/xssnick/tonutils-go/tl"
 )
 
 // QueryHandler processes a storage protocol query for a given bagID.
 // The raw query is the inner TL payload (after overlay unwrapping).
-type QueryHandler func(ctx context.Context, bagID [32]byte, rawQuery []byte) ([]byte, error)
+type QueryHandler func(ctx context.Context, bagID boc.BagID, rawQuery []byte) ([]byte, error)
 
 // SessionCallback is called when a new peer session is detected.
-type SessionCallback func(rldp RLDPDoQueryer, overlayID []byte, bagID [32]byte, sessionID int64)
+type SessionCallback func(rldp RLDPDoQueryer, overlayID []byte, bagID boc.BagID, sessionID int64)
 
 // RLDPDoQueryer can send RLDP queries to a peer.
 type RLDPDoQueryer interface {
@@ -24,14 +25,14 @@ type RLDPDoQueryer interface {
 // OverlayManager tracks active per-bag overlays with an LRU cache.
 // Maps overlayID (SHA256(bagID)) -> bagID for reverse lookup.
 type OverlayManager struct {
-	overlays        *lru.Cache[[32]byte, [32]byte]
+	overlays        *lru.Cache[[32]byte, boc.BagID]
 	queryHandler    QueryHandler
 	sessionCallback SessionCallback
 	logger          *slog.Logger
 }
 
 func newOverlayManager(limit int, logger *slog.Logger) *OverlayManager {
-	cache, _ := lru.NewWithEvict[[32]byte, [32]byte](limit, func(overlayID [32]byte, _ [32]byte) {
+	cache, _ := lru.NewWithEvict[[32]byte, boc.BagID](limit, func(overlayID [32]byte, _ boc.BagID) {
 		logger.Info("overlay evicted from LRU", "overlay_id_prefix", overlayID[:4])
 	})
 
@@ -52,14 +53,14 @@ func (m *OverlayManager) SetSessionCallback(cb SessionCallback) {
 }
 
 // NotifyNewSession triggers the session callback for a new peer connection.
-func (m *OverlayManager) NotifyNewSession(rldp RLDPDoQueryer, overlayID []byte, bagID [32]byte, sessionID int64) {
+func (m *OverlayManager) NotifyNewSession(rldp RLDPDoQueryer, overlayID []byte, bagID boc.BagID, sessionID int64) {
 	if cb := m.sessionCallback; cb != nil {
 		cb(rldp, overlayID, bagID, sessionID)
 	}
 }
 
 // Join registers a bag's overlay in the LRU.
-func (m *OverlayManager) Join(_ context.Context, bagID [32]byte) error {
+func (m *OverlayManager) Join(_ context.Context, bagID boc.BagID) error {
 	overlayID := ComputeOverlayID(bagID)
 	if m.overlays.Contains(overlayID) {
 		return nil
@@ -70,7 +71,7 @@ func (m *OverlayManager) Join(_ context.Context, bagID [32]byte) error {
 }
 
 // Leave removes a bag's overlay from the LRU.
-func (m *OverlayManager) Leave(bagID [32]byte) error {
+func (m *OverlayManager) Leave(bagID boc.BagID) error {
 	overlayID := ComputeOverlayID(bagID)
 	m.overlays.Remove(overlayID)
 	m.logger.Info("left overlay", "bag_id_prefix", bagID[:4], "active_count", m.overlays.Len())
@@ -78,7 +79,7 @@ func (m *OverlayManager) Leave(bagID [32]byte) error {
 }
 
 // LookupBagID resolves a bagID from an overlayID.
-func (m *OverlayManager) LookupBagID(overlayID [32]byte) ([32]byte, bool) {
+func (m *OverlayManager) LookupBagID(overlayID [32]byte) (boc.BagID, bool) {
 	return m.overlays.Get(overlayID)
 }
 

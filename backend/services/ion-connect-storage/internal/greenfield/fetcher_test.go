@@ -94,18 +94,23 @@ func TestFetcherContextCancelDoesNotAffectCoalescedCallers(t *testing.T) {
 	var wg sync.WaitGroup
 	var result2 []byte
 	var err2 error
+	start := make(chan struct{})
 
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
+		<-start
 		// Cancelled context -- should not poison the singleflight.
+		// FetchSegment uses context.WithoutCancel internally, so the
+		// cancelled caller still receives the shared result.
 		_, _ = fetcher.FetchSegment(cancelledCtx, "b", "o", 0, nil)
 	}()
 	go func() {
 		defer wg.Done()
-		time.Sleep(10 * time.Millisecond)
+		<-start
 		result2, err2 = fetcher.FetchSegment(context.Background(), "b", "o", 0, nil)
 	}()
+	close(start)
 	wg.Wait()
 
 	// Second caller must succeed despite first caller's cancellation.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -11,7 +12,7 @@ func TestSingleNodeCoordinatorOwnsEverything(t *testing.T) {
 	addr := [32]byte{0x01, 0x02}
 	coord := NewSingleNodeCoordinator("node-1", addr, "127.0.0.1", 3278)
 
-	bagID := [32]byte{0xDE, 0xAD}
+	bagID := boc.BagID{0xDE, 0xAD}
 	require.True(t, coord.OwnsBag(bagID))
 
 	owned, err := coord.OwnsOrClaim(context.Background(), bagID)
@@ -40,6 +41,6 @@ func TestSingleNodeCoordinatorHealth(t *testing.T) {
 
 func TestSingleNodeCoordinatorForwardFails(t *testing.T) {
 	coord := NewSingleNodeCoordinator("n", [32]byte{}, "", 0)
-	_, _, err := coord.ForwardGetPiece(context.Background(), [32]byte{}, 0)
+	_, _, err := coord.ForwardGetPiece(context.Background(), boc.BagID{}, 0)
 	require.Error(t, err)
 }

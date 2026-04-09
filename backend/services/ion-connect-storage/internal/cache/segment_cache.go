@@ -31,9 +31,9 @@ type cachedBag struct {
 
 // SegmentCache manages per-file disk caching of bag segments with TTL eviction.
 type SegmentCache struct {
-	lru     *expirable.LRU[[32]byte, *cachedBag]
+	lru     *expirable.LRU[boc.BagID, *cachedBag]
 	dir     string
-	onEvict func(bagID [32]byte)
+	onEvict func(bagID boc.BagID)
 	logger  *slog.Logger
 }
 
@@ -43,7 +43,7 @@ const defaultMaxCachedBags = 10000
 func NewSegmentCache(
 	directory string,
 	ttl time.Duration,
-	onEvict func(bagID [32]byte),
+	onEvict func(bagID boc.BagID),
 	logger *slog.Logger,
 ) *SegmentCache {
 	return NewSegmentCacheWithLimit(directory, ttl, defaultMaxCachedBags, onEvict, logger)
@@ -55,7 +55,7 @@ func NewSegmentCacheWithLimit(
 	directory string,
 	ttl time.Duration,
 	maxBags int,
-	onEvict func(bagID [32]byte),
+	onEvict func(bagID boc.BagID),
 	logger *slog.Logger,
 ) *SegmentCache {
 	if maxBags <= 0 {
@@ -66,12 +66,12 @@ func NewSegmentCacheWithLimit(
 		onEvict: onEvict,
 		logger:  logger,
 	}
-	c.lru = expirable.NewLRU[[32]byte, *cachedBag](maxBags, c.handleEviction, ttl)
+	c.lru = expirable.NewLRU[boc.BagID, *cachedBag](maxBags, c.handleEviction, ttl)
 	return c
 }
 
 // OpenBag creates the cache directory and pre-allocates files for a bag.
-func (c *SegmentCache) OpenBag(bagID [32]byte, layout BagFileLayout) error {
+func (c *SegmentCache) OpenBag(bagID boc.BagID, layout BagFileLayout) error {
 	dirPath := filepath.Join(c.dir, hex.EncodeToString(bagID[:]))
 	if err := os.MkdirAll(dirPath, 0o755); err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
@@ -93,7 +93,7 @@ const maxSegmentIndex = math.MaxInt64 / int64(boc.SegmentSize)
 
 // SegmentWriter returns a WriteCloser that distributes segment bytes
 // to the correct cache files based on the bag's file layout.
-func (c *SegmentCache) SegmentWriter(bagID [32]byte, segmentIndex int) (io.WriteCloser, error) {
+func (c *SegmentCache) SegmentWriter(bagID boc.BagID, segmentIndex int) (io.WriteCloser, error) {
 	bag, ok := c.lru.Get(bagID)
 	if !ok {
 		return nil, fmt.Errorf("bag %x not opened in cache", bagID)
@@ -106,7 +106,7 @@ func (c *SegmentCache) SegmentWriter(bagID [32]byte, segmentIndex int) (io.Write
 }
 
 // MarkSegmentWritten records that a segment has been fully written to cache.
-func (c *SegmentCache) MarkSegmentWritten(bagID [32]byte, segmentIndex int) {
+func (c *SegmentCache) MarkSegmentWritten(bagID boc.BagID, segmentIndex int) {
 	bag, ok := c.lru.Get(bagID)
 	if !ok {
 		return
@@ -115,7 +115,7 @@ func (c *SegmentCache) MarkSegmentWritten(bagID [32]byte, segmentIndex int) {
 }
 
 // GetSegment reads a cached segment from disk files into a contiguous buffer.
-func (c *SegmentCache) GetSegment(bagID [32]byte, segmentIndex int) ([]byte, bool, error) {
+func (c *SegmentCache) GetSegment(bagID boc.BagID, segmentIndex int) ([]byte, bool, error) {
 	bag, ok := c.lru.Get(bagID)
 	if !ok {
 		return nil, false, nil
@@ -127,7 +127,7 @@ func (c *SegmentCache) GetSegment(bagID [32]byte, segmentIndex int) ([]byte, boo
 }
 
 // HasSegment checks if a segment is cached and written.
-func (c *SegmentCache) HasSegment(bagID [32]byte, segmentIndex int) bool {
+func (c *SegmentCache) HasSegment(bagID boc.BagID, segmentIndex int) bool {
 	bag, ok := c.lru.Get(bagID)
 	if !ok {
 		return false
@@ -137,7 +137,7 @@ func (c *SegmentCache) HasSegment(bagID [32]byte, segmentIndex int) bool {
 }
 
 // HasBag checks if a bag is present in the cache.
-func (c *SegmentCache) HasBag(bagID [32]byte) bool {
+func (c *SegmentCache) HasBag(bagID boc.BagID) bool {
 	return c.lru.Contains(bagID)
 }
 
@@ -146,7 +146,7 @@ func (c *SegmentCache) HasBag(bagID [32]byte) bool {
 // Concurrent readers/writers that already hold an fd are unaffected; those that
 // attempt to open after removal get os.ErrNotExist, which is handled gracefully
 // by the segment distributor and reader.
-func (c *SegmentCache) handleEviction(bagID [32]byte, bag *cachedBag) {
+func (c *SegmentCache) handleEviction(bagID boc.BagID, bag *cachedBag) {
 	if err := os.RemoveAll(bag.dirPath); err != nil {
 		c.logger.Warn("failed to remove cache dir", "path", bag.dirPath, "error", err)
 	}

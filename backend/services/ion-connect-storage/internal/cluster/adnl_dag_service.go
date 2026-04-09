@@ -12,6 +12,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"golang.org/x/sync/semaphore"
 )
 
 const maxBlockSize = 1 << 20 // 1 MB — prevent OOM from rogue peers
@@ -83,22 +84,17 @@ func (s *ADNLDAGService) GetMany(ctx context.Context, cids []cid.Cid) <-chan *ip
 }
 
 func (s *ADNLDAGService) getManyAsync(ctx context.Context, cids []cid.Cid, out chan<- *ipld.NodeOption) {
-	sem := make(chan struct{}, 8)
+	sem := semaphore.NewWeighted(8)
 	var wg sync.WaitGroup
 
 	for _, c := range cids {
-		select {
-		case <-ctx.Done():
-		case sem <- struct{}{}:
-		}
-		if ctx.Err() != nil {
+		if err := sem.Acquire(ctx, 1); err != nil {
 			break
 		}
 
 		wg.Add(1)
 		go func(c cid.Cid) {
-			defer wg.Done()
-			defer func() { <-sem }()
+			defer func() { sem.Release(1); wg.Done() }()
 
 			node, err := s.Get(ctx, c)
 			select {

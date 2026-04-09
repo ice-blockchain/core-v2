@@ -12,7 +12,7 @@ import (
 
 // ServePiece serves a piece locally, returning data and proof separately.
 // Used by the cluster piece forwarding handler on the owning node.
-func (h *Handler) ServePiece(ctx context.Context, bagID [32]byte, pieceIndex int) ([]byte, []byte, error) {
+func (h *Handler) ServePiece(ctx context.Context, bagID boc.BagID, pieceIndex int) ([]byte, []byte, error) {
 	meta, err := h.ensureBagLoaded(ctx, bagID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("ensure bag loaded: %w", err)
@@ -49,7 +49,7 @@ func (h *Handler) ServePiece(ctx context.Context, bagID [32]byte, pieceIndex int
 
 // handleGetPiece handles storage.getPiece RPC (hot path).
 // Pieces cover headerBytes + payload (standard TON Storage format).
-func (h *Handler) handleGetPiece(ctx context.Context, bagID [32]byte, pieceIndex int) ([]byte, error) {
+func (h *Handler) handleGetPiece(ctx context.Context, bagID boc.BagID, pieceIndex int) ([]byte, error) {
 	meta, err := h.ensureBagLoaded(ctx, bagID)
 	if err != nil {
 		return nil, fmt.Errorf("ensure bag loaded: %w", err)
@@ -86,7 +86,7 @@ func (h *Handler) handleGetPiece(ctx context.Context, bagID [32]byte, pieceIndex
 
 // fetchSegmentForPiece retrieves the Greenfield segment containing data for the given piece.
 // Returns nil if the piece is entirely within the header (no payload needed).
-func (h *Handler) fetchSegmentForPiece(ctx context.Context, bagID [32]byte, meta *boc.BagMetadata, pieceIndex int) ([]byte, error) {
+func (h *Handler) fetchSegmentForPiece(ctx context.Context, bagID boc.BagID, meta *boc.BagMetadata, pieceIndex int) ([]byte, error) {
 	segIdx := payloadSegmentIndex(pieceIndex, meta.HeaderSize, meta.PieceSize)
 	if segIdx < 0 {
 		return nil, nil // piece is entirely header data
@@ -96,7 +96,7 @@ func (h *Handler) fetchSegmentForPiece(ctx context.Context, bagID [32]byte, meta
 
 // getOrFetchSegment checks segment cache, falls back to Greenfield fetch.
 // Uses singleflight to prevent concurrent fetches for the same segment.
-func (h *Handler) getOrFetchSegment(ctx context.Context, bagID [32]byte, meta *boc.BagMetadata, segIdx int) ([]byte, error) {
+func (h *Handler) getOrFetchSegment(ctx context.Context, bagID boc.BagID, meta *boc.BagMetadata, segIdx int) ([]byte, error) {
 	data, ok, err := h.segmentCache.GetSegment(bagID, segIdx)
 	if err != nil {
 		return nil, fmt.Errorf("check segment cache: %w", err)
@@ -105,12 +105,13 @@ func (h *Handler) getOrFetchSegment(ctx context.Context, bagID [32]byte, meta *b
 		return data, nil
 	}
 	key := fmt.Sprintf("%x:%d", bagID, segIdx)
+	bgCtx := context.WithoutCancel(ctx)
 	result, err, _ := h.segmentFetchFlight.Do(key, func() (any, error) {
 		// Double-check cache after acquiring the flight slot.
 		if d, ok2, _ := h.segmentCache.GetSegment(bagID, segIdx); ok2 {
 			return d, nil
 		}
-		return h.fetchAndCacheSegment(ctx, bagID, meta, segIdx)
+		return h.fetchAndCacheSegment(bgCtx, bagID, meta, segIdx)
 	})
 	if err != nil {
 		return nil, err
@@ -125,7 +126,7 @@ const (
 
 // fetchAndCacheSegment downloads a segment from Greenfield and caches it.
 // Retries transient failures with exponential backoff.
-func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta *boc.BagMetadata, segIdx int) ([]byte, error) {
+func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID boc.BagID, meta *boc.BagMetadata, segIdx int) ([]byte, error) {
 	loc, found, err := h.index.LookupBag(bagID)
 	if err != nil {
 		return nil, fmt.Errorf("lookup bag: %w", err)
@@ -174,7 +175,7 @@ func (h *Handler) fetchAndCacheSegment(ctx context.Context, bagID [32]byte, meta
 
 // ensureBagCacheOpen creates the cache directory if not already present.
 // Uses singleflight to prevent concurrent OpenBag calls for the same bag.
-func (h *Handler) ensureBagCacheOpen(bagID [32]byte, meta *boc.BagMetadata) error {
+func (h *Handler) ensureBagCacheOpen(bagID boc.BagID, meta *boc.BagMetadata) error {
 	if h.segmentCache.HasBag(bagID) {
 		return nil
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/cockroachdb/pebble/v2"
 	"github.com/gin-gonic/gin"
 	ionadnl "github.com/ice-blockchain/ion/services/ion-connect-storage/internal/adnl"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/cluster"
 	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/provider"
 	"github.com/stretchr/testify/require"
@@ -49,7 +50,7 @@ func TestE2E_ProviderIndexOverRLDP(t *testing.T) {
 	singleNode := cluster.NewSingleNodeCoordinator("test-node", adnlAddr, "127.0.0.1", 0)
 	providerIndex := provider.NewProviderIndex(db, adnlAddr, singleNode, logger)
 
-	testBagID := [32]byte{0xDE, 0xAD, 0xBE, 0xEF}
+	testBagID := boc.BagID{0xDE, 0xAD, 0xBE, 0xEF}
 	require.NoError(t, providerIndex.Register(testBagID))
 
 	peer := connectClient(t, fmt.Sprintf("127.0.0.1:%d", port), serverKey)
@@ -67,7 +68,7 @@ func TestE2E_ProviderIndexOverRLDP(t *testing.T) {
 	})
 
 	t.Run("unknown bag returns 404", func(t *testing.T) {
-		unknownBag := [32]byte{0x01}
+		unknownBag := boc.BagID{0x01}
 		resp, _ := sendHTTPOverRLDP(t, peer, "GET", "/bags/"+hex.EncodeToString(unknownBag[:]))
 		require.EqualValues(t, 404, resp.StatusCode)
 	})

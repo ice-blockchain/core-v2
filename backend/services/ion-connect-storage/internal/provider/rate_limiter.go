@@ -42,6 +42,11 @@ func (rl *PeerRateLimiter) Close() { rl.closeOnce.Do(func() { close(rl.done) }) 
 // Middleware returns a gin middleware that rate-limits requests by peer ID.
 // Peers are identified by the X-RLDP-Peer-ID header set by the RLDP bridge.
 // Falls back to client IP when the header is absent.
+//
+// Security: The X-RLDP-Peer-ID header is always set by the upstream RLDP bridge
+// (rldp_http.go). The ClientIP fallback is only reached if a request bypasses
+// the bridge. In that case, Gin's ClientIP trusts X-Forwarded-For by default,
+// which can be spoofed unless gin.SetTrustedProxies is configured in deployment.
 func (rl *PeerRateLimiter) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		peerID := c.GetHeader("X-RLDP-Peer-ID")

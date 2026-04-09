@@ -1,10 +1,11 @@
 package adnl
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math/bits"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -54,8 +55,8 @@ func mergeClosest(existing, incoming []foundNode, targetKey []byte, k int) []fou
 		}
 	}
 
-	sort.Slice(all, func(i, j int) bool {
-		return all[i].affinity > all[j].affinity
+	slices.SortStableFunc(all, func(a, b foundNode) int {
+		return cmp.Compare(b.affinity, a.affinity)
 	})
 
 	if len(all) > k {
@@ -111,7 +112,7 @@ func parseDHTNodes(nodesList dht.NodesList, gateway *adnl.Gateway, targetKey []b
 }
 
 func storeSingleValue(ctx context.Context, peer adnl.Peer, val *dht.Value) error {
-	storeCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	storeCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	raw, err := tl.Serialize(dht.Store{Value: val}, true)

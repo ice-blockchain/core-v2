@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -54,7 +55,7 @@ func TestE2E_IngesterWritesToRedis(t *testing.T) {
 		RpcURLs:    []string{e2eRPCURL},
 		ChainID:    e2eChainID,
 		PrivateKey: privateKey,
-		Logger:     greenfieldclient.NewZerologAdapter(testLogger()),
+		Logger:     slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})),
 	})
 	require.NoError(t, err)
 	defer gfClient.Close()

@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 // handleGetTorrentInfo handles storage.getTorrentInfo RPC.
 // Returns TorrentInfo BoC wrapped in storage.torrentInfo TL response.
-func (h *Handler) handleGetTorrentInfo(ctx context.Context, bagID [32]byte) ([]byte, error) {
+func (h *Handler) handleGetTorrentInfo(ctx context.Context, bagID boc.BagID) ([]byte, error) {
 	meta, err := h.ensureBagLoaded(ctx, bagID)
 	if err != nil {
 		return nil, fmt.Errorf("ensure bag loaded: %w", err)

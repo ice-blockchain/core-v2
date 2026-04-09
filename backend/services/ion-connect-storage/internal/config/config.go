@@ -88,6 +88,9 @@ func Load() (Config, error) {
 	if adnlExternalAddr == "" {
 		return Config{}, fmt.Errorf("ADNL_EXTERNAL_ADDR is required (e.g. 1.2.3.4:3278)")
 	}
+	if err := validateExternalAddr(adnlExternalAddr); err != nil {
+		return Config{}, err
+	}
 
 	cacheTTL, err := parseDuration("CACHE_TTL", 24*time.Hour)
 	if err != nil {
@@ -134,6 +137,18 @@ func Load() (Config, error) {
 	reclamationStartDelay, err := parseDuration("RECLAMATION_START_DELAY", 0)
 	if err != nil {
 		return Config{}, err
+	}
+	if heartbeatInterval <= 0 {
+		return Config{}, fmt.Errorf("HEARTBEAT_INTERVAL must be positive, got %v", heartbeatInterval)
+	}
+	if reclamationInterval <= 0 {
+		return Config{}, fmt.Errorf("RECLAMATION_INTERVAL must be positive, got %v", reclamationInterval)
+	}
+	if staleHeartbeatTimeout <= 0 {
+		return Config{}, fmt.Errorf("STALE_HEARTBEAT_TIMEOUT must be positive, got %v", staleHeartbeatTimeout)
+	}
+	if reclamationStartDelay < 0 {
+		return Config{}, fmt.Errorf("RECLAMATION_START_DELAY must be non-negative, got %v", reclamationStartDelay)
 	}
 
 	return Config{
@@ -228,7 +243,7 @@ func validateURL(raw string) error {
 }
 
 func validateIP(host string, ip net.IP) error {
-	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+	if ip.IsUnspecified() || ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
 		ip.IsLinkLocalMulticast() || ip.IsMulticast() {
 		return fmt.Errorf("URL host %q resolves to a private/restricted IP %s", host, ip)
 	}
@@ -279,6 +294,18 @@ func parseDuration(key string, fallback time.Duration) (time.Duration, error) {
 		return 0, fmt.Errorf("%s: invalid duration %q: %w", key, v, err)
 	}
 	return d, nil
+}
+
+func validateExternalAddr(addr string) error {
+	host, portStr, err := net.SplitHostPort(addr)
+	if err != nil || host == "" {
+		return fmt.Errorf("ADNL_EXTERNAL_ADDR must be in host:port format, got %q", addr)
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil || port <= 0 || port > 65535 {
+		return fmt.Errorf("ADNL_EXTERNAL_ADDR port must be between 1 and 65535, got %q", portStr)
+	}
+	return nil
 }
 
 // secretFromEnvOrFile reads a secret from environment variable KEY, or from

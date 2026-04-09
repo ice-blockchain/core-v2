@@ -119,7 +119,7 @@ func wireCluster(t *testing.T, nodes []*clusterNode) {
 	time.Sleep(1 * time.Second)
 }
 
-func uploadBag(t *testing.T, ctx context.Context, payloadSize int, suffix string) ([32]byte, []byte, string, string) {
+func uploadBag(t *testing.T, ctx context.Context, payloadSize int, suffix string) (boc.BagID, []byte, string, string) {
 	t.Helper()
 	privKey := greenfieldPrivKey(t)
 
@@ -136,7 +136,7 @@ func uploadBag(t *testing.T, ctx context.Context, payloadSize int, suffix string
 	return bagID, payload, bucketName, objectName
 }
 
-func queryProviderOverRLDP(t *testing.T, node *clusterNode, bagID [32]byte) provider.LookupResponse {
+func queryProviderOverRLDP(t *testing.T, node *clusterNode, bagID boc.BagID) provider.LookupResponse {
 	t.Helper()
 
 	_, clientKey, err := ed25519.GenerateKey(rand.Reader)
@@ -215,7 +215,7 @@ func waitForClusterConvergence(t *testing.T, nodes []*clusterNode, timeout time.
 }
 
 // waitForExactlyOneOwner polls until exactly one node owns the bag.
-func waitForExactlyOneOwner(t *testing.T, nodes []*clusterNode, bagID [32]byte, timeout time.Duration) {
+func waitForExactlyOneOwner(t *testing.T, nodes []*clusterNode, bagID boc.BagID, timeout time.Duration) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
 	"github.com/xssnick/tonutils-go/tl"
 )
@@ -64,7 +65,7 @@ func (t *ClusterTransport) handleForwardRaw(ctx context.Context, h handlerBundle
 		resp, _ := tl.Serialize(ForwardRawResponseMsg{}, true)
 		return resp
 	}
-	var bagID [32]byte
+	var bagID boc.BagID
 	copy(bagID[:], fwdRaw.BagID)
 	if h.ownerChecker == nil || !h.ownerChecker.OwnsBag(bagID) {
 		t.logger.Debug("rejected forwarded raw query for non-owned bag", "bag", bagID[:4])
@@ -85,7 +86,7 @@ func (t *ClusterTransport) handleForwardPiece(ctx context.Context, h handlerBund
 		resp, _ := tl.Serialize(PieceNotFoundMsg{}, true)
 		return resp
 	}
-	var bagID [32]byte
+	var bagID boc.BagID
 	copy(bagID[:], fwdReq.BagID)
 	if h.ownerChecker == nil || !h.ownerChecker.OwnsBag(bagID) {
 		t.logger.Debug("rejected forwarded piece request for non-owned bag", "bag", bagID[:4])
@@ -103,7 +104,7 @@ func (t *ClusterTransport) handleForwardPiece(ctx context.Context, h handlerBund
 }
 
 func (t *ClusterTransport) handleOwnerCheck(h handlerBundle, ownerCheck OwnerCheckMsg) []byte {
-	var bagID [32]byte
+	var bagID boc.BagID
 	copy(bagID[:], ownerCheck.BagID)
 	owner := ""
 	if h.ownerChecker != nil {
@@ -115,10 +116,10 @@ func (t *ClusterTransport) handleOwnerCheck(h handlerBundle, ownerCheck OwnerChe
 
 // ForwardPieceViaPeer sends a ForwardPieceRequest to a specific peer
 // using RLDP over the cluster overlay.
-func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID [32]byte, pieceID int) ([]byte, []byte, error) {
+func (t *ClusterTransport) ForwardPieceViaPeer(ctx context.Context, adnlAddr [32]byte, bagID boc.BagID, pieceID int) ([]byte, []byte, error) {
 	t.mu.RLock()
-	defer t.mu.RUnlock()
 	cp, ok := t.peers[adnlAddr]
+	t.mu.RUnlock()
 	if !ok {
 		return nil, nil, fmt.Errorf("peer %x not connected", adnlAddr[:4])
 	}
@@ -138,13 +139,13 @@ const maxForwardQuerySize = 64 * 1024
 
 // ForwardRawQuery forwards a raw storage query to the bag owner via the
 // cluster overlay.
-func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID [32]byte, rawQuery []byte) ([]byte, error) {
+func (t *ClusterTransport) ForwardRawQuery(ctx context.Context, ownerADNLAddr [32]byte, bagID boc.BagID, rawQuery []byte) ([]byte, error) {
 	if len(rawQuery) > maxForwardQuerySize {
 		return nil, fmt.Errorf("raw query too large: %d bytes (max %d)", len(rawQuery), maxForwardQuerySize)
 	}
 	t.mu.RLock()
-	defer t.mu.RUnlock()
 	cp, ok := t.peers[ownerADNLAddr]
+	t.mu.RUnlock()
 	if !ok {
 		return nil, fmt.Errorf("owner peer %x not connected", ownerADNLAddr[:4])
 	}
@@ -166,7 +167,7 @@ const ownerCheckTimeout = 5 * time.Second
 
 // QueryPeerOwnership asks all connected cluster peers who they believe
 // owns a bag.
-func (t *ClusterTransport) QueryPeerOwnership(ctx context.Context, bagID [32]byte) []string {
+func (t *ClusterTransport) QueryPeerOwnership(ctx context.Context, bagID boc.BagID) []string {
 	t.mu.RLock()
 	peers := make([]*clusterPeer, 0, len(t.peers))
 	for _, p := range t.peers {

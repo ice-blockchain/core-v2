@@ -2,6 +2,7 @@ package greenfieldclient
 
 import (
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -140,7 +141,7 @@ func TestHasOnlineIOTag(t *testing.T) {
 func TestRotateGateway(t *testing.T) {
 	c := &client{
 		rpcURLs: []string{"http://rpc1", "http://rpc2", "http://rpc3"},
-		log:     &nopLogger{},
+		log:     slog.New(slog.DiscardHandler),
 	}
 
 	c.rotateGateway()
@@ -171,7 +172,7 @@ func TestGetGnfdClient_ConcurrentWithRotate(t *testing.T) {
 	c := &client{
 		rpcURLs: []string{"http://rpc1", "http://rpc2", "http://rpc3"},
 		cfg:     Config{ChainID: "test-chain"},
-		log:     &nopLogger{},
+		log:     slog.New(slog.DiscardHandler),
 	}
 
 	var wg sync.WaitGroup
@@ -205,12 +206,14 @@ func TestLastHeight_NeverRegresses(t *testing.T) {
 func TestDefaultQuery_RejectsSpecialCharacters(t *testing.T) {
 	valid := []string{"dev", "staging", "prod", "staging-1"}
 	for _, env := range valid {
-		result := DefaultQuery(env)
+		result, err := DefaultQuery(env)
+		require.NoError(t, err)
 		require.Contains(t, result, env)
 	}
 
 	invalid := []string{"dev'--", "prod OR 1=1", "DEV", "dev;drop", "dev test"}
 	for _, env := range invalid {
-		require.Panics(t, func() { DefaultQuery(env) }, "expected panic for %q", env)
+		_, err := DefaultQuery(env)
+		require.Error(t, err, "expected error for %q", env)
 	}
 }

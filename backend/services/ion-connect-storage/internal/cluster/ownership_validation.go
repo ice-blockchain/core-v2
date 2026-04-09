@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"time"
 
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -12,7 +13,7 @@ import (
 // fresh heartbeat. Returns "" if the owner cannot be validated, treating
 // the bag as effectively unclaimed. This prevents identity spoofing where
 // a malicious node writes another node's ID as the ownership value.
-func (c *Coordinator) ValidatedOwner(bagID [32]byte) string {
+func (c *Coordinator) ValidatedOwner(bagID boc.BagID) string {
 	owner := c.Owner(bagID)
 	if owner == "" {
 		return ""

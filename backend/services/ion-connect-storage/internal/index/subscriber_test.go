@@ -10,13 +10,14 @@ import (
 
 	"github.com/cockroachdb/pebble/v2"
 	greenfieldclient "github.com/ice-blockchain/ion/packages/greenfield-client"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/stretchr/testify/require"
 )
 
 // alwaysOwnChecker always claims ownership.
 type alwaysOwnChecker struct{}
 
-func (a *alwaysOwnChecker) OwnsOrClaim(_ context.Context, _ [32]byte) (bool, error) {
+func (a *alwaysOwnChecker) OwnsOrClaim(_ context.Context, _ boc.BagID) (bool, error) {
 	return true, nil
 }
 
@@ -60,9 +61,9 @@ func makeTxEventWithBag(bagIDHex, bucket, object string, height int64) *greenfie
 	}
 }
 
-func decodeBagIDHelper(t *testing.T, hexStr string) [32]byte {
+func decodeBagIDHelper(t *testing.T, hexStr string) boc.BagID {
 	t.Helper()
-	var bagID [32]byte
+	var bagID boc.BagID
 	decoded, err := hex.DecodeString(hexStr)
 	require.NoError(t, err)
 	copy(bagID[:], decoded)

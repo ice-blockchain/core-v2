@@ -8,6 +8,7 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 	"github.com/xssnick/tonutils-go/adnl/dht"
 	"github.com/xssnick/tonutils-go/adnl/keys"
 	"github.com/xssnick/tonutils-go/adnl/overlay"
@@ -27,8 +28,8 @@ type dhtStorer interface {
 type DHTRegistrar struct {
 	storer          dhtStorer
 	sw              *sweeper
-	registered      *lru.Cache[[32]byte, struct{}]
-	regionIndex     map[uint8]map[[32]byte]struct{}
+	registered      *lru.Cache[boc.BagID, struct{}]
+	regionIndex     map[uint8]map[boc.BagID]struct{}
 	ownerKey        ed25519.PrivateKey
 	refreshInterval time.Duration
 	logger          *slog.Logger
@@ -48,13 +49,13 @@ func newDHTRegistrar(
 	r := &DHTRegistrar{
 		storer:          storer,
 		sw:              sw,
-		regionIndex:     make(map[uint8]map[[32]byte]struct{}),
+		regionIndex:     make(map[uint8]map[boc.BagID]struct{}),
 		ownerKey:        ownerKey,
 		refreshInterval: 1 * time.Hour,
 		logger:          logger,
 		done:            make(chan struct{}),
 	}
-	cache, _ := lru.NewWithEvict[[32]byte, struct{}](limit, func(bagID [32]byte, _ struct{}) {
+	cache, _ := lru.NewWithEvict[boc.BagID, struct{}](limit, func(bagID boc.BagID, _ struct{}) {
 		r.removeFromRegionIndex(bagID)
 	})
 	r.registered = cache
@@ -80,7 +81,7 @@ func (r *DHTRegistrar) Stop() {
 	<-r.done
 }
 
-func (r *DHTRegistrar) Register(ctx context.Context, bagID [32]byte) error {
+func (r *DHTRegistrar) Register(ctx context.Context, bagID boc.BagID) error {
 	r.registered.Add(bagID, struct{}{})
 	r.addToRegionIndex(bagID)
 	r.logger.Info("bag registered in DHT", "bag_id_prefix", bagID[:4], "count", r.registered.Len())
@@ -102,7 +103,7 @@ func (r *DHTRegistrar) Register(ctx context.Context, bagID [32]byte) error {
 	return nil
 }
 
-func (r *DHTRegistrar) Deregister(bagID [32]byte) {
+func (r *DHTRegistrar) Deregister(bagID boc.BagID) {
 	r.registered.Remove(bagID)
 	r.removeFromRegionIndex(bagID)
 	r.logger.Info("bag deregistered from DHT", "bag_id_prefix", bagID[:4], "count", r.registered.Len())
@@ -112,17 +113,17 @@ func (r *DHTRegistrar) Count() int {
 	return r.registered.Len()
 }
 
-func (r *DHTRegistrar) addToRegionIndex(bagID [32]byte) {
+func (r *DHTRegistrar) addToRegionIndex(bagID boc.BagID) {
 	region := overlayRegion(bagID)
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.regionIndex[region] == nil {
-		r.regionIndex[region] = make(map[[32]byte]struct{})
+		r.regionIndex[region] = make(map[boc.BagID]struct{})
 	}
 	r.regionIndex[region][bagID] = struct{}{}
 }
 
-func (r *DHTRegistrar) removeFromRegionIndex(bagID [32]byte) {
+func (r *DHTRegistrar) removeFromRegionIndex(bagID boc.BagID) {
 	region := overlayRegion(bagID)
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -134,14 +135,14 @@ func (r *DHTRegistrar) removeFromRegionIndex(bagID [32]byte) {
 	}
 }
 
-func (r *DHTRegistrar) bagsInRegion(region uint8) [][32]byte {
+func (r *DHTRegistrar) bagsInRegion(region uint8) []boc.BagID {
 	r.mu.Lock()
 	m := r.regionIndex[region]
 	if len(m) == 0 {
 		r.mu.Unlock()
 		return nil
 	}
-	result := make([][32]byte, 0, len(m))
+	result := make([]boc.BagID, 0, len(m))
 	for bagID := range m {
 		result = append(result, bagID)
 	}
@@ -199,7 +200,7 @@ func (r *DHTRegistrar) sweepRegion(ctx context.Context, region uint8) {
 	r.logger.Debug("sweep region complete", "region", region, "bags", len(bags), "peers", len(peers))
 }
 
-func (r *DHTRegistrar) buildRegionValues(bags [][32]byte) ([]*dht.Value, error) {
+func (r *DHTRegistrar) buildRegionValues(bags []boc.BagID) ([]*dht.Value, error) {
 	values := make([]*dht.Value, 0, len(bags))
 	for _, bagID := range bags {
 		overlayKey := computeOverlayKey(bagID)
@@ -218,16 +219,16 @@ func (r *DHTRegistrar) buildRegionValues(bags [][32]byte) ([]*dht.Value, error) 
 
 // computeOverlayKey returns the raw overlay key (bagID) for DHT registration.
 // This is passed to buildOverlayValue which computes the DHT address from it.
-func computeOverlayKey(bagID [32]byte) []byte {
+func computeOverlayKey(bagID boc.BagID) []byte {
 	return bagID[:]
 }
 
-func overlayRegion(bagID [32]byte) uint8 {
+func overlayRegion(bagID boc.BagID) uint8 {
 	dhtKey := overlayDHTKey(bagID)
 	return dhtKey[0]
 }
 
-func overlayDHTKey(bagID [32]byte) []byte {
+func overlayDHTKey(bagID boc.BagID) []byte {
 	id := keys.PublicKeyOverlay{Key: bagID[:]}
 	idKey, _ := tl.Hash(id)
 	return idKey

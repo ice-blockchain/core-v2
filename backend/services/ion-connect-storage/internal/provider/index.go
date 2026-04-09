@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/cockroachdb/pebble/v2"
+	"github.com/ice-blockchain/ion/services/ion-connect-storage/internal/boc"
 )
 
 const provKeyPrefix = "prov/"
@@ -24,7 +25,7 @@ type LookupResponse struct {
 
 // OwnerResolver resolves bag ownership from the cluster CRDT.
 type OwnerResolver interface {
-	Owner(bagID [32]byte) string
+	Owner(bagID boc.BagID) string
 	NodeADNLAddress(nodeID string) (adnlAddr [32]byte, ip string, port int, found bool)
 }
 
@@ -42,7 +43,7 @@ func NewProviderIndex(db *pebble.DB, adnlAddr [32]byte, ownerResolver OwnerResol
 }
 
 // Register persists this node as a provider for the given bag.
-func (p *ProviderIndex) Register(bagID [32]byte) error {
+func (p *ProviderIndex) Register(bagID boc.BagID) error {
 	records := []ProviderRecord{{ADNLAddress: hex.EncodeToString(p.adnlAddr[:])}}
 	data, err := json.Marshal(records)
 	if err != nil {
@@ -55,7 +56,7 @@ func (p *ProviderIndex) Register(bagID [32]byte) error {
 }
 
 // Deregister removes this node as a provider for the given bag.
-func (p *ProviderIndex) Deregister(bagID [32]byte) error {
+func (p *ProviderIndex) Deregister(bagID boc.BagID) error {
 	if err := p.db.Delete(makeProviderKey(bagID), pebble.Sync); err != nil {
 		return fmt.Errorf("delete provider: %w", err)
 	}
@@ -65,7 +66,7 @@ func (p *ProviderIndex) Deregister(bagID [32]byte) error {
 // Lookup returns all known providers for a bag.
 // Checks PebbleDB first to confirm the bag is registered, then enriches
 // with the CRDT owner's ADNL address if available.
-func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
+func (p *ProviderIndex) Lookup(bagID boc.BagID) ([]ProviderRecord, error) {
 	val, closer, err := p.db.Get(makeProviderKey(bagID))
 	if err == pebble.ErrNotFound {
 		return nil, nil
@@ -95,7 +96,7 @@ func (p *ProviderIndex) Lookup(bagID [32]byte) ([]ProviderRecord, error) {
 	return records, nil
 }
 
-func makeProviderKey(bagID [32]byte) []byte {
+func makeProviderKey(bagID boc.BagID) []byte {
 	key := make([]byte, len(provKeyPrefix)+32)
 	copy(key, provKeyPrefix)
 	copy(key[len(provKeyPrefix):], bagID[:])
