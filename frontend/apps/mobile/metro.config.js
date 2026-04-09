@@ -16,6 +16,7 @@ const singletonNames = [
   'react-native-svg',
   'react-native-gesture-handler',
   'react-native-reanimated',
+  'react-native-pager-view',
   'react-native-video',
   '@react-navigation/native',
   '@react-navigation/native-stack',

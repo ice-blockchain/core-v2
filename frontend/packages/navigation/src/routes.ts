@@ -26,6 +26,7 @@ export const Routes = {
     MediaPicker: 'Sheet/MediaPicker',
     GalleryPermissionDenied: 'Sheet/GalleryPermissionDenied',
     CameraPermissionDenied: 'Sheet/CameraPermissionDenied',
+    CancelPost: 'Sheet/CancelPost',
   },
 
   WalletView: {

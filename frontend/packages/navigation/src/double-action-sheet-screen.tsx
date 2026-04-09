@@ -7,19 +7,23 @@ import { Icon, Text, useTheme } from "@ion/ui";
 import { DynamicSheet } from "./DynamicSheet";
 import { InformationSheetContent } from "./information-sheet-content";
 
-interface DoubleActionSheetScreenProps {
-  iconName: IconName;
+type IconConfig =
+  | { iconName: IconName; icon?: never }
+  | { icon: ReactNode; iconName?: never };
+
+type DoubleActionSheetScreenProps = IconConfig & {
   iconColor?: string;
   title: string;
   description: ReactNode;
   secondaryLabel: string;
   primaryLabel: string;
+  primaryColor?: string;
   onSecondaryPress: () => void;
   onPrimaryPress: () => void;
   isSecondaryLoading?: boolean;
   isPrimaryLoading?: boolean;
   onDismiss?: () => void;
-}
+};
 
 function buildButtonRowStyle(scale: (n: number) => number): ViewStyle {
   return {
@@ -70,11 +74,19 @@ function SecondaryButton({ label, onPress, isLoading }: { label: string; onPress
   );
 }
 
-function PrimaryButton({ label, onPress, isLoading }: { label: string; onPress: () => void; isLoading: boolean }) {
+interface PrimaryButtonProps {
+  label: string;
+  onPress: () => void;
+  isLoading: boolean;
+  backgroundColor?: string | undefined;
+}
+
+function PrimaryButton({ label, onPress, isLoading, backgroundColor }: PrimaryButtonProps) {
   const { scale, colors } = useTheme();
+  const bgColor = backgroundColor ?? colors.primaryAccent;
   const style = useMemo(
-    () => buildPrimaryButtonStyle(scale.scaleSize, colors.primaryAccent),
-    [scale.scaleSize, colors.primaryAccent],
+    () => buildPrimaryButtonStyle(scale.scaleSize, bgColor),
+    [scale.scaleSize, bgColor],
   );
 
   return (
@@ -91,8 +103,8 @@ function buildSheetIcon(iconName: IconName, size: number, iconColor?: string) {
 }
 
 export function DoubleActionSheetScreen({
-  iconName, iconColor, title, description,
-  secondaryLabel, primaryLabel,
+  iconName, icon, iconColor, title, description,
+  secondaryLabel, primaryLabel, primaryColor,
   onSecondaryPress, onPrimaryPress,
   isSecondaryLoading = false, isPrimaryLoading = false,
   onDismiss,
@@ -100,18 +112,19 @@ export function DoubleActionSheetScreen({
   const { scale } = useTheme();
   const scaleSize = scale.scaleSize;
   const rowStyle = useMemo(() => buildButtonRowStyle(scaleSize), [scaleSize]);
+  const resolvedIcon = icon ?? buildSheetIcon(iconName!, scaleSize(80), iconColor);
 
   return (
     <DynamicSheet showClose={false} {...(onDismiss ? { onDismiss } : {})}>
       <InformationSheetContent
-        icon={buildSheetIcon(iconName, scaleSize(80), iconColor)}
+        icon={resolvedIcon}
         title={title}
         description={description}
         topPadding={30}
       />
       <View style={rowStyle}>
         <SecondaryButton label={secondaryLabel} onPress={onSecondaryPress} isLoading={isSecondaryLoading} />
-        <PrimaryButton label={primaryLabel} onPress={onPrimaryPress} isLoading={isPrimaryLoading} />
+        <PrimaryButton label={primaryLabel} onPress={onPrimaryPress} isLoading={isPrimaryLoading} backgroundColor={primaryColor} />
       </View>
     </DynamicSheet>
   );

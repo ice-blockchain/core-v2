@@ -34,4 +34,8 @@ export const feedFR: Record<keyof typeof feedEN, string> = {
   addButtonLabel: "Ajouter",
   cameraLabel: "Camera",
   selectAlbumTitle: "Selectionner l'album",
+  cancelPostTitle: "Annuler la publication ?",
+  cancelPostDescription: "Etes-vous sur de vouloir annuler votre progression ?",
+  cancelPostBackButton: "Retour",
+  cancelPostDeleteButton: "Supprimer",
 };

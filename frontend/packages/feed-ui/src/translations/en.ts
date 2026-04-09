@@ -32,4 +32,8 @@ export const feedEN = {
   addButtonLabel: "Add",
   cameraLabel: "Camera",
   selectAlbumTitle: "Select album",
+  cancelPostTitle: "Cancel post?",
+  cancelPostDescription: "Are you sure you want to cancel your progress?",
+  cancelPostBackButton: "Back",
+  cancelPostDeleteButton: "Delete",
 } as const;

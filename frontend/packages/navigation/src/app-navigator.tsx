@@ -37,6 +37,7 @@ interface AppNavigatorScreens {
   MediaPicker?: ComponentType;
   GalleryPermissionDenied?: ComponentType;
   CameraPermissionDenied?: ComponentType;
+  CancelPost?: ComponentType;
   walletViewScreens?: WalletViewScreens;
 }
 
@@ -95,6 +96,7 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       {s.MediaPicker && <Stack.Screen name={Routes.Sheet.MediaPicker} component={s.MediaPicker} options={MODAL} />}
       {s.GalleryPermissionDenied && <Stack.Screen name={Routes.Sheet.GalleryPermissionDenied} component={s.GalleryPermissionDenied} options={MODAL} />}
       {s.CameraPermissionDenied && <Stack.Screen name={Routes.Sheet.CameraPermissionDenied} component={s.CameraPermissionDenied} options={MODAL} />}
+      {s.CancelPost && <Stack.Screen name={Routes.Sheet.CancelPost} component={s.CancelPost} options={MODAL} />}
     </Stack.Navigator>
   );
 }

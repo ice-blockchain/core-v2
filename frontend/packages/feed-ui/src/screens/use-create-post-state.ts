@@ -27,7 +27,10 @@ export function useCreatePostState() {
   const navigation = useSheetNavigation();
   const { attachedMedia, handleRemoveMedia, handleMediaSelected } = useAttachedMedia();
 
-  const handleClose = useCallback(() => navigation.goBack(), [navigation]);
+  const handleClose = useCallback(
+    () => navigation.navigate(Routes.Sheet.CancelPost),
+    [navigation],
+  );
 
   const handleGalleryPress = useCallback(async () => {
     try {
