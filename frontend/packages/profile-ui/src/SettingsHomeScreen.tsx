@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ScrollView } from "react-native";
 import { Text, useTheme } from "@ion/ui";
 import type { IconName } from "@ion/ui";
 import { translate } from "@ion/localization";
+import { useSettingsNavigation, useReportSettingsContentHeight, Routes } from "@ion/navigation";
+
 import { PROFILE_NAMESPACE } from "./translations";
 import { SettingsTile } from "./SettingsTile";
 
@@ -28,18 +30,21 @@ const TILES: readonly TileConfig[] = [
 export function SettingsHomeScreen() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
+  const navigation = useSettingsNavigation();
   const contentStyle = useMemo(() => buildContentStyle(scale), [scale]);
   const versionStyle = useMemo(() => ({ marginTop: scale(4), textAlign: "center" as const }), [scale]);
+  const goToAccount = useCallback(() => navigation.navigate(Routes.Settings.Account), [navigation]);
+  const onContentSize = useReportSettingsContentHeight(Routes.Settings.Home);
 
   return (
-    <ScrollView contentContainerStyle={contentStyle}>
+    <ScrollView contentContainerStyle={contentStyle} onContentSizeChange={onContentSize}>
       {TILES.map((tile) => (
         <SettingsTile
           key={tile.labelKey}
           iconName={tile.iconName}
           iconColor={tile.colorType === "danger" ? theme.colors.attentionRed : theme.colors.primaryAccent}
           label={translate(tile.labelKey)}
-          onPress={noop}
+          onPress={tile.labelKey === `${NS}:settingsAccount` ? goToAccount : noop}
         />
       ))}
       <Text variant="caption3" color={theme.colors.quaternaryText} style={versionStyle}>

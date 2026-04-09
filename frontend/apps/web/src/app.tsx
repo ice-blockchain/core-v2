@@ -24,7 +24,7 @@ import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
 import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, CancelPostScreen, feedTranslations } from '@ion/feed-ui';
 import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from '@ion/wallet-ui';
-import { profileTranslations } from '@ion/profile-ui';
+import { profileTranslations, SettingsSheetScreen } from '@ion/profile-ui';
 import { HomeScreen, homeTranslations } from '@ion/home-ui';
 import { SplashScreen } from './components/splash-screen';
 import { IntroScreen } from './components/intro-screen';
@@ -72,6 +72,7 @@ const screens = {
     Edit: EditWalletViewScreen,
     DeleteConfirm: DeleteWalletViewConfirmScreen,
   },
+  Settings: SettingsSheetScreen,
 };
 
 const authScreens = {

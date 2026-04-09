@@ -7,10 +7,14 @@ interface SettingsTileProps {
   iconName: IconName;
   iconColor: string;
   label: string;
+  valueLabel?: string | undefined;
+  rightType?: "arrow" | "checkbox" | undefined;
+  checked?: boolean | undefined;
   onPress: () => void;
 }
 
-export function SettingsTile({ iconName, iconColor, label, onPress }: SettingsTileProps) {
+export function SettingsTile(props: SettingsTileProps) {
+  const { iconName, iconColor, label, valueLabel, rightType = "arrow", checked, onPress } = props;
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const containerStyle = useMemo(() => buildContainerStyle(scale, theme.colors.tertiaryBackground), [scale, theme.colors]);
@@ -24,8 +28,22 @@ export function SettingsTile({ iconName, iconColor, label, onPress }: SettingsTi
         </View>
         <Text variant="body">{label}</Text>
       </View>
-      <Icon name="arrow-right" size={scale(24)} color={theme.colors.quaternaryText} />
+      <TileRightSide rightType={rightType} valueLabel={valueLabel} checked={checked} />
     </Pressable>
+  );
+}
+
+function TileRightSide({ rightType, valueLabel, checked }: { rightType: string; valueLabel?: string | undefined; checked?: boolean | undefined }) {
+  const theme = useTheme();
+  const scale = theme.scale.scaleSize;
+  if (rightType === "checkbox") {
+    return <Icon name={checked ? "checkbox-on" : "checkbox-off"} size={scale(24)} color={theme.colors.primaryAccent} />;
+  }
+  return (
+    <View style={styles.rightRow}>
+      {valueLabel ? <Text variant="caption" color={theme.colors.primaryAccent}>{valueLabel}</Text> : null}
+      <Icon name="arrow-right" size={scale(24)} color={theme.colors.quaternaryText} />
+    </View>
   );
 }
 
@@ -56,4 +74,5 @@ function buildIconBoxStyle(scale: (n: number) => number, backgroundColor: string
 
 const styles = StyleSheet.create({
   leftRow: { flexDirection: "row", alignItems: "center" },
+  rightRow: { flexDirection: "row", alignItems: "center", gap: 12 },
 });

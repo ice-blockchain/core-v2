@@ -50,4 +50,9 @@ export const Routes = {
     DiscoverCreators: 'DiscoverCreators',
     Notifications: 'Notifications',
   },
+
+  Settings: {
+    Home: 'Settings/Home',
+    Account: 'Settings/Account',
+  },
 } as const;

@@ -1,12 +1,13 @@
-import { translate } from "@ion/localization";
-import { DynamicSheet } from "@ion/navigation";
-import { PROFILE_NAMESPACE } from "./translations";
+import type { SettingsScreens } from "@ion/navigation";
+import { SettingsSheetNavigator } from "@ion/navigation";
 import { SettingsHomeScreen } from "./SettingsHomeScreen";
+import { SettingsAccountScreen } from "./SettingsAccountScreen";
+
+const screens: SettingsScreens = {
+  Home: SettingsHomeScreen,
+  Account: SettingsAccountScreen,
+};
 
 export function SettingsSheetScreen() {
-  return (
-    <DynamicSheet title={translate(`${PROFILE_NAMESPACE}:settingsTitle`)}>
-      <SettingsHomeScreen />
-    </DynamicSheet>
-  );
+  return <SettingsSheetNavigator screens={screens} />;
 }

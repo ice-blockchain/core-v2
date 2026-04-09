@@ -104,11 +104,15 @@ import { SearchFollowersIcon } from "./generated/SearchFollowersIcon";
 import { SearchGroupsIcon } from "./generated/SearchGroupsIcon";
 import { SearchIcon } from "./generated/SearchIcon";
 import { SecurityShieldUserIcon } from "./generated/SecurityShieldUserIcon";
+import { SelectLanguageIcon } from "./generated/SelectLanguageIcon";
 import { SendIcon } from "./generated/SendIcon";
+import { SettingsAppearanceIcon } from "./generated/SettingsAppearanceIcon";
+import { SettingsAutoplayIcon } from "./generated/SettingsAutoplayIcon";
 import { SettingsFeedbackIcon } from "./generated/SettingsFeedbackIcon";
 import { SheetCloseIcon } from "./generated/SheetCloseIcon";
 import { SwapIcon } from "./generated/SwapIcon";
 import { TrashIcon } from "./generated/TrashIcon";
+import { UserBlockIcon } from "./generated/UserBlockIcon";
 import { VideosTradingIcon } from "./generated/VideosTradingIcon";
 import { WalletBuycryptoIcon } from "./generated/WalletBuycryptoIcon";
 import { WalletIconProfileEmptypostsIcon } from "./generated/WalletIconProfileEmptypostsIcon";
@@ -225,11 +229,15 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "search-groups": SearchGroupsIcon,
   "search": SearchIcon,
   "security-shield-user": SecurityShieldUserIcon,
+  "select-language": SelectLanguageIcon,
   "send": SendIcon,
+  "settings-appearance": SettingsAppearanceIcon,
+  "settings-autoplay": SettingsAutoplayIcon,
   "settings-feedback": SettingsFeedbackIcon,
   "sheet-close": SheetCloseIcon,
   "swap": SwapIcon,
   "trash": TrashIcon,
+  "user-block": UserBlockIcon,
   "videos-trading": VideosTradingIcon,
   "wallet-buycrypto": WalletBuycryptoIcon,
   "wallet-icon-profile-emptyposts": WalletIconProfileEmptypostsIcon,

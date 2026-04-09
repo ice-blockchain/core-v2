@@ -67,19 +67,9 @@ function useWalletViewScreen(walletViewScreens?: WalletViewScreens) {
   );
 }
 
-/* eslint-disable max-lines-per-function -- navigator registration is declarative */
-export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
-  const Auth = useAuthScreen(authScreens);
-  const WalletView = useWalletViewScreen(s.walletViewScreens);
+function SheetScreens({ s, Auth, WalletView }: { s: AppNavigatorScreens; Auth: ComponentType; WalletView?: ComponentType })
   return (
-    <Stack.Navigator screenOptions={NAV}>
-      <Stack.Screen name={Routes.Splash} component={s.Splash} />
-      <Stack.Screen name={Routes.GetStarted} component={s.GetStarted} />
-      {s.Main && <Stack.Screen name={Routes.Main} component={s.Main} />}
-      <Stack.Screen name={Routes.Catalog} component={s.Catalog} />
-      {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
-      {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}
-      {s.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={s.AuthFlow} options={MODAL} />}
+    <>
       <Stack.Screen name={Routes.Sheet.Auth} component={Auth} options={MODAL} />
       {WalletView && <Stack.Screen name={Routes.Sheet.WalletViewManagement} component={WalletView} options={MODAL} />}
       <Stack.Screen name={Routes.Sheet.NicknameReserved} component={s.NicknameReserved} options={MODAL} />
@@ -99,6 +89,23 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       {s.CameraPermissionDenied && <Stack.Screen name={Routes.Sheet.CameraPermissionDenied} component={s.CameraPermissionDenied} options={MODAL} />}
       {s.CancelPost && <Stack.Screen name={Routes.Sheet.CancelPost} component={s.CancelPost} options={MODAL} />}
       {s.Settings && <Stack.Screen name={Routes.Sheet.Settings} component={s.Settings} options={MODAL} />}
+    </>
+  );
+}
+
+export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
+  const Auth = useAuthScreen(authScreens);
+  const WalletView = useWalletViewScreen(s.walletViewScreens);
+  return (
+    <Stack.Navigator screenOptions={NAV}>
+      <Stack.Screen name={Routes.Splash} component={s.Splash} />
+      <Stack.Screen name={Routes.GetStarted} component={s.GetStarted} />
+      {s.Main && <Stack.Screen name={Routes.Main} component={s.Main} />}
+      <Stack.Screen name={Routes.Catalog} component={s.Catalog} />
+      {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
+      {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}
+      {s.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={s.AuthFlow} options={MODAL} />}
+      <SheetScreens s={s} Auth={Auth} WalletView={WalletView} />
     </Stack.Navigator>
   );
 }

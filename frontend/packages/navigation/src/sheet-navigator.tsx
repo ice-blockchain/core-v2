@@ -56,7 +56,6 @@ export function Sheet({ children, onClose, title, titleVisible, onBack, headerRi
   const keyboardOffset = useKeyboardVerticalOffset();
   const bottomInsetStyle = useBottomInsetStyle();
   const resolvedSnapPoints = snapPoints ?? DEFAULT_SNAP_POINTS;
-  const handleCloseAnimated = useCallback(() => { bottomSheetRef.current?.close(); }, []);
 
   return (
     <BottomSheet ref={bottomSheetRef} index={0} snapPoints={resolvedSnapPoints} enablePanDownToClose enableDynamicSizing={false} backdropComponent={SheetBackdrop} backgroundComponent={SheetBackground} handleComponent={SheetHandle} onClose={onClose}>

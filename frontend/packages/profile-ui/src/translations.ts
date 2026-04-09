@@ -32,6 +32,14 @@ const profileEN = {
   settingsFeedback: "Leave your feedback",
   settingsLogout: "Logout",
   settingsVersion: "dApp Version v1.0",
+  accountTitle: "Account",
+  accountEditProfile: "Edit profile",
+  accountBlockedUsers: "Blocked users",
+  accountVideoAutoplay: "Video autoplay",
+  accountAppearance: "Appearance",
+  accountDappLanguage: "dApp language",
+  accountContentLanguage: "Content language",
+  accountDeleteAccount: "Delete account",
 };
 
 const profileFR = {
@@ -64,6 +72,14 @@ const profileFR = {
   settingsFeedback: "Donnez votre avis",
   settingsLogout: "Déconnexion",
   settingsVersion: "dApp Version v1.0",
+  accountTitle: "Compte",
+  accountEditProfile: "Modifier le profil",
+  accountBlockedUsers: "Utilisateurs bloqués",
+  accountVideoAutoplay: "Lecture automatique",
+  accountAppearance: "Apparence",
+  accountDappLanguage: "Langue de l'application",
+  accountContentLanguage: "Langue du contenu",
+  accountDeleteAccount: "Supprimer le compte",
 };
 
 const profileDE = {
@@ -96,6 +112,14 @@ const profileDE = {
   settingsFeedback: "Feedback hinterlassen",
   settingsLogout: "Abmelden",
   settingsVersion: "dApp Version v1.0",
+  accountTitle: "Konto",
+  accountEditProfile: "Profil bearbeiten",
+  accountBlockedUsers: "Blockierte Benutzer",
+  accountVideoAutoplay: "Automatische Wiedergabe",
+  accountAppearance: "Erscheinungsbild",
+  accountDappLanguage: "App-Sprache",
+  accountContentLanguage: "Inhaltssprache",
+  accountDeleteAccount: "Konto löschen",
 };
 
 export const profileTranslations: readonly TranslationResource[] = [
