@@ -1,0 +1,26 @@
+{
+  "name": "@ion/feed",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ion/permissions": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-native-image-picker": ">=7.0.0",
+    "@react-native-camera-roll/camera-roll": ">=7.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

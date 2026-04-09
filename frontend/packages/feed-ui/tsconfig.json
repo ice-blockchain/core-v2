@@ -5,5 +5,5 @@
     "rootDir": "src",
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["src"]
+  "include": ["src", "../feed/src/camera-roll.d.ts"]
 }

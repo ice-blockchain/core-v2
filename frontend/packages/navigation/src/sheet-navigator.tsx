@@ -26,6 +26,7 @@ export interface SheetProps {
   title?: string;
   titleVisible?: boolean;
   onBack?: (() => void) | undefined;
+  headerRightAction?: ReactNode | undefined;
 }
 
 function computeTitleOpacity(scrollOffset: number): number {
@@ -47,7 +48,7 @@ function useScrollTitleOpacity() {
   return { titleOpacity, handleScroll };
 }
 
-export function Sheet({ children, onClose, title, titleVisible, onBack }: SheetProps) {
+export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction }: SheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { titleOpacity: scrollOpacity, handleScroll } = useScrollTitleOpacity();
   const titleOpacity = titleVisible ? 1 : scrollOpacity;
@@ -67,7 +68,7 @@ export function Sheet({ children, onClose, title, titleVisible, onBack }: SheetP
       onClose={onClose}
     >
       <View style={[FLEX_ONE, bottomInsetStyle]}>
-        <SheetScreenHeader title={title} titleOpacity={titleOpacity} onBack={onBack} />
+        <SheetScreenHeader title={title} titleOpacity={titleOpacity} onBack={onBack} rightAction={headerRightAction} />
         <KeyboardAvoidingView style={FLEX_ONE} behavior={KEYBOARD_BEHAVIOR} keyboardVerticalOffset={keyboardOffset}>
           <SheetScrollProvider value={handleScroll}>
             {children}

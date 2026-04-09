@@ -16,5 +16,9 @@ function Mask(props: React.SVGProps<SVGMaskElement> & { children?: React.ReactNo
 function Stop(props: React.SVGProps<SVGStopElement>) { return <stop {...props} />; }
 function LinearGradient(props: React.SVGProps<SVGLinearGradientElement> & { children?: React.ReactNode }) { return <linearGradient {...props} />; }
 
+function SvgXml({ xml, width, height }: { xml: string; width?: number; height?: number }) {
+  return <div style={{ width, height }} dangerouslySetInnerHTML={{ __html: xml }} />;
+}
+
 export default Svg;
-export { Svg, Path, Rect, Circle, G, Defs, ClipPath, Mask, Stop, LinearGradient };
+export { Svg, SvgXml, Path, Rect, Circle, G, Defs, ClipPath, Mask, Stop, LinearGradient };

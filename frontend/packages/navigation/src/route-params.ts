@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { DeviceAsset } from '@ion/feed';
 
 export type VerifyMethodType = 'Passkey' | 'Password' | 'Biometrics';
 
@@ -14,6 +15,7 @@ export type RootStackParamList = {
   Main: undefined;
   Onboarding: undefined;
   Catalog: undefined;
+  ChatPreview: undefined;
   ProxyTest: undefined;
   StorageTest: undefined;
   AuthFlow: undefined;
@@ -30,6 +32,9 @@ export type RootStackParamList = {
   'Sheet/ConfirmPassword': undefined;
   'Sheet/RestoreSuccess': undefined;
   'Sheet/GeneralError': { errorCode: string };
+  'Sheet/MediaPicker': { onComplete?: (assets: DeviceAsset[]) => void } | undefined;
+  'Sheet/GalleryPermissionDenied': undefined;
+  'Sheet/CameraPermissionDenied': undefined;
 };
 
 export type AuthStackParamList = {

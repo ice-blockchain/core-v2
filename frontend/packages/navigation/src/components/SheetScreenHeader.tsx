@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { Pressable, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Icon, Text, useTheme } from '@ion/ui';
@@ -6,6 +7,7 @@ interface SheetScreenHeaderProps {
   title?: string | undefined;
   titleOpacity?: number | undefined;
   onBack?: (() => void) | undefined;
+  rightAction?: ReactNode | undefined;
 }
 
 function buildHeaderStyle(scale: (n: number) => number, backgroundColor: string): ViewStyle {
@@ -22,7 +24,7 @@ function buildHeaderStyle(scale: (n: number) => number, backgroundColor: string)
   };
 }
 
-export function SheetScreenHeader({title, titleOpacity = 0, onBack }: SheetScreenHeaderProps) {
+export function SheetScreenHeader({title, titleOpacity = 0, onBack, rightAction }: SheetScreenHeaderProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const headerStyle = useMemo(() => buildHeaderStyle(scale, theme.colors.secondaryBackground), [scale, theme.colors.secondaryBackground]);
@@ -44,9 +46,11 @@ export function SheetScreenHeader({title, titleOpacity = 0, onBack }: SheetScree
       ) : (
         <View />
       )}
-      <View style={{ ...spacerStyle, opacity: 0 }}>
-        <Icon name="close" size={scale(24)} color={theme.colors.primaryText} />
-      </View>
+      {rightAction ?? (
+        <View style={{ ...spacerStyle, opacity: 0 }}>
+          <Icon name="close" size={scale(24)} color={theme.colors.primaryText} />
+        </View>
+      )}
     </View>
   );
 }
