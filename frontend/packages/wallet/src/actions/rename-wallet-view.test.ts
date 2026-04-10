@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renameWalletView } from "./rename-wallet-view";
-import { walletViewStore, resetWalletViewStore } from "./wallet-view-store";
+import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
 
 describe("renameWalletView", () => {
   beforeEach(() => {
