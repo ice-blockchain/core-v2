@@ -16,13 +16,16 @@ function getSecondWalletId(): string {
 }
 
 describe("deleteWalletView", () => {
+  const mockDetail = {
+    id: "server-id-1", name: "Second", coins: [], aggregation: {},
+    symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
+  };
+
   beforeEach(() => {
     resetWalletClient();
     const mockClient = {
-      createWalletView: vi.fn().mockResolvedValue({
-        id: "server-id-1", name: "Second", coins: [], aggregation: {},
-        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
-      }),
+      createWalletView: vi.fn().mockResolvedValue(mockDetail),
+      getWalletView: vi.fn().mockResolvedValue(mockDetail),
       deleteWalletView: vi.fn().mockResolvedValue(undefined),
     } as never;
     initializeWalletClient(mockClient, "alice");
@@ -67,10 +70,8 @@ describe("deleteWalletView", () => {
     const deleteFn = vi.fn().mockRejectedValue(new Error("API error"));
     resetWalletClient();
     initializeWalletClient({
-      createWalletView: vi.fn().mockResolvedValue({
-        id: "server-id-1", name: "Second", coins: [], aggregation: {},
-        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
-      }),
+      createWalletView: vi.fn().mockResolvedValue(mockDetail),
+      getWalletView: vi.fn().mockResolvedValue(mockDetail),
       deleteWalletView: deleteFn,
     } as never, "alice");
 
@@ -91,10 +92,8 @@ describe("deleteWalletView", () => {
     const deleteFn = vi.fn().mockResolvedValue(undefined);
     resetWalletClient();
     initializeWalletClient({
-      createWalletView: vi.fn().mockResolvedValue({
-        id: "server-id-1", name: "Second", coins: [], aggregation: {},
-        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
-      }),
+      createWalletView: vi.fn().mockResolvedValue(mockDetail),
+      getWalletView: vi.fn().mockResolvedValue(mockDetail),
       deleteWalletView: deleteFn,
     } as never, "alice");
 

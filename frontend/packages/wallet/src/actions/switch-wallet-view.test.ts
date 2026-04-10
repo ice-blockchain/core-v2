@@ -5,13 +5,16 @@ import { walletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
 
 describe("switchWalletView", () => {
+  const mockDetail = {
+    id: "server-id-1", name: "Second", coins: [], aggregation: {},
+    symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
+  };
+
   beforeEach(() => {
     resetWalletClient();
     const mockClient = {
-      createWalletView: vi.fn().mockResolvedValue({
-        id: "server-id-1", name: "Second", coins: [], aggregation: {},
-        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
-      }),
+      createWalletView: vi.fn().mockResolvedValue(mockDetail),
+      getWalletView: vi.fn().mockResolvedValue(mockDetail),
     } as never;
     initializeWalletClient(mockClient, "alice");
   });

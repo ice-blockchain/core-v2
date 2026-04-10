@@ -50,15 +50,16 @@ export function createWalletView(name: string): void {
 
   const { client, username } = getWalletClient();
   client.createWalletView(username, { name: trimmedName, items: [], symbolGroups: [] })
-    .then((detail) => {
+    .then((created) => client.getWalletView(username, created.id).then((detail) => ({ created, detail })))
+    .then(({ created, detail }) => {
       const viewData = convertWalletView(detail);
       const views = walletViewStore.getWalletViews();
       setWalletViews(views.map((v) =>
         v.id === optimistic.id
           ? {
               ...v,
-              id: detail.id,
-              serverId: detail.id,
+              id: created.id,
+              serverId: created.id,
               balance: usdFormatter.format(viewData.usdBalance),
               coinGroups: viewData.coinGroups,
               isLoading: false,
