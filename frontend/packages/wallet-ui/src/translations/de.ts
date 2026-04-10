@@ -44,4 +44,8 @@ export const walletUiDE: Record<keyof typeof walletUiEN, string> = {
     "Alle Coins in dieser Wallet gehen verloren. Sind Sie sicher, dass Sie diese Wallet löschen möchten?",
   deleteButton: "Löschen",
   switchWalletLabel: "Wallet wechseln, {{name}}",
+  createWalletError: "Wallet konnte nicht erstellt werden",
+  renameWalletError: "Wallet konnte nicht umbenannt werden",
+  deleteWalletError: "Wallet konnte nicht gelöscht werden",
+  loadWalletError: "Wallet-Daten konnten nicht geladen werden",
 };

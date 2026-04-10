@@ -42,4 +42,8 @@ export const walletUiEN = {
     "All coins on this wallet will be lost. Are you sure you want to delete this wallet?",
   deleteButton: "Delete",
   switchWalletLabel: "Switch wallet, {{name}}",
+  createWalletError: "Failed to create wallet",
+  renameWalletError: "Failed to rename wallet",
+  deleteWalletError: "Failed to delete wallet",
+  loadWalletError: "Failed to load wallet data",
 } as const;

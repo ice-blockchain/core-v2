@@ -44,4 +44,8 @@ export const walletUiFR: Record<keyof typeof walletUiEN, string> = {
     "Tous les jetons de ce portefeuille seront perdus. Êtes-vous sûr de vouloir supprimer ce portefeuille ?",
   deleteButton: "Supprimer",
   switchWalletLabel: "Changer de portefeuille, {{name}}",
+  createWalletError: "Impossible de créer le portefeuille",
+  renameWalletError: "Impossible de renommer le portefeuille",
+  deleteWalletError: "Impossible de supprimer le portefeuille",
+  loadWalletError: "Impossible de charger les données du portefeuille",
 };
