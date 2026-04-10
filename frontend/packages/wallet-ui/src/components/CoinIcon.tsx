@@ -37,50 +37,39 @@ function useSvgXml(uri: string | null) {
   return isSvg ? xml : null;
 }
 
-function CoinIconComponent({ uri }: CoinIconProps) {
+function useCoinIconStyles() {
   const theme = useTheme();
-  const scale = theme.scale.scaleSize;
-  const radius = theme.scale.scaleRadius;
+  const size = theme.scale.scaleSize(36);
+  const borderRadius = theme.scale.scaleRadius(10);
+  return useMemo(() => ({
+    container: { width: size, height: size, borderRadius, overflow: "hidden" as const, backgroundColor: theme.colors.tertiaryBackground },
+    fallbackBg: { backgroundColor: theme.colors.sheetLine },
+    iconSize: theme.scale.scaleSize(24),
+    iconColor: theme.colors.onPrimaryAccent,
+    size,
+  }), [size, borderRadius, theme.colors.tertiaryBackground, theme.colors.sheetLine, theme.colors.onPrimaryAccent, theme.scale]);
+}
+
+function CoinIconComponent({ uri }: CoinIconProps) {
+  const s = useCoinIconStyles();
   const [hasError, setHasError] = useState(false);
   const svgXml = useSvgXml(uri);
-
-  const size = scale(36);
-  const borderRadius = radius(10);
-
-  const containerStyle = useMemo(() => ({
-    width: size,
-    height: size,
-    borderRadius,
-    overflow: "hidden" as const,
-    backgroundColor: theme.colors.tertiaryBackground,
-  }), [size, borderRadius, theme.colors.tertiaryBackground]);
-
   const handleError = useCallback(() => setHasError(true), []);
-
-  const fallbackBg = useMemo(() => ({
-    backgroundColor: theme.colors.sheetLine,
-  }), [theme.colors.sheetLine]);
 
   if (!uri || hasError || failedUrls.has(uri)) {
     return (
-      <View style={[containerStyle, fallbackBg, fallbackStyles.background]}>
-        <Icon name="coin-fallback" size={scale(24)} color={theme.colors.onPrimaryAccent} />
+      <View style={[s.container, s.fallbackBg, fallbackStyles.background]}>
+        <Icon name="coin-fallback" size={s.iconSize} color={s.iconColor} />
       </View>
     );
   }
 
   if (isSvgUrl(uri)) {
-    if (!svgXml) return <View style={containerStyle} />;
-    return (
-      <View style={containerStyle}>
-        <SvgXml xml={svgXml} width={size} height={size} />
-      </View>
-    );
+    if (!svgXml) return <View style={s.container} />;
+    return <View style={s.container}><SvgXml xml={svgXml} width={s.size} height={s.size} /></View>;
   }
 
-  return (
-    <Image source={{ uri }} style={containerStyle} onError={handleError} />
-  );
+  return <Image source={{ uri }} style={s.container} onError={handleError} />;
 }
 
 const fallbackStyles = StyleSheet.create({

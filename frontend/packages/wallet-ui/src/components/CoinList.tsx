@@ -22,49 +22,40 @@ function extractKey(item: CoinsGroup): string {
   return item.symbolGroup;
 }
 
-export function CoinList({ coinGroups, searchQuery, isBalanceVisible }: CoinListProps) {
+function useCoinListLayout() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const separatorHeight = theme.spacing.md;
   const itemHeight = scale(12) * 2 + scale(36);
+
+  const separatorStyle = useMemo(() => ({ height: separatorHeight }), [separatorHeight]);
+  const Separator = useMemo(() => {
+    return function ItemSeparator() { return <View style={separatorStyle} />; };
+  }, [separatorStyle]);
+  const getItemLayout = useCallback((_: unknown, index: number) => ({
+    length: itemHeight, offset: (itemHeight + separatorHeight) * index, index,
+  }), [itemHeight, separatorHeight]);
+
+  return { Separator, getItemLayout };
+}
+
+export function CoinList({ coinGroups, searchQuery, isBalanceVisible }: CoinListProps) {
+  const { Separator, getItemLayout } = useCoinListLayout();
 
   const renderCoinItem = useCallback(({ item }: { item: CoinsGroup }) => {
     return <CoinListItem group={item} isBalanceVisible={isBalanceVisible} />;
   }, [isBalanceVisible]);
 
   const filteredGroups = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return coinGroups;
-    }
+    if (!searchQuery.trim()) return coinGroups;
     return coinGroups.filter((group) => matchesSearch(group, searchQuery));
   }, [coinGroups, searchQuery]);
 
-  const separatorStyle = useMemo(() => ({
-    height: separatorHeight,
-  }), [separatorHeight]);
-
-  const Separator = useMemo(() => {
-    return function ItemSeparator() {
-      return <View style={separatorStyle} />;
-    };
-  }, [separatorStyle]);
-
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
-    length: itemHeight,
-    offset: (itemHeight + separatorHeight) * index,
-    index,
-  }), [itemHeight, separatorHeight]);
-
   return (
     <FlatList
-      data={filteredGroups}
-      keyExtractor={extractKey}
-      renderItem={renderCoinItem}
-      getItemLayout={getItemLayout}
-      ItemSeparatorComponent={Separator}
-      ListFooterComponent={Separator}
-      scrollEnabled={false}
-      removeClippedSubviews
+      data={filteredGroups} keyExtractor={extractKey} renderItem={renderCoinItem}
+      getItemLayout={getItemLayout} ItemSeparatorComponent={Separator}
+      ListFooterComponent={Separator} scrollEnabled={false} removeClippedSubviews
     />
   );
 }
