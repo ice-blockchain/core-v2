@@ -24,8 +24,23 @@ react {
     /* Variants */
     debuggableVariants = ["stagingDebug", "ionTestnetDebug", "productionDebug"]
 
+    /* Resolve React Native files from app-local node_modules first, then workspace root */
+    def reactNativeLocal = file("../../node_modules/react-native")
+    def reactNativeRoot = file("../../../../node_modules/react-native")
+    reactNativeDir = reactNativeLocal.exists() ? reactNativeLocal : reactNativeRoot
+
+    def codegenLocal = file("../../node_modules/@react-native/codegen")
+    def codegenRoot = file("../../../../node_modules/@react-native/codegen")
+    codegenDir = codegenLocal.exists() ? codegenLocal : codegenRoot
+
+    def cliLocal = file("../../node_modules/react-native/cli.js")
+    def cliRoot = file("../../../../node_modules/react-native/cli.js")
+    cliFile = cliLocal.exists() ? cliLocal : cliRoot
+
     /* Hermes compiler — RN 0.84 moved hermesc to hermes-compiler package */
-    def hermescDir = file("../../node_modules/hermes-compiler/hermesc")
+    def hermescLocal = file("../../node_modules/hermes-compiler/hermesc")
+    def hermescRoot = file("../../../../node_modules/hermes-compiler/hermesc")
+    def hermescDir = hermescLocal.exists() ? hermescLocal : hermescRoot
     def osDir = Os.isFamily(Os.FAMILY_WINDOWS) ? "win64-bin" :
                 Os.isFamily(Os.FAMILY_MAC)     ? "osx-bin"   : "linux64-bin"
     hermesCommand = new File(hermescDir, [osDir, "hermesc"].join(File.separator)).toString()
