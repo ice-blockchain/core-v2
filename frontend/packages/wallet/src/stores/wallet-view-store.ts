@@ -3,7 +3,7 @@ import type { WalletView, WalletViewStore } from "../types";
 const listeners = new Set<() => void>();
 
 let walletViews: readonly WalletView[] = [
-  { id: "1", name: "ion.wallet", balance: "$0.00", isMain: true, coinGroups: [], isLoading: false },
+  { id: "1", name: "ion.wallet", balance: "$0.00", isMain: true, coinGroups: [], isLoading: false, serverId: null, originalItems: [], originalSymbolGroups: [] },
 ];
 
 let activeWalletViewId = "1";
@@ -55,7 +55,7 @@ export function batchUpdate(
 // Reset store to initial state (for testing).
 export function resetWalletViewStore(): void {
   walletViews = [
-    { id: "1", name: "ion.wallet", balance: "$0.00", isMain: true, coinGroups: [], isLoading: false },
+    { id: "1", name: "ion.wallet", balance: "$0.00", isMain: true, coinGroups: [], isLoading: false, serverId: null, originalItems: [], originalSymbolGroups: [] },
   ];
   activeWalletViewId = "1";
   nextId = 2;
