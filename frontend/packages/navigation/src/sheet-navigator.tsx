@@ -28,6 +28,7 @@ export interface SheetProps {
   onBack?: (() => void) | undefined;
   headerRightAction?: ReactNode | undefined;
   snapPoints?: Array<string | number> | undefined;
+  closeRef?: React.MutableRefObject<(() => void) | null> | undefined;
 }
 
 function computeTitleOpacity(scrollOffset: number): number {
@@ -49,13 +50,14 @@ function useScrollTitleOpacity() {
   return { titleOpacity, handleScroll };
 }
 
-export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction, snapPoints }: SheetProps) {
+export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction, snapPoints, closeRef }: SheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { titleOpacity: scrollOpacity, handleScroll } = useScrollTitleOpacity();
   const titleOpacity = titleVisible ? 1 : scrollOpacity;
   const keyboardOffset = useKeyboardVerticalOffset();
   const bottomInsetStyle = useBottomInsetStyle();
   const resolvedSnapPoints = snapPoints ?? DEFAULT_SNAP_POINTS;
+  if (closeRef) closeRef.current = () => bottomSheetRef.current?.close();
 
   return (
     <BottomSheet ref={bottomSheetRef} index={0} snapPoints={resolvedSnapPoints} enablePanDownToClose enableDynamicSizing={false} backdropComponent={SheetBackdrop} backgroundComponent={SheetBackground} handleComponent={SheetHandle} onClose={onClose}>

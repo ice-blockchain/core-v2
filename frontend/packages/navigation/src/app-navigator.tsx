@@ -67,7 +67,7 @@ function useWalletViewScreen(walletViewScreens?: WalletViewScreens) {
   );
 }
 
-/* eslint-disable max-lines-per-function -- navigator registration is declarative, can't extract (React Navigation requires direct children) */
+// eslint-disable-next-line max-lines-per-function -- declarative screen registration, can't extract (React Navigation requires direct children)
 export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
   const Auth = useAuthScreen(authScreens);
   const WalletView = useWalletViewScreen(s.walletViewScreens);

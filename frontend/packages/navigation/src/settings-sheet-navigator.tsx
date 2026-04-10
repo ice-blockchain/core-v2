@@ -56,7 +56,14 @@ function useScreenOptions() {
   }), [theme.colors.secondaryBackground]);
 }
 
-function useSettingsListeners(navRef: NavRef, setTitle: (t: string) => void, setActiveRoute: (r: string) => void, setIndex: (i: number) => void) {
+interface ListenerCallbacks {
+  setTitle: (t: string) => void;
+  setActiveRoute: (r: string) => void;
+  setIndex: (i: number) => void;
+}
+
+function useSettingsListeners(navRef: NavRef, callbacks: ListenerCallbacks) {
+  const { setTitle, setActiveRoute, setIndex } = callbacks;
   return useCallback(({ navigation }: { navigation: SettingsNav }) => {
     navRef.current = navigation;
     return {
@@ -69,9 +76,9 @@ function useSettingsListeners(navRef: NavRef, setTitle: (t: string) => void, set
   }, [navRef, setTitle, setActiveRoute, setIndex]);
 }
 
-function SettingsStack({ screens, navRef, setTitle, setActiveRoute, setIndex }: { screens: SettingsScreens; navRef: NavRef; setTitle: (t: string) => void; setActiveRoute: (r: string) => void; setIndex: (i: number) => void }) {
+function SettingsStack({ screens, navRef, callbacks }: { screens: SettingsScreens; navRef: NavRef; callbacks: ListenerCallbacks }) {
   const screenOptions = useScreenOptions();
-  const listeners = useSettingsListeners(navRef, setTitle, setActiveRoute, setIndex);
+  const listeners = useSettingsListeners(navRef, callbacks);
   return (
     <Stack.Navigator screenOptions={screenOptions} screenListeners={listeners}>
       <Stack.Screen name={Routes.Settings.Home} component={screens.Home} />
@@ -94,22 +101,27 @@ export function SettingsSheetNavigator({ screens }: { screens: SettingsScreens }
   const [title, setTitle] = useState(() => translateTitle(Routes.Settings.Home));
   const [activeRoute, setActiveRoute] = useState<string>(Routes.Settings.Home);
   const [index, setIndex] = useState(0);
+  const callbacks = useMemo(() => ({ setTitle, setActiveRoute, setIndex }), []);
   const { heights, reportHeight } = useRouteHeights();
   const snapPoints = useSettingsSnapPoints(heights, activeRoute);
-  const handleClose = useCallback(() => navigation.goBack(), [navigation]);
+  // X button must go through closeRef → bottomSheet.close() to trigger the close
+  // animation. Calling navigation.goBack() directly unmounts the sheet instantly.
+  const closeRef = useRef<(() => void) | null>(null);
+  const handleClosed = useCallback(() => navigation.goBack(), [navigation]);
+  const handleCloseRequest = useCallback(() => closeRef.current?.(), []);
   const handleBack = useCallback(() => { if (navRef.current?.canGoBack()) navRef.current.goBack(); }, []);
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const closeButton = useMemo(() => (
-    <Pressable onPress={handleClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
+    <Pressable onPress={handleCloseRequest} hitSlop={8} accessibilityRole="button" accessibilityLabel="Close">
       <Icon name="sheet-close" size={scale(24)} color={theme.colors.primaryText} />
     </Pressable>
-  ), [handleClose, scale, theme.colors.primaryText]);
+  ), [handleCloseRequest, scale, theme.colors.primaryText]);
 
   return (
     <SettingsHeightContext.Provider value={reportHeight}>
-      <Sheet onClose={handleClose} title={title} titleVisible headerRightAction={closeButton} onBack={index > 0 ? handleBack : undefined} snapPoints={snapPoints}>
-        <SettingsStack screens={screens} navRef={navRef} setTitle={setTitle} setActiveRoute={setActiveRoute} setIndex={setIndex} />
+      <Sheet onClose={handleClosed} closeRef={closeRef} title={title} titleVisible headerRightAction={closeButton} onBack={index > 0 ? handleBack : undefined} snapPoints={snapPoints}>
+        <SettingsStack screens={screens} navRef={navRef} callbacks={callbacks} />
       </Sheet>
     </SettingsHeightContext.Provider>
   );
