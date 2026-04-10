@@ -54,7 +54,8 @@ export function createWalletView(name: string): void {
     .then(({ created, detail }) => {
       const viewData = convertWalletView(detail);
       const views = walletViewStore.getWalletViews();
-      setWalletViews(views.map((v) =>
+      const activeId = walletViewStore.getActiveWalletViewId();
+      const updatedViews = views.map((v) =>
         v.id === optimistic.id
           ? {
               ...v,
@@ -67,7 +68,9 @@ export function createWalletView(name: string): void {
               originalSymbolGroups: detail.symbolGroups,
             }
           : v,
-      ));
+      );
+      const newActiveId = activeId === optimistic.id ? created.id : activeId;
+      batchUpdate(updatedViews, newActiveId);
     })
     .catch((error) => {
       revertOptimisticCreate(optimistic.id, previousActiveId);
