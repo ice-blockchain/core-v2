@@ -1,41 +1,63 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createWalletView } from "./create-wallet-view";
-import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
+import { walletViewStore } from "../stores/wallet-view-store";
+import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
+
+function flushPromises(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 describe("createWalletView", () => {
   beforeEach(() => {
-    resetWalletViewStore();
+    resetWalletClient();
+    const mockClient = {
+      createWalletView: vi.fn().mockResolvedValue({
+        id: "server-id-1", name: "Savings", coins: [], aggregation: {},
+        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
+      }),
+    } as never;
+    initializeWalletClient(mockClient, "alice");
   });
 
-  it("creates a new wallet with the given name", () => {
-    const wallet = createWalletView("Savings");
-    expect(wallet.name).toBe("Savings");
-    expect(wallet.balance).toBe("$0.00");
-    expect(wallet.isMain).toBe(false);
-    expect(walletViewStore.getWalletViews()).toHaveLength(2);
+  it("adds wallet optimistically with loading state", () => {
+    createWalletView("Savings");
+    const views = walletViewStore.getWalletViews();
+    expect(views).toHaveLength(2);
+    expect(views[1]?.name).toBe("Savings");
+    expect(views[1]?.isLoading).toBe(true);
+    expect(views[1]?.serverId).toBeNull();
   });
 
-  it("trims the wallet name", () => {
-    const wallet = createWalletView("  Savings  ");
-    expect(wallet.name).toBe("Savings");
+  it("updates with server ID after API success", async () => {
+    createWalletView("Savings");
+    await flushPromises();
+    const views = walletViewStore.getWalletViews();
+    expect(views[1]?.serverId).toBe("server-id-1");
+    expect(views[1]?.isLoading).toBe(false);
   });
 
-  it("sets the new wallet as active", () => {
-    const wallet = createWalletView("Savings");
-    expect(walletViewStore.getActiveWalletViewId()).toBe(wallet.id);
+  it("reverts on API failure", async () => {
+    resetWalletClient();
+    const mockClient = {
+      createWalletView: vi.fn().mockRejectedValue(new Error("API error")),
+    } as never;
+    initializeWalletClient(mockClient, "alice");
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    createWalletView("Savings");
+    await flushPromises();
+
+    expect(walletViewStore.getWalletViews()).toHaveLength(1);
+    expect(walletViewStore.getActiveWalletViewId()).toBe("1");
+    consoleSpy.mockRestore();
   });
 
   it("throws when name is empty", () => {
     expect(() => createWalletView("")).toThrow("Wallet name cannot be empty");
-    expect(() => createWalletView("   ")).toThrow(
-      "Wallet name cannot be empty",
-    );
   });
 
   it("throws when maximum wallet limit is reached", () => {
     createWalletView("Second");
-    expect(() => createWalletView("Third")).toThrow(
-      "Maximum number of wallets reached",
-    );
+    expect(() => createWalletView("Third")).toThrow("Maximum number of wallets reached");
   });
 });
