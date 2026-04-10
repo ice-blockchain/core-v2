@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import { Routes, useSheetNavigation } from "@ion/navigation";
 import { BottomSnackBar, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { WalletHeader } from "../components/WalletHeader";
