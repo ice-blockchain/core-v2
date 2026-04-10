@@ -24,10 +24,7 @@ export function CoinsSection({ isBalanceVisible }: CoinsSectionProps) {
   const search = useCoinsSectionSearch();
   const s = useCoinsSectionStyles(pageWidth);
   const activeView = useActiveWalletView();
-  const handleLayout = useCallback((e: LayoutChangeEvent) => {
-    setPageWidth(e.nativeEvent.layout.width);
-    pager.onLayout(e.nativeEvent.layout.width);
-  }, [pager]);
+  const handleLayout = useCallback((e: LayoutChangeEvent) => { setPageWidth(e.nativeEvent.layout.width); pager.onLayout(e.nativeEvent.layout.width); }, [pager]);
 
   return (
     <View style={s.container}>
