@@ -19,7 +19,7 @@ export type { TextFieldProps } from "./components/TextField";
 export type { TextFieldTextVariant } from "./components/TextFieldStyles";
 
 export { SelectField } from "./components/SelectField";
-export type { SelectFieldProps } from "./components/SelectField";
+export type { SelectFieldProps, SelectOption } from "./components/SelectField";
 
 export { BottomSheet } from "./components/BottomSheet";
 export type { BottomSheetProps } from "./components/bottom-sheet-types";

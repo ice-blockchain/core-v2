@@ -20,7 +20,7 @@ import {
   NicknameReservedScreen,
   onboardingTranslations,
 } from "@ion/onboarding-ui";
-import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
+import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreCloudScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, TfaOptionsScreen, TfaVerificationScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
 import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from "@ion/wallet-ui";
 import { userSearchTranslations } from "@ion/user-search-ui";
@@ -88,7 +88,10 @@ const authScreens = {
   PasswordRegister: PasswordRegisterScreen,
   PasskeyRegister: PasskeyRegisterScreen,
   RestoreIdentity: RestoreIdentityScreen,
+  RestoreFromCloud: RestoreCloudScreen,
   RestoreWithRecoveryCreds: RestoreWithRecoveryCredsScreen,
+  TfaOptions: TfaOptionsScreen,
+  TfaVerification: TfaVerificationScreen,
   RestoreSetNewPassword: RestoreSetNewPasswordScreen,
   ProfileSetup: ProfileSetupScreen,
   SelectLanguages: SelectLanguagesScreen,

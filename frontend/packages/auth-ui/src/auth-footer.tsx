@@ -10,12 +10,12 @@ export function AuthFooter() {
   const dynamicStyles = useMemo(() => ({
     wrapper: {
       ...styles.wrapper,
-      paddingTop: scale.scaleSize(8),
+      paddingTop: scale.scaleSize(14),
       paddingBottom: scale.scaleSize(14),
     },
     content: {
       ...styles.content,
-      gap: scale.scaleSize(21),
+      gap: scale.scaleSize(20),
     },
   }), [scale]);
 

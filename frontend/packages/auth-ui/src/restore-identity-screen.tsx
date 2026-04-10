@@ -36,6 +36,7 @@ function RestoreOptions() {
         icon={<Icon name="restore-cloud" size={restoreStyles.iconSize} />}
         title={translate("auth:restoreFromCloudTitle", { cloudProvider })}
         description={translate("auth:restoreFromCloudDescription", { cloudProvider })}
+        onPress={() => navigation.navigate(Routes.Auth.RestoreFromCloud)}
       />
       <RestoreOptionCard
         icon={<Icon name="restore-credentials" size={restoreStyles.iconSize} />}

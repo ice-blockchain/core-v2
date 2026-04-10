@@ -20,7 +20,7 @@ function useFormStyles() {
     field: { width: scale.scaleSize(287) },
     form: {
       ...styles.form,
-      marginTop: scale.scaleSize(36),
+      marginTop: scale.scaleSize(62),
       gap: scale.scaleSize(16),
     },
     buttonWrapper: { marginTop: scale.scaleSize(20) },
@@ -45,7 +45,7 @@ function RestoreForm({ identity, form }: {
   const authNav = useAuthNavigation();
   const handleRestore = useCallback(() => {
     if (!form.isFormValid) return;
-    authNav.navigate(Routes.Auth.RestoreSetNewPassword);
+    authNav.navigate(Routes.Auth.TfaOptions, { optionsCount: 2 });
   }, [form.isFormValid, authNav]);
 
   return (

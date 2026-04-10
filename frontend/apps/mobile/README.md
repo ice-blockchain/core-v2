@@ -20,10 +20,11 @@ pnpm install
 First-time iOS native setup:
 
 ```bash
-cd apps/mobile
-bundle install
-bundle exec pod install
+pnpm install
+pnpm pods
 ```
+
+`pnpm pods` runs a guarded CocoaPods workflow that checks Ruby gems and retries with a spec repo update when needed. For consistent results, make sure your active Ruby matches `apps/mobile/.tool-versions`.
 
 ## Dev
 
@@ -53,7 +54,7 @@ pnpm test       # Jest
 Native project files (`android/`, `ios/`) are committed to the repo. After updating native dependencies, re-run CocoaPods:
 
 ```bash
-bundle exec pod install
+pnpm pods
 ```
 
 You can also build directly from Xcode or Android Studio.

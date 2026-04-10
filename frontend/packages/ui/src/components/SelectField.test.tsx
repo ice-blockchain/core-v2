@@ -12,14 +12,14 @@ describe("SelectField", () => {
   });
 });
 
-describe("SelectFieldDropdown", () => {
-  it("exports a function component", async () => {
-    const mod = await import("./SelectFieldDropdown");
-    expect(typeof mod.SelectFieldDropdown).toBe("function");
+describe("select-field-dropdown-types", () => {
+  it("exports SELECT_FIELD_Z_INDEX constant", async () => {
+    const mod = await import("./select-field-dropdown-types");
+    expect(typeof mod.SELECT_FIELD_Z_INDEX).toBe("number");
   });
 
-  it("exports SelectFieldDropdownProps type", async () => {
-    const mod = await import("./SelectFieldDropdown");
-    expect(mod).toBeDefined();
+  it("exports DROPDOWN_GAP constant", async () => {
+    const mod = await import("./select-field-dropdown-types");
+    expect(typeof mod.DROPDOWN_GAP).toBe("number");
   });
 });

@@ -40,6 +40,7 @@ import { ChevronRightIcon } from "./generated/ChevronRightIcon";
 import { ChevronUpIcon } from "./generated/ChevronUpIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
+import { CloudUploadIcon } from "./generated/CloudUploadIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { DappCheckIcon } from "./generated/DappCheckIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
@@ -50,12 +51,14 @@ import { FeedStoriesIcon } from "./generated/FeedStoriesIcon";
 import { FeedVideosIcon } from "./generated/FeedVideosIcon";
 import { FieldCalendarIcon } from "./generated/FieldCalendarIcon";
 import { FieldClearallIcon } from "./generated/FieldClearallIcon";
+import { FieldEmailIcon } from "./generated/FieldEmailIcon";
 import { FieldIdentitykeyIcon } from "./generated/FieldIdentitykeyIcon";
 import { FieldInviterIcon } from "./generated/FieldInviterIcon";
 import { FieldNameIcon } from "./generated/FieldNameIcon";
 import { FieldNicknameIcon } from "./generated/FieldNicknameIcon";
 import { FieldPassIcon } from "./generated/FieldPassIcon";
 import { FieldSearchIcon } from "./generated/FieldSearchIcon";
+import { FieldSelectIcon } from "./generated/FieldSelectIcon";
 import { GalleryOpenIcon } from "./generated/GalleryOpenIcon";
 import { HeaderScanIcon } from "./generated/HeaderScanIcon";
 import { HomeOffIcon } from "./generated/HomeOffIcon";
@@ -63,9 +66,11 @@ import { IconIdentitykeyIcon } from "./generated/IconIdentitykeyIcon";
 import { IdentityKeyNoteIcon } from "./generated/IdentityKeyNoteIcon";
 import { KeysErrorIcon } from "./generated/KeysErrorIcon";
 import { KeysSuccessIcon } from "./generated/KeysSuccessIcon";
+import { LoginAuthcodeIcon } from "./generated/LoginAuthcodeIcon";
 import { LoginIceLogoIcon } from "./generated/LoginIceLogoIcon";
 import { LoginIdentityIcon } from "./generated/LoginIdentityIcon";
 import { LoginPasswordIcon } from "./generated/LoginPasswordIcon";
+import { LoginSmscodeIcon } from "./generated/LoginSmscodeIcon";
 import { ManageIcon } from "./generated/ManageIcon";
 import { MenuLogoutIcon } from "./generated/MenuLogoutIcon";
 import { MorePopupIcon } from "./generated/MorePopupIcon";
@@ -118,6 +123,7 @@ import { WalletBuycryptoIcon } from "./generated/WalletBuycryptoIcon";
 import { WalletIconProfileEmptypostsIcon } from "./generated/WalletIconProfileEmptypostsIcon";
 import { WalletMoreIcon } from "./generated/WalletMoreIcon";
 import { WalletOffIcon } from "./generated/WalletOffIcon";
+import { WalletProtectFillIcon } from "./generated/WalletProtectFillIcon";
 import { WalletSwapIcon } from "./generated/WalletSwapIcon";
 import { WalletIcon } from "./generated/WalletIcon";
 
@@ -165,6 +171,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "chevron-up": ChevronUpIcon,
   "clock": ClockIcon,
   "close": CloseIcon,
+  "cloud-upload": CloudUploadIcon,
   "danger_triangle": DangerTriangleIcon,
   "dapp-check": DappCheckIcon,
   "edit-link": EditLinkIcon,
@@ -175,12 +182,14 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "feed-videos": FeedVideosIcon,
   "field-calendar": FieldCalendarIcon,
   "field-clearall": FieldClearallIcon,
+  "field-email": FieldEmailIcon,
   "field-identitykey": FieldIdentitykeyIcon,
   "field-inviter": FieldInviterIcon,
   "field-name": FieldNameIcon,
   "field-nickname": FieldNicknameIcon,
   "field-pass": FieldPassIcon,
   "field-search": FieldSearchIcon,
+  "field-select": FieldSelectIcon,
   "gallery-open": GalleryOpenIcon,
   "header-scan": HeaderScanIcon,
   "home-off": HomeOffIcon,
@@ -188,9 +197,11 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "identity-key-note": IdentityKeyNoteIcon,
   "keys-error": KeysErrorIcon,
   "keys-success": KeysSuccessIcon,
+  "login-authcode": LoginAuthcodeIcon,
   "login-ice-logo": LoginIceLogoIcon,
   "login-identity": LoginIdentityIcon,
   "login-password": LoginPasswordIcon,
+  "login-smscode": LoginSmscodeIcon,
   "manage": ManageIcon,
   "menu-logout": MenuLogoutIcon,
   "more-popup": MorePopupIcon,
@@ -243,6 +254,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "wallet-icon-profile-emptyposts": WalletIconProfileEmptypostsIcon,
   "wallet-more": WalletMoreIcon,
   "wallet-off": WalletOffIcon,
+  "wallet-protect-fill": WalletProtectFillIcon,
   "wallet-swap": WalletSwapIcon,
   "wallet": WalletIcon,
 };

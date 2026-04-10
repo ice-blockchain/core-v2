@@ -1,22 +1,38 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import type { StyleProp, ViewStyle } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { useTheme } from "../theme/ThemeProvider";
 import { Text } from "./Text";
 import { Icon } from "../icons/Icon";
 import { TextFieldFloatingLabel } from "./TextFieldFloatingLabel";
 import { TextFieldIconSlot } from "./TextFieldIconSlot";
 import { buildTextFieldContainerStyle, resolveTextFieldColorSpec, deriveTextFieldState } from "./TextFieldStyles";
-import { SelectFieldDropdown, SELECT_FIELD_Z_INDEX } from "./SelectFieldDropdown";
+import { SelectFieldDropdown } from "./SelectFieldDropdown";
+import { SELECT_FIELD_Z_INDEX } from "./select-field-dropdown-types";
+import type { SelectOption } from "./select-field-dropdown-types";
+
+export type { SelectOption } from "./select-field-dropdown-types";
+export { SELECT_FIELD_Z_INDEX } from "./select-field-dropdown-types";
 
 export interface SelectFieldProps {
   label: string;
   value: string | null;
-  options: string[];
+  options: string[] | SelectOption[];
+  disabledOptions?: string[];
   onSelect: (value: string) => void;
   prefixIcon?: React.ReactNode;
   hasPrefixDivider?: boolean;
+  disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+}
+
+function normalizeOptions(options: string[] | SelectOption[]): SelectOption[] {
+  if (options.length === 0) return [];
+  if (typeof options[0] === "string") {
+    return (options as string[]).map((label) => ({ label }));
+  }
+  return options as SelectOption[];
 }
 
 function useSelectFieldState(value: string | null) {
@@ -30,8 +46,8 @@ function useSelectFieldState(value: string | null) {
 function useSelectFieldStyles(options: { isOpen: boolean; hasValue: boolean }) {
   const theme = useTheme();
   const derivedState = useMemo(
-    () => deriveTextFieldState({ explicitState: undefined, isFocused: options.isOpen, hasValue: options.hasValue }),
-    [options.isOpen, options.hasValue],
+    () => deriveTextFieldState({ explicitState: undefined, isFocused: false, hasValue: options.hasValue }),
+    [options.hasValue],
   );
   const spec = useMemo(() => resolveTextFieldColorSpec(theme.colors, derivedState), [theme.colors, derivedState]);
   const containerStyle = useMemo(() => buildTextFieldContainerStyle({ spec, scale: theme.scale }), [spec, theme.scale]);
@@ -48,16 +64,39 @@ function SelectFieldValue({ value, scaleSize }: { value: string; scaleSize: (n: 
   );
 }
 
-function renderPrefixSlot(props: SelectFieldProps, theme: ReturnType<typeof useTheme>) {
-  if (props.prefixIcon == null) return null;
+function renderPrefixSlot(props: SelectFieldProps, theme: ReturnType<typeof useTheme>, isActive: boolean) {
+  if (props.prefixIcon == null || isActive) return null;
+  if (props.hasPrefixDivider) {
+    return (
+      <TextFieldIconSlot
+        icon={props.prefixIcon}
+        position="prefix"
+        hasDivider
+        scale={theme.scale}
+        dividerColor={theme.colors.strokeElements}
+      />
+    );
+  }
+  return <>{props.prefixIcon}</>;
+}
+
+const CHEVRON_ROTATION_DURATION = 200;
+
+function AnimatedChevron({ isOpen, size, color }: { isOpen: boolean; size: number; color: string }) {
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    rotation.value = withTiming(isOpen ? 180 : 0, { duration: CHEVRON_ROTATION_DURATION });
+  }, [isOpen, rotation]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }), [rotation]);
+
   return (
-    <TextFieldIconSlot
-      icon={props.prefixIcon}
-      position="prefix"
-      hasDivider={props.hasPrefixDivider ?? false}
-      scale={theme.scale}
-      dividerColor={theme.colors.strokeElements}
-    />
+    <Animated.View style={animatedStyle}>
+      <Icon name="chevron-down" size={size} color={color} />
+    </Animated.View>
   );
 }
 
@@ -72,10 +111,13 @@ function renderLabelAndValue(options: { label: string; value: string | null; has
 }
 
 export function SelectField(props: SelectFieldProps) {
-  const { value, options, onSelect, style } = props;
+  const { value, options, onSelect, disabled, style } = props;
   const { isOpen, hasValue, toggle, close } = useSelectFieldState(value);
-  const { theme, spec, containerStyle } = useSelectFieldStyles({ isOpen, hasValue });
+  const { theme, spec, containerStyle } = useSelectFieldStyles({ isOpen: !disabled && isOpen, hasValue });
+  const normalizedOptions = useMemo(() => normalizeOptions(options), [options]);
+  const anchorRef = useRef<View>(null);
 
+  const handleToggle = useCallback(() => { if (!disabled) toggle(); }, [disabled, toggle]);
   const handleSelect = useCallback((selected: string) => {
     onSelect(selected);
     close();
@@ -83,12 +125,12 @@ export function SelectField(props: SelectFieldProps) {
 
   return (
     <View style={[{ zIndex: SELECT_FIELD_Z_INDEX }, style]}>
-      <Pressable onPress={toggle} style={containerStyle}>
-        {renderPrefixSlot(props, theme)}
-        {renderLabelAndValue({ label: props.label, value, hasValue, isOpen, spec, theme })}
-        <Icon name={isOpen ? "chevron-up" : "chevron-down"} size={24} color={theme.colors.tertiaryText} />
+      <Pressable ref={anchorRef} onPress={handleToggle} style={containerStyle} collapsable={false}>
+        {renderPrefixSlot(props, theme, hasValue || isOpen)}
+        {renderLabelAndValue({ label: props.label, value, hasValue, isOpen: !disabled && isOpen, spec, theme })}
+        {!disabled && <AnimatedChevron isOpen={isOpen} size={theme.scale.scaleSize(24)} color={theme.colors.primaryText} />}
       </Pressable>
-      <SelectFieldDropdown options={options} onSelect={handleSelect} isVisible={isOpen} />
+      {!disabled && <SelectFieldDropdown options={normalizedOptions} disabledOptions={props.disabledOptions} onSelect={handleSelect} isVisible={isOpen} onClose={close} anchorRef={anchorRef} />}
     </View>
   );
 }
