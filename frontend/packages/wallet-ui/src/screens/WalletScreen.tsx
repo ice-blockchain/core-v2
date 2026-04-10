@@ -19,7 +19,8 @@ export function WalletScreen() {
   const s = useWalletScreenStyles(isScrolled);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setIsScrolled(e.nativeEvent.contentOffset.y > 0);
+    const scrolled = e.nativeEvent.contentOffset.y > 0;
+    setIsScrolled((prev) => (prev === scrolled ? prev : scrolled));
   }, []);
 
   return (
@@ -33,7 +34,7 @@ export function WalletScreen() {
           </View>
           <View style={s.banner}><BannerCarousel /></View>
           <FriendsSection />
-          <CoinsSection />
+          <CoinsSection isBalanceVisible={isBalanceVisible} />
         </View>
       </ScrollView>
     </View>

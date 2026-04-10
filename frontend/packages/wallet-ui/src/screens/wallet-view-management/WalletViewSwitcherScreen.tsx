@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useWalletViews, useActiveWalletView, switchWalletView } from "@ion/wallet";
+import type { WalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
 import { WalletViewListItem } from "../../components/WalletViewListItem";
 
@@ -42,7 +43,7 @@ export function WalletViewSwitcherScreen() {
 }
 
 interface WalletViewListProps {
-  walletViews: readonly { id: string; name: string; balance: string; isMain: boolean }[];
+  walletViews: readonly WalletView[];
   activeId: string;
   onPress: (walletId: string) => void;
 }
