@@ -44,6 +44,7 @@ export type RootStackParamList = {
   'Sheet/MediaPicker': { onComplete?: (assets: DeviceAsset[]) => void } | undefined;
   'Sheet/GalleryPermissionDenied': undefined;
   'Sheet/CameraPermissionDenied': undefined;
+  'Sheet/CancelPost': undefined;
 };
 
 export type AuthStackParamList = {
