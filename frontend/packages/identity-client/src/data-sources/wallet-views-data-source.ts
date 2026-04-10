@@ -1,6 +1,6 @@
 import { NetworkError } from '@ion/network';
 import type { HttpClient } from '@ion/network';
-import { Logger } from '@ion/diagnostics';
+
 import type { WalletViewSummary, WalletViewDetail, WalletViewInput } from '../wallets/types';
 
 interface GetWalletViewQuery { limit?: number; paginationToken?: string }
@@ -44,7 +44,6 @@ function buildViewsReadMethods(httpClient: HttpClient) {
         headers: { 'X-Username': options.username },
         query: buildGetQuery(options.query),
       });
-      console.log('WALLET_VIEW_FULL_RESPONSE', JSON.stringify(response.body, null, 2));
       return { body: response.body, headers: response.headers };
     },
   };
@@ -70,10 +69,7 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
       try {
         await httpClient.delete(buildViewPath(userId, walletViewId), { headers: { 'X-Username': username } });
       } catch (error) {
-        if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {
-          Logger.warning('deleteWalletView returned unparseable response, treating as success', { data: { userId, walletViewId } });
-          return;
-        }
+        if (error instanceof NetworkError && error.code === 'PARSE_ERROR') return;
         throw error;
       }
     },
