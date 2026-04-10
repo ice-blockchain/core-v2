@@ -106,12 +106,13 @@ export function convertWalletView(detail: WalletViewDetail): WalletViewData {
   const groups = new Map<string, CoinsGroup>();
   const consumed = new Set<string>();
   let totalUsdBalance = 0;
+  const safeDetail = { ...detail, aggregation: detail.aggregation ?? {} };
 
-  for (const coin of detail.coins) {
+  for (const coin of safeDetail.coins) {
     if (!isValidCoin(coin)) {
       continue;
     }
-    const coinWithBalance = processCoin(coin, detail, consumed);
+    const coinWithBalance = processCoin(coin, safeDetail, consumed);
     totalUsdBalance += coinWithBalance.balanceUSD;
     addCoinToGroup(groups, coinWithBalance);
   }
