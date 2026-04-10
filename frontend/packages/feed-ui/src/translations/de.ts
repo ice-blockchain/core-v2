@@ -38,4 +38,7 @@ export const feedDE: Record<keyof typeof feedEN, string> = {
   cancelPostDescription: "Sind Sie sicher, dass Sie Ihren Fortschritt abbrechen mochten?",
   cancelPostBackButton: "Zuruck",
   cancelPostDeleteButton: "Loschen",
+  galleryButtonLabel: "Galerie offnen",
+  boldButtonLabel: "Fett",
+  italicButtonLabel: "Kursiv",
 };

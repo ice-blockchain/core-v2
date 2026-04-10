@@ -16,11 +16,16 @@ export function CreatePostSheetScreen() {
     <Sheet onClose={state.handleClose} title={translate('feed:newPostTitle')} titleVisible onBack={state.handleClose}>
       <View style={styles.content}>
         <CreatePostHeader />
-        <CreatePostComposer />
+        <CreatePostComposer editor={state.richText.editor} />
         <AttachedMediaCarousel items={state.attachedMedia} onRemove={state.handleRemoveMedia} />
         <View style={styles.spacer} />
         <CreatePostVisibilityBar />
-        <CreatePostToolbar onGalleryPress={state.handleGalleryPress} />
+        <CreatePostToolbar
+          onGalleryPress={state.handleGalleryPress}
+          formatState={state.richText.formatState}
+          onToggleBold={state.richText.actions.toggleBold}
+          onToggleItalic={state.richText.actions.toggleItalic}
+        />
       </View>
     </Sheet>
   );

@@ -36,4 +36,7 @@ export const feedEN = {
   cancelPostDescription: "Are you sure you want to cancel your progress?",
   cancelPostBackButton: "Back",
   cancelPostDeleteButton: "Delete",
+  galleryButtonLabel: "Open gallery",
+  boldButtonLabel: "Bold",
+  italicButtonLabel: "Italic",
 } as const;
