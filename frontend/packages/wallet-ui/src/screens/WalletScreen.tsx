@@ -11,19 +11,14 @@ import { FriendsSection } from "../components/FriendsSection";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CoinsSection } from "../components/CoinsSection";
 import { useWalletScreenStyles } from "./useWalletScreenStyles";
+import { useWalletActions } from "./useWalletActions";
 
 export function WalletScreen() {
-  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isSnackBarVisible, setIsSnackBarVisible] = useState(false);
-  const navigation = useSheetNavigation();
+  const s = useWalletScreenStyles(isScrolled);
+  const actions = useWalletActions();
   const theme = useTheme();
   const scaleSize = theme.scale.scaleSize;
-  const toggleBalance = useCallback(() => setIsBalanceVisible((p) => !p), []);
-  const openSheet = useCallback(() => navigation.navigate(Routes.Sheet.WalletViewManagement), [navigation]);
-  const showSnackBar = useCallback(() => setIsSnackBarVisible(true), []);
-  const hideSnackBar = useCallback(() => setIsSnackBarVisible(false), []);
-  const s = useWalletScreenStyles(isScrolled);
 
   const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
     setIsScrolled(e.nativeEvent.contentOffset.y > 0);
@@ -31,12 +26,12 @@ export function WalletScreen() {
 
   return (
     <View style={s.screen}>
-      <View style={s.headerWrapper}><WalletHeader onWalletPress={openSheet} /></View>
+      <View style={s.headerWrapper}><WalletHeader onWalletPress={actions.openSheet} /></View>
       <ScrollView style={styles.scroll} contentContainerStyle={s.scrollContent} onScroll={handleScroll} scrollEventThrottle={16}>
         <View style={s.gap}>
           <View style={s.header}>
-            <BalanceDisplay isBalanceVisible={isBalanceVisible} onToggleVisibility={toggleBalance} />
-            <ActionButtonsRow onBuyPress={showSnackBar} />
+            <BalanceDisplay isBalanceVisible={actions.isBalanceVisible} onToggleVisibility={actions.toggleBalance} />
+            <ActionButtonsRow {...(actions.showSnackBar ? { onBuyPress: actions.showSnackBar } : {})} />
           </View>
           <View style={s.banner}><BannerCarousel /></View>
           <FriendsSection />
@@ -44,11 +39,7 @@ export function WalletScreen() {
         </View>
       </ScrollView>
       <View style={[styles.snackBarWrapper, { paddingHorizontal: scaleSize(16), paddingBottom: scaleSize(16) }]}>
-        <BottomSnackBar
-          message={translate("walletUi:buyCryptoComingSoon") ?? "Buy crypto easily. Coming soon."}
-          isVisible={isSnackBarVisible}
-          onDismiss={hideSnackBar}
-        />
+        <BottomSnackBar message={translate("walletUi:buyCryptoComingSoon")} isVisible={actions.isSnackBarVisible} onDismiss={actions.hideSnackBar} />
       </View>
     </View>
   );
