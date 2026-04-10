@@ -22,7 +22,8 @@
     "@gorhom/bottom-sheet": ">=5",
     "react": ">=19",
     "react-native": ">=0.76",
-    "react-native-safe-area-context": ">=4.0.0"
+    "react-native-safe-area-context": ">=4.0.0",
+    "react-native-svg": ">=15.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { TextInput as RNTextInput, View } from "react-native";
 import type { StyleProp, ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../theme/ThemeProvider";
@@ -9,6 +9,7 @@ export interface SearchBarProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   style?: StyleProp<ViewStyle>;
+  autoFocus?: boolean;
   testID?: string;
 }
 
@@ -53,11 +54,18 @@ function useSearchBarStyles() {
 }
 
 export function SearchBar(props: SearchBarProps) {
-  const { value, onChangeText, placeholder = "Search", style, testID } = props;
+  const { value, onChangeText, placeholder = "Search", style, autoFocus, testID } = props;
   const { containerStyle, inputStyle, theme, scale } = useSearchBarStyles();
+  const [isFocused, setIsFocused] = useState(false);
+  const handleFocus = useCallback(() => setIsFocused(true), []);
+  const handleBlur = useCallback(() => setIsFocused(false), []);
+
+  const focusedBorder = useMemo(() => (
+    isFocused ? { borderWidth: 1, borderColor: theme.colors.primaryAccent } : null
+  ), [isFocused, theme.colors.primaryAccent]);
 
   return (
-    <View style={[containerStyle, style]}>
+    <View style={[containerStyle, focusedBorder, style]}>
       <Icon name="field-search" size={scale(16)} color={theme.colors.tertiaryText} />
       <RNTextInput
         value={value}
@@ -67,6 +75,9 @@ export function SearchBar(props: SearchBarProps) {
         keyboardAppearance={theme.colorMode === "dark" ? "dark" : "light"}
         cursorColor={theme.colors.primaryAccent}
         selectionColor={theme.colors.primaryAccent}
+        autoFocus={autoFocus}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         style={inputStyle}
         testID={testID}
       />
