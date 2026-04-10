@@ -22,7 +22,7 @@ import { splashTranslations } from '@ion/splash-ui';
 import { chatTranslations } from '@ion/chat';
 import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
-import { feedTranslations } from '@ion/feed-ui';
+import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, CancelPostScreen, feedTranslations } from '@ion/feed-ui';
 import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from '@ion/wallet-ui';
 import { profileTranslations } from '@ion/profile-ui';
 import { HomeScreen, homeTranslations } from '@ion/home-ui';
@@ -59,6 +59,11 @@ const screens = {
   InvalidCredentials: InvalidCredentialsModal,
   ConfirmPassword: ConfirmPasswordScreen,
   RestoreSuccess: RestoreSuccessScreen,
+  CreatePost: CreatePostSheetScreen,
+  MediaPicker: MediaPickerSheetScreen,
+  GalleryPermissionDenied: GalleryPermissionDeniedScreen,
+  CameraPermissionDenied: CameraPermissionDeniedScreen,
+  CancelPost: CancelPostScreen,
   GeneralError: GeneralErrorScreen,
   walletViewScreens: {
     Switcher: WalletViewSwitcherScreen,
