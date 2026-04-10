@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
+import { RichText, type EditorBridge } from '@10play/tentap-editor';
 import { useTheme } from '@ion/ui';
-import { EditorContent, type Editor } from '@tiptap/react';
 
 import { PlaceholderAvatar } from './PlaceholderAvatar';
 
 interface CreatePostComposerProps {
-  editor: Editor | null;
+  editor: EditorBridge;
 }
 
 function useComposerStyles() {
@@ -24,30 +24,23 @@ function useComposerStyles() {
     [scale],
   );
 
-  const editorStyle: React.CSSProperties = useMemo(
-    () => ({
-      flex: 1,
-      fontSize: scale(13),
-      color: theme.colors.primaryText,
-      fontFamily: 'NotoSans-Regular, Noto Sans, sans-serif',
-      outline: 'none',
-      lineHeight: '1.38',
-    }),
-    [theme, scale],
+  const editorWrapperStyle = useMemo(
+    () => ({ flex: 1, minHeight: scale(40) }),
+    [scale],
   );
 
-  return { containerStyle, editorStyle };
+  return { containerStyle, editorWrapperStyle };
 }
 
 export function CreatePostComposer({ editor }: CreatePostComposerProps) {
-  const { containerStyle, editorStyle } = useComposerStyles();
+  const { containerStyle, editorWrapperStyle } = useComposerStyles();
 
   return (
     <View style={containerStyle}>
       <PlaceholderAvatar />
-      <div style={editorStyle}>
-        {editor ? <EditorContent editor={editor} /> : null}
-      </div>
+      <View style={editorWrapperStyle}>
+        <RichText editor={editor} />
+      </View>
     </View>
   );
 }

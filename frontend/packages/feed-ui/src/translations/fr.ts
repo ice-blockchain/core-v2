@@ -38,4 +38,7 @@ export const feedFR: Record<keyof typeof feedEN, string> = {
   cancelPostDescription: "Etes-vous sur de vouloir annuler votre progression ?",
   cancelPostBackButton: "Retour",
   cancelPostDeleteButton: "Supprimer",
+  galleryButtonLabel: "Ouvrir la galerie",
+  boldButtonLabel: "Gras",
+  italicButtonLabel: "Italique",
 };

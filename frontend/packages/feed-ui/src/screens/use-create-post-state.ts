@@ -2,6 +2,9 @@ import { useCallback, useState } from 'react';
 import { useSheetNavigation, Routes } from '@ion/navigation';
 import type { DeviceAsset } from '@ion/feed';
 import { requestGalleryPermission } from '@ion/feed';
+import { translate } from '@ion/localization';
+
+import { useRichTextState } from '../components/use-rich-text-state';
 
 const MAX_TOTAL_ATTACHMENTS = 10;
 
@@ -26,6 +29,7 @@ function useAttachedMedia() {
 export function useCreatePostState() {
   const navigation = useSheetNavigation();
   const { attachedMedia, handleRemoveMedia, handleMediaSelected } = useAttachedMedia();
+  const richText = useRichTextState(translate('feed:composerPlaceholder'));
 
   const handleClose = useCallback(
     () => navigation.navigate(Routes.Sheet.CancelPost),
@@ -45,5 +49,5 @@ export function useCreatePostState() {
     }
   }, [navigation, handleMediaSelected]);
 
-  return { attachedMedia, handleClose, handleRemoveMedia, handleGalleryPress };
+  return { attachedMedia, handleClose, handleRemoveMedia, handleGalleryPress, richText };
 }

@@ -77,8 +77,10 @@ import { PasswordCheckPassIcon } from "./generated/PasswordCheckPassIcon";
 import { PersonAddIcon } from "./generated/PersonAddIcon";
 import { PersonFollowingIcon } from "./generated/PersonFollowingIcon";
 import { PlusCreatechannelIcon } from "./generated/PlusCreatechannelIcon";
+import { PostBoldActiveIcon } from "./generated/PostBoldActiveIcon";
 import { PostBoldIcon } from "./generated/PostBoldIcon";
 import { PostEveryoneIcon } from "./generated/PostEveryoneIcon";
+import { PostItalicActiveIcon } from "./generated/PostItalicActiveIcon";
 import { PostItalicIcon } from "./generated/PostItalicIcon";
 import { PostLanguageIcon } from "./generated/PostLanguageIcon";
 import { PostPollIcon } from "./generated/PostPollIcon";
@@ -202,8 +204,10 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "person-add": PersonAddIcon,
   "person-following": PersonFollowingIcon,
   "plus-createchannel": PlusCreatechannelIcon,
+  "post-bold-active": PostBoldActiveIcon,
   "post-bold": PostBoldIcon,
   "post-everyone": PostEveryoneIcon,
+  "post-italic-active": PostItalicActiveIcon,
   "post-italic": PostItalicIcon,
   "post-language": PostLanguageIcon,
   "post-poll": PostPollIcon,
