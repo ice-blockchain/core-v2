@@ -44,6 +44,7 @@ function buildViewsReadMethods(httpClient: HttpClient) {
         headers: { 'X-Username': options.username },
         query: buildGetQuery(options.query),
       });
+      console.log('WALLET_VIEW_FULL_RESPONSE', JSON.stringify(response.body, null, 2));
       return { body: response.body, headers: response.headers };
     },
   };
