@@ -1,24 +1,40 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { deleteWalletView } from "./delete-wallet-view";
 import { createWalletView } from "./create-wallet-view";
-import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
+import { walletViewStore } from "../stores/wallet-view-store";
+import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
+
+function getSecondWalletId(): string {
+  const views = walletViewStore.getWalletViews();
+  const second = views.find((v) => !v.isMain);
+  if (!second) throw new Error("Second wallet not found");
+  return second.id;
+}
 
 describe("deleteWalletView", () => {
   beforeEach(() => {
-    resetWalletViewStore();
+    resetWalletClient();
+    const mockClient = {
+      createWalletView: vi.fn().mockResolvedValue({
+        id: "server-id-1", name: "Second", coins: [], aggregation: {},
+        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
+      }),
+    } as never;
+    initializeWalletClient(mockClient, "alice");
   });
 
   it("deletes a non-main wallet", () => {
-    const second = createWalletView("Second");
-    deleteWalletView(second.id);
+    createWalletView("Second");
+    const secondId = getSecondWalletId();
+    deleteWalletView(secondId);
     expect(walletViewStore.getWalletViews()).toHaveLength(1);
   });
 
   it("switches active to remaining wallet when active is deleted", () => {
-    const second = createWalletView("Second");
-    // second is now active (createWalletView sets it)
-    expect(walletViewStore.getActiveWalletViewId()).toBe(second.id);
-    deleteWalletView(second.id);
+    createWalletView("Second");
+    const secondId = getSecondWalletId();
+    expect(walletViewStore.getActiveWalletViewId()).toBe(secondId);
+    deleteWalletView(secondId);
     expect(walletViewStore.getActiveWalletViewId()).toBe("1");
   });
 
@@ -30,13 +46,11 @@ describe("deleteWalletView", () => {
   });
 
   it("throws when trying to delete the last wallet", () => {
-    const second = createWalletView("Second");
-    deleteWalletView(second.id);
-    // Now only the main wallet remains — force-set it as non-main to test length guard
+    createWalletView("Second");
+    const secondId = getSecondWalletId();
+    deleteWalletView(secondId);
     const store = walletViewStore.getWalletViews();
     expect(store).toHaveLength(1);
-    // The main wallet is protected by the isMain guard first,
-    // so this test verifies the main-wallet guard takes precedence
     expect(() => deleteWalletView("1")).toThrow("Cannot delete the main wallet");
   });
 
