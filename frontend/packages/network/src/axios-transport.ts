@@ -98,7 +98,7 @@ function flattenHeaders(response: AxiosResponse): Record<string, string> {
 }
 
 function parseResponseData<T>(response: AxiosResponse): T {
-  if (response.status === 204) return undefined as T;
+  if (response.status === 204 || response.data === '' || response.data == null) return undefined as T;
   const contentType: string = response.headers['content-type'] ?? '';
   rejectNonJsonContentType(contentType, response.data);
   if (typeof response.data === 'string') {
