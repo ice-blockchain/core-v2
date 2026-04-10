@@ -8,13 +8,16 @@ function flushPromises(): Promise<void> {
 }
 
 describe("createWalletView", () => {
+  const mockDetail = {
+    id: "server-id-1", name: "Savings", coins: [], aggregation: {},
+    symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
+  };
+
   beforeEach(() => {
     resetWalletClient();
     const mockClient = {
-      createWalletView: vi.fn().mockResolvedValue({
-        id: "server-id-1", name: "Savings", coins: [], aggregation: {},
-        symbolGroups: [], createdAt: "", updatedAt: "", userId: "u1", nfts: null, nextPageToken: null,
-      }),
+      createWalletView: vi.fn().mockResolvedValue(mockDetail),
+      getWalletView: vi.fn().mockResolvedValue(mockDetail),
     } as never;
     initializeWalletClient(mockClient, "alice");
   });
@@ -40,6 +43,7 @@ describe("createWalletView", () => {
     resetWalletClient();
     const mockClient = {
       createWalletView: vi.fn().mockRejectedValue(new Error("API error")),
+      getWalletView: vi.fn(),
     } as never;
     initializeWalletClient(mockClient, "alice");
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
