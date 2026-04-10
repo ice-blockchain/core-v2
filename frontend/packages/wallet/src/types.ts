@@ -1,3 +1,5 @@
+import type { WalletViewCoinRef } from "@ion/identity-client";
+
 export interface CoinDisplayInfo {
   id: string;
   name: string;
@@ -47,6 +49,9 @@ export interface WalletView {
   isMain: boolean;
   coinGroups: readonly CoinsGroup[];
   isLoading: boolean;
+  serverId: string | null;
+  originalItems: readonly WalletViewCoinRef[];
+  originalSymbolGroups: readonly string[];
 }
 
 export interface WalletViewStore {

@@ -25,6 +25,9 @@ export function createWalletView(name: string): WalletView {
     isMain: false,
     coinGroups: [],
     isLoading: false,
+    serverId: null,
+    originalItems: [],
+    originalSymbolGroups: [],
   };
 
   batchUpdate([...current, walletView], walletView.id);

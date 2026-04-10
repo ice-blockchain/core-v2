@@ -16,6 +16,9 @@ describe("walletViewStore", () => {
       isMain: true,
       coinGroups: [],
       isLoading: false,
+      serverId: null,
+      originalItems: [],
+      originalSymbolGroups: [],
     });
   });
 
