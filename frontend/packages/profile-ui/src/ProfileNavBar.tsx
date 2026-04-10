@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { RefObject } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";
 import type { SharedValue, AnimatedStyle } from "react-native-reanimated";
@@ -14,6 +15,7 @@ interface ProfileNavBarProps {
   navBarBgAnimatedStyle: AnimatedStyle;
   onBackPress?: () => void;
   onMorePress?: () => void;
+  moreButtonRef?: RefObject<View | null>;
 }
 
 function useNavBarLayout() {
@@ -30,7 +32,7 @@ function useNavBarLayout() {
   );
 }
 
-export function ProfileNavBar({ showBackButton, profile, collapsedHeaderOpacity, navBarBgAnimatedStyle, onBackPress, onMorePress }: ProfileNavBarProps) {
+export function ProfileNavBar({ showBackButton, profile, collapsedHeaderOpacity, navBarBgAnimatedStyle, onBackPress, onMorePress, moreButtonRef }: ProfileNavBarProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const layout = useNavBarLayout();
@@ -46,9 +48,11 @@ export function ProfileNavBar({ showBackButton, profile, collapsedHeaderOpacity,
           <View style={{ width: scale(24) }} />
         )}
         <CollapsedProfileHeader profile={profile} animatedOpacity={collapsedHeaderOpacity} />
-        <Pressable onPress={onMorePress} hitSlop={8}>
-          <Icon name="more-popup" size={scale(24)} color={theme.colors.quaternaryText} />
-        </Pressable>
+        <View ref={moreButtonRef} collapsable={false}>
+          <Pressable onPress={onMorePress} hitSlop={8}>
+            <Icon name="more-popup" size={scale(24)} color={theme.colors.quaternaryText} />
+          </Pressable>
+        </View>
       </View>
     </Animated.View>
   );

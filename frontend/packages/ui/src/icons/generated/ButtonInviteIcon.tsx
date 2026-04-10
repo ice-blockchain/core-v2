@@ -1,0 +1,12 @@
+// AUTO-GENERATED — do not edit manually. Run `pnpm generate:icons`.
+
+import Svg, { Path } from "react-native-svg";
+
+interface ButtonInviteIconProps {
+  size?: number;
+  color: string;
+}
+
+export function ButtonInviteIcon({ size = 24, color }: ButtonInviteIconProps) {
+  return <Svg viewBox="0 0 24 24" width={size} height={size} fill="none"><Path fill={color} d="M9 20.5a.5.5 0 0 0 1 0zm0-9a.5.5 0 0 0 0-1zm-7 5a.5.5 0 0 0 1 0zm9.87-11.503a.5.5 0 1 0 .82-.573zM20 16.5a.5.5 0 0 0-1 0zm-1 4a.5.5 0 0 0 1 0zm2.5-1.5a.5.5 0 0 0 0-1zm-4-1a.5.5 0 0 0 0 1zm2-7a3.5 3.5 0 0 1-3.5 3.5v1a4.5 4.5 0 0 0 4.5-4.5zM16 14.5a3.5 3.5 0 0 1-3.5-3.5h-1a4.5 4.5 0 0 0 4.5 4.5zM12.5 11A3.5 3.5 0 0 1 16 7.5v-1a4.5 4.5 0 0 0-4.5 4.5zM16 7.5a3.5 3.5 0 0 1 3.5 3.5h1A4.5 4.5 0 0 0 16 6.5zm0 7c-.488 0-2.193.187-3.796 1.005C10.58 16.334 9 17.852 9 20.5h1c0-2.152 1.245-3.384 2.659-4.105 1.435-.732 2.98-.895 3.341-.895zm-7-4A3.5 3.5 0 0 1 5.5 7h-1A4.5 4.5 0 0 0 9 11.5zM5.5 7A3.5 3.5 0 0 1 9 3.5v-1A4.5 4.5 0 0 0 4.5 7zM9 10.5c-.488 0-2.193.187-3.796 1.005C3.58 12.334 2 13.852 2 16.5h1c0-2.152 1.245-3.383 2.659-4.105C7.094 11.663 8.639 11.5 9 11.5zm0-7c1.188 0 2.237.591 2.87 1.497l.82-.573A4.5 4.5 0 0 0 9 2.5zm10 13v2h1v-2zm0 2v2h1v-2zm2.5-.5h-2v1h2zm-2 0h-2v1h2z" /></Svg>;
+}

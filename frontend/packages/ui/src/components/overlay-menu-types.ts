@@ -6,6 +6,7 @@ export interface OverlayMenuProps {
   onClose: () => void;
   anchorRef: RefObject<View | null>;
   children: ReactNode;
+  width?: number;
   testID?: string;
 }
 

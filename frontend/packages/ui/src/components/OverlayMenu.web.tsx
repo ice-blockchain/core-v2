@@ -20,11 +20,11 @@ function useDelayedRender(isVisible: boolean) {
   return shouldRender;
 }
 
-export function OverlayMenu({ isVisible, onClose, children, testID }: OverlayMenuProps) {
+export function OverlayMenu({ isVisible, onClose, children, width, testID }: OverlayMenuProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
   const shouldRender = useDelayedRender(isVisible);
-  const containerStyle = useMemo(() => buildContainerStyle({ scale, bgColor: theme.colors.tertiaryBackground }), [scale, theme.colors]);
+  const containerStyle = useMemo(() => buildContainerStyle({ scale, bgColor: theme.colors.tertiaryBackground, width }), [scale, theme.colors, width]);
   const backdropStyle = useMemo(() => buildBackdropStyle(), []);
   const menuPositionStyle = useMemo(() => ({ top: scale(MENU_GAP), right: 0 }), [scale]);
   const handleBackdropPress = useCallback(() => onClose(), [onClose]);

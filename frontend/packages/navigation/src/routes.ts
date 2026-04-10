@@ -27,6 +27,7 @@ export const Routes = {
     GalleryPermissionDenied: 'Sheet/GalleryPermissionDenied',
     CameraPermissionDenied: 'Sheet/CameraPermissionDenied',
     CancelPost: 'Sheet/CancelPost',
+    Settings: 'Sheet/Settings',
   },
 
   WalletView: {
@@ -48,5 +49,10 @@ export const Routes = {
     SelectLanguages: 'SelectLanguages',
     DiscoverCreators: 'DiscoverCreators',
     Notifications: 'Notifications',
+  },
+
+  Settings: {
+    Home: 'Settings/Home',
+    Account: 'Settings/Account',
   },
 } as const;

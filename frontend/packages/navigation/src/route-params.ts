@@ -45,6 +45,12 @@ export type RootStackParamList = {
   'Sheet/GalleryPermissionDenied': undefined;
   'Sheet/CameraPermissionDenied': undefined;
   'Sheet/CancelPost': undefined;
+  'Sheet/Settings': NavigatorScreenParams<SettingsStackParamList> | undefined;
+};
+
+export type SettingsStackParamList = {
+  'Settings/Home': undefined;
+  'Settings/Account': undefined;
 };
 
 export type AuthStackParamList = {

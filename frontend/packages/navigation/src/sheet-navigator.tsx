@@ -8,7 +8,7 @@ import { SheetScreenHeader } from './components/SheetScreenHeader';
 import { SheetScrollProvider } from './sheet-scroll-context';
 import { SheetBackdrop, SheetBackground, SheetHandle } from '@ion/ui';
 
-const SNAP_POINTS = ['92%'];
+const DEFAULT_SNAP_POINTS = ['92%'];
 const KEYBOARD_BEHAVIOR = Platform.select({ ios: 'padding' as const, default: 'height' as const });
 const SHEET_TOP_FRACTION = 0.08;
 const FLEX_ONE = { flex: 1 } as const;
@@ -27,6 +27,8 @@ export interface SheetProps {
   titleVisible?: boolean;
   onBack?: (() => void) | undefined;
   headerRightAction?: ReactNode | undefined;
+  snapPoints?: Array<string | number> | undefined;
+  closeRef?: React.MutableRefObject<(() => void) | null> | undefined;
 }
 
 function computeTitleOpacity(scrollOffset: number): number {
@@ -48,31 +50,21 @@ function useScrollTitleOpacity() {
   return { titleOpacity, handleScroll };
 }
 
-export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction }: SheetProps) {
+export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction, snapPoints, closeRef }: SheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { titleOpacity: scrollOpacity, handleScroll } = useScrollTitleOpacity();
   const titleOpacity = titleVisible ? 1 : scrollOpacity;
   const keyboardOffset = useKeyboardVerticalOffset();
   const bottomInsetStyle = useBottomInsetStyle();
+  const resolvedSnapPoints = snapPoints ?? DEFAULT_SNAP_POINTS;
+  if (closeRef) closeRef.current = () => bottomSheetRef.current?.close();
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={0}
-      snapPoints={SNAP_POINTS}
-      enablePanDownToClose
-      enableDynamicSizing={false}
-      backdropComponent={SheetBackdrop}
-      backgroundComponent={SheetBackground}
-      handleComponent={SheetHandle}
-      onClose={onClose}
-    >
+    <BottomSheet ref={bottomSheetRef} index={0} snapPoints={resolvedSnapPoints} enablePanDownToClose enableDynamicSizing={false} backdropComponent={SheetBackdrop} backgroundComponent={SheetBackground} handleComponent={SheetHandle} onClose={onClose}>
       <View style={[FLEX_ONE, bottomInsetStyle]}>
         <SheetScreenHeader title={title} titleOpacity={titleOpacity} onBack={onBack} rightAction={headerRightAction} />
         <KeyboardAvoidingView style={FLEX_ONE} behavior={KEYBOARD_BEHAVIOR} keyboardVerticalOffset={keyboardOffset}>
-          <SheetScrollProvider value={handleScroll}>
-            {children}
-          </SheetScrollProvider>
+          <SheetScrollProvider value={handleScroll}>{children}</SheetScrollProvider>
         </KeyboardAvoidingView>
       </View>
     </BottomSheet>

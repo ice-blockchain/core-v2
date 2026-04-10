@@ -110,6 +110,7 @@ export type {
 
 // Overlay Menu
 export { OverlayMenu } from "./components/OverlayMenu";
+export { useOverlayMenu } from "./components/use-overlay-menu";
 export type { OverlayMenuProps } from "./components/overlay-menu-types";
 
 // Feed Filters Menu

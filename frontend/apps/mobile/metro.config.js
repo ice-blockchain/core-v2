@@ -20,6 +20,7 @@ const singletonNames = [
   '@react-navigation/native',
   '@react-navigation/native-stack',
   'lottie-react-native',
+  '@react-native-camera-roll/camera-roll',
 ];
 const singletonResolvePaths = [mobileModules, path.resolve(workspaceRoot, 'node_modules')];
 const singletonPaths = {};
