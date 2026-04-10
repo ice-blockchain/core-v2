@@ -40,7 +40,7 @@ function TileRightSide({ rightType, valueLabel, checked }: { rightType: string; 
     return <Icon name={checked ? "checkbox-on" : "checkbox-off"} size={scale(24)} color={theme.colors.primaryAccent} />;
   }
   return (
-    <View style={styles.rightRow}>
+    <View style={[styles.rightRow, { gap: scale(12) }]}>
       {valueLabel ? <Text variant="caption" color={theme.colors.primaryAccent}>{valueLabel}</Text> : null}
       <Icon name="arrow-right" size={scale(24)} color={theme.colors.quaternaryText} />
     </View>
@@ -74,5 +74,5 @@ function buildIconBoxStyle(scale: (n: number) => number, backgroundColor: string
 
 const styles = StyleSheet.create({
   leftRow: { flexDirection: "row", alignItems: "center" },
-  rightRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  rightRow: { flexDirection: "row", alignItems: "center" },
 });

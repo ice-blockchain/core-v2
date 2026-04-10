@@ -24,6 +24,9 @@ function useSettingsMenuHandler(menu: ReturnType<typeof useOverlayMenu>) {
 
   const handleItemPress = useCallback((key: string) => {
     if (key === SETTINGS_KEY) {
+      // Unmount before close: OverlayMenu uses a Modal that blocks touches on the
+      // Settings sheet if it stays in the tree. Sacrificing the close animation is
+      // fine since the sheet opens on top immediately.
       setMenuMounted(false);
       menu.close();
       requestAnimationFrame(() => navigation.navigate(Routes.Sheet.Settings));

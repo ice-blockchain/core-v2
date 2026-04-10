@@ -43,7 +43,7 @@ function useSettingsSnapPoints(heights: Record<string, number>, activeRoute: str
     const contentHeight = heights[activeRoute];
     if (!contentHeight) return undefined;
     const headerHeight = scale(20) + scale(24) + scale(16);
-    return [contentHeight + headerHeight + HANDLE_HEIGHT + insets.bottom];
+    return [contentHeight + headerHeight + scale(HANDLE_HEIGHT) + insets.bottom];
   }, [heights, activeRoute, scale, insets.bottom]);
 }
 
@@ -56,22 +56,22 @@ function useScreenOptions() {
   }), [theme.colors.secondaryBackground]);
 }
 
-function useSettingsListeners(navRef: NavRef, setTitle: (t: string) => void, setActiveRoute: (r: string) => void) {
+function useSettingsListeners(navRef: NavRef, setTitle: (t: string) => void, setActiveRoute: (r: string) => void, setIndex: (i: number) => void) {
   return useCallback(({ navigation }: { navigation: SettingsNav }) => {
     navRef.current = navigation;
     return {
       state: (event: StateEvent) => {
         const navState = event.data?.state;
         const focused = navState?.routes[navState.index];
-        if (focused) { setTitle(translateTitle(focused.name)); setActiveRoute(focused.name); }
+        if (focused) { setTitle(translateTitle(focused.name)); setActiveRoute(focused.name); setIndex(navState.index); }
       },
     };
-  }, [navRef, setTitle, setActiveRoute]);
+  }, [navRef, setTitle, setActiveRoute, setIndex]);
 }
 
-function SettingsStack({ screens, navRef, setTitle, setActiveRoute }: { screens: SettingsScreens; navRef: NavRef; setTitle: (t: string) => void; setActiveRoute: (r: string) => void }) {
+function SettingsStack({ screens, navRef, setTitle, setActiveRoute, setIndex }: { screens: SettingsScreens; navRef: NavRef; setTitle: (t: string) => void; setActiveRoute: (r: string) => void; setIndex: (i: number) => void }) {
   const screenOptions = useScreenOptions();
-  const listeners = useSettingsListeners(navRef, setTitle, setActiveRoute);
+  const listeners = useSettingsListeners(navRef, setTitle, setActiveRoute, setIndex);
   return (
     <Stack.Navigator screenOptions={screenOptions} screenListeners={listeners}>
       <Stack.Screen name={Routes.Settings.Home} component={screens.Home} />
@@ -93,6 +93,7 @@ export function SettingsSheetNavigator({ screens }: { screens: SettingsScreens }
   const navRef = useRef<SettingsNav | null>(null);
   const [title, setTitle] = useState(() => translateTitle(Routes.Settings.Home));
   const [activeRoute, setActiveRoute] = useState<string>(Routes.Settings.Home);
+  const [index, setIndex] = useState(0);
   const { heights, reportHeight } = useRouteHeights();
   const snapPoints = useSettingsSnapPoints(heights, activeRoute);
   const handleClose = useCallback(() => navigation.goBack(), [navigation]);
@@ -107,8 +108,8 @@ export function SettingsSheetNavigator({ screens }: { screens: SettingsScreens }
 
   return (
     <SettingsHeightContext.Provider value={reportHeight}>
-      <Sheet onClose={handleClose} title={title} titleVisible headerRightAction={closeButton} onBack={handleBack} snapPoints={snapPoints}>
-        <SettingsStack screens={screens} navRef={navRef} setTitle={setTitle} setActiveRoute={setActiveRoute} />
+      <Sheet onClose={handleClose} title={title} titleVisible headerRightAction={closeButton} onBack={index > 0 ? handleBack : undefined} snapPoints={snapPoints}>
+        <SettingsStack screens={screens} navRef={navRef} setTitle={setTitle} setActiveRoute={setActiveRoute} setIndex={setIndex} />
       </Sheet>
     </SettingsHeightContext.Provider>
   );
