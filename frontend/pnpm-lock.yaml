@@ -1575,6 +1575,9 @@ importers:
       react-native-safe-area-context:
         specifier: '>=4.0.0'
         version: 5.7.0(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+      react-native-svg:
+        specifier: '>=15.0.0'
+        version: 15.15.4(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.84.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@testing-library/react':
         specifier: ^16.0.0
