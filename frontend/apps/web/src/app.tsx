@@ -23,7 +23,7 @@ import { chatTranslations } from '@ion/chat';
 import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
 import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, CancelPostScreen, feedTranslations } from '@ion/feed-ui';
-import { loadWalletViewData } from '@ion/wallet';
+import { loadWalletViewData, initializeWalletClient } from '@ion/wallet';
 import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from '@ion/wallet-ui';
 import { profileTranslations, SettingsSheetScreen } from '@ion/profile-ui';
 import { HomeScreen, homeTranslations } from '@ion/home-ui';
@@ -93,7 +93,8 @@ const authScreens = {
 };
 
 const handleAuthSuccess = (username: string) => {
-  loadWalletViewData(identityClient, username).catch(console.error);
+  initializeWalletClient(identityClient, username);
+  loadWalletViewData().catch(console.error);
 };
 const authFlowStore = createAuthFlowStore({ identityClient, onAuthSuccess: handleAuthSuccess });
 setAuthFlowStore(authFlowStore);

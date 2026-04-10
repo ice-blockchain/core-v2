@@ -6,3 +6,5 @@ export { renameWalletView } from "./actions/rename-wallet-view";
 export { deleteWalletView } from "./actions/delete-wallet-view";
 export { switchWalletView } from "./actions/switch-wallet-view";
 export { loadWalletViewData } from "./actions/load-wallet-view-data";
+export { initializeWalletClient, resetWalletClient } from "./stores/wallet-client-config";
+export { setWalletErrorNotifier } from "./stores/wallet-notification-config";

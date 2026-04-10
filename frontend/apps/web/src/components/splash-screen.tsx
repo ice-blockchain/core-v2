@@ -3,7 +3,7 @@ import type { MediaViewerSource } from "@ion/media-viewer";
 import { SplashScreen as SplashScreenCore } from "@ion/splash-ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
 import { Logger } from "@ion/diagnostics";
-import { loadWalletViewData } from "@ion/wallet";
+import { loadWalletViewData, initializeWalletClient } from "@ion/wallet";
 import { identityClient } from "../identity-client";
 
 const splashSource: MediaViewerSource = {
@@ -37,7 +37,8 @@ export function SplashScreen() {
     const users = identityClient.authStore.getSnapshot();
     const isAuthenticated = users.length > 0;
     if (isAuthenticated) {
-      loadWalletViewData(identityClient, users[0]!).catch(console.error);
+      initializeWalletClient(identityClient, users[0]!);
+      loadWalletViewData().catch(console.error);
     }
     const target = isAuthenticated ? Routes.Main : Routes.GetStarted;
     navigation.reset({ index: 0, routes: [{ name: target }] });
