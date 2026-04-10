@@ -3728,7 +3728,7 @@ SPEC CHECKSUMS:
   FileStorageOps: 0e42e8a22faa7264b77f4d7aedda4ab4c4cfcc6f
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: e56ede4028c4b7418e6b1195a36b1656bb35e225
-  hermes-engine: 2c6d84657e941a90808c1aea16f1ded7990a9fe7
+  hermes-engine: e235d48b2e8b9639caef9c2da5fa2700efe29cba
   IonConnectProxy: 957f7eeddd6a6639e25db2b449cf248526588b90
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: 983fd0489530e8d40f173de7f04e2f88b9317a15

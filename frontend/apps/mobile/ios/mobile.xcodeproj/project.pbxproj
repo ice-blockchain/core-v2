@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0C80B921A6F3F58F76C31292 /* libPods-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-mobile.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1F102CDD6F68457B833D6D11 /* NotoSans-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7A04C15192514F7AAD87B23C /* NotoSans-MediumItalic.ttf */; };
+		2FF638D4776895D879EB0B92 /* libPods-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C93AB65D49EA7A7D3763F26D /* libPods-mobile.a */; };
 		3BDF198804154651A9516F4D /* NotoSans-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B2DFE1381CEF4AD9A891E548 /* NotoSans-Italic.ttf */; };
 		42F08506BA084788B423E5B2 /* NotoSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 581451D94DDF43D1A36C65F2 /* NotoSans-Regular.ttf */; };
 		564BD70B37015FE9498F8444 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
@@ -30,19 +30,17 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = mobile/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = mobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		173E7CFDAE824A5E939FA0D8 /* NotoSans-BoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-BoldItalic.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-BoldItalic.ttf"; sourceTree = "<group>"; };
-		190DC71F53241BC5923F5B80 /* Pods-mobile.release-production.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-production.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-production.xcconfig"; sourceTree = "<group>"; };
-		26ACE6FB9CAE9D5902CAC400 /* Pods-mobile.debug-testnet.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-testnet.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-testnet.xcconfig"; sourceTree = "<group>"; };
-		3B4392A12AC88292D35C810B /* Pods-mobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug.xcconfig"; sourceTree = "<group>"; };
-		3B8DA45D35F51A0B1835219E /* Pods-mobile.debug-production.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-production.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-production.xcconfig"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-mobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release.xcconfig"; sourceTree = "<group>"; };
+		1BEE675799221CB73AD7D28F /* Pods-mobile.debug-testnet.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-testnet.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-testnet.xcconfig"; sourceTree = "<group>"; };
+		2A377A59137A673B4B56CB47 /* Pods-mobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug.xcconfig"; sourceTree = "<group>"; };
+		4E986E8CAD354AD8C136CFCA /* Pods-mobile.release-testnet.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-testnet.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-testnet.xcconfig"; sourceTree = "<group>"; };
 		581451D94DDF43D1A36C65F2 /* NotoSans-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-Regular.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-Regular.ttf"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-mobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5AE602AA996780F6C37CE06B /* Pods-mobile.debug-production.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-production.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-production.xcconfig"; sourceTree = "<group>"; };
 		7052FF7938AE4743BC83E122 /* NotoSans-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-Medium.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-Medium.ttf"; sourceTree = "<group>"; };
 		7552A82743364B299E71B436 /* Monaco.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Monaco.ttf; path = ../../../packages/ui/src/fonts/Monaco.ttf; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = mobile/AppDelegate.swift; sourceTree = "<group>"; };
 		7A04C15192514F7AAD87B23C /* NotoSans-MediumItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-MediumItalic.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-MediumItalic.ttf"; sourceTree = "<group>"; };
+		7EE36E4CD20BE606C10A1315 /* Pods-mobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = mobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		A08A9BDA64AC23CA2AEFDDA8 /* Pods-mobile.release-staging.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-staging.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-staging.xcconfig"; sourceTree = "<group>"; };
 		A69738FFF2054D9B9CCD6DAA /* NotoSans-SemiBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-SemiBoldItalic.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
 		AA0000010000000000000000 /* Ion-Staging-Debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Ion-Staging-Debug.xcconfig"; sourceTree = "<group>"; };
 		AA0000020000000000000000 /* Ion-Staging-Release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Ion-Staging-Release.xcconfig"; sourceTree = "<group>"; };
@@ -50,12 +48,14 @@
 		AA0000040000000000000000 /* Ion-Testnet-Release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Ion-Testnet-Release.xcconfig"; sourceTree = "<group>"; };
 		AA0000050000000000000000 /* Ion-Production-Debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Ion-Production-Debug.xcconfig"; sourceTree = "<group>"; };
 		AA0000060000000000000000 /* Ion-Production-Release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Ion-Production-Release.xcconfig"; sourceTree = "<group>"; };
-		B234A5BA2E8624A5B00C828E /* Pods-mobile.debug-staging.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-staging.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-staging.xcconfig"; sourceTree = "<group>"; };
 		B2DFE1381CEF4AD9A891E548 /* NotoSans-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-Italic.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-Italic.ttf"; sourceTree = "<group>"; };
+		C147948CACF2ECBF49A06D89 /* Pods-mobile.debug-staging.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.debug-staging.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.debug-staging.xcconfig"; sourceTree = "<group>"; };
+		C93AB65D49EA7A7D3763F26D /* libPods-mobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD0000020000000000000000 /* mobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = mobile.entitlements; path = mobile/mobile.entitlements; sourceTree = "<group>"; };
+		E0A6538FA1C14A5A70732538 /* Pods-mobile.release-staging.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-staging.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-staging.xcconfig"; sourceTree = "<group>"; };
 		E8636EB9B9A14DD980927BB2 /* NotoSans-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "NotoSans-SemiBold.ttf"; path = "../../../packages/ui/src/fonts/NotoSans-SemiBold.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		FE6691CF0321E7EA8B117F2F /* Pods-mobile.release-testnet.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-testnet.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-testnet.xcconfig"; sourceTree = "<group>"; };
+		FC0096C0A1BA4C63929AED75 /* Pods-mobile.release-production.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-mobile.release-production.xcconfig"; path = "Target Support Files/Pods-mobile/Pods-mobile.release-production.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,7 +63,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-mobile.a in Frameworks */,
+				2FF638D4776895D879EB0B92 /* libPods-mobile.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -87,7 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-mobile.a */,
+				C93AB65D49EA7A7D3763F26D /* libPods-mobile.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -142,14 +142,14 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-mobile.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-mobile.release.xcconfig */,
-				B234A5BA2E8624A5B00C828E /* Pods-mobile.debug-staging.xcconfig */,
-				A08A9BDA64AC23CA2AEFDDA8 /* Pods-mobile.release-staging.xcconfig */,
-				26ACE6FB9CAE9D5902CAC400 /* Pods-mobile.debug-testnet.xcconfig */,
-				FE6691CF0321E7EA8B117F2F /* Pods-mobile.release-testnet.xcconfig */,
-				3B8DA45D35F51A0B1835219E /* Pods-mobile.debug-production.xcconfig */,
-				190DC71F53241BC5923F5B80 /* Pods-mobile.release-production.xcconfig */,
+				2A377A59137A673B4B56CB47 /* Pods-mobile.debug.xcconfig */,
+				7EE36E4CD20BE606C10A1315 /* Pods-mobile.release.xcconfig */,
+				C147948CACF2ECBF49A06D89 /* Pods-mobile.debug-staging.xcconfig */,
+				E0A6538FA1C14A5A70732538 /* Pods-mobile.release-staging.xcconfig */,
+				1BEE675799221CB73AD7D28F /* Pods-mobile.debug-testnet.xcconfig */,
+				4E986E8CAD354AD8C136CFCA /* Pods-mobile.release-testnet.xcconfig */,
+				5AE602AA996780F6C37CE06B /* Pods-mobile.debug-production.xcconfig */,
+				FC0096C0A1BA4C63929AED75 /* Pods-mobile.release-production.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -174,14 +174,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "mobile" */;
 			buildPhases = (
-				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
+				CF7642326DD8853D444ABC0E /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
-				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
 				DD0000010000000000000000 /* Copy GoogleService-Info.plist */,
+				DB050B6F26212FD02D04EA8D /* [CP] Embed Pods Frameworks */,
+				7A81A4D309AA9E63DDF1FD48 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -262,24 +262,24 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
 		};
-		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
+		7A81A4D309AA9E63DDF1FD48 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			name = "[CP] Embed Pods Frameworks";
+			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
+		CF7642326DD8853D444ABC0E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -301,6 +301,23 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		DB050B6F26212FD02D04EA8D /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		DD0000010000000000000000 /* Copy GoogleService-Info.plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -316,23 +333,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ -f \"${SRCROOT}/GoogleService-Info.plist\" ]; then\n  cp \"${SRCROOT}/GoogleService-Info.plist\" \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/GoogleService-Info.plist\"\nelse\n  echo \"warning: GoogleService-Info.plist not found — skipping copy\"\nfi\n";
-		};
-		E235C05ADACE081382539298 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-mobile/Pods-mobile-resources.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -350,7 +350,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-mobile.debug.xcconfig */;
+			baseConfigurationReference = 2A377A59137A673B4B56CB47 /* Pods-mobile.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -382,7 +382,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-mobile.release.xcconfig */;
+			baseConfigurationReference = 7EE36E4CD20BE606C10A1315 /* Pods-mobile.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

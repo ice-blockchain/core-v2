@@ -67,32 +67,7 @@ function useWalletViewScreen(walletViewScreens?: WalletViewScreens) {
   );
 }
 
-function SheetScreens({ s, Auth, WalletView }: { s: AppNavigatorScreens; Auth: ComponentType; WalletView?: ComponentType })
-  return (
-    <>
-      <Stack.Screen name={Routes.Sheet.Auth} component={Auth} options={MODAL} />
-      {WalletView && <Stack.Screen name={Routes.Sheet.WalletViewManagement} component={WalletView} options={MODAL} />}
-      <Stack.Screen name={Routes.Sheet.NicknameReserved} component={s.NicknameReserved} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={s.IdentityKeyNameNote} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.Verify} component={s.Verify} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.LinkDevice} component={s.LinkDevice} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.VerifyOnOtherDevice} component={s.VerifyOnOtherDevice} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.AddBiometrics} component={s.AddBiometrics} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={s.AddPasskeyCredentials} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.InvalidCredentials} component={s.InvalidCredentials} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.ConfirmPassword} component={s.ConfirmPassword} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.RestoreSuccess} component={s.RestoreSuccess} options={MODAL} />
-      <Stack.Screen name={Routes.Sheet.GeneralError} component={s.GeneralError} options={MODAL} />
-      {s.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={s.CreatePost} options={MODAL} />}
-      {s.MediaPicker && <Stack.Screen name={Routes.Sheet.MediaPicker} component={s.MediaPicker} options={MODAL} />}
-      {s.GalleryPermissionDenied && <Stack.Screen name={Routes.Sheet.GalleryPermissionDenied} component={s.GalleryPermissionDenied} options={MODAL} />}
-      {s.CameraPermissionDenied && <Stack.Screen name={Routes.Sheet.CameraPermissionDenied} component={s.CameraPermissionDenied} options={MODAL} />}
-      {s.CancelPost && <Stack.Screen name={Routes.Sheet.CancelPost} component={s.CancelPost} options={MODAL} />}
-      {s.Settings && <Stack.Screen name={Routes.Sheet.Settings} component={s.Settings} options={MODAL} />}
-    </>
-  );
-}
-
+/* eslint-disable max-lines-per-function -- navigator registration is declarative, can't extract (React Navigation requires direct children) */
 export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuthenticated }: AppNavigatorProps) {
   const Auth = useAuthScreen(authScreens);
   const WalletView = useWalletViewScreen(s.walletViewScreens);
@@ -105,7 +80,27 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
       {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}
       {s.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={s.AuthFlow} options={MODAL} />}
-      <SheetScreens s={s} Auth={Auth} WalletView={WalletView} />
+      <Stack.Group screenOptions={MODAL}>
+        <Stack.Screen name={Routes.Sheet.Auth} component={Auth} />
+        {WalletView && <Stack.Screen name={Routes.Sheet.WalletViewManagement} component={WalletView} />}
+        <Stack.Screen name={Routes.Sheet.NicknameReserved} component={s.NicknameReserved} />
+        <Stack.Screen name={Routes.Sheet.IdentityKeyNameNote} component={s.IdentityKeyNameNote} />
+        <Stack.Screen name={Routes.Sheet.Verify} component={s.Verify} />
+        <Stack.Screen name={Routes.Sheet.LinkDevice} component={s.LinkDevice} />
+        <Stack.Screen name={Routes.Sheet.VerifyOnOtherDevice} component={s.VerifyOnOtherDevice} />
+        <Stack.Screen name={Routes.Sheet.AddBiometrics} component={s.AddBiometrics} />
+        <Stack.Screen name={Routes.Sheet.AddPasskeyCredentials} component={s.AddPasskeyCredentials} />
+        <Stack.Screen name={Routes.Sheet.InvalidCredentials} component={s.InvalidCredentials} />
+        <Stack.Screen name={Routes.Sheet.ConfirmPassword} component={s.ConfirmPassword} />
+        <Stack.Screen name={Routes.Sheet.RestoreSuccess} component={s.RestoreSuccess} />
+        <Stack.Screen name={Routes.Sheet.GeneralError} component={s.GeneralError} />
+        {s.CreatePost && <Stack.Screen name={Routes.Sheet.CreatePost} component={s.CreatePost} />}
+        {s.MediaPicker && <Stack.Screen name={Routes.Sheet.MediaPicker} component={s.MediaPicker} />}
+        {s.GalleryPermissionDenied && <Stack.Screen name={Routes.Sheet.GalleryPermissionDenied} component={s.GalleryPermissionDenied} />}
+        {s.CameraPermissionDenied && <Stack.Screen name={Routes.Sheet.CameraPermissionDenied} component={s.CameraPermissionDenied} />}
+        {s.CancelPost && <Stack.Screen name={Routes.Sheet.CancelPost} component={s.CancelPost} />}
+        {s.Settings && <Stack.Screen name={Routes.Sheet.Settings} component={s.Settings} />}
+      </Stack.Group>
     </Stack.Navigator>
   );
 }
