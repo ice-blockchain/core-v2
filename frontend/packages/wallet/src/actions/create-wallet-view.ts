@@ -1,9 +1,9 @@
-import type { WalletView } from "./types";
+import type { WalletView } from "../types";
 import {
   walletViewStore,
   batchUpdate,
   getNextId,
-} from "./wallet-view-store";
+} from "../stores/wallet-view-store";
 
 export const MAX_WALLET_VIEWS = 2;
 
@@ -23,6 +23,8 @@ export function createWalletView(name: string): WalletView {
     name: trimmedName,
     balance: "$0.00",
     isMain: false,
+    coinGroups: [],
+    isLoading: false,
   };
 
   batchUpdate([...current, walletView], walletView.id);

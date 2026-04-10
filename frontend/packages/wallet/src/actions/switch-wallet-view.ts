@@ -1,4 +1,4 @@
-import { walletViewStore, setActiveWalletViewId } from "./wallet-view-store";
+import { walletViewStore, setActiveWalletViewId } from "../stores/wallet-view-store";
 
 export function switchWalletView(walletId: string): void {
   const current = walletViewStore.getWalletViews();

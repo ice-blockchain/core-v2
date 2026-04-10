@@ -2,7 +2,7 @@ import {
   walletViewStore,
   setWalletViews,
   batchUpdate,
-} from "./wallet-view-store";
+} from "../stores/wallet-view-store";
 
 export function deleteWalletView(walletId: string): void {
   const current = walletViewStore.getWalletViews();

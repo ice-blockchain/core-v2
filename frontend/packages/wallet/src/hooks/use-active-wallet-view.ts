@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
-import type { WalletView } from "./types";
-import { walletViewStore } from "./wallet-view-store";
+import type { WalletView } from "../types";
+import { walletViewStore } from "../stores/wallet-view-store";
 
 export function useActiveWalletView(): WalletView {
   const walletViews = useSyncExternalStore(

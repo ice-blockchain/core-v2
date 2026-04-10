@@ -1,4 +1,4 @@
-import { walletViewStore, setWalletViews } from "./wallet-view-store";
+import { walletViewStore, setWalletViews } from "../stores/wallet-view-store";
 
 export function renameWalletView(walletId: string, newName: string): void {
   const trimmedName = newName.trim();

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { switchWalletView } from "./switch-wallet-view";
 import { createWalletView } from "./create-wallet-view";
-import { walletViewStore, resetWalletViewStore } from "./wallet-view-store";
+import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
 
 describe("switchWalletView", () => {
   beforeEach(() => {
