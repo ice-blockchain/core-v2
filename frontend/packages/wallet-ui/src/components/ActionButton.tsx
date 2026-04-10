@@ -8,9 +8,10 @@ interface ActionButtonProps {
   iconName: IconName;
   label: string;
   filled?: boolean;
+  onPress?: () => void;
 }
 
-export function ActionButton({ iconName, label, filled }: ActionButtonProps) {
+export function ActionButton({ iconName, label, filled, onPress }: ActionButtonProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -27,7 +28,7 @@ export function ActionButton({ iconName, label, filled }: ActionButtonProps) {
   const iconColor = filled ? theme.colors.onPrimaryAccent : theme.colors.primaryAccent;
 
   return (
-    <TouchableOpacity style={[styles.container, containerStyle]} accessibilityLabel={label} accessibilityRole="button">
+    <TouchableOpacity style={[styles.container, containerStyle]} accessibilityLabel={label} accessibilityRole="button" onPress={onPress}>
       <View style={[styles.iconContainer, iconContainerStyle]}>
         <Icon name={iconName} size={scale(24)} color={iconColor} />
       </View>

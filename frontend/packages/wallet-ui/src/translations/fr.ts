@@ -4,6 +4,7 @@ export const walletUiFR: Record<keyof typeof walletUiEN, string> = {
   balanceLabel: "Solde",
   balanceAmount: "0,00 $",
   buyAction: "Acheter",
+  buyCryptoComingSoon: "Achetez des cryptos facilement. Bientôt disponible.",
   receiveAction: "Recevoir",
   swapAction: "Échanger",
   moreAction: "Plus",

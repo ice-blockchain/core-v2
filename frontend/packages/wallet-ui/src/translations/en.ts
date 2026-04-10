@@ -2,6 +2,7 @@ export const walletUiEN = {
   balanceLabel: "Balance",
   balanceAmount: "$0.00",
   buyAction: "Buy",
+  buyCryptoComingSoon: "Buy crypto easily. Coming soon.",
   receiveAction: "Receive",
   swapAction: "Swap",
   moreAction: "More",
