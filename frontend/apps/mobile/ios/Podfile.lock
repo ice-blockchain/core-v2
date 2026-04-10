@@ -2450,6 +2450,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-webview (13.16.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - React-NativeModulesApple (0.84.1):
     - boost
     - DoubleConversion
@@ -3460,6 +3488,7 @@ DEPENDENCIES:
   - react-native-passkey (from `../node_modules/react-native-passkey`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-video (from `../node_modules/react-native-video`)
+  - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -3634,6 +3663,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-video:
     :path: "../node_modules/react-native-video"
+  react-native-webview:
+    :path: "../node_modules/react-native-webview"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -3728,7 +3759,7 @@ SPEC CHECKSUMS:
   FileStorageOps: 0e42e8a22faa7264b77f4d7aedda4ab4c4cfcc6f
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: e56ede4028c4b7418e6b1195a36b1656bb35e225
-  hermes-engine: e235d48b2e8b9639caef9c2da5fa2700efe29cba
+  hermes-engine: 33b123449c51b9e09baba8468f80036892e53bbd
   IonConnectProxy: 957f7eeddd6a6639e25db2b449cf248526588b90
   lottie-ios: 8f959969761e9c45d70353667d00af0e5b9cadb3
   lottie-react-native: 983fd0489530e8d40f173de7f04e2f88b9317a15
@@ -3782,6 +3813,7 @@ SPEC CHECKSUMS:
   react-native-passkey: bc3dbc2f1f6b5f543c56e8cc093f5a2fcc9cf72d
   react-native-safe-area-context: befb5404eb8a16fdc07fa2bebab3568ecabcbb8a
   react-native-video: ce907959c67ad2abaa0411082db621036944737a
+  react-native-webview: 8407aaaf6b539b1e38b72fabb55d6885de03beaf
   React-NativeModulesApple: e889a8973f2fc5d141b713cce2fa0f5917525e3e
   React-networking: 23fcf73347415e2fa88f77b442316e42aef06b2c
   React-oscompat: d25dec7213a964cdfae442e1967a680954ed0df1
@@ -3813,15 +3845,15 @@ SPEC CHECKSUMS:
   React-utils: 6d2e9236ff5574fcfb51e4fbef5d7c24005b1bda
   React-webperformancenativemodule: ccc4e381492deafa8b848ab6e4e66b08c0cfa9ae
   ReactAppDependencyProvider: e96e93b493d8d86eeaee3e590ba0be53f6abe46f
-  ReactCodegen: f0e4977ada9ac12d7fc8e2cf6f1a3a88c15918a5
+  ReactCodegen: 5df2451c56d4de602a161d1fbdfd1355798cfff9
   ReactCommon: 02ee6650471e9c32a201abc0b593e4b0e5d1eede
   RNDeviceInfo: bcce8752b5043a623fe3c26789679b473f705d3c
   RNGestureHandler: 0108b0a14d04c88c382138bea400c111ceb3f79f
   RNKeychain: a2c134ab796272c3d605e035ab727591000b30f3
-  RNReanimated: d47256d6789251c8a47b7b9c67d19a3646e24a03
+  RNReanimated: 608af306de434f08be0b53071ffcdeeb7755b0af
   RNScreens: 7f643ee0fd1407dc5085c7795460bd93da113b8f
   RNSVG: db85b4eb848b5978a77cdbf797738f4e3ed1bdbb
-  RNWorklets: cfd755b62d5a3a7d99bc3bd347beb9babd89b05c
+  RNWorklets: 4626a775e4dcdc491d26c95702e889984f9fb710
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   TensorFlowLiteC: eac6d689a8d391d1b202dc59e3d9165ba64aaf73
