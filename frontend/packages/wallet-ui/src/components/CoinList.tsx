@@ -47,8 +47,9 @@ export function CoinList({ coinGroups, searchQuery, isBalanceVisible }: CoinList
   }, [isBalanceVisible]);
 
   const filteredGroups = useMemo(() => {
-    if (!searchQuery.trim()) return coinGroups;
-    return coinGroups.filter((group) => matchesSearch(group, searchQuery));
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return coinGroups;
+    return coinGroups.filter((group) => matchesSearch(group, trimmedQuery));
   }, [coinGroups, searchQuery]);
 
   return (

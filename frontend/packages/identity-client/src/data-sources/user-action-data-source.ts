@@ -38,7 +38,7 @@ export function createUserActionDataSource(httpClient: HttpClient): UserActionDa
         headers: { 'X-Username': username },
       });
       validateActionChallengeResponse(body);
-      return body;
+      return body!;
     },
 
     async completeAction(input, username) {
@@ -47,7 +47,7 @@ export function createUserActionDataSource(httpClient: HttpClient): UserActionDa
         headers: { 'X-Username': username },
       });
       validateUserActionResponse(body);
-      return body;
+      return body!;
     },
   };
 }

@@ -83,5 +83,6 @@ export function buildAggregationWalletKey(
   wallet: WalletViewAggregationWallet,
 ): string {
   const contract = extractContractAddress(wallet.asset);
-  return `${wallet.walletId}|${wallet.network}|${contract ?? wallet.coinId}`;
+  const normalizedContract = contract?.toLowerCase() ?? null;
+  return `${wallet.walletId}|${wallet.network}|${normalizedContract ?? wallet.coinId}`;
 }

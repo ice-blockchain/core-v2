@@ -20,7 +20,11 @@ function useSvgXml(uri: string | null) {
   const [xml, setXml] = useState<string | null>(cached ?? null);
 
   useEffect(() => {
-    if (!isSvg || svgCache.has(uri) || failedUrls.has(uri)) return;
+    if (!isSvg || !uri) { setXml(null); return; }
+    const currentCached = svgCache.get(uri);
+    if (currentCached) { setXml(currentCached); return; }
+    if (failedUrls.has(uri)) { setXml(null); return; }
+    setXml(null);
     let cancelled = false;
     fetch(uri)
       .then((res) => res.text())
@@ -30,6 +34,7 @@ function useSvgXml(uri: string | null) {
       })
       .catch(() => {
         failedUrls.add(uri);
+        if (!cancelled) setXml(null);
       });
     return () => { cancelled = true; };
   }, [uri, isSvg]);

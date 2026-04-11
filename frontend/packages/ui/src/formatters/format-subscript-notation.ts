@@ -1,6 +1,6 @@
 const SUBSCRIPT_DIGITS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
 
-export function toSubscript(count: number): string {
+function toSubscript(count: number): string {
   return String(count)
     .split("")
     .map((digit) => SUBSCRIPT_DIGITS[Number(digit)])
@@ -16,6 +16,7 @@ export function formatSubscriptNotation(value: number, symbol = ""): string {
 
   const mantissa = exponentMatch[1] ?? "";
   const exponent = Math.abs(Number(exponentMatch[2]));
+  if (Number(exponentMatch[2]) >= 0) return "";
   const zeroCount = exponent - 1;
 
   const digits = mantissa.replace(".", "");

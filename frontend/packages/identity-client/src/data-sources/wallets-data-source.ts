@@ -50,19 +50,19 @@ function buildWalletCoreMethods(httpClient: HttpClient) {
   return {
     async listWallets(username: string) {
       const { body } = await httpClient.get<ListWalletsResponse>('/wallets', { headers: { 'X-Username': username } });
-      return body;
+      return body!;
     },
     async getWalletAssets(walletId: string, username: string) {
       const { body } = await httpClient.get<WalletAssetsResponse>(
         `${walletPath(walletId)}/assets`, { headers: { 'X-Username': username } },
       );
-      return body;
+      return body!;
     },
     async getWalletNfts(walletId: string, username: string) {
       const { body } = await httpClient.get<WalletNftsResponse>(
         `${walletPath(walletId)}/nfts`, { headers: { 'X-Username': username } },
       );
-      return body;
+      return body!;
     },
     async probeRestrictedRegion(username: string) {
       await httpClient.post('/wallets/wa-bogus-restricted-region-probe/transactions', {
@@ -79,21 +79,21 @@ function buildWalletHistoryMethods(httpClient: HttpClient) {
       const { body } = await httpClient.get<WalletHistoryResponse>(
         `${walletPath(walletId)}/history`, { query, headers: { 'X-Username': username } },
       );
-      return body;
+      return body!;
     },
     async getWalletTransfers(walletId: string, username: string, params?: { limit?: number; paginationToken?: string }) {
       const query = buildPaginationQuery(params);
       const { body } = await httpClient.get<WalletTransfersResponse>(
         `${walletPath(walletId)}/transfers`, { query, headers: { 'X-Username': username } },
       );
-      return body;
+      return body!;
     },
     async getTransferById(walletId: string, transferId: string, username: string) {
       const { body } = await httpClient.get<WalletTransferRequest>(
         `${walletPath(walletId)}/transfers/${encodeURIComponent(transferId)}`,
         { headers: { 'X-Username': username } },
       );
-      return body;
+      return body!;
     },
   };
 }
@@ -105,7 +105,7 @@ function buildCallFunctionMethod(httpClient: HttpClient) {
         `/networks/${encodeURIComponent(network)}/call-function`,
         { body: request, headers: { 'X-Username': username } },
       );
-      return body;
+      return body!;
     },
   };
 }

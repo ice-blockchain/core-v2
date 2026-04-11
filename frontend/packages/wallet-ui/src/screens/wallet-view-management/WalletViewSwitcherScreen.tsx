@@ -7,23 +7,26 @@ import type { WalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
 import { WalletViewListItem } from "../../components/WalletViewListItem";
 
+function useSwitchHandler(activeId: string) {
+  return useCallback(
+    (walletId: string) => {
+      if (walletId === activeId) return;
+      try {
+        switchWalletView(walletId);
+      } catch (error) {
+        console.debug("switchWalletView failed", { walletId, error });
+      }
+    },
+    [activeId],
+  );
+}
+
 export function WalletViewSwitcherScreen() {
   const theme = useTheme();
   const walletViewNav = useWalletViewNavigation();
   const walletViews = useWalletViews();
   const activeWallet = useActiveWalletView();
-
-  const handleWalletPress = useCallback(
-    (walletId: string) => {
-      if (walletId === activeWallet.id) return;
-      try {
-        switchWalletView(walletId);
-      } catch {
-        // wallet view not found — ignore
-      }
-    },
-    [activeWallet.id],
-  );
+  const handleWalletPress = useSwitchHandler(activeWallet.id);
 
   const containerStyle = useMemo(
     () => ({ gap: theme.spacing.lg, padding: theme.spacing.lg }),

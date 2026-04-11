@@ -8,13 +8,14 @@ import { notifyWalletError } from "../stores/wallet-notification-config";
 import type { WalletView } from "../types";
 
 interface DeleteSnapshot {
-  previousViews: readonly WalletView[];
+  deletedView: WalletView;
   previousActiveId: string;
 }
 
 function captureAndRemove(walletId: string): DeleteSnapshot {
   const previousViews = walletViewStore.getWalletViews();
   const previousActiveId = walletViewStore.getActiveWalletViewId();
+  const deletedView = previousViews.find((w) => w.id === walletId)!;
   const remaining = previousViews.filter((w) => w.id !== walletId);
 
   if (previousActiveId === walletId && remaining[0]) {
@@ -23,11 +24,20 @@ function captureAndRemove(walletId: string): DeleteSnapshot {
     setWalletViews(remaining);
   }
 
-  return { previousViews, previousActiveId };
+  return { deletedView, previousActiveId };
 }
 
 function revertDelete(snapshot: DeleteSnapshot): void {
-  batchUpdate(snapshot.previousViews, snapshot.previousActiveId);
+  const currentViews = walletViewStore.getWalletViews();
+  const currentActiveId = walletViewStore.getActiveWalletViewId();
+  const alreadyExists = currentViews.some((v) => v.id === snapshot.deletedView.id);
+  if (alreadyExists) return;
+
+  const restoredViews = [...currentViews, snapshot.deletedView];
+  const activeId = currentActiveId === snapshot.previousActiveId || !currentActiveId
+    ? snapshot.previousActiveId
+    : currentActiveId;
+  batchUpdate(restoredViews, activeId);
 }
 
 export function deleteWalletView(walletId: string): void {

@@ -34,7 +34,7 @@ function createGetCoins(httpClient: HttpClient): CoinsDataSource['getCoins'] {
       `/v1/users/${encodeURIComponent(userId)}/coins`,
       { query: { version: String(version) }, headers: { 'X-Username': username } },
     );
-    return body;
+    return body!;
   };
 }
 
@@ -43,7 +43,7 @@ function createSyncCoins(httpClient: HttpClient): CoinsDataSource['syncCoins'] {
     const { body } = await httpClient.patch<Coin[]>(buildSyncCoinsUrl(symbolGroups), {
       headers: { 'X-Username': username },
     });
-    return body;
+    return body!;
   };
 }
 
@@ -53,7 +53,7 @@ function createGetCoinsBySymbolGroup(httpClient: HttpClient): CoinsDataSource['g
       `/v1/users/${encodeURIComponent(userId)}/coins/${encodeURIComponent(symbolGroup)}`,
       { headers: { 'X-Username': username } },
     );
-    return body;
+    return body!;
   };
 }
 
@@ -63,7 +63,7 @@ function createGetCoinData(httpClient: HttpClient): CoinsDataSource['getCoinData
       body: { contractAddress, network },
       headers: { 'X-Username': username },
     });
-    return body;
+    return body!;
   };
 }
 
@@ -74,7 +74,7 @@ function createSearchCoins(httpClient: HttpClient): CoinsDataSource['searchCoins
         query: buildSearchQuery(keyword, params),
         headers: { 'X-Username': username },
       });
-      return body;
+      return body!;
     } catch (error) {
       if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {
         Logger.warning('searchCoins returned unparseable response, returning empty', { data: { keyword } });

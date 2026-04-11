@@ -3,10 +3,10 @@ import {
   walletViewStore,
   batchUpdate,
   getNextId,
-  setWalletViews,
 } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
 import { notifyWalletError } from "../stores/wallet-notification-config";
+import type { WalletViewDetail } from "@ion/identity-client";
 import { convertWalletView } from "../converters/convert-wallet-view";
 
 export const MAX_WALLET_VIEWS = 2;
@@ -39,8 +39,32 @@ function addOptimisticWallet(trimmedName: string): WalletView {
 }
 
 function revertOptimisticCreate(tempId: string, previousActiveId: string): void {
+  const currentActive = walletViewStore.getActiveWalletViewId();
   const views = walletViewStore.getWalletViews().filter((v) => v.id !== tempId);
-  batchUpdate(views, previousActiveId);
+  const activeId = currentActive === tempId ? previousActiveId : currentActive;
+  batchUpdate(views, activeId);
+}
+
+function finalizeCreatedView(optimisticId: string, created: { id: string }, detail: WalletViewDetail): void {
+  const viewData = convertWalletView(detail);
+  const views = walletViewStore.getWalletViews();
+  const activeId = walletViewStore.getActiveWalletViewId();
+  const updatedViews = views.map((v) =>
+    v.id === optimisticId
+      ? {
+          ...v,
+          id: created.id,
+          serverId: created.id,
+          balance: usdFormatter.format(viewData.usdBalance),
+          coinGroups: viewData.coinGroups,
+          isLoading: false,
+          originalItems: [],
+          originalSymbolGroups: detail.symbolGroups,
+        }
+      : v,
+  );
+  const newActiveId = activeId === optimisticId ? created.id : activeId;
+  batchUpdate(updatedViews, newActiveId);
 }
 
 export function createWalletView(name: string): void {
@@ -48,30 +72,18 @@ export function createWalletView(name: string): void {
   const previousActiveId = walletViewStore.getActiveWalletViewId();
   const optimistic = addOptimisticWallet(trimmedName);
 
-  const { client, username } = getWalletClient();
+  let clientInfo;
+  try {
+    clientInfo = getWalletClient();
+  } catch (error) {
+    revertOptimisticCreate(optimistic.id, previousActiveId);
+    throw error;
+  }
+
+  const { client, username } = clientInfo;
   client.createWalletView(username, { name: trimmedName, items: [], symbolGroups: [] })
     .then((created) => client.getWalletView(username, created.id).then((detail) => ({ created, detail })))
-    .then(({ created, detail }) => {
-      const viewData = convertWalletView(detail);
-      const views = walletViewStore.getWalletViews();
-      const activeId = walletViewStore.getActiveWalletViewId();
-      const updatedViews = views.map((v) =>
-        v.id === optimistic.id
-          ? {
-              ...v,
-              id: created.id,
-              serverId: created.id,
-              balance: usdFormatter.format(viewData.usdBalance),
-              coinGroups: viewData.coinGroups,
-              isLoading: false,
-              originalItems: [],
-              originalSymbolGroups: detail.symbolGroups,
-            }
-          : v,
-      );
-      const newActiveId = activeId === optimistic.id ? created.id : activeId;
-      batchUpdate(updatedViews, newActiveId);
-    })
+    .then(({ created, detail }) => finalizeCreatedView(optimistic.id, created, detail))
     .catch((error) => {
       revertOptimisticCreate(optimistic.id, previousActiveId);
       notifyWalletError("Failed to create wallet");

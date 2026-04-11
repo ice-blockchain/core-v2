@@ -12,7 +12,7 @@ export interface TransportRequest {
 export interface TransportResponse<T> {
   status: number;
   headers: Record<string, string>;
-  body: T;
+  body: T | undefined;
 }
 
 export interface TransportUploadRequest extends TransportRequest {

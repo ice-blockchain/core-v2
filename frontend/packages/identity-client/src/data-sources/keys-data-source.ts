@@ -20,7 +20,7 @@ export function createKeysDataSource(httpClient: HttpClient): KeysDataSource {
         query,
         headers: { 'X-Username': username },
       });
-      return body;
+      return body!;
     },
   };
 }

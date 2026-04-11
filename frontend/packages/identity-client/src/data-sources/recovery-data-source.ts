@@ -43,7 +43,7 @@ export function createRecoveryDataSource(httpClient: HttpClient): RecoveryDataSo
         { body: input },
       );
       validateRegistrationChallengeResponse(body);
-      return body;
+      return body!;
     },
 
     async completeRecovery(input, temporaryToken) {
@@ -55,7 +55,7 @@ export function createRecoveryDataSource(httpClient: HttpClient): RecoveryDataSo
         },
       );
       validateRecoveryResultResponse(body);
-      return body;
+      return body!;
     },
   };
 }

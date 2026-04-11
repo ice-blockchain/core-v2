@@ -20,7 +20,7 @@ export function createSessionDataSource(httpClient: HttpClient): SessionDataSour
         headers: { Authorization: `Bearer ${input.currentToken}`, 'X-Username': input.username },
       });
       validateRefreshTokenResponse(body);
-      return body;
+      return body!;
     },
 
     async logout(username) {

@@ -20,7 +20,10 @@ export function renameWalletView(walletId: string, newName: string): void {
   client.updateWalletView(username, wallet.serverId, input)
     .catch((error) => {
       const views = walletViewStore.getWalletViews();
-      setWalletViews(views.map((w) => (w.id === walletId ? { ...w, name: previousName } : w)));
+      const current = views.find((w) => w.id === walletId);
+      if (current && current.name === trimmedName) {
+        setWalletViews(views.map((w) => (w.id === walletId ? { ...w, name: previousName } : w)));
+      }
       notifyWalletError("Failed to rename wallet");
       console.error("Failed to rename wallet view", error);
     });

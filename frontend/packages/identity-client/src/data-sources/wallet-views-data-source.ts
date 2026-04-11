@@ -37,14 +37,14 @@ function buildViewsReadMethods(httpClient: HttpClient) {
       const response = await httpClient.get<WalletViewSummary[]>(buildViewsPath(userId), {
         headers: { 'X-Username': username },
       });
-      return response.body;
+      return response.body!;
     },
     async getWalletView(options: GetWalletViewOptions) {
       const response = await httpClient.get<WalletViewDetail>(buildViewPath(options.userId, options.walletViewId), {
         headers: { 'X-Username': options.username },
         query: buildGetQuery(options.query),
       });
-      return { body: response.body, headers: response.headers };
+      return { body: response.body!, headers: response.headers };
     },
   };
 }
@@ -56,14 +56,14 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
         headers: { 'X-Username': username },
         body: input,
       });
-      return response.body;
+      return response.body!;
     },
     async updateWalletView(options: UpdateWalletViewOptions) {
       const response = await httpClient.put<WalletViewDetail>(buildViewPath(options.userId, options.walletViewId), {
         headers: { 'X-Username': options.username },
         body: options.input,
       });
-      return response.body;
+      return response.body!;
     },
     async deleteWalletView(userId: string, walletViewId: string, username: string) {
       try {

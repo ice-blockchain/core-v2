@@ -53,7 +53,7 @@ describe("deleteWalletView", () => {
     );
   });
 
-  it("throws when trying to delete the last wallet", () => {
+  it("throws when trying to delete the main wallet after others are removed", () => {
     createWalletView("Second");
     const secondId = getSecondWalletId();
     deleteWalletView(secondId);

@@ -139,7 +139,7 @@ describe('buildAggregationWalletKey', () => {
       network: 'ethereum',
       asset: {kind: 'Erc20', decimals: 18, balance: '0', contract: '0xDEF'} as WalletAsset,
     });
-    expect(buildAggregationWalletKey(wallet)).toBe('w1|ethereum|0xDEF');
+    expect(buildAggregationWalletKey(wallet)).toBe('w1|ethereum|0xdef');
   });
 
   it('builds key with coinId when no contract', () => {

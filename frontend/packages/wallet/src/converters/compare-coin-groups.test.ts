@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import type {CoinsGroup, CoinWithBalance, CoinDisplayInfo} from '../types';
-import {compareGroups, compareCoins} from './compare-coin-groups';
+import {compareGroups} from './compare-coin-groups';
+import {compareCoins} from './compare-coins';
 
 const DEFAULT_COIN: CoinDisplayInfo = {
   id: 'c1',

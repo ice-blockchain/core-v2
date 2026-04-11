@@ -82,7 +82,7 @@ async function sendRequestCode(
       buildVerificationUrl(options.userId, options.twoFAOption),
       { body: input, headers: buildHeaders(options.username, options.userAction) },
     );
-    return body;
+    return body!;
   } catch (error) {
     mapTwoFAError(error);
   }

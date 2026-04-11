@@ -11,7 +11,7 @@ export function createUserDataSource(httpClient: HttpClient): UserDataSource {
       const response = await httpClient.get<User>(`/auth/users/${encodeURIComponent(userIdOrMasterKey)}`, {
         headers: { 'X-Username': username },
       });
-      return response.body;
+      return response.body!;
     },
   };
 }

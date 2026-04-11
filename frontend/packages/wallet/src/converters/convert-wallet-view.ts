@@ -8,7 +8,8 @@ import type {
 import { fromBlockchainUnits } from "./from-blockchain-units";
 import { extractContractAddress } from "./extract-contract-address";
 import { searchAggregationItem, buildAggregationWalletKey } from "./search-aggregation-item";
-import { compareGroups, compareCoins } from "./compare-coin-groups";
+import { compareGroups } from "./compare-coin-groups";
+import { compareCoins } from "./compare-coins";
 
 function isValidCoin(coin: WalletViewCoin): boolean {
   return coin.id !== "" && coin.decimals > 0 && coin.symbol !== "" && coin.symbolGroup !== "";
@@ -55,11 +56,13 @@ function calculateMatchedBalance(
   const amount = isConsumed ? 0 : fromBlockchainUnits(result.wallet.asset.balance, result.wallet.asset.decimals);
   const rawAmount = isConsumed ? "0" : result.wallet.asset.balance;
   const assetContract = extractContractAddress(result.wallet.asset);
+  const parsedPrice = parseFloat(coin.priceUSD ?? "");
+  const safePrice = Number.isFinite(parsedPrice) ? parsedPrice : 0;
 
   return {
     amount,
     rawAmount,
-    balanceUSD: amount * parseFloat(coin.priceUSD),
+    balanceUSD: amount * safePrice,
     walletId: result.wallet.walletId,
     walletAssetContractAddress: assetContract && assetContract !== coin.contractAddress ? assetContract : null,
   };

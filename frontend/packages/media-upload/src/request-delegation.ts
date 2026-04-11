@@ -16,5 +16,5 @@ export async function requestDelegation(
     { body: { mimeType: input.mimeType, fileSize: input.fileSize } },
   );
 
-  return body;
+  return body!;
 }

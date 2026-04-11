@@ -54,7 +54,7 @@ export function createCredentialsDataSource(httpClient: HttpClient): Credentials
       const { body } = await httpClient.get<CredentialListResponse>('/auth/credentials', {
         headers: { 'X-Username': username },
       });
-      return body;
+      return body!;
     },
 
     async initCreateCredential(kind, username) {
@@ -62,7 +62,7 @@ export function createCredentialsDataSource(httpClient: HttpClient): Credentials
         body: { kind },
         headers: { 'X-Username': username },
       });
-      return body;
+      return body!;
     },
 
     async createCredential(payload, auth) {
@@ -74,7 +74,7 @@ export function createCredentialsDataSource(httpClient: HttpClient): Credentials
         body: payload,
         headers,
       });
-      return body;
+      return body!;
     },
   };
 }

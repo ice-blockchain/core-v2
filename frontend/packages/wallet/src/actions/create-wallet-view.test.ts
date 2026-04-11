@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createWalletView } from "./create-wallet-view";
-import { walletViewStore } from "../stores/wallet-view-store";
+import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
 
 function flushPromises(): Promise<void> {
@@ -15,6 +15,7 @@ describe("createWalletView", () => {
 
   beforeEach(() => {
     resetWalletClient();
+    resetWalletViewStore();
     const mockClient = {
       createWalletView: vi.fn().mockResolvedValue(mockDetail),
       getWalletView: vi.fn().mockResolvedValue(mockDetail),
