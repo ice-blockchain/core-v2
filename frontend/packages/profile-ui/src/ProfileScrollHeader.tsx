@@ -11,13 +11,14 @@ interface ProfileScrollHeaderProps {
   sectionStyle: ViewStyle;
   profile: ProfileData;
   isCurrentUser: boolean;
+  onEditProfile?: () => void;
 }
 
-export function ProfileScrollHeader({ spacerHeight, sectionStyle, profile, isCurrentUser }: ProfileScrollHeaderProps) {
+export function ProfileScrollHeader({ spacerHeight, sectionStyle, profile, isCurrentUser, onEditProfile }: ProfileScrollHeaderProps) {
   return (
     <>
       <View style={{ height: spacerHeight }} />
-      <ProfileHeader profile={profile} isCurrentUser={isCurrentUser} />
+      <ProfileHeader profile={profile} isCurrentUser={isCurrentUser} {...(onEditProfile ? { onEditProfile } : {})} />
       <View style={sectionStyle}>
         <ProfileStats followingCount={profile.followingCount} followersCount={profile.followersCount} />
       </View>

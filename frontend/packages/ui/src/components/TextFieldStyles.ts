@@ -70,13 +70,14 @@ export function buildTextFieldContainerStyle(options: ContainerStyleOptions): Vi
     flexDirection: "row",
     paddingHorizontal: scale.scaleSize(HORIZONTAL_PADDING),
     opacity: spec.containerOpacity,
+    overflow: "hidden",
   };
 
   if (isMultiline) {
     const lineHeight = scale.scaleFont(BODY_LINE_HEIGHT);
     const effectiveMin = Math.max(minLines, 1);
     style.minHeight = baseHeight + lineHeight * (effectiveMin - 1);
-    style.alignItems = "flex-start";
+    style.alignItems = effectiveMin <= 1 ? "center" : "flex-start";
   } else {
     style.height = baseHeight;
     style.alignItems = "center";
@@ -132,7 +133,8 @@ export function buildTextFieldInputStyle(options: InputStyleOptions): TextStyle 
   if (!isMultiline) {
     const padding = textVariant === "large" ? FLOATING_LABEL_PADDING_LARGE : FLOATING_LABEL_PADDING;
     const labelPadding = scale.scaleSize(padding);
-    return { ...font, ...WEB_INPUT_RESET, flex: 1, paddingTop: labelPadding, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
+    const lineHeight = font.lineHeight ?? scale.scaleFont(BODY_LINE_HEIGHT);
+    return { ...font, ...WEB_INPUT_RESET, flex: 1, maxHeight: lineHeight + labelPadding, paddingTop: labelPadding, paddingBottom: 0, paddingHorizontal: 0, textAlignVertical: "auto" };
   }
 
   const lineHeight = scale.scaleFont(BODY_LINE_HEIGHT);

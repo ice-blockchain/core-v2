@@ -7,6 +7,7 @@ export const Routes = {
   ProxyTest: 'ProxyTest',
   StorageTest: 'StorageTest',
   AuthFlow: 'AuthFlow',
+  EditProfile: 'EditProfile',
 
   Sheet: {
     Auth: 'Sheet/Auth',

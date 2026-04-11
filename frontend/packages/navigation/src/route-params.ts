@@ -27,6 +27,7 @@ export type RootStackParamList = {
   ProxyTest: undefined;
   StorageTest: undefined;
   AuthFlow: undefined;
+  EditProfile: undefined;
   'Sheet/Auth': NavigatorScreenParams<AuthStackParamList> | undefined;
   'Sheet/WalletViewManagement': NavigatorScreenParams<WalletViewSheetParamList> | undefined;
   'Sheet/NicknameReserved': undefined;
