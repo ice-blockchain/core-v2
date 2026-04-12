@@ -37,14 +37,16 @@ function buildViewsReadMethods(httpClient: HttpClient) {
       const response = await httpClient.get<WalletViewSummary[]>(buildViewsPath(userId), {
         headers: { 'X-Username': username },
       });
-      return response.body!;
+      if (response.body === undefined) throw new Error('Empty response body from listWalletViews');
+      return response.body;
     },
     async getWalletView(options: GetWalletViewOptions) {
       const response = await httpClient.get<WalletViewDetail>(buildViewPath(options.userId, options.walletViewId), {
         headers: { 'X-Username': options.username },
         query: buildGetQuery(options.query),
       });
-      return { body: response.body!, headers: response.headers };
+      if (response.body === undefined) throw new Error('Empty response body from getWalletView');
+      return { body: response.body, headers: response.headers };
     },
   };
 }
@@ -56,14 +58,16 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
         headers: { 'X-Username': username },
         body: input,
       });
-      return response.body!;
+      if (response.body === undefined) throw new Error('Empty response body from createWalletView');
+      return response.body;
     },
     async updateWalletView(options: UpdateWalletViewOptions) {
       const response = await httpClient.put<WalletViewDetail>(buildViewPath(options.userId, options.walletViewId), {
         headers: { 'X-Username': options.username },
         body: options.input,
       });
-      return response.body!;
+      if (response.body === undefined) throw new Error('Empty response body from updateWalletView');
+      return response.body;
     },
     async deleteWalletView(userId: string, walletViewId: string, username: string) {
       try {

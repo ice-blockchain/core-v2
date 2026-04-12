@@ -29,9 +29,12 @@ export async function fetchConfigFromNetwork<T>(
     );
   }
 
-  const parsed = identity.parser(response.body!);
+  if (response.body === undefined) {
+    throw new ConfigError(ConfigErrorCode.CONFIG_FETCH_FAILED, `Empty response body for config "${identity.configName}"`);
+  }
+  const parsed = identity.parser(response.body);
   const resolvedVersion = resolveVersion(parsed, response.headers, identity.checkVersion);
-  const entry = { raw: response.body!, version: resolvedVersion, fetchedAtMs: Date.now() };
+  const entry = { raw: response.body, version: resolvedVersion, fetchedAtMs: Date.now() };
   writeToCache(deps, identity.configName, entry);
 
   return parsed;

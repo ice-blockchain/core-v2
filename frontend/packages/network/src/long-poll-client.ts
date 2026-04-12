@@ -123,7 +123,8 @@ async function executePollRequest<T>(ctx: PollContext<T>): Promise<SyncResponse>
     timeoutMs: ctx.holdTimeout + 5000,
     signal: ctx.abortController?.signal,
   });
-  return response.body!;
+  if (response.body === undefined) throw new Error('Empty response body from long-poll request');
+  return response.body;
 }
 
 function handlePollSuccess<T>(ctx: PollContext<T>, response: SyncResponse): void {

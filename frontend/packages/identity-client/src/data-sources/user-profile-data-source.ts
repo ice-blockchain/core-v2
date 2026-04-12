@@ -37,7 +37,8 @@ async function sendGetSocialProfile(
       `/v1/users/${encodeURIComponent(userIdOrMasterKey)}/profiles/social`,
       { headers: { 'X-Username': username } },
     );
-    return body!;
+    if (body === undefined) throw new Error('Empty response body from getSocialProfile');
+    return body;
   } catch (error) {
     if (error instanceof NetworkError && error.status === 404) {
       throw new IdentityError(IdentityErrorCode.USER_NOT_FOUND, 'User not found', error);
@@ -55,7 +56,8 @@ async function sendUpdateSocialProfile(
       `/v1/users/${encodeURIComponent(options.userId)}/profiles/social`,
       { body: options.input, headers: { 'X-Username': options.username } },
     );
-    return body!;
+    if (body === undefined) throw new Error('Empty response body from updateSocialProfile');
+    return body;
   } catch (error) {
     mapNicknameError(error);
   }

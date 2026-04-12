@@ -82,7 +82,8 @@ async function sendRequestCode(
       buildVerificationUrl(options.userId, options.twoFAOption),
       { body: input, headers: buildHeaders(options.username, options.userAction) },
     );
-    return body!;
+    if (body === undefined) throw new Error('Empty response body from requestCode');
+    return body;
   } catch (error) {
     mapTwoFAError(error);
   }

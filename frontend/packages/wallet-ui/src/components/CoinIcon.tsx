@@ -27,7 +27,10 @@ function useSvgXml(uri: string | null) {
     setXml(null);
     let cancelled = false;
     fetch(uri)
-      .then((res) => res.text())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
       .then((text) => {
         svgCache.set(uri, text);
         if (!cancelled) setXml(text);
@@ -60,6 +63,8 @@ function CoinIconComponent({ uri }: CoinIconProps) {
   const [hasError, setHasError] = useState(false);
   const svgXml = useSvgXml(uri);
   const handleError = useCallback(() => setHasError(true), []);
+
+  useEffect(() => { setHasError(false); }, [uri]);
 
   if (!uri || hasError || failedUrls.has(uri)) {
     return (

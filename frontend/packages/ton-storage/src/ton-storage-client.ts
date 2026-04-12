@@ -40,12 +40,14 @@ async function stopBag(httpClient: HttpClient, bagId: string): Promise<void> {
 async function getBagDetails(httpClient: HttpClient, bagId: string): Promise<BagDetails> {
   validateBagId(bagId);
   const response = await httpClient.get<RawBagDetails>(`/api/v1/details?bag_id=${encodeURIComponent(bagId)}`);
-  return mapBagDetails(response.body!);
+  if (response.body === undefined) throw new Error('Empty response body from getBagDetails');
+  return mapBagDetails(response.body);
 }
 
 async function listBags(httpClient: HttpClient): Promise<BagInfo[]> {
   const response = await httpClient.get<RawListResponse>('/api/v1/list');
-  return (response.body!.bags ?? []).map(mapBagInfo);
+  if (response.body === undefined) throw new Error('Empty response body from listBags');
+  return (response.body.bags ?? []).map(mapBagInfo);
 }
 
 function getFilePath(_httpClient: HttpClient, bagId: string, fileIndex: number): string {

@@ -54,7 +54,8 @@ export function createCredentialsDataSource(httpClient: HttpClient): Credentials
       const { body } = await httpClient.get<CredentialListResponse>('/auth/credentials', {
         headers: { 'X-Username': username },
       });
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from listCredentials');
+      return body;
     },
 
     async initCreateCredential(kind, username) {
@@ -62,7 +63,8 @@ export function createCredentialsDataSource(httpClient: HttpClient): Credentials
         body: { kind },
         headers: { 'X-Username': username },
       });
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from initCreateCredential');
+      return body;
     },
 
     async createCredential(payload, auth) {
@@ -74,7 +76,8 @@ export function createCredentialsDataSource(httpClient: HttpClient): Credentials
         body: payload,
         headers,
       });
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from createCredential');
+      return body;
     },
   };
 }

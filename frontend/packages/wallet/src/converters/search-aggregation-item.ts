@@ -14,12 +14,8 @@ export function isMatchingWallet(
   }
 
   const contract = extractContractAddress(wallet.asset);
-  if (
-    contract &&
-    coin.contractAddress &&
-    contract.toLowerCase() === coin.contractAddress.toLowerCase()
-  ) {
-    return true;
+  if (contract && coin.contractAddress) {
+    return contract.toLowerCase() === coin.contractAddress.toLowerCase();
   }
 
   return wallet.coinId === null || wallet.coinId === coin.id;

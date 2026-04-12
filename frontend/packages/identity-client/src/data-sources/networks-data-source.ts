@@ -13,7 +13,8 @@ export function createNetworksDataSource(httpClient: HttpClient): NetworksDataSo
         query: { network: networks.join(',') },
         headers: { 'X-Username': username },
       });
-      return Array.isArray(body) ? body : [body!];
+      if (body === undefined) return [];
+      return Array.isArray(body) ? body : [body];
     },
   };
 }

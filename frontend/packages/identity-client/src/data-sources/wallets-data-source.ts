@@ -50,19 +50,22 @@ function buildWalletCoreMethods(httpClient: HttpClient) {
   return {
     async listWallets(username: string) {
       const { body } = await httpClient.get<ListWalletsResponse>('/wallets', { headers: { 'X-Username': username } });
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from listWallets');
+      return body;
     },
     async getWalletAssets(walletId: string, username: string) {
       const { body } = await httpClient.get<WalletAssetsResponse>(
         `${walletPath(walletId)}/assets`, { headers: { 'X-Username': username } },
       );
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from getWalletAssets');
+      return body;
     },
     async getWalletNfts(walletId: string, username: string) {
       const { body } = await httpClient.get<WalletNftsResponse>(
         `${walletPath(walletId)}/nfts`, { headers: { 'X-Username': username } },
       );
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from getWalletNfts');
+      return body;
     },
     async probeRestrictedRegion(username: string) {
       await httpClient.post('/wallets/wa-bogus-restricted-region-probe/transactions', {
@@ -79,21 +82,24 @@ function buildWalletHistoryMethods(httpClient: HttpClient) {
       const { body } = await httpClient.get<WalletHistoryResponse>(
         `${walletPath(walletId)}/history`, { query, headers: { 'X-Username': username } },
       );
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from getWalletHistory');
+      return body;
     },
     async getWalletTransfers(walletId: string, username: string, params?: { limit?: number; paginationToken?: string }) {
       const query = buildPaginationQuery(params);
       const { body } = await httpClient.get<WalletTransfersResponse>(
         `${walletPath(walletId)}/transfers`, { query, headers: { 'X-Username': username } },
       );
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from getWalletTransfers');
+      return body;
     },
     async getTransferById(walletId: string, transferId: string, username: string) {
       const { body } = await httpClient.get<WalletTransferRequest>(
         `${walletPath(walletId)}/transfers/${encodeURIComponent(transferId)}`,
         { headers: { 'X-Username': username } },
       );
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from getTransferById');
+      return body;
     },
   };
 }
@@ -105,7 +111,8 @@ function buildCallFunctionMethod(httpClient: HttpClient) {
         `/networks/${encodeURIComponent(network)}/call-function`,
         { body: request, headers: { 'X-Username': username } },
       );
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from callFunction');
+      return body;
     },
   };
 }

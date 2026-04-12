@@ -9,6 +9,7 @@ function toSubscript(count: number): string {
 
 export function formatSubscriptNotation(value: number, symbol = ""): string {
   const absValue = Math.abs(value);
+  if (absValue === 0 || absValue >= 0.1) return "";
   const exponentMatch = absValue.toExponential(12).match(/^(\d(?:\.\d+)?)e([+-]\d+)$/);
   if (!exponentMatch) {
     return "";

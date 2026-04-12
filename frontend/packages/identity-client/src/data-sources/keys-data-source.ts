@@ -20,7 +20,8 @@ export function createKeysDataSource(httpClient: HttpClient): KeysDataSource {
         query,
         headers: { 'X-Username': username },
       });
-      return body!;
+      if (body === undefined) throw new Error('Empty response body from listKeys');
+      return body;
     },
   };
 }

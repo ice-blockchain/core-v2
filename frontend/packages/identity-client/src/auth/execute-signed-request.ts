@@ -52,8 +52,10 @@ async function sendRequest<T>(input: SendRequestInput): Promise<T> {
   const method = input.httpMethod.toLowerCase() as 'post' | 'put' | 'patch' | 'delete';
   if (method === 'delete') {
     const resp = await input.httpClient.delete<T>(input.httpPath, { headers: input.headers });
-    return resp.body!;
+    if (resp.body === undefined) throw new Error('Empty response body from executeSignedRequest (DELETE)');
+    return resp.body;
   }
   const resp = await input.httpClient[method]<T>(input.httpPath, { headers: input.headers, body: input.body });
-  return resp.body!;
+  if (resp.body === undefined) throw new Error('Empty response body from executeSignedRequest');
+  return resp.body;
 }
