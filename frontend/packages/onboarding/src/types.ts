@@ -1,14 +1,4 @@
-export class ActionError extends Error {
-  code: string;
-  userMessage: string;
-
-  constructor(code: string, userMessage: string) {
-    super(userMessage);
-    this.code = code;
-    this.userMessage = userMessage;
-    this.name = "ActionError";
-  }
-}
+export { ActionError } from "@ion/diagnostics";
 
 export interface SaveProfileInput {
   displayName: string;

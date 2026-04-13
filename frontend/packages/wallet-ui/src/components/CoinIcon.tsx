@@ -2,6 +2,8 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { SvgXml } from "react-native-svg";
 import { Icon, useTheme } from "@ion/ui";
+import { Logger } from "@ion/diagnostics";
+import { fetchSvgText } from "../svg-fetcher";
 
 interface CoinIconProps {
   readonly uri: string | null;
@@ -26,17 +28,18 @@ function useSvgXml(uri: string | null) {
     if (failedUrls.has(uri)) { setXml(null); return; }
     setXml(null);
     let cancelled = false;
-    fetch(uri)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.text();
-      })
+    fetchSvgText(uri)
       .then((text) => {
         svgCache.set(uri, text);
         if (!cancelled) setXml(text);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         failedUrls.add(uri);
+        Logger.error("Failed to fetch coin SVG icon", {
+          tag: "wallet-ui",
+          error: error instanceof Error ? error : new Error(String(error)),
+          data: { uri },
+        });
         if (!cancelled) setXml(null);
       });
     return () => { cancelled = true; };

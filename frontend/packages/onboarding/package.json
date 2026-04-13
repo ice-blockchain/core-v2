@@ -11,6 +11,9 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@ion/diagnostics": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=19"
   },

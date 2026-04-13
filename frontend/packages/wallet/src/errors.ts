@@ -1,3 +1,5 @@
+import { ActionError } from "@ion/diagnostics";
+
 export enum WalletErrorCode {
   NAME_EMPTY = "NAME_EMPTY",
   WALLET_NOT_FOUND = "WALLET_NOT_FOUND",
@@ -10,14 +12,6 @@ export enum WalletErrorCode {
   LOAD_FAILED = "LOAD_FAILED",
 }
 
-export class ActionError extends Error {
-  code: WalletErrorCode;
-  userMessage: string;
+export type WalletActionError = ActionError<WalletErrorCode>;
 
-  constructor(code: WalletErrorCode, userMessage: string) {
-    super(userMessage);
-    this.code = code;
-    this.userMessage = userMessage;
-    this.name = "ActionError";
-  }
-}
+export { ActionError };

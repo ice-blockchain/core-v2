@@ -4,9 +4,8 @@ import { WalletErrorCode } from "../errors";
 import { buildWalletActionError } from "../error-messages";
 import { Logger } from "@ion/diagnostics";
 import { convertWalletView } from "../converters/convert-wallet-view";
+import { formatUsdBalance } from "../converters/format-usd";
 import type { WalletView } from "../types";
-
-const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 function setAllViewsLoading(isLoading: boolean): void {
   const views = walletViewStore.getWalletViews();
@@ -22,7 +21,7 @@ function buildWalletView(
   return {
     id: summary.id,
     name: summary.name,
-    balance: usdFormatter.format(viewData.usdBalance),
+    balance: formatUsdBalance(viewData.usdBalance),
     isMain,
     coinGroups: viewData.coinGroups,
     isLoading: false,

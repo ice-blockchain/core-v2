@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
+import { Logger } from "@ion/diagnostics";
 import { useWalletViews, useActiveWalletView, switchWalletView } from "@ion/wallet";
 import type { WalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
@@ -14,7 +15,11 @@ function useSwitchHandler(activeId: string) {
       try {
         switchWalletView(walletId);
       } catch (error) {
-        console.debug("switchWalletView failed", { walletId, error });
+        Logger.error("switchWalletView failed", {
+          tag: "wallet",
+          error: error instanceof Error ? error : new Error(String(error)),
+          data: { walletId },
+        });
       }
     },
     [activeId],

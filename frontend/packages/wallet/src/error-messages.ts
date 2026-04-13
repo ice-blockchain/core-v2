@@ -1,5 +1,6 @@
 import { translate } from "@ion/localization";
-import { ActionError, WalletErrorCode } from "./errors";
+import { ActionError } from "@ion/diagnostics";
+import { WalletErrorCode } from "./errors";
 
 const ERROR_KEYS: Record<WalletErrorCode, string> = {
   [WalletErrorCode.NAME_EMPTY]: "walletUi:walletNameEmptyError",
@@ -13,6 +14,6 @@ const ERROR_KEYS: Record<WalletErrorCode, string> = {
   [WalletErrorCode.LOAD_FAILED]: "walletUi:loadWalletError",
 };
 
-export function buildWalletActionError(code: WalletErrorCode): ActionError {
+export function buildWalletActionError(code: WalletErrorCode): ActionError<WalletErrorCode> {
   return new ActionError(code, translate(ERROR_KEYS[code]));
 }

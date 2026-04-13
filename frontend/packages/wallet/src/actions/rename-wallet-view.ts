@@ -4,6 +4,31 @@ import { WalletErrorCode } from "../errors";
 import { buildWalletActionError } from "../error-messages";
 import { Logger } from "@ion/diagnostics";
 
+function revertRename(walletId: string, trimmedName: string, previousName: string): void {
+  const views = walletViewStore.getWalletViews();
+  const currentView = views.find((w) => w.id === walletId);
+  if (currentView && currentView.name === trimmedName) {
+    setWalletViews(views.map((w) => (w.id === walletId ? { ...w, name: previousName } : w)));
+  }
+}
+
+interface RenameFailure {
+  walletId: string;
+  trimmedName: string;
+  previousName: string;
+  error: unknown;
+}
+
+function handleRenameFailure({ walletId, trimmedName, previousName, error }: RenameFailure): never {
+  revertRename(walletId, trimmedName, previousName);
+  Logger.error("Failed to rename wallet view", {
+    tag: "wallet",
+    error: error instanceof Error ? error : new Error(String(error)),
+    data: { walletId, newName: trimmedName },
+  });
+  throw buildWalletActionError(WalletErrorCode.RENAME_FAILED);
+}
+
 export function renameWalletView(walletId: string, newName: string): Promise<void> {
   const trimmedName = newName.trim();
   if (!trimmedName) throw buildWalletActionError(WalletErrorCode.NAME_EMPTY);
@@ -21,17 +46,5 @@ export function renameWalletView(walletId: string, newName: string): Promise<voi
   const input = { name: trimmedName, items: [...wallet.originalItems], symbolGroups: [...wallet.originalSymbolGroups] };
   return client.updateWalletView(username, wallet.serverId, input)
     .then(() => undefined)
-    .catch((error: unknown) => {
-      const views = walletViewStore.getWalletViews();
-      const currentView = views.find((w) => w.id === walletId);
-      if (currentView && currentView.name === trimmedName) {
-        setWalletViews(views.map((w) => (w.id === walletId ? { ...w, name: previousName } : w)));
-      }
-      Logger.error("Failed to rename wallet view", {
-        tag: "wallet",
-        error: error instanceof Error ? error : new Error(String(error)),
-        data: { walletId, newName: trimmedName },
-      });
-      throw buildWalletActionError(WalletErrorCode.RENAME_FAILED);
-    });
+    .catch((error: unknown) => handleRenameFailure({ walletId, trimmedName, previousName, error }));
 }

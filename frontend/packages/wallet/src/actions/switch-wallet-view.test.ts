@@ -3,6 +3,8 @@ import { switchWalletView } from "./switch-wallet-view";
 import { createWalletView } from "./create-wallet-view";
 import { walletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
+import { WalletErrorCode } from "../errors";
+import { ActionError } from "@ion/diagnostics";
 
 describe("switchWalletView", () => {
   const mockDetail = {
@@ -29,7 +31,13 @@ describe("switchWalletView", () => {
     expect(walletViewStore.getActiveWalletViewId()).toBe(secondId);
   });
 
-  it("throws when wallet is not found", () => {
-    expect(() => switchWalletView("999")).toThrow("Wallet not found");
+  it("throws ActionError(WALLET_NOT_FOUND) when wallet is not found", () => {
+    try {
+      switchWalletView("999");
+      expect.fail("expected switchWalletView to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ActionError);
+      expect((error as ActionError).code).toBe(WalletErrorCode.WALLET_NOT_FOUND);
+    }
   });
 });

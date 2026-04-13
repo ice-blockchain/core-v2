@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ion/diagnostics": "workspace:*",
     "@ion/storage": "workspace:*"
   },
   "peerDependencies": {

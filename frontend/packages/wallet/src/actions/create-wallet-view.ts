@@ -10,10 +10,9 @@ import { buildWalletActionError } from "../error-messages";
 import { Logger } from "@ion/diagnostics";
 import type { WalletViewDetail } from "@ion/identity-client";
 import { convertWalletView } from "../converters/convert-wallet-view";
+import { formatUsdBalance } from "../converters/format-usd";
 
 export const MAX_WALLET_VIEWS = 2;
-
-const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 function validateCreateInput(name: string): string {
   const trimmedName = name.trim();
@@ -59,7 +58,7 @@ function finalizeCreatedView(optimisticId: string, created: { id: string }, deta
           ...v,
           id: created.id,
           serverId: created.id,
-          balance: usdFormatter.format(viewData.usdBalance),
+          balance: formatUsdBalance(viewData.usdBalance),
           coinGroups: viewData.coinGroups,
           isLoading: false,
           originalItems: [],
