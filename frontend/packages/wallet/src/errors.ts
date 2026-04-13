@@ -1,5 +1,3 @@
-import { ActionError } from "@ion/diagnostics";
-
 export enum WalletErrorCode {
   NAME_EMPTY = "NAME_EMPTY",
   WALLET_NOT_FOUND = "WALLET_NOT_FOUND",
@@ -12,6 +10,11 @@ export enum WalletErrorCode {
   LOAD_FAILED = "LOAD_FAILED",
 }
 
-export type WalletActionError = ActionError<WalletErrorCode>;
+export interface WalletActionError {
+  code: WalletErrorCode;
+  userMessage: string;
+}
 
-export { ActionError };
+export type WalletActionResult<T = void> =
+  | { outcome: "success"; value: T }
+  | { outcome: "error"; error: WalletActionError };

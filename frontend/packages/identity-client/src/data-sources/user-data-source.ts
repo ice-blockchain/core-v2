@@ -11,7 +11,6 @@ export function createUserDataSource(httpClient: HttpClient): UserDataSource {
       const response = await httpClient.get<User>(`/auth/users/${encodeURIComponent(userIdOrMasterKey)}`, {
         headers: { 'X-Username': username },
       });
-      if (response.body === undefined) throw new Error('Empty response body from getUser');
       return response.body;
     },
   };

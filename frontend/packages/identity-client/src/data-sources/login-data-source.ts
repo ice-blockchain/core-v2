@@ -22,7 +22,7 @@ export function createLoginDataSource(httpClient: HttpClient): LoginDataSource {
         body: { username, '2FAVerificationCodes': twoFAVerificationCodes ?? {} },
       });
       validateActionChallengeResponse(body);
-      return body!;
+      return body;
     },
 
     async completeLogin(payload) {
@@ -30,7 +30,7 @@ export function createLoginDataSource(httpClient: HttpClient): LoginDataSource {
         body: payload,
       });
       validateAuthTokensResponse(body);
-      return body!;
+      return body;
     },
   };
 }

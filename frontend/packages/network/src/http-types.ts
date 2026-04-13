@@ -39,7 +39,7 @@ export interface UploadOptions extends RequestOptions {
 export interface HttpResponse<T> {
   status: number;
   headers: Record<string, string>;
-  body: T | undefined;
+  body: T;
 }
 
 export interface HttpClient {

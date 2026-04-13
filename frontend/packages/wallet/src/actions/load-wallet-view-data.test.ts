@@ -5,6 +5,7 @@ import { loadWalletViewData } from "./load-wallet-view-data";
 
 import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
+import { WalletErrorCode } from "../errors";
 
 function createMockClient(overrides: Partial<IdentityClient> = {}): IdentityClient {
   return {
@@ -26,7 +27,8 @@ describe("loadWalletViewData", () => {
   it("sets loading false when no wallet views exist", async () => {
     const client = createMockClient();
     initializeWalletClient(client, "alice");
-    await loadWalletViewData();
+    const result = await loadWalletViewData();
+    expect(result.outcome).toBe("success");
     const active = walletViewStore.getWalletViews()[0];
     expect(active?.isLoading).toBe(false);
   });
@@ -68,7 +70,9 @@ describe("loadWalletViewData", () => {
       listWalletViews: vi.fn().mockRejectedValue(new Error("Network error")),
     });
     initializeWalletClient(client, "alice");
-    await expect(loadWalletViewData()).rejects.toThrow("walletUi:loadWalletError");
+    const result = await loadWalletViewData();
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.LOAD_FAILED);
     const views = walletViewStore.getWalletViews();
     expect(views[0]?.isLoading).toBe(false);
     consoleSpy.mockRestore();

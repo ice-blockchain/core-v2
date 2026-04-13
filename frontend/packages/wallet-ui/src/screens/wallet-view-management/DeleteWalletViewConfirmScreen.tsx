@@ -15,12 +15,10 @@ type DeleteRoute = RouteProp<WalletViewSheetParamList, "WalletViewDeleteConfirm"
 function useDeleteHandler(walletId: string) {
   const walletViewNav = useWalletViewNavigation();
   return useCallback(() => {
-    try {
-      deleteWalletView(walletId).catch(showWalletError);
-      walletViewNav.goToSwitcher();
-    } catch (error) {
-      showWalletError(error);
-    }
+    deleteWalletView(walletId).then((result) => {
+      if (result.outcome === "error") showWalletError(result.error);
+    });
+    walletViewNav.goToSwitcher();
   }, [walletId, walletViewNav]);
 }
 

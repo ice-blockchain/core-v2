@@ -5,8 +5,8 @@ import {
   getNextId,
 } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
-import { WalletErrorCode } from "../errors";
-import { buildWalletActionError } from "../error-messages";
+import { WalletErrorCode, type WalletActionResult } from "../errors";
+import { walletErrorResult, walletSuccess } from "../error-messages";
 import { Logger } from "@ion/diagnostics";
 import type { WalletViewDetail } from "@ion/identity-client";
 import { convertWalletView } from "../converters/convert-wallet-view";
@@ -14,14 +14,14 @@ import { formatUsdBalance } from "../converters/format-usd";
 
 export const MAX_WALLET_VIEWS = 2;
 
-function validateCreateInput(name: string): string {
+function validateCreateInput(name: string): WalletActionResult<string> {
   const trimmedName = name.trim();
-  if (!trimmedName) throw buildWalletActionError(WalletErrorCode.NAME_EMPTY);
+  if (!trimmedName) return walletErrorResult(WalletErrorCode.NAME_EMPTY);
   const current = walletViewStore.getWalletViews();
   if (current.length >= MAX_WALLET_VIEWS) {
-    throw buildWalletActionError(WalletErrorCode.MAX_WALLETS_REACHED);
+    return walletErrorResult(WalletErrorCode.MAX_WALLETS_REACHED);
   }
-  return trimmedName;
+  return walletSuccess(trimmedName);
 }
 
 function addOptimisticWallet(trimmedName: string): WalletView {
@@ -70,30 +70,31 @@ function finalizeCreatedView(optimisticId: string, created: { id: string }, deta
   batchUpdate(updatedViews, newActiveId);
 }
 
-export function createWalletView(name: string): Promise<void> {
-  const trimmedName = validateCreateInput(name);
+function handleCreateFailure(tempId: string, previousActiveId: string, trimmedName: string, error: unknown): WalletActionResult {
+  revertOptimisticCreate(tempId, previousActiveId);
+  Logger.error("Failed to create wallet view", {
+    tag: "wallet",
+    error: error instanceof Error ? error : new Error(String(error)),
+    data: { name: trimmedName },
+  });
+  return walletErrorResult(WalletErrorCode.CREATE_FAILED);
+}
+
+export async function createWalletView(name: string): Promise<WalletActionResult> {
+  const validation = validateCreateInput(name);
+  if (validation.outcome === "error") return validation;
+  const trimmedName = validation.value;
+
   const previousActiveId = walletViewStore.getActiveWalletViewId();
   const optimistic = addOptimisticWallet(trimmedName);
 
-  let clientInfo;
   try {
-    clientInfo = getWalletClient();
+    const { client, username } = getWalletClient();
+    const created = await client.createWalletView(username, { name: trimmedName, items: [], symbolGroups: [] });
+    const detail = await client.getWalletView(username, created.id);
+    finalizeCreatedView(optimistic.id, created, detail);
+    return walletSuccess(undefined);
   } catch (error) {
-    revertOptimisticCreate(optimistic.id, previousActiveId);
-    throw error;
+    return handleCreateFailure(optimistic.id, previousActiveId, trimmedName, error);
   }
-
-  const { client, username } = clientInfo;
-  return client.createWalletView(username, { name: trimmedName, items: [], symbolGroups: [] })
-    .then((created) => client.getWalletView(username, created.id).then((detail) => ({ created, detail })))
-    .then(({ created, detail }) => finalizeCreatedView(optimistic.id, created, detail))
-    .catch((error: unknown) => {
-      revertOptimisticCreate(optimistic.id, previousActiveId);
-      Logger.error("Failed to create wallet view", {
-        tag: "wallet",
-        error: error instanceof Error ? error : new Error(String(error)),
-        data: { name: trimmedName },
-      });
-      throw buildWalletActionError(WalletErrorCode.CREATE_FAILED);
-    });
 }

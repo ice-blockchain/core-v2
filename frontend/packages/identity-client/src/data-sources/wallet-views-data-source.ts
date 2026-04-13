@@ -1,6 +1,6 @@
 import { NetworkError } from '@ion/network';
 import type { HttpClient } from '@ion/network';
-
+import { Logger } from '@ion/diagnostics';
 import type { WalletViewSummary, WalletViewDetail, WalletViewInput } from '../wallets/types';
 
 interface GetWalletViewQuery { limit?: number; paginationToken?: string }
@@ -69,15 +69,23 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
       if (response.body === undefined) throw new Error('Empty response body from updateWalletView');
       return response.body;
     },
-    async deleteWalletView(userId: string, walletViewId: string, username: string) {
-      try {
-        await httpClient.delete(buildViewPath(userId, walletViewId), { headers: { 'X-Username': username } });
-      } catch (error) {
-        if (error instanceof NetworkError && error.code === 'PARSE_ERROR') return;
-        throw error;
-      }
-    },
+    deleteWalletView: (userId: string, walletViewId: string, username: string) =>
+      executeDeleteWalletView({ httpClient, userId, walletViewId, username }),
   };
+}
+
+interface DeleteOptions { httpClient: HttpClient; userId: string; walletViewId: string; username: string }
+
+async function executeDeleteWalletView({ httpClient, userId, walletViewId, username }: DeleteOptions): Promise<void> {
+  try {
+    await httpClient.delete(buildViewPath(userId, walletViewId), { headers: { 'X-Username': username } });
+  } catch (error) {
+    if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {
+      Logger.warning('deleteWalletView returned unparseable response, treating as success', { data: { userId, walletViewId } });
+      return;
+    }
+    throw error;
+  }
 }
 
 export function createWalletViewsDataSource(httpClient: HttpClient): WalletViewsDataSource {

@@ -24,7 +24,7 @@ import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
 import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, CancelPostScreen, feedTranslations } from '@ion/feed-ui';
 import { loadWalletViewData, initializeWalletClient, resetWalletClient } from '@ion/wallet';
-import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen, showWalletError } from '@ion/wallet-ui';
+import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from '@ion/wallet-ui';
 import { profileTranslations, SettingsSheetScreen } from '@ion/profile-ui';
 import { HomeScreen, homeTranslations } from '@ion/home-ui';
 import { SplashScreen } from './components/splash-screen';
@@ -95,7 +95,7 @@ const authScreens = {
 const handleAuthSuccess = (username: string) => {
   resetWalletClient();
   initializeWalletClient(identityClient, username);
-  loadWalletViewData().catch(showWalletError);
+  loadWalletViewData();
 };
 const authFlowStore = createAuthFlowStore({ identityClient, onAuthSuccess: handleAuthSuccess });
 setAuthFlowStore(authFlowStore);

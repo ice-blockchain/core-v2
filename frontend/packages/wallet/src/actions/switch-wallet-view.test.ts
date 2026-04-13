@@ -4,7 +4,6 @@ import { createWalletView } from "./create-wallet-view";
 import { walletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
 import { WalletErrorCode } from "../errors";
-import { ActionError } from "@ion/diagnostics";
 
 describe("switchWalletView", () => {
   const mockDetail = {
@@ -21,23 +20,21 @@ describe("switchWalletView", () => {
     initializeWalletClient(mockClient, "alice");
   });
 
-  it("switches the active wallet", () => {
-    createWalletView("Second");
+  it("switches the active wallet", async () => {
+    await createWalletView("Second");
     const views = walletViewStore.getWalletViews();
     const secondId = views.find((v) => !v.isMain)!.id;
-    switchWalletView("1");
+    expect(switchWalletView("1").outcome).toBe("success");
     expect(walletViewStore.getActiveWalletViewId()).toBe("1");
-    switchWalletView(secondId);
+    expect(switchWalletView(secondId).outcome).toBe("success");
     expect(walletViewStore.getActiveWalletViewId()).toBe(secondId);
   });
 
-  it("throws ActionError(WALLET_NOT_FOUND) when wallet is not found", () => {
-    try {
-      switchWalletView("999");
-      expect.fail("expected switchWalletView to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(ActionError);
-      expect((error as ActionError).code).toBe(WalletErrorCode.WALLET_NOT_FOUND);
+  it("returns WALLET_NOT_FOUND error when wallet is not found", () => {
+    const result = switchWalletView("999");
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") {
+      expect(result.error.code).toBe(WalletErrorCode.WALLET_NOT_FOUND);
     }
   });
 });

@@ -15,13 +15,10 @@ export function CreateWalletViewScreen() {
 
   const handleSubmit = useCallback(() => {
     setIsSubmitting(true);
-    try {
-      createWalletView(name).catch(showWalletError);
-      walletViewNav.goBack();
-    } catch (error) {
-      setIsSubmitting(false);
-      showWalletError(error);
-    }
+    createWalletView(name).then((result) => {
+      if (result.outcome === "error") showWalletError(result.error);
+    });
+    walletViewNav.goBack();
   }, [name, walletViewNav]);
 
   return (

@@ -45,11 +45,11 @@ Hooks:
 - `useWalletViews()` — reactive wallet list
 - `useActiveWalletView()` — reactive active wallet
 
-Actions:
-- `createWalletView(name)` — max 2 wallet views; returns Promise that resolves after server roundtrip
+Actions (all return `WalletActionResult<T>`):
+- `createWalletView(name)` — max 2 wallet views; returns after server roundtrip
 - `renameWalletView(walletId, newName)` — optimistic rename, reverts on server error
 - `deleteWalletView(walletId)` — optimistic delete, reverts on server error
-- `switchWalletView(walletId)` — synchronous; throws ActionError if not found
+- `switchWalletView(walletId)` — synchronous; `{ outcome: 'error' }` if not found
 - `loadWalletViewData()` — loads all views in parallel, marks loading during fetch
 
 Config:
@@ -57,13 +57,14 @@ Config:
 - `resetWalletClient()` — clears client + resets store (used on sign-out)
 
 Errors:
-- `ActionError` (re-exported from `@ion/diagnostics`)
-- `WalletErrorCode` — enum used for `ActionError.code`
+- `WalletActionResult<T>` — discriminated union: `{ outcome: 'success', value }` or `{ outcome: 'error', error }`
+- `WalletActionError` — `{ code: WalletErrorCode, userMessage: string }`
+- `WalletErrorCode` — enum of all wallet error codes
 - `MAX_WALLET_VIEWS` — limit constant
 
 ## Dependencies
 
-- `@ion/diagnostics` — `Logger`, `ActionError`
+- `@ion/diagnostics` — `Logger`
 - `@ion/identity-client` — server-side wallet API client + types
 - `@ion/localization` — translated user-facing error messages
 - React (peer) — hooks
@@ -72,6 +73,6 @@ Errors:
 
 - Stores follow the same module-level singleton + `useSyncExternalStore` pattern as `identityClient.authStore`.
 - Every action validates synchronously, applies an optimistic mutation, calls the server, and reverts on failure while logging via `Logger.error` with `tag: "wallet"`.
-- Package-internal errors are translated into `ActionError` (from `@ion/diagnostics`) with a `WalletErrorCode` code and a translated `userMessage`. Screens never see transport-layer errors.
+- Actions return `WalletActionResult<T>` (discriminated union). Screens dispatch on `outcome === 'error'` and display `error.userMessage`, mirroring the `@ion/auth` → `@ion/auth-ui` result-pattern rather than throwing typed errors.
 - `wallet-client-config` is a module-level singleton rather than a React context so non-React call sites (actions triggered from app shell) can invoke it.
 - USD formatting is shared via `converters/format-usd.ts` to avoid re-instantiating `Intl.NumberFormat` across actions.

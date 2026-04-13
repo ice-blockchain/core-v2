@@ -26,7 +26,7 @@ export function createRegistrationDataSource(httpClient: HttpClient): Registrati
         body: { email, ...(earlyAccessEmail != null && { earlyAccessEmail }) },
       });
       validateRegistrationChallengeResponse(body);
-      return body!;
+      return body;
     },
 
     async completeRegistration(credential, tempToken, earlyAccessEmail) {
@@ -35,7 +35,7 @@ export function createRegistrationDataSource(httpClient: HttpClient): Registrati
         headers: { Authorization: `Bearer ${tempToken}` },
       });
       validateRegistrationResultResponse(body);
-      return body!;
+      return body;
     },
   };
 }

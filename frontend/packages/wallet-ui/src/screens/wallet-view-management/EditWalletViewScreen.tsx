@@ -27,12 +27,10 @@ interface FormProps {
 function useRenameHandler(walletId: string, name: string) {
   const walletViewNav = useWalletViewNavigation();
   return useCallback(() => {
-    try {
-      renameWalletView(walletId, name).catch(showWalletError);
-      walletViewNav.goBack();
-    } catch (error) {
-      showWalletError(error);
-    }
+    renameWalletView(walletId, name).then((result) => {
+      if (result.outcome === "error") showWalletError(result.error);
+    });
+    walletViewNav.goBack();
   }, [walletId, name, walletViewNav]);
 }
 

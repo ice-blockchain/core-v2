@@ -1,5 +1,5 @@
 import { translate } from "@ion/localization";
-import { ActionError } from "@ion/diagnostics";
+import type { WalletActionError, WalletActionResult } from "./errors";
 import { WalletErrorCode } from "./errors";
 
 const ERROR_KEYS: Record<WalletErrorCode, string> = {
@@ -14,6 +14,14 @@ const ERROR_KEYS: Record<WalletErrorCode, string> = {
   [WalletErrorCode.LOAD_FAILED]: "walletUi:loadWalletError",
 };
 
-export function buildWalletActionError(code: WalletErrorCode): ActionError<WalletErrorCode> {
-  return new ActionError(code, translate(ERROR_KEYS[code]));
+export function buildWalletError(code: WalletErrorCode): WalletActionError {
+  return { code, userMessage: translate(ERROR_KEYS[code]) };
+}
+
+export function walletErrorResult<T = void>(code: WalletErrorCode): WalletActionResult<T> {
+  return { outcome: "error", error: buildWalletError(code) };
+}
+
+export function walletSuccess<T = void>(value: T): WalletActionResult<T> {
+  return { outcome: "success", value };
 }

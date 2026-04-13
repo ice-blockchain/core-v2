@@ -1,7 +1,7 @@
 # ION Architecture — Living Document
 
 > This file describes the current state of the system. Updated after every structural PR.
-> Last updated: 2026-04-13
+> Last updated: 2026-04-08
 
 ---
 
@@ -61,9 +61,6 @@
 |---|---|---|
 | `@ion/auth` | Auth flow orchestrator | In Progress |
 | `@ion/actions` | Internal SDK — business functions for screens | Planned |
-| `@ion/wallet` | Wallet domain actions, stores, and converters | Implemented |
-| `@ion/onboarding` | Onboarding domain actions and types | Implemented |
-| `@ion/user-search` | User search domain actions and cache | Implemented |
 
 ### UI Layer
 | Package | Purpose | Status |
@@ -74,7 +71,7 @@
 | `@ion/main-tabs-ui` | Main tab navigation screens | Implemented |
 | `@ion/wallet-ui` | Wallet tab screens and components | Implemented |
 
-**Total: 33 packages**
+**Total: 30 packages**
 
 ---
 
@@ -120,4 +117,4 @@
 
 ## Known Deviations
 
-- `ActionError` is exported from `@ion/diagnostics` (foundation) to avoid duplication across action-layer packages (`@ion/wallet`, `@ion/onboarding`, `@ion/user-search`). Diagnostics is the lowest-level package every action package already depends on for logging, making it a natural home for the shared error type. Date: 2026-04-13.
+_None yet. Document deviations from ideal architecture here with rationale._

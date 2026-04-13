@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createWalletView } from "./create-wallet-view";
 import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
-
-function flushPromises(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
+import { WalletErrorCode } from "../errors";
 
 describe("createWalletView", () => {
   const mockDetail = {
@@ -24,7 +21,7 @@ describe("createWalletView", () => {
   });
 
   it("adds wallet optimistically with loading state", () => {
-    createWalletView("Savings");
+    void createWalletView("Savings");
     const views = walletViewStore.getWalletViews();
     expect(views).toHaveLength(2);
     expect(views[1]?.name).toBe("Savings");
@@ -33,8 +30,8 @@ describe("createWalletView", () => {
   });
 
   it("updates with server ID after API success", async () => {
-    createWalletView("Savings");
-    await flushPromises();
+    const result = await createWalletView("Savings");
+    expect(result.outcome).toBe("success");
     const views = walletViewStore.getWalletViews();
     expect(views[1]?.serverId).toBe("server-id-1");
     expect(views[1]?.isLoading).toBe(false);
@@ -49,19 +46,25 @@ describe("createWalletView", () => {
     initializeWalletClient(mockClient, "alice");
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(createWalletView("Savings")).rejects.toThrow("walletUi:createWalletError");
+    const result = await createWalletView("Savings");
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.CREATE_FAILED);
 
     expect(walletViewStore.getWalletViews()).toHaveLength(1);
     expect(walletViewStore.getActiveWalletViewId()).toBe("1");
     consoleSpy.mockRestore();
   });
 
-  it("throws when name is empty", () => {
-    expect(() => createWalletView("")).toThrow("walletUi:walletNameEmptyError");
+  it("returns NAME_EMPTY error when name is empty", async () => {
+    const result = await createWalletView("");
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.NAME_EMPTY);
   });
 
-  it("throws when maximum wallet limit is reached", () => {
-    createWalletView("Second");
-    expect(() => createWalletView("Third")).toThrow("walletUi:maxWalletsReachedError");
+  it("returns MAX_WALLETS_REACHED when maximum wallet limit is reached", async () => {
+    await createWalletView("Second");
+    const result = await createWalletView("Third");
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.MAX_WALLETS_REACHED);
   });
 });

@@ -23,7 +23,7 @@ import {
 import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreCloudScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, TfaOptionsScreen, TfaVerificationScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
 import { loadWalletViewData, initializeWalletClient, resetWalletClient } from "@ion/wallet";
-import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen, showWalletError } from "@ion/wallet-ui";
+import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from "@ion/wallet-ui";
 import { userSearchTranslations } from "@ion/user-search-ui";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
@@ -113,7 +113,7 @@ function ThemedRoot({ children }: { children: ReactNode }) {
 const handleAuthSuccess = (username: string) => {
   resetWalletClient();
   initializeWalletClient(identityClient, username);
-  loadWalletViewData().catch(showWalletError);
+  loadWalletViewData();
 };
 const authFlowStore = createAuthFlowStore({ identityClient, onAuthSuccess: handleAuthSuccess });
 setAuthFlowStore(authFlowStore);

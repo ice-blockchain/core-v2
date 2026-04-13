@@ -4,8 +4,8 @@ import {
   batchUpdate,
 } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
-import { WalletErrorCode } from "../errors";
-import { buildWalletActionError } from "../error-messages";
+import { WalletErrorCode, type WalletActionResult } from "../errors";
+import { walletErrorResult, walletSuccess } from "../error-messages";
 import { Logger } from "@ion/diagnostics";
 import type { WalletView } from "../types";
 
@@ -14,19 +14,18 @@ interface DeleteSnapshot {
   previousActiveId: string;
 }
 
-function captureAndRemove(walletId: string): DeleteSnapshot {
+function captureAndRemove(wallet: WalletView): DeleteSnapshot {
   const previousViews = walletViewStore.getWalletViews();
   const previousActiveId = walletViewStore.getActiveWalletViewId();
-  const deletedView = previousViews.find((w) => w.id === walletId)!;
-  const remaining = previousViews.filter((w) => w.id !== walletId);
+  const remaining = previousViews.filter((w) => w.id !== wallet.id);
 
-  if (previousActiveId === walletId && remaining[0]) {
+  if (previousActiveId === wallet.id && remaining[0]) {
     batchUpdate(remaining, remaining[0].id);
   } else {
     setWalletViews(remaining);
   }
 
-  return { deletedView, previousActiveId };
+  return { deletedView: wallet, previousActiveId };
 }
 
 function revertDelete(snapshot: DeleteSnapshot): void {
@@ -42,27 +41,34 @@ function revertDelete(snapshot: DeleteSnapshot): void {
   batchUpdate(restoredViews, activeId);
 }
 
-export function deleteWalletView(walletId: string): Promise<void> {
+function validateDelete(walletId: string): WalletActionResult<WalletView> {
   const current = walletViewStore.getWalletViews();
   const wallet = current.find((w) => w.id === walletId);
+  if (!wallet) return walletErrorResult(WalletErrorCode.WALLET_NOT_FOUND);
+  if (wallet.isMain) return walletErrorResult(WalletErrorCode.CANNOT_DELETE_MAIN);
+  if (current.length <= 1) return walletErrorResult(WalletErrorCode.CANNOT_DELETE_LAST);
+  return walletSuccess(wallet);
+}
 
-  if (!wallet) throw buildWalletActionError(WalletErrorCode.WALLET_NOT_FOUND);
-  if (wallet.isMain) throw buildWalletActionError(WalletErrorCode.CANNOT_DELETE_MAIN);
-  if (current.length <= 1) throw buildWalletActionError(WalletErrorCode.CANNOT_DELETE_LAST);
+export async function deleteWalletView(walletId: string): Promise<WalletActionResult> {
+  const validation = validateDelete(walletId);
+  if (validation.outcome === "error") return validation;
+  const wallet = validation.value;
 
-  const snapshot = captureAndRemove(walletId);
+  const snapshot = captureAndRemove(wallet);
+  if (!wallet.serverId) return walletSuccess(undefined);
 
-  if (!wallet.serverId) return Promise.resolve();
-
-  const { client, username } = getWalletClient();
-  return client.deleteWalletView(username, wallet.serverId)
-    .catch((error: unknown) => {
-      revertDelete(snapshot);
-      Logger.error("Failed to delete wallet view", {
-        tag: "wallet",
-        error: error instanceof Error ? error : new Error(String(error)),
-        data: { walletId },
-      });
-      throw buildWalletActionError(WalletErrorCode.DELETE_FAILED);
+  try {
+    const { client, username } = getWalletClient();
+    await client.deleteWalletView(username, wallet.serverId);
+    return walletSuccess(undefined);
+  } catch (error) {
+    revertDelete(snapshot);
+    Logger.error("Failed to delete wallet view", {
+      tag: "wallet",
+      error: error instanceof Error ? error : new Error(String(error)),
+      data: { walletId },
     });
+    return walletErrorResult(WalletErrorCode.DELETE_FAILED);
+  }
 }

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renameWalletView } from "./rename-wallet-view";
 import { walletViewStore, resetWalletViewStore, setWalletViews } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
+import { WalletErrorCode } from "../errors";
 
 describe("renameWalletView", () => {
   beforeEach(() => {
@@ -14,7 +15,7 @@ describe("renameWalletView", () => {
   });
 
   it("renames optimistically", () => {
-    renameWalletView("1", "My Wallet");
+    void renameWalletView("1", "My Wallet");
     expect(walletViewStore.getWalletViews()[0]?.name).toBe("My Wallet");
   });
 
@@ -30,25 +31,31 @@ describe("renameWalletView", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const promise = renameWalletView("1", "New Name");
     expect(walletViewStore.getWalletViews()[0]?.name).toBe("New Name");
-    await expect(promise).rejects.toThrow("walletUi:renameWalletError");
+    const result = await promise;
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.RENAME_FAILED);
     expect(walletViewStore.getWalletViews()[0]?.name).toBe("ion.wallet");
     consoleSpy.mockRestore();
   });
 
-  it("skips API call when serverId is null", () => {
+  it("skips API call when serverId is null", async () => {
     const updateFn = vi.fn().mockResolvedValue({});
     resetWalletClient();
     initializeWalletClient({ updateWalletView: updateFn } as never, "alice");
-    renameWalletView("1", "Local Only");
+    await renameWalletView("1", "Local Only");
     expect(walletViewStore.getWalletViews()[0]?.name).toBe("Local Only");
     expect(updateFn).not.toHaveBeenCalled();
   });
 
-  it("throws when name is empty", () => {
-    expect(() => renameWalletView("1", "")).toThrow("walletUi:walletNameEmptyError");
+  it("returns NAME_EMPTY when name is empty", async () => {
+    const result = await renameWalletView("1", "");
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.NAME_EMPTY);
   });
 
-  it("throws when wallet is not found", () => {
-    expect(() => renameWalletView("999", "New Name")).toThrow("walletUi:walletNotFoundError");
+  it("returns WALLET_NOT_FOUND when wallet is not found", async () => {
+    const result = await renameWalletView("999", "New Name");
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.error.code).toBe(WalletErrorCode.WALLET_NOT_FOUND);
   });
 });

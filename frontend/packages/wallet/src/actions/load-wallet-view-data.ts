@@ -1,7 +1,7 @@
 import { walletViewStore, setWalletViews, batchUpdate, resetWalletViewStore } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
-import { WalletErrorCode } from "../errors";
-import { buildWalletActionError } from "../error-messages";
+import { WalletErrorCode, type WalletActionResult } from "../errors";
+import { walletErrorResult, walletSuccess } from "../error-messages";
 import { Logger } from "@ion/diagnostics";
 import { convertWalletView } from "../converters/convert-wallet-view";
 import { formatUsdBalance } from "../converters/format-usd";
@@ -31,14 +31,14 @@ function buildWalletView(
   };
 }
 
-export async function loadWalletViewData(): Promise<void> {
+export async function loadWalletViewData(): Promise<WalletActionResult> {
   const { client, username } = getWalletClient();
   setAllViewsLoading(true);
   try {
     const summaries = await client.listWalletViews(username);
     if (summaries.length === 0) {
       resetWalletViewStore();
-      return;
+      return walletSuccess(undefined);
     }
 
     const details = await Promise.all(
@@ -50,6 +50,7 @@ export async function loadWalletViewData(): Promise<void> {
     );
 
     batchUpdate(walletViews, walletViews[0]!.id);
+    return walletSuccess(undefined);
   } catch (error: unknown) {
     setAllViewsLoading(false);
     Logger.error("Failed to load wallet view data", {
@@ -57,6 +58,6 @@ export async function loadWalletViewData(): Promise<void> {
       error: error instanceof Error ? error : new Error(String(error)),
       data: { username },
     });
-    throw buildWalletActionError(WalletErrorCode.LOAD_FAILED);
+    return walletErrorResult(WalletErrorCode.LOAD_FAILED);
   }
 }

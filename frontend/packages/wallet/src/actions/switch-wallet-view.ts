@@ -1,14 +1,12 @@
 import { walletViewStore, setActiveWalletViewId } from "../stores/wallet-view-store";
-import { WalletErrorCode } from "../errors";
-import { buildWalletActionError } from "../error-messages";
+import { WalletErrorCode, type WalletActionResult } from "../errors";
+import { walletErrorResult, walletSuccess } from "../error-messages";
 
-export function switchWalletView(walletId: string): void {
+export function switchWalletView(walletId: string): WalletActionResult {
   const current = walletViewStore.getWalletViews();
   const wallet = current.find((w) => w.id === walletId);
-
-  if (!wallet) {
-    throw buildWalletActionError(WalletErrorCode.WALLET_NOT_FOUND);
-  }
+  if (!wallet) return walletErrorResult(WalletErrorCode.WALLET_NOT_FOUND);
 
   setActiveWalletViewId(walletId);
+  return walletSuccess(undefined);
 }

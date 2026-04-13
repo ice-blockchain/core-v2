@@ -394,7 +394,7 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next:
-        specifier: ^15.5.15
+        specifier: ^15.0.0
         version: 15.5.15(@babel/core@7.29.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: ^19.2.4
@@ -1124,9 +1124,6 @@ importers:
 
   packages/onboarding:
     dependencies:
-      '@ion/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
       react:
         specifier: '>=19'
         version: 19.2.4
@@ -1479,9 +1476,6 @@ importers:
 
   packages/user-search:
     dependencies:
-      '@ion/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
       '@ion/storage':
         specifier: workspace:*
         version: link:../storage
@@ -15015,7 +15009,7 @@ snapshots:
     dependencies:
       '@next/env': 15.5.15
       '@swc/helpers': 0.5.15
-      caniuse-lite: 1.0.30001781
+      caniuse-lite: 1.0.30001787
       postcss: 8.4.31
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)

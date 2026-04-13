@@ -16,6 +16,5 @@ export async function requestDelegation(
     { body: { mimeType: input.mimeType, fileSize: input.fileSize } },
   );
 
-  if (body === undefined) throw new Error('Empty response body from requestDelegation');
   return body;
 }

@@ -34,7 +34,6 @@ function createGetCoins(httpClient: HttpClient): CoinsDataSource['getCoins'] {
       `/v1/users/${encodeURIComponent(userId)}/coins`,
       { query: { version: String(version) }, headers: { 'X-Username': username } },
     );
-    if (body === undefined) throw new Error('Empty response body from getCoins');
     return body;
   };
 }
@@ -44,7 +43,6 @@ function createSyncCoins(httpClient: HttpClient): CoinsDataSource['syncCoins'] {
     const { body } = await httpClient.patch<Coin[]>(buildSyncCoinsUrl(symbolGroups), {
       headers: { 'X-Username': username },
     });
-    if (body === undefined) throw new Error('Empty response body from syncCoins');
     return body;
   };
 }
@@ -55,7 +53,6 @@ function createGetCoinsBySymbolGroup(httpClient: HttpClient): CoinsDataSource['g
       `/v1/users/${encodeURIComponent(userId)}/coins/${encodeURIComponent(symbolGroup)}`,
       { headers: { 'X-Username': username } },
     );
-    if (body === undefined) throw new Error('Empty response body from getCoinsBySymbolGroup');
     return body;
   };
 }
@@ -66,7 +63,6 @@ function createGetCoinData(httpClient: HttpClient): CoinsDataSource['getCoinData
       body: { contractAddress, network },
       headers: { 'X-Username': username },
     });
-    if (body === undefined) throw new Error('Empty response body from getCoinData');
     return body;
   };
 }
@@ -78,7 +74,6 @@ function createSearchCoins(httpClient: HttpClient): CoinsDataSource['searchCoins
         query: buildSearchQuery(keyword, params),
         headers: { 'X-Username': username },
       });
-      if (body === undefined) throw new Error('Empty response body from searchCoins');
       return body;
     } catch (error) {
       if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {

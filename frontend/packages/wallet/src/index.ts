@@ -7,4 +7,5 @@ export { deleteWalletView } from "./actions/delete-wallet-view";
 export { switchWalletView } from "./actions/switch-wallet-view";
 export { loadWalletViewData } from "./actions/load-wallet-view-data";
 export { initializeWalletClient, resetWalletClient } from "./stores/wallet-client-config";
-export { ActionError, WalletErrorCode } from "./errors";
+export { WalletErrorCode } from "./errors";
+export type { WalletActionError, WalletActionResult } from "./errors";
