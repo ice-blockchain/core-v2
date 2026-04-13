@@ -8,7 +8,7 @@ services:
       GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
       GREENFIELD_PRIVATE_KEY: ${GREENFIELD_PRIVATE_KEY}
       ONLINEIO_ENV: ${ONLINEIO_ENV:-dev}
-      REDIS_URL: redis://dragonfly:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dragonfly:6379
       QUEUE_NAME: ${QUEUE_NAME:-greenfield-events}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
     depends_on:
@@ -25,6 +25,7 @@ services:
 
   dragonfly:
     image: docker.dragonflydb.io/dragonflydb/dragonfly
+    command: dragonfly --default_lua_flags=allow-undeclared-keys --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     ulimits:
       memlock: -1
     ports:
@@ -32,11 +33,67 @@ services:
     volumes:
       - dragonfly-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:?REDIS_PASSWORD is required} ping"]
       interval: 5s
       timeout: 3s
       retries: 5
       start_period: 5s
+
+  greenfield-processor-1:
+    build:
+      context: ..
+      dockerfile: services/greenfield-processor/Dockerfile
+    environment:
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dragonfly:6379
+      SOURCE_QUEUE_NAME: ${QUEUE_NAME:-greenfield-events}
+      GREENFIELD_RPC_URL: ${GREENFIELD_RPC_URL:-https://gnfd-testnet-fullnode-tendermint-us.bnbchain.org:443}
+      GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
+      BUNNY_STORAGE_ZONE: ${BUNNY_STORAGE_ZONE}
+      BUNNY_STORAGE_PASSWORD: ${BUNNY_STORAGE_PASSWORD}
+      BUNNY_STORAGE_REGION: ${BUNNY_STORAGE_REGION:-ny}
+      BUNNY_FTP_HOST: ${BUNNY_FTP_HOST:-storage.bunnycdn.com}
+      FTP_MAX_CONNECTIONS: ${FTP_MAX_CONNECTIONS:-5}
+      HTTP_UPLOAD_SIZE_LIMIT: ${HTTP_UPLOAD_SIZE_LIMIT:-52428800}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      dragonfly:
+        condition: service_healthy
+    volumes:
+      - greenfield-processor-tmp-1:/tmp/greenfield-processor
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health-check || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  greenfield-processor-2:
+    build:
+      context: ..
+      dockerfile: services/greenfield-processor/Dockerfile
+    environment:
+      REDIS_URL: redis://:${REDIS_PASSWORD}@dragonfly:6379
+      SOURCE_QUEUE_NAME: ${QUEUE_NAME:-greenfield-events}
+      GREENFIELD_RPC_URL: ${GREENFIELD_RPC_URL:-https://gnfd-testnet-fullnode-tendermint-us.bnbchain.org:443}
+      GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
+      BUNNY_STORAGE_ZONE: ${BUNNY_STORAGE_ZONE}
+      BUNNY_STORAGE_PASSWORD: ${BUNNY_STORAGE_PASSWORD}
+      BUNNY_STORAGE_REGION: ${BUNNY_STORAGE_REGION:-ny}
+      BUNNY_FTP_HOST: ${BUNNY_FTP_HOST:-storage.bunnycdn.com}
+      FTP_MAX_CONNECTIONS: ${FTP_MAX_CONNECTIONS:-5}
+      HTTP_UPLOAD_SIZE_LIMIT: ${HTTP_UPLOAD_SIZE_LIMIT:-52428800}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      dragonfly:
+        condition: service_healthy
+    volumes:
+      - greenfield-processor-tmp-2:/tmp/greenfield-processor
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health-check || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
 
   ion-connect-storage:
     build:
@@ -83,4 +140,6 @@ secrets:
 
 volumes:
   dragonfly-data:
+  greenfield-processor-tmp-1:
+  greenfield-processor-tmp-2:
   ion-storage-data:

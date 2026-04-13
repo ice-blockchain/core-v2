@@ -83,6 +83,30 @@ func TestExtractSetTagEvent_InvalidTagsJSON(t *testing.T) {
 	require.ErrorContains(t, err, "parse tags JSON")
 }
 
+func TestParseChecksums_JSONArray(t *testing.T) {
+	t.Parallel()
+	result := parseChecksums(`["8sv4TinSKv6JTs8yil1eV227M2g=","tRLRNEftyU/yjlDPDX0+M7JlJGk="]`)
+	require.Equal(t, []string{"8sv4TinSKv6JTs8yil1eV227M2g=", "tRLRNEftyU/yjlDPDX0+M7JlJGk="}, result)
+}
+
+func TestParseChecksums_CommaSeparated(t *testing.T) {
+	t.Parallel()
+	result := parseChecksums("abc123,def456")
+	require.Equal(t, []string{"abc123", "def456"}, result)
+}
+
+func TestParseChecksums_Empty(t *testing.T) {
+	t.Parallel()
+	result := parseChecksums("")
+	require.Nil(t, result)
+}
+
+func TestParseChecksums_SingleValue(t *testing.T) {
+	t.Parallel()
+	result := parseChecksums("abc123")
+	require.Equal(t, []string{"abc123"}, result)
+}
+
 func TestParseObjectGRN_Valid(t *testing.T) {
 	t.Parallel()
 	bucket, object, ok := ParseObjectGRN("grn:o::mybucket/myobject")

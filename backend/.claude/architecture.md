@@ -21,6 +21,7 @@
 |---|---|---|---|
 | greenfield-ingester | Subscribe to Greenfield blockchain events, enqueue to BullMQ Redis | Active | [ARCHITECTURE.md](../../services/greenfield-ingester/ARCHITECTURE.md) |
 | ion-connect-storage | Virtual TON Storage node serving files from Greenfield. ADNL/RLDP, DHT registration, bag indexing, segment caching, TON Storage RPC, HTTP-over-RLDP provider index, health/metrics, CRDT cluster management with bag ownership, piece forwarding, dead node reclamation | Active (Phase 8) | [ARCHITECTURE.md](../../services/ion-connect-storage/ARCHITECTURE.md) |
+| greenfield-processor | Download from Greenfield SP, upload to Bunny CDN | Active | [ARCHITECTURE.md](../../services/greenfield-processor/ARCHITECTURE.md) |
 | identity | Auth, users, wallets | Planned | -- |
 | wallet | Coin/NFT operations | Planned | -- |
 | feed | Posts, likes, reposts (Fastify, healthcheck endpoint live) | Scaffolded | -- |
