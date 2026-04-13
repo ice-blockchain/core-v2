@@ -11,10 +11,10 @@ export enum WalletErrorCode {
 }
 
 export class ActionError extends Error {
-  code: string;
+  code: WalletErrorCode;
   userMessage: string;
 
-  constructor(code: string, userMessage: string) {
+  constructor(code: WalletErrorCode, userMessage: string) {
     super(userMessage);
     this.code = code;
     this.userMessage = userMessage;

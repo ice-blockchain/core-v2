@@ -9,7 +9,7 @@ export interface SearchBarProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   style?: StyleProp<ViewStyle>;
-  autoFocus?: boolean;
+  isAutoFocus?: boolean;
   testID?: string;
 }
 
@@ -54,7 +54,7 @@ function useSearchBarStyles() {
 }
 
 export function SearchBar(props: SearchBarProps) {
-  const { value, onChangeText, placeholder = "Search", style, autoFocus, testID } = props;
+  const { value, onChangeText, placeholder = "Search", style, isAutoFocus, testID } = props;
   const { containerStyle, inputStyle, theme, scale } = useSearchBarStyles();
   const [isFocused, setIsFocused] = useState(false);
   const handleFocus = useCallback(() => setIsFocused(true), []);
@@ -75,7 +75,7 @@ export function SearchBar(props: SearchBarProps) {
         keyboardAppearance={theme.colorMode === "dark" ? "dark" : "light"}
         cursorColor={theme.colors.primaryAccent}
         selectionColor={theme.colors.primaryAccent}
-        autoFocus={autoFocus}
+        autoFocus={isAutoFocus}
         onFocus={handleFocus}
         onBlur={handleBlur}
         style={inputStyle}

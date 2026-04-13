@@ -1,4 +1,4 @@
-import { walletViewStore, setWalletViews, batchUpdate } from "../stores/wallet-view-store";
+import { walletViewStore, setWalletViews, batchUpdate, resetWalletViewStore } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
 import { WalletErrorCode } from "../errors";
 import { buildWalletActionError } from "../error-messages";
@@ -10,7 +10,7 @@ const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currenc
 
 function setAllViewsLoading(isLoading: boolean): void {
   const views = walletViewStore.getWalletViews();
-  setWalletViews(views.map((v) => ({ ...v, isLoading })));
+  setWalletViews(views.map((view) => ({ ...view, isLoading })));
 }
 
 function buildWalletView(
@@ -38,12 +38,12 @@ export async function loadWalletViewData(): Promise<void> {
   try {
     const summaries = await client.listWalletViews(username);
     if (summaries.length === 0) {
-      setAllViewsLoading(false);
+      resetWalletViewStore();
       return;
     }
 
     const details = await Promise.all(
-      summaries.map((s) => client.getWalletView(username, s.id)),
+      summaries.map((summary) => client.getWalletView(username, summary.id)),
     );
 
     const walletViews = summaries.map((summary, index) =>

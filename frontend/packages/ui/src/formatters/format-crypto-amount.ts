@@ -3,9 +3,15 @@ import { formatSubscriptNotation } from "./format-subscript-notation";
 const MILLION = 1_000_000;
 const BILLION = 1_000_000_000;
 const TRILLION = 1_000_000_000_000;
+const BASE_TEN = 10;
+const PRECISION_TWO = 2;
+const PRECISION_THREE = 3;
+const PRECISION_SIX = 6;
+const MIN_NON_ZERO = 0.000001;
+const ZERO_DISPLAY = "0.00";
 
 function truncateToDecimals(value: number, decimals: number): number {
-  const factor = Math.pow(10, decimals);
+  const factor = Math.pow(BASE_TEN, decimals);
   return Math.floor(value * factor) / factor;
 }
 
@@ -31,33 +37,33 @@ function formatLargeNumber(value: number): string {
 
 function formatAbbreviated(value: number, divisor: number, suffix: string): string {
   const divided = value / divisor;
-  const truncated = truncateToDecimals(divided, 3);
-  const formatted = truncated.toFixed(3).replace(/\.?0+$/, "");
+  const truncated = truncateToDecimals(divided, PRECISION_THREE);
+  const formatted = truncated.toFixed(PRECISION_THREE).replace(/\.?0+$/, "");
   return `${formatted}${suffix}`;
 }
 
 function formatMediumNumber(value: number): string {
-  const truncated = truncateToDecimals(value, 2);
+  const truncated = truncateToDecimals(value, PRECISION_TWO);
   return truncated.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: PRECISION_TWO,
+    maximumFractionDigits: PRECISION_TWO,
   });
 }
 
 function formatSmallNumber(value: number): string {
-  const truncated = truncateToDecimals(value, 6);
-  const formatted = truncated.toFixed(6);
-  return trimTrailingZeros(formatted, 2);
+  const truncated = truncateToDecimals(value, PRECISION_SIX);
+  const formatted = truncated.toFixed(PRECISION_SIX);
+  return trimTrailingZeros(formatted, PRECISION_TWO);
 }
 
 export function formatCryptoAmount(value: number, currency?: string): string {
   let result: string;
 
-  if (value <= 0) {
-    result = "0.00";
-  } else if (value < 0.000001) {
+  if (!Number.isFinite(value) || value <= 0) {
+    result = ZERO_DISPLAY;
+  } else if (value < MIN_NON_ZERO) {
     result = formatSubscriptNotation(value);
-  } else if (value < 10) {
+  } else if (value < BASE_TEN) {
     result = formatSmallNumber(value);
   } else if (value < MILLION) {
     result = formatMediumNumber(value);

@@ -22,7 +22,7 @@ import {
 } from "@ion/onboarding-ui";
 import { authTranslations, AddBiometricsScreen, AddPasskeyCredentialsScreen, ConfirmPasswordScreen, GetStartedScreen, IdentityKeyNameNoteScreen, InvalidCredentialsModal, LinkDeviceScreen, PasswordRegisterScreen, PasskeyRegisterScreen, RestoreCloudScreen, RestoreIdentityScreen, RestoreSetNewPasswordScreen, RestoreSuccessScreen, RestoreWithRecoveryCredsScreen, TfaOptionsScreen, TfaVerificationScreen, VerifyOnOtherDeviceScreen, VerifySheetScreen } from "@ion/auth-ui";
 import { chatTranslations } from "@ion/chat";
-import { loadWalletViewData, initializeWalletClient } from "@ion/wallet";
+import { loadWalletViewData, initializeWalletClient, resetWalletClient } from "@ion/wallet";
 import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen, showWalletError } from "@ion/wallet-ui";
 import { userSearchTranslations } from "@ion/user-search-ui";
 import { splashTranslations } from "@ion/splash-ui";
@@ -111,6 +111,7 @@ function ThemedRoot({ children }: { children: ReactNode }) {
 }
 
 const handleAuthSuccess = (username: string) => {
+  resetWalletClient();
   initializeWalletClient(identityClient, username);
   loadWalletViewData().catch(showWalletError);
 };
