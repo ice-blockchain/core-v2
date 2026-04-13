@@ -25,7 +25,7 @@ services:
 
   dragonfly:
     image: docker.dragonflydb.io/dragonflydb/dragonfly
-    command: dragonfly --default_lua_flags=allow-undeclared-keys --requirepass ${REDIS_PASSWORD}
+    command: dragonfly --default_lua_flags=allow-undeclared-keys --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     ulimits:
       memlock: -1
     ports:
@@ -33,7 +33,7 @@ services:
     volumes:
       - dragonfly-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:?REDIS_PASSWORD is required} ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -45,6 +45,7 @@ services:
       dockerfile: services/greenfield-processor/Dockerfile
     environment:
       REDIS_URL: redis://:${REDIS_PASSWORD}@dragonfly:6379
+      SOURCE_QUEUE_NAME: ${QUEUE_NAME:-greenfield-events}
       GREENFIELD_RPC_URL: ${GREENFIELD_RPC_URL:-https://gnfd-testnet-fullnode-tendermint-us.bnbchain.org:443}
       GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
       BUNNY_STORAGE_ZONE: ${BUNNY_STORAGE_ZONE}
@@ -72,6 +73,7 @@ services:
       dockerfile: services/greenfield-processor/Dockerfile
     environment:
       REDIS_URL: redis://:${REDIS_PASSWORD}@dragonfly:6379
+      SOURCE_QUEUE_NAME: ${QUEUE_NAME:-greenfield-events}
       GREENFIELD_RPC_URL: ${GREENFIELD_RPC_URL:-https://gnfd-testnet-fullnode-tendermint-us.bnbchain.org:443}
       GREENFIELD_CHAIN_ID: ${GREENFIELD_CHAIN_ID:-greenfield_5600-1}
       BUNNY_STORAGE_ZONE: ${BUNNY_STORAGE_ZONE}

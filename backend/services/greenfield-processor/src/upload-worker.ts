@@ -88,7 +88,7 @@ async function processBatch(
   }
 }
 
-function itemKey(item: PendingUploadItem): string {
+export function itemKey(item: PendingUploadItem): string {
   return `${item.bucketName}:${item.objectName}:${item.version}`;
 }
 
@@ -97,12 +97,12 @@ interface BatchProgress {
   failCounts?: Record<string, number>;
 }
 
-function getCompletedKeys(job: Job<UploadBatchJob>): string[] {
+export function getCompletedKeys(job: Job<UploadBatchJob>): string[] {
   const progress = job.progress as BatchProgress | undefined;
   return progress?.completed ?? [];
 }
 
-function getPersistedFailCounts(job: Job<UploadBatchJob>): Record<string, number> {
+export function getPersistedFailCounts(job: Job<UploadBatchJob>): Record<string, number> {
   const progress = job.progress as BatchProgress | undefined;
   return progress?.failCounts ?? {};
 }

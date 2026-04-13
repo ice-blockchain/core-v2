@@ -9,11 +9,11 @@ describe('createPinnedDispatcher', () => {
     await dispatcher.close();
   });
 
-  it('creates distinct dispatchers per call', () => {
+  it('creates distinct dispatchers per call', async () => {
     const d1 = createPinnedDispatcher('203.0.113.10', 4);
     const d2 = createPinnedDispatcher('203.0.113.11', 4);
     expect(d1).not.toBe(d2);
-    d1.close();
-    d2.close();
+    await d1.close();
+    await d2.close();
   });
 });

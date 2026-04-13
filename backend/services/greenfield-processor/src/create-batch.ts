@@ -37,6 +37,18 @@ export default async function createBatch(
   return results.map((raw) => JSON.parse(raw) as PendingUploadItem);
 }
 
+/**
+ * Pushes items back to the front of the pending list (LPUSH for FIFO order).
+ */
+export async function pushItemsBack(
+  redis: Redis,
+  items: PendingUploadItem[],
+): Promise<void> {
+  if (items.length === 0) return;
+  const serialized = items.map((item) => JSON.stringify(item));
+  await redis.lpush(PENDING_LIST_KEY, ...[...serialized].reverse());
+}
+
 const LUA_RPUSH_LLEN = `
 redis.call('RPUSH', KEYS[1], ARGV[1])
 return redis.call('LLEN', KEYS[1])

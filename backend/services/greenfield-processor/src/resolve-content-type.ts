@@ -74,7 +74,7 @@ async function fetchContentTypeFromSp(
 }
 
 function extractHost(endpoint: string): string {
-  return endpoint.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  return new URL(endpoint).host;
 }
 
 function guessFromExtension(objectName: string): string {

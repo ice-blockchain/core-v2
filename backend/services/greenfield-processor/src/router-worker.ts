@@ -113,8 +113,7 @@ async function resolveEventContentType(
   allowedSpHostnamePattern?: string,
 ): Promise<string> {
   if ('content_type' in data && data.content_type) {
-    const disposition = classifyContentType(data.content_type);
-    if (disposition === 'upload') return data.content_type;
+    return data.content_type;
   }
 
   const sp = await resolveStorageProvider(

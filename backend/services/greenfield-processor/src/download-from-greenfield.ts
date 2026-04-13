@@ -4,6 +4,7 @@ import { dirname } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { Response as UndiciResponse } from 'undici';
+import AppError from './app-error.js';
 import createSizeLimiter from './create-size-limiter.js';
 import fetchWithPinnedDns from './fetch-with-pinned-dns.js';
 import type { PinnedFetchResult } from './fetch-with-pinned-dns.js';
@@ -22,8 +23,8 @@ export default async function downloadFromGreenfield(
   assertValidBucketName(bucketName);
 
   if (payloadSize > maxDownloadSize) {
-    throw new Error(
-      `File too large: ${payloadSize} exceeds max ${maxDownloadSize}`,
+    throw new AppError(
+      `File too large: ${payloadSize} exceeds max ${maxDownloadSize}`, 413,
     );
   }
 
@@ -38,7 +39,7 @@ export default async function downloadFromGreenfield(
   const { response, cleanup } = fetchResult;
 
   try {
-    const writeMode = determineWriteMode(response.status, existingSize);
+    const writeMode = determineWriteMode(response, existingSize);
 
     if (writeMode === 'truncate' && existingSize > 0) {
       await unlink(partPath).catch((err) => {
@@ -50,7 +51,7 @@ export default async function downloadFromGreenfield(
     const remainingAllowance = maxDownloadSize - startingBytes;
     if (remainingAllowance <= 0) {
       await unlink(partPath).catch(() => {});
-      throw new Error('Partial file already exceeds max download size');
+      throw new AppError('Partial file already exceeds max download size', 413);
     }
 
     await writeResponseToFile(response, { filePath: partPath, mode: writeMode, maxBytes: remainingAllowance });
@@ -110,19 +111,33 @@ async function fetchWithRange(
 
   if (!result.response.ok && result.response.status !== 206) {
     await result.cleanup();
-    throw new Error(
-      `Greenfield download failed: ${result.response.status} ${result.response.statusText}`,
+    throw new AppError(
+      `Greenfield download failed: ${result.response.status} ${result.response.statusText}`, 502,
     );
   }
 
   return result;
 }
 
+function parseContentRangeStart(response: UndiciResponse): number | null {
+  const header = response.headers.get('content-range');
+  if (!header) return null;
+  const match = header.match(/^bytes\s+(\d+)-/);
+  if (!match) return null;
+  return parseInt(match[1], 10);
+}
+
 function determineWriteMode(
-  status: number,
+  response: UndiciResponse,
   existingSize: number,
 ): 'append' | 'truncate' {
-  if (status === 206 && existingSize > 0) return 'append';
+  if (response.status === 206 && existingSize > 0) {
+    const rangeStart = parseContentRangeStart(response);
+    if (rangeStart !== null && rangeStart !== existingSize) {
+      return 'truncate';
+    }
+    return 'append';
+  }
   return 'truncate';
 }
 
@@ -137,7 +152,7 @@ async function writeResponseToFile(
   opts: WriteOpts,
 ): Promise<void> {
   if (!response.body) {
-    throw new Error('Response body is null');
+    throw new AppError('Response body is null', 502);
   }
 
   const flags = opts.mode === 'append' ? 'a' : 'w';
@@ -155,11 +170,9 @@ async function verifyDownloadSize(
   if (expectedSize <= 0) return;
   const actualSize = await getFileSize(filePath);
   if (actualSize !== expectedSize) {
-    await unlink(filePath).catch(() => {
-      // best-effort cleanup of mismatched download
-    });
-    throw new Error(
-      `Download size mismatch: expected ${expectedSize}, got ${actualSize}`,
+    await unlink(filePath).catch(() => {});
+    throw new AppError(
+      `Download size mismatch: expected ${expectedSize}, got ${actualSize}`, 502,
     );
   }
 }

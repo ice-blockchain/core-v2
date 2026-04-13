@@ -1,6 +1,7 @@
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { Readable } from 'node:stream';
+import AppError from './app-error.js';
 import type { CdnUploaderConfig } from './types.js';
 
 interface HttpUploadDeps {
@@ -36,8 +37,8 @@ export default async function uploadToBunnyHttp(
   } as RequestInit);
 
   if (!response.ok) {
-    throw new Error(
-      `Bunny HTTP upload failed: ${response.status} ${response.statusText}`,
+    throw new AppError(
+      `Bunny HTTP upload failed: ${response.status} ${response.statusText}`, 502,
     );
   }
 }

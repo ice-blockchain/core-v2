@@ -1,7 +1,7 @@
 import { Queue, Worker } from 'bullmq';
 import type Redis from 'ioredis';
 import type { Logger } from 'pino';
-import createBatch from './create-batch.js';
+import createBatch, { pushItemsBack } from './create-batch.js';
 import type { CdnUploaderConfig, UploadBatchJob } from './types.js';
 
 const BATCH_QUEUE_NAME = 'cdn-batches';
@@ -43,13 +43,19 @@ export async function assembleBatch(
   const items = await createBatch(redis, config.batchMaxSize);
   if (items.length === 0) return;
 
-  await batchQueue.add('upload-batch', {
-    items,
-    createdAt: Date.now(),
-  }, {
-    attempts: 5,
-    backoff: { type: 'exponential', delay: 5000 },
-  });
+  try {
+    await batchQueue.add('upload-batch', {
+      items,
+      createdAt: Date.now(),
+    }, {
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 5000 },
+    });
+  } catch (err) {
+    logger.error({ err, batchSize: items.length }, 'enqueue failed, pushing items back');
+    await pushItemsBack(redis, items);
+    throw err;
+  }
 
   logger.info({ batchSize: items.length }, 'batch created');
 }

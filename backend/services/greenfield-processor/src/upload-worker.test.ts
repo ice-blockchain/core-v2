@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { itemKey, getCompletedKeys, getPersistedFailCounts } from './upload-worker.js';
 import type { PendingUploadItem } from './types.js';
 
 function createTestItem(overrides?: Partial<PendingUploadItem>): PendingUploadItem {
@@ -12,6 +13,10 @@ function createTestItem(overrides?: Partial<PendingUploadItem>): PendingUploadIt
     checksums: ['abc123'],
     ...overrides,
   };
+}
+
+function createMockJob(progress?: unknown) {
+  return { progress } as never;
 }
 
 function createMockRedis() {
@@ -29,49 +34,40 @@ function createMockRedis() {
   };
 }
 
-describe('upload-worker item lock', () => {
+describe('upload-worker itemKey', () => {
   it('generates lock key from bucket, object, and version', () => {
     const item = createTestItem({ bucketName: 'b', objectName: 'o', version: 3 });
-    const lockKey = `${item.bucketName}:${item.objectName}:${item.version}`;
-    expect(lockKey).toBe('b:o:3');
-  });
-
-  it('different versions produce different lock keys', () => {
-    const item1 = createTestItem({ version: 1 });
-    const item2 = createTestItem({ version: 2 });
-    const key1 = `${item1.bucketName}:${item1.objectName}:${item1.version}`;
-    const key2 = `${item2.bucketName}:${item2.objectName}:${item2.version}`;
-    expect(key1).not.toBe(key2);
-  });
-});
-
-describe('upload-worker idempotency', () => {
-  it('generates a unique key per item from bucket, object, and version', () => {
-    const item = createTestItem({ bucketName: 'b', objectName: 'o', version: 3 });
-    const key = `${item.bucketName}:${item.objectName}:${item.version}`;
-    expect(key).toBe('b:o:3');
+    expect(itemKey(item)).toBe('b:o:3');
   });
 
   it('different versions produce different keys', () => {
     const item1 = createTestItem({ version: 1 });
     const item2 = createTestItem({ version: 2 });
-    const key1 = `${item1.bucketName}:${item1.objectName}:${item1.version}`;
-    const key2 = `${item2.bucketName}:${item2.objectName}:${item2.version}`;
-    expect(key1).not.toBe(key2);
+    expect(itemKey(item1)).not.toBe(itemKey(item2));
+  });
+});
+
+describe('upload-worker progress restoration', () => {
+  it('restores completed set from job progress', () => {
+    const job = createMockJob({ completed: ['b:o:1', 'b:o:2'] });
+    const completed = getCompletedKeys(job);
+    expect(completed).toEqual(['b:o:1', 'b:o:2']);
   });
 
-  it('completed set from job progress is restored correctly', () => {
-    const progress = { completed: ['b:o:1', 'b:o:2'] };
-    const completed = new Set<string>(progress.completed ?? []);
-    expect(completed.has('b:o:1')).toBe(true);
-    expect(completed.has('b:o:2')).toBe(true);
-    expect(completed.has('b:o:3')).toBe(false);
+  it('returns empty array when progress is undefined', () => {
+    const job = createMockJob(undefined);
+    expect(getCompletedKeys(job)).toEqual([]);
   });
 
-  it('empty progress results in empty completed set', () => {
-    const progress = undefined as { completed?: string[] } | undefined;
-    const completed = new Set<string>(progress?.completed ?? []);
-    expect(completed.size).toBe(0);
+  it('restores failCounts from job progress', () => {
+    const job = createMockJob({ failCounts: { 'b:o:2': 2, 'b:o:3': 1 } });
+    const counts = getPersistedFailCounts(job);
+    expect(counts).toEqual({ 'b:o:2': 2, 'b:o:3': 1 });
+  });
+
+  it('returns empty object when progress has no failCounts', () => {
+    const job = createMockJob(undefined);
+    expect(getPersistedFailCounts(job)).toEqual({});
   });
 });
 
@@ -105,7 +101,7 @@ describe('upload-worker per-bucket SP cache', () => {
 describe('upload-worker dead-letter categorization', () => {
   it('items at retry boundary are dead-lettered using persisted failCounts', () => {
     const maxRetries = 3;
-    const key = 'test-bucket:file.png:1';
+    const key = itemKey(createTestItem());
     const failCounts = new Map<string, number>([[key, 3]]);
     const retryCount = (failCounts.get(key) ?? 0) + 1;
     expect(retryCount > maxRetries).toBe(true);
@@ -113,33 +109,22 @@ describe('upload-worker dead-letter categorization', () => {
 
   it('items under retry limit are retried via BullMQ', () => {
     const maxRetries = 3;
-    const key = 'test-bucket:file.png:1';
+    const key = itemKey(createTestItem());
     const failCounts = new Map<string, number>([[key, 2]]);
     const retryCount = (failCounts.get(key) ?? 0) + 1;
     expect(retryCount > maxRetries).toBe(false);
   });
 
   it('items with no prior failures start at 1 in failCounts', () => {
-    const key = 'test-bucket:file.png:1';
+    const key = itemKey(createTestItem());
     const failCounts = new Map<string, number>();
     const retryCount = (failCounts.get(key) ?? 0) + 1;
     expect(retryCount).toBe(1);
   });
 
-  it('failCounts persist via job.progress across batch retries', () => {
-    const progress = {
-      completed: ['b:o:1'],
-      failCounts: { 'b:o:2': 2, 'b:o:3': 1 },
-    };
-    const failCounts = new Map<string, number>(Object.entries(progress.failCounts));
-    expect(failCounts.get('b:o:2')).toBe(2);
-    expect(failCounts.get('b:o:3')).toBe(1);
-    expect(failCounts.get('b:o:4')).toBeUndefined();
-  });
-
   it('item reaches dead-letter after accumulating MAX_RETRIES+1 failures', () => {
     const maxRetries = 3;
-    const key = 'test-bucket:file.png:1';
+    const key = itemKey(createTestItem());
     const failCounts = new Map<string, number>();
 
     for (let i = 0; i <= maxRetries; i++) {
