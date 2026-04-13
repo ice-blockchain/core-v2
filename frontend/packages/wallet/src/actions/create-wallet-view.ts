@@ -70,7 +70,14 @@ function finalizeCreatedView(optimisticId: string, created: { id: string }, deta
   batchUpdate(updatedViews, newActiveId);
 }
 
-function handleCreateFailure(tempId: string, previousActiveId: string, trimmedName: string, error: unknown): WalletActionResult {
+interface CreateFailure {
+  tempId: string;
+  previousActiveId: string;
+  trimmedName: string;
+  error: unknown;
+}
+
+function handleCreateFailure({ tempId, previousActiveId, trimmedName, error }: CreateFailure): WalletActionResult {
   revertOptimisticCreate(tempId, previousActiveId);
   Logger.error("Failed to create wallet view", {
     tag: "wallet",
@@ -95,6 +102,6 @@ export async function createWalletView(name: string): Promise<WalletActionResult
     finalizeCreatedView(optimistic.id, created, detail);
     return walletSuccess(undefined);
   } catch (error) {
-    return handleCreateFailure(optimistic.id, previousActiveId, trimmedName, error);
+    return handleCreateFailure({ tempId: optimistic.id, previousActiveId, trimmedName, error });
   }
 }
