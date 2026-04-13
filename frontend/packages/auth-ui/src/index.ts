@@ -14,6 +14,8 @@ export { RestoreCloudScreen } from "./restore-cloud-screen";
 export { RestoreIdentityScreen } from "./restore-identity-screen";
 export { RestoreWithRecoveryCredsScreen } from "./restore-with-recovery-creds-screen";
 
+export { TfaOptionsScreen } from "./tfa-options-screen";
+export { TfaVerificationScreen } from "./tfa-verification-screen";
 export { RestoreSetNewPasswordScreen } from "./restore-set-new-password-screen";
 export { RestoreSuccessScreen } from "./restore-success-screen";
 export { AddBiometricsScreen } from "./add-biometrics-screen";
@@ -47,6 +49,7 @@ export { IdentityKeyNameInput } from "./identity-key-name-input";
 export { RecoveryKeyIdInput } from "./recovery-key-id-input";
 export { RecoveryCodeInput } from "./recovery-code-input";
 export { PasswordInput } from "./password-input";
+export { TfaInput } from "./tfa-input";
 
 // Forms
 export { PasswordFormFields } from "./password-form-fields";

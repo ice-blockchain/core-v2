@@ -53,12 +53,22 @@ export type SettingsStackParamList = {
   'Settings/Account': undefined;
 };
 
+export type TwoFaType = 'auth' | 'email' | 'sms';
+
+export interface TwoFaOption {
+  type: TwoFaType;
+  label: string;
+}
+
 export type AuthStackParamList = {
   GetStarted: undefined;
   PasswordRegister: undefined;
   PasskeyRegister: undefined;
   RestoreIdentity: undefined;
+  RestoreFromCloud: undefined;
   RestoreWithRecoveryCreds: undefined;
+  TfaOptions: { optionsCount: 1 | 2 };
+  TfaVerification: { selectedMethods: TwoFaOption[] };
   RestoreSetNewPassword: undefined;
   ProfileSetup: undefined;
   SelectLanguages: undefined;

@@ -1,145 +1,140 @@
-import { useCallback, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { Icon, SelectField, colorPalette, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
-import { Button, Icon, SelectField, TextField, colorPalette } from "@ion/ui";
-import { SheetHeader } from "./sheet-header";
+import { useSheetScroll, useAppNavigation, Routes } from "@ion/navigation";
 import { RegisterHeader } from "./register-header";
-import { SecuredByFooter } from "./secured-by-footer";
-import { TermsFooter } from "./terms-footer";
-import { EyeIcon } from "./eye-icon";
+import { PasswordInput } from "./password-input";
+import { PrimaryButton } from "./primary-button";
+import { AuthFooter } from "./auth-footer";
 import { getCloudProvider } from "./cloud-provider";
 
-interface RestoreCloudScreenProps {
-  onBack: () => void;
-  onRestore: (data: { identityKeyName: string; password: string }) => void;
-  identityKeyNames: string[];
-  isLoading?: boolean;
-}
-
-function useRestoreCloudForm() {
-  const [selectedKeyName, setSelectedKeyName] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const isFormValid = selectedKeyName !== null && password.trim().length > 0;
-
-  const togglePasswordVisibility = useCallback(() => {
-    setIsPasswordVisible((prev) => !prev);
-  }, []);
-
-  return { selectedKeyName, setSelectedKeyName, password, setPassword, isPasswordVisible, togglePasswordVisibility, isFormValid };
-}
-
 function RestoreCloudIcon() {
-  return <Icon name="restore-cloud" size={36} color={colorPalette.white} />;
+  return <Icon name="cloud-upload" size={36} color={colorPalette.white} />;
 }
 
-function PasswordSuffixIcon({ isOff, onPress }: { isOff: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={isOff ? "Show password" : "Hide password"}
-    >
-      <EyeIcon isOff={isOff} />
-    </Pressable>
-  );
+function useRestoreCloudForm(identityKeyNames: string[]) {
+  const isSingleKey = identityKeyNames.length === 1;
+  const [selectedKeyName, setSelectedKeyName] = useState<string | null>(isSingleKey ? identityKeyNames[0] ?? null : null);
+  const [password, setPassword] = useState("");
+  const isFormValid = selectedKeyName !== null && password.trim().length > 0;
+  return { selectedKeyName, setSelectedKeyName, password, setPassword, isFormValid, isSingleKey };
 }
 
-function CloudRestoreForm({ form, identityKeyNames }: { form: ReturnType<typeof useRestoreCloudForm>; identityKeyNames: string[] }) {
+function useFormStyles() {
+  const { scale } = useTheme();
+  return useMemo(() => ({
+    page: { ...styles.page, paddingTop: scale.scaleSize(5), paddingHorizontal: scale.scaleSize(44) },
+    formContainer: { ...styles.formContainer, marginTop: scale.scaleSize(88), gap: scale.scaleSize(21) },
+    buttonWrapper: { marginTop: scale.scaleSize(20) },
+  }), [scale]);
+}
+
+function SelectKeyPrefix() {
+  const { colors, scale } = useTheme();
+  return <Icon name="restore-key" size={scale.scaleSize(24)} color={colors.secondaryText} />;
+}
+
+function CloudRestoreForm({ form, identityKeyNames, containerStyle }: {
+  form: ReturnType<typeof useRestoreCloudForm>;
+  identityKeyNames: string[];
+  containerStyle: object;
+}) {
   return (
-    <View style={styles.formContainer}>
+    <View style={containerStyle}>
       <SelectField
-        label={translate("auth:selectIdentityKeyNameLabel")}
+        label={translate("auth:identityKeyNameLabel")}
         value={form.selectedKeyName}
         options={identityKeyNames}
         onSelect={form.setSelectedKeyName}
-        style={styles.field}
+        prefixIcon={form.isSingleKey ? undefined : <SelectKeyPrefix />}
+        hasPrefixDivider={!form.isSingleKey}
+        disabled={form.isSingleKey}
       />
-      <TextField
-        label={translate("auth:passwordLabel")}
+      <PasswordInput
         value={form.password}
         onChangeText={form.setPassword}
-        isSecureTextEntry={!form.isPasswordVisible}
-        suffixIcon={<PasswordSuffixIcon isOff={!form.isPasswordVisible} onPress={form.togglePasswordVisibility} />}
-        style={styles.field}
+        placeholder={translate("auth:passwordLabel")}
       />
     </View>
   );
 }
 
-function useRestoreHandler(
-  form: ReturnType<typeof useRestoreCloudForm>,
-  onRestore: RestoreCloudScreenProps["onRestore"],
-) {
+function useRestoreHandler(form: ReturnType<typeof useRestoreCloudForm>, onNavigate: () => void) {
   const isSubmitting = useRef(false);
 
   return useCallback(() => {
     if (!form.isFormValid || isSubmitting.current) return;
     isSubmitting.current = true;
     try {
-      onRestore({
-        identityKeyName: form.selectedKeyName!,
-        password: form.password.trim(),
-      });
+      onNavigate();
     } finally {
       isSubmitting.current = false;
     }
-  }, [form.isFormValid, form.selectedKeyName, form.password, onRestore]);
+  }, [form.isFormValid, onNavigate]);
 }
 
-export function RestoreCloudScreen({ onBack, onRestore, identityKeyNames, isLoading }: RestoreCloudScreenProps) {
-  const form = useRestoreCloudForm();
-  const handleRestore = useRestoreHandler(form, onRestore);
+function RestoreCloudContent({ identityKeyNames }: { identityKeyNames: string[] }) {
+  const sheetScroll = useSheetScroll();
+  const formStyles = useFormStyles();
+  const form = useRestoreCloudForm(identityKeyNames);
+  const appNavigation = useAppNavigation();
   const cloudProvider = getCloudProvider();
 
+  const handleRestore = useRestoreHandler(form, useCallback(() => {
+    appNavigation.navigate(Routes.Sheet.RestoreSuccess);
+  }, [appNavigation]));
+
   return (
-    <View style={styles.page}>
-      <SheetHeader title="" onBack={onBack} />
-      <RegisterHeader
-        icon={<RestoreCloudIcon />}
-        title={translate("auth:restoreFromCloudTitle", { cloudProvider })}
-        subtitle={translate("auth:restoreFromCloudDescription", { cloudProvider })}
-      />
-      <CloudRestoreForm form={form} identityKeyNames={identityKeyNames} />
-      <View style={styles.buttonWrapper}>
-        <Button
-          color="primary"
-          label={translate("auth:restoreButton")}
-          isDisabled={!form.isFormValid || !!isLoading}
-          isLoading={isLoading ?? false}
-          onPress={handleRestore}
+    <BottomSheetScrollView onScroll={sheetScroll} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
+      <View style={formStyles.page}>
+        <RegisterHeader
+          icon={<RestoreCloudIcon />}
+          title={translate("auth:restoreFromCloudTitle", { cloudProvider })}
+          subtitle={translate("auth:restoreFromCloudDescription", { cloudProvider })}
         />
+        <CloudRestoreForm form={form} identityKeyNames={identityKeyNames} containerStyle={formStyles.formContainer} />
+        <View style={formStyles.buttonWrapper}>
+          <PrimaryButton label={translate("auth:restoreButton")} disabled={!form.isFormValid} onPress={handleRestore} showArrow={false} style={styles.fullWidth} />
+        </View>
+        <AuthFooter />
       </View>
-      <View style={styles.footer}>
-        <SecuredByFooter />
-        <TermsFooter />
-      </View>
+    </BottomSheetScrollView>
+  );
+}
+
+function useContainerStyle() {
+  const theme = useTheme();
+  return useMemo(
+    () => ({ flex: 1 as const, backgroundColor: theme.colors.secondaryBackground }),
+    [theme.colors],
+  );
+}
+
+export function RestoreCloudScreen() {
+  const containerStyle = useContainerStyle();
+  const identityKeyNames = ["samuelaltman21", "samuelaltman", "altmancrypto"];
+
+  return (
+    <View style={containerStyle}>
+      <RestoreCloudContent identityKeyNames={identityKeyNames} />
     </View>
   );
 }
 
-const FIELD_WIDTH = 287;
-
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   page: {
-    alignItems: "center",
+    flexGrow: 1,
     width: "100%",
   },
   formContainer: {
-    marginTop: 36,
-    gap: 21,
+    width: "100%",
   },
-  field: {
-    width: FIELD_WIDTH,
-  },
-  buttonWrapper: {
-    marginTop: 20,
-    width: FIELD_WIDTH,
-  },
-  footer: {
-    marginTop: 40,
-    alignItems: "center",
-    gap: 12,
-    paddingBottom: 40,
+  fullWidth: {
+    width: "100%",
   },
 });

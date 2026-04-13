@@ -23,7 +23,10 @@ export interface AuthScreens {
   PasswordRegister: ComponentType;
   PasskeyRegister: ComponentType;
   RestoreIdentity: ComponentType;
+  RestoreFromCloud: ComponentType;
   RestoreWithRecoveryCreds: ComponentType;
+  TfaOptions: ComponentType;
+  TfaVerification: ComponentType;
   RestoreSetNewPassword: ComponentType;
   ProfileSetup: ComponentType;
   SelectLanguages: ComponentType;
@@ -36,7 +39,10 @@ const TITLE_KEYS: Record<string, string> = {
   [Routes.Auth.PasswordRegister]: 'auth:registerTitle',
   [Routes.Auth.PasskeyRegister]: 'auth:passkeyRegisterTitle',
   [Routes.Auth.RestoreIdentity]: 'auth:restoreMenuTitle',
+  [Routes.Auth.RestoreFromCloud]: 'auth:restoreMenuTitle',
   [Routes.Auth.RestoreWithRecoveryCreds]: 'auth:restoreMenuTitle',
+  [Routes.Auth.TfaOptions]: 'auth:tfaVerificationTitle',
+  [Routes.Auth.TfaVerification]: 'auth:tfaVerificationTitle',
   [Routes.Auth.RestoreSetNewPassword]: 'auth:setNewPasswordTitle',
   [Routes.Auth.ProfileSetup]: 'onboarding:yourProfileTitle',
   [Routes.Auth.SelectLanguages]: 'onboarding:selectLanguagesTitle',
@@ -77,7 +83,10 @@ function AuthStack({ screens, navRef, setTitle }: { screens: AuthScreens; navRef
       <Stack.Screen name={Routes.Auth.PasswordRegister} component={screens.PasswordRegister} />
       <Stack.Screen name={Routes.Auth.PasskeyRegister} component={screens.PasskeyRegister} />
       <Stack.Screen name={Routes.Auth.RestoreIdentity} component={screens.RestoreIdentity} />
+      <Stack.Screen name={Routes.Auth.RestoreFromCloud} component={screens.RestoreFromCloud} />
       <Stack.Screen name={Routes.Auth.RestoreWithRecoveryCreds} component={screens.RestoreWithRecoveryCreds} />
+      <Stack.Screen name={Routes.Auth.TfaOptions} component={screens.TfaOptions} />
+      <Stack.Screen name={Routes.Auth.TfaVerification} component={screens.TfaVerification} />
       <Stack.Screen name={Routes.Auth.RestoreSetNewPassword} component={screens.RestoreSetNewPassword} />
       <Stack.Screen name={Routes.Auth.ProfileSetup} component={screens.ProfileSetup} />
       <Stack.Screen name={Routes.Auth.SelectLanguages} component={screens.SelectLanguages} />
