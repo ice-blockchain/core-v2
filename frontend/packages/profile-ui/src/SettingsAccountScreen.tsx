@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import { ScrollView } from "react-native";
 import { useTheme } from "@ion/ui";
 import type { IconName } from "@ion/ui";
-import { useReportSettingsContentHeight, Routes } from "@ion/navigation";
+import { useReportSettingsContentHeight, useSettingsCloseNavigation, Routes } from "@ion/navigation";
 import { translate } from "@ion/localization";
 import { PROFILE_NAMESPACE } from "./translations";
 import { SettingsTile } from "./SettingsTile";
@@ -27,6 +27,17 @@ const STATIC_TILES: readonly AccountTileConfig[] = [
   { labelKey: `${NS}:accountDeleteAccount`, iconName: "block-delete", colorType: "danger" },
 ];
 
+function useEditProfileHandler() {
+  const closeAndNavigate = useSettingsCloseNavigation();
+  return useCallback(() => { closeAndNavigate(Routes.EditProfile); }, [closeAndNavigate]);
+}
+
+function resolveTilePress(tile: AccountTileConfig, toggleAutoplay: () => void, handleEditProfile: () => void) {
+  if (tile.rightType === "checkbox") return toggleAutoplay;
+  if (tile.labelKey === `${NS}:accountEditProfile`) return handleEditProfile;
+  return noop;
+}
+
 export function SettingsAccountScreen() {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
@@ -34,6 +45,7 @@ export function SettingsAccountScreen() {
   const [autoplay, setAutoplay] = useState(true);
   const toggleAutoplay = useCallback(() => setAutoplay((prev) => !prev), []);
   const onContentSize = useReportSettingsContentHeight(Routes.Settings.Account);
+  const handleEditProfile = useEditProfileHandler();
 
   return (
     <ScrollView contentContainerStyle={contentStyle} onContentSizeChange={onContentSize}>
@@ -46,7 +58,7 @@ export function SettingsAccountScreen() {
           valueLabel={tile.valueLabel}
           rightType={tile.rightType}
           checked={tile.rightType === "checkbox" ? autoplay : undefined}
-          onPress={tile.rightType === "checkbox" ? toggleAutoplay : noop}
+          onPress={resolveTilePress(tile, toggleAutoplay, handleEditProfile)}
         />
       ))}
     </ScrollView>

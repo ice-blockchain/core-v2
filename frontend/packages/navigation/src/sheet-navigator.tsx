@@ -29,6 +29,7 @@ export interface SheetProps {
   headerRightAction?: ReactNode | undefined;
   snapPoints?: Array<string | number> | undefined;
   closeRef?: React.MutableRefObject<(() => void) | null> | undefined;
+  onAnimateClose?: () => void;
 }
 
 function computeTitleOpacity(scrollOffset: number): number {
@@ -50,7 +51,7 @@ function useScrollTitleOpacity() {
   return { titleOpacity, handleScroll };
 }
 
-export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction, snapPoints, closeRef }: SheetProps) {
+export function Sheet({ children, onClose, title, titleVisible, onBack, headerRightAction, snapPoints, closeRef, onAnimateClose }: SheetProps) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { titleOpacity: scrollOpacity, handleScroll } = useScrollTitleOpacity();
   const titleOpacity = titleVisible ? 1 : scrollOpacity;
@@ -58,9 +59,10 @@ export function Sheet({ children, onClose, title, titleVisible, onBack, headerRi
   const bottomInsetStyle = useBottomInsetStyle();
   const resolvedSnapPoints = snapPoints ?? DEFAULT_SNAP_POINTS;
   if (closeRef) closeRef.current = () => bottomSheetRef.current?.close();
+  const handleAnimate = useCallback((_from: number, to: number) => { if (to === -1 && onAnimateClose) onAnimateClose(); }, [onAnimateClose]);
 
   return (
-    <BottomSheet ref={bottomSheetRef} index={0} snapPoints={resolvedSnapPoints} enablePanDownToClose enableDynamicSizing={false} backdropComponent={SheetBackdrop} backgroundComponent={SheetBackground} handleComponent={SheetHandle} onClose={onClose}>
+    <BottomSheet ref={bottomSheetRef} index={0} snapPoints={resolvedSnapPoints} enablePanDownToClose enableDynamicSizing={false} backdropComponent={SheetBackdrop} backgroundComponent={SheetBackground} handleComponent={SheetHandle} onClose={onClose} onAnimate={handleAnimate}>
       <View style={[FLEX_ONE, bottomInsetStyle]}>
         <SheetScreenHeader title={title} titleOpacity={titleOpacity} onBack={onBack} rightAction={headerRightAction} />
         <KeyboardAvoidingView style={FLEX_ONE} behavior={KEYBOARD_BEHAVIOR} keyboardVerticalOffset={keyboardOffset}>

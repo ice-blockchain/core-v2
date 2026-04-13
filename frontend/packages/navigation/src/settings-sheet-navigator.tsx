@@ -13,6 +13,7 @@ import { Routes } from './routes';
 import { Sheet } from './sheet-navigator';
 import { useSheetNavigation } from './use-sheet-navigation';
 import { SettingsHeightContext } from './use-settings-content-height';
+import { SettingsCloseNavigationContext } from './use-settings-close-navigation';
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
 const HANDLE_HEIGHT = 13;
@@ -95,6 +96,24 @@ function useRouteHeights() {
   return { heights, reportHeight };
 }
 
+function useSheetCloseHandlers(navigation: ReturnType<typeof useSheetNavigation>) {
+  const closeRef = useRef<(() => void) | null>(null);
+  const pendingRouteRef = useRef<string | null>(null);
+  const navigatedRef = useRef(false);
+  const handleAnimateClose = useCallback(() => {
+    const route = pendingRouteRef.current;
+    if (!route) return;
+    pendingRouteRef.current = null;
+    navigatedRef.current = true;
+    navigation.goBack();
+    navigation.navigate(route as never);
+  }, [navigation]);
+  const handleClosed = useCallback(() => { if (!navigatedRef.current) { navigation.goBack(); } navigatedRef.current = false; }, [navigation]);
+  const handleCloseRequest = useCallback(() => closeRef.current?.(), []);
+  const closeAndNavigate = useCallback((route: string) => { pendingRouteRef.current = route; closeRef.current?.(); }, []);
+  return { closeRef, handleClosed, handleCloseRequest, closeAndNavigate, handleAnimateClose };
+}
+
 export function SettingsSheetNavigator({ screens }: { screens: SettingsScreens }) {
   const navigation = useSheetNavigation();
   const navRef = useRef<SettingsNav | null>(null);
@@ -104,11 +123,7 @@ export function SettingsSheetNavigator({ screens }: { screens: SettingsScreens }
   const callbacks = useMemo(() => ({ setTitle, setActiveRoute, setIndex }), []);
   const { heights, reportHeight } = useRouteHeights();
   const snapPoints = useSettingsSnapPoints(heights, activeRoute);
-  // X button must go through closeRef → bottomSheet.close() to trigger the close
-  // animation. Calling navigation.goBack() directly unmounts the sheet instantly.
-  const closeRef = useRef<(() => void) | null>(null);
-  const handleClosed = useCallback(() => navigation.goBack(), [navigation]);
-  const handleCloseRequest = useCallback(() => closeRef.current?.(), []);
+  const { closeRef, handleClosed, handleCloseRequest, closeAndNavigate, handleAnimateClose } = useSheetCloseHandlers(navigation);
   const handleBack = useCallback(() => { if (navRef.current?.canGoBack()) navRef.current.goBack(); }, []);
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
@@ -119,10 +134,12 @@ export function SettingsSheetNavigator({ screens }: { screens: SettingsScreens }
   ), [handleCloseRequest, scale, theme.colors.primaryText]);
 
   return (
-    <SettingsHeightContext.Provider value={reportHeight}>
-      <Sheet onClose={handleClosed} closeRef={closeRef} title={title} titleVisible headerRightAction={closeButton} onBack={index > 0 ? handleBack : undefined} snapPoints={snapPoints}>
-        <SettingsStack screens={screens} navRef={navRef} callbacks={callbacks} />
-      </Sheet>
-    </SettingsHeightContext.Provider>
+    <SettingsCloseNavigationContext.Provider value={closeAndNavigate}>
+      <SettingsHeightContext.Provider value={reportHeight}>
+        <Sheet onClose={handleClosed} onAnimateClose={handleAnimateClose} closeRef={closeRef} title={title} titleVisible headerRightAction={closeButton} onBack={index > 0 ? handleBack : undefined} snapPoints={snapPoints}>
+          <SettingsStack screens={screens} navRef={navRef} callbacks={callbacks} />
+        </Sheet>
+      </SettingsHeightContext.Provider>
+    </SettingsCloseNavigationContext.Provider>
   );
 }

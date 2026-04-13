@@ -38,6 +38,7 @@ interface AppNavigatorScreens {
   GalleryPermissionDenied?: ComponentType;
   CameraPermissionDenied?: ComponentType;
   CancelPost?: ComponentType;
+  EditProfile?: ComponentType;
   walletViewScreens?: WalletViewScreens;
   Settings?: ComponentType;
 }
@@ -80,6 +81,7 @@ export function AppNavigator({ screens: s, authScreens, isAuthenticated: _isAuth
       {s.ProxyTest && <Stack.Screen name={Routes.ProxyTest} component={s.ProxyTest} />}
       {s.StorageTest && <Stack.Screen name={Routes.StorageTest} component={s.StorageTest} />}
       {s.AuthFlow && <Stack.Screen name={Routes.AuthFlow} component={s.AuthFlow} options={MODAL} />}
+      {s.EditProfile && <Stack.Screen name={Routes.EditProfile} component={s.EditProfile} options={{ animation: 'default' }} />}
       <Stack.Group screenOptions={MODAL}>
         <Stack.Screen name={Routes.Sheet.Auth} component={Auth} />
         {WalletView && <Stack.Screen name={Routes.Sheet.WalletViewManagement} component={WalletView} />}

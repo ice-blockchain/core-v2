@@ -20,4 +20,5 @@ export type { SettingsScreens } from './settings-sheet-navigator';
 export type { SettingsStackParamList } from './route-params';
 export { useSettingsNavigation } from './use-settings-navigation';
 export { useReportSettingsContentHeight } from './use-settings-content-height';
+export { useSettingsCloseNavigation } from './use-settings-close-navigation';
 export { BottomSheetModalProvider } from '@gorhom/bottom-sheet';

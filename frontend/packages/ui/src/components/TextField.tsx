@@ -33,6 +33,7 @@ export interface TextFieldProps {
   prefixIcon?: React.ReactNode;
   suffixIcon?: React.ReactNode;
   hasPrefixDivider?: boolean;
+  preservePrefixIcon?: boolean;
   isClearable?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -149,11 +150,14 @@ interface RenderSlotsOptions {
   spec: TextFieldColorSpec;
   shouldShowClear: boolean;
   onClear: () => void;
+  isFocused: boolean;
+  hasValue: boolean;
 }
 
 function renderPrefixSlot(options: RenderSlotsOptions) {
-  const { props, theme } = options;
+  const { props, theme, isFocused, hasValue } = options;
   if (props.prefixIcon == null) return null;
+  if (!props.preservePrefixIcon && (isFocused || hasValue)) return null;
   return (
     <TextFieldIconSlot
       icon={props.prefixIcon}
@@ -224,6 +228,7 @@ function renderTextInput(options: TextFieldInputOptions) {
       editable={props.state !== "disabled"}
       secureTextEntry={props.isSecureTextEntry}
       multiline={isMultiline}
+      scrollEnabled={isMultiline || internal.isFocused}
       numberOfLines={IS_WEB && isMultiline ? 1 : undefined}
       keyboardAppearance={internal.theme.colorMode === "dark" ? "dark" : "light"}
       style={inputStyle}
@@ -250,7 +255,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
     const shouldShowClear = props.isClearable === true && isFocused && hasValue;
     const handleClear = useCallback(() => internal.handleChangeText(""), [internal.handleChangeText]);
     const focusInput = useFocusInput(ref, inputRef);
-    const slotOptions: RenderSlotsOptions = { props, theme, spec, shouldShowClear, onClear: handleClear };
+    const slotOptions: RenderSlotsOptions = { props, theme, spec, shouldShowClear, onClear: handleClear, isFocused, hasValue };
     const innerStyle = isMultiline ? { flex: 1 } : { flex: 1, height: "100%" as const, justifyContent: "center" as const };
     const inputOptions: TextFieldInputOptions = { ref, inputRef, props, internal, inputStyle, isMultiline };
 

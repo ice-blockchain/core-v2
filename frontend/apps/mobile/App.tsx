@@ -27,7 +27,7 @@ import { userSearchTranslations } from "@ion/user-search-ui";
 import { splashTranslations } from "@ion/splash-ui";
 import { mainShellTranslations } from "@ion/main-tabs-ui";
 import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, CancelPostScreen, feedTranslations } from "@ion/feed-ui";
-import { profileTranslations, SettingsSheetScreen } from "@ion/profile-ui";
+import { profileTranslations, EditProfileScreen, SettingsSheetScreen } from "@ion/profile-ui";
 import { HomeScreen, homeTranslations } from "@ion/home-ui";
 import { SplashScreen } from "./src/components/splash-screen";
 import { IntroScreen } from "./src/components/intro-screen";
@@ -80,6 +80,7 @@ const screens = {
     Edit: EditWalletViewScreen,
     DeleteConfirm: DeleteWalletViewConfirmScreen,
   },
+  EditProfile: EditProfileScreen,
   Settings: SettingsSheetScreen,
 };
 

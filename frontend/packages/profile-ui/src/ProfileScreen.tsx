@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedTabBar, AnimatedTabPager, useTabViewState, useTheme } from "@ion/ui";
 import type { AnimatedTabDefinition } from "@ion/ui";
 import { translate } from "@ion/localization";
+import { useAppNavigation, Routes } from "@ion/navigation";
 import { ProfileNavBarWithMenu } from "./ProfileNavBarWithMenu";
 import { ProfileScrollHeader } from "./ProfileScrollHeader";
 import { ProfileTabPage } from "./ProfileTabContent";
@@ -67,15 +68,16 @@ export function ProfileScreen() {
   const { rootStyle, sectionStyle, spacerHeight, tabBarBorderColor } = useProfileLayout();
   const { pagerStyle, handleHeaderLayout, handleScrollViewLayout, isReady } = usePagerHeight();
   const scrollAnim = useProfileScrollAnimation();
+  const navigation = useAppNavigation();
   const [profile, isCurrentUser] = [MOCK_PROFILE, true] as const;
-
+  const handleEditProfile = useCallback(() => { navigation.navigate(Routes.EditProfile); }, [navigation]);
   return (
     <View style={rootStyle}>
       <scrollAnim.AnimatedScrollView style={styles.scroll} onScroll={scrollAnim.scrollHandler}
         scrollEventThrottle={16} onLayout={handleScrollViewLayout}>
         <View onLayout={handleHeaderLayout}>
           <ProfileScrollHeader spacerHeight={spacerHeight} sectionStyle={sectionStyle}
-            profile={profile} isCurrentUser={isCurrentUser} />
+            profile={profile} isCurrentUser={isCurrentUser} onEditProfile={handleEditProfile} />
           <AnimatedTabBar tabs={tabs} position={position} onTabPress={setPage}
             style={[styles.tabBarWrap, { borderBottomColor: tabBarBorderColor }]} />
         </View>
@@ -87,8 +89,7 @@ export function ProfileScreen() {
           </AnimatedTabPager>
         )}
       </scrollAnim.AnimatedScrollView>
-      <ProfileNavBarWithMenu showBackButton={!isCurrentUser} profile={profile}
-        collapsedHeaderOpacity={scrollAnim.collapsedHeaderOpacity} navBarBgAnimatedStyle={scrollAnim.navBarBgStyle} />
+      <ProfileNavBarWithMenu showBackButton={!isCurrentUser} profile={profile} collapsedHeaderOpacity={scrollAnim.collapsedHeaderOpacity} navBarBgAnimatedStyle={scrollAnim.navBarBgStyle} />
     </View>
   );
 }

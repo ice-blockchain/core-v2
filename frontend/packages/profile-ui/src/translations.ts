@@ -40,6 +40,13 @@ const profileEN = {
   accountDappLanguage: "dApp language",
   accountContentLanguage: "Content language",
   accountDeleteAccount: "Delete account",
+  editProfileName: "Name",
+  editProfileNickname: "Nickname",
+  editProfileBio: "Bio",
+  editProfileSelectCategory: "Select category",
+  editProfileLocation: "Location",
+  editProfileWebsite: "Website",
+  editProfileSave: "Save profile",
 };
 
 const profileFR = {
@@ -80,6 +87,13 @@ const profileFR = {
   accountDappLanguage: "Langue de l'application",
   accountContentLanguage: "Langue du contenu",
   accountDeleteAccount: "Supprimer le compte",
+  editProfileName: "Nom",
+  editProfileNickname: "Pseudo",
+  editProfileBio: "Bio",
+  editProfileSelectCategory: "Choisir une categorie",
+  editProfileLocation: "Localisation",
+  editProfileWebsite: "Site web",
+  editProfileSave: "Enregistrer le profil",
 };
 
 const profileDE = {
@@ -120,6 +134,13 @@ const profileDE = {
   accountDappLanguage: "App-Sprache",
   accountContentLanguage: "Inhaltssprache",
   accountDeleteAccount: "Konto löschen",
+  editProfileName: "Name",
+  editProfileNickname: "Spitzname",
+  editProfileBio: "Bio",
+  editProfileSelectCategory: "Kategorie waehlen",
+  editProfileLocation: "Standort",
+  editProfileWebsite: "Webseite",
+  editProfileSave: "Profil speichern",
 };
 
 export const profileTranslations: readonly TranslationResource[] = [

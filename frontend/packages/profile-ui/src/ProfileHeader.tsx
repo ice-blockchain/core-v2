@@ -10,9 +10,10 @@ const NS = PROFILE_NAMESPACE;
 interface ProfileHeaderProps {
   profile: ProfileData;
   isCurrentUser: boolean;
+  onEditProfile?: (() => void) | undefined;
 }
 
-export function ProfileHeader({ profile, isCurrentUser }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isCurrentUser, onEditProfile }: ProfileHeaderProps) {
   const theme = useTheme();
   const scale = theme.scale.scaleSize;
 
@@ -37,7 +38,7 @@ export function ProfileHeader({ profile, isCurrentUser }: ProfileHeaderProps) {
       <NameSection displayName={profile.displayName} isVerified={profile.isVerified} />
       <Text variant="caption" color={theme.colors.quaternaryText}>@{profile.username}</Text>
       {isCurrentUser && (
-        <SmallButton color="primary" icon={editIcon} label={translate(`${NS}:editProfile`)} />
+        <SmallButton color="primary" icon={editIcon} label={translate(`${NS}:editProfile`)} {...(onEditProfile ? { onPress: onEditProfile } : {})} />
       )}
     </View>
   );
