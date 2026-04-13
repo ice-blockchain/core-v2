@@ -49,8 +49,7 @@ describe("createWalletView", () => {
     initializeWalletClient(mockClient, "alice");
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    createWalletView("Savings");
-    await flushPromises();
+    await expect(createWalletView("Savings")).rejects.toThrow("walletUi:createWalletError");
 
     expect(walletViewStore.getWalletViews()).toHaveLength(1);
     expect(walletViewStore.getActiveWalletViewId()).toBe("1");
@@ -58,11 +57,11 @@ describe("createWalletView", () => {
   });
 
   it("throws when name is empty", () => {
-    expect(() => createWalletView("")).toThrow("Wallet name cannot be empty");
+    expect(() => createWalletView("")).toThrow("walletUi:walletNameEmptyError");
   });
 
   it("throws when maximum wallet limit is reached", () => {
     createWalletView("Second");
-    expect(() => createWalletView("Third")).toThrow("Maximum number of wallets reached");
+    expect(() => createWalletView("Third")).toThrow("walletUi:maxWalletsReachedError");
   });
 });

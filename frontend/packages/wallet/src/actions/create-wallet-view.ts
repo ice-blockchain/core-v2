@@ -5,7 +5,9 @@ import {
   getNextId,
 } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
-import { notifyWalletError } from "../stores/wallet-notification-config";
+import { WalletErrorCode } from "../errors";
+import { buildWalletActionError } from "../error-messages";
+import { Logger } from "@ion/diagnostics";
 import type { WalletViewDetail } from "@ion/identity-client";
 import { convertWalletView } from "../converters/convert-wallet-view";
 
@@ -15,9 +17,11 @@ const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currenc
 
 function validateCreateInput(name: string): string {
   const trimmedName = name.trim();
-  if (!trimmedName) throw new Error("Wallet name cannot be empty");
+  if (!trimmedName) throw buildWalletActionError(WalletErrorCode.NAME_EMPTY);
   const current = walletViewStore.getWalletViews();
-  if (current.length >= MAX_WALLET_VIEWS) throw new Error("Maximum number of wallets reached");
+  if (current.length >= MAX_WALLET_VIEWS) {
+    throw buildWalletActionError(WalletErrorCode.MAX_WALLETS_REACHED);
+  }
   return trimmedName;
 }
 
@@ -67,7 +71,7 @@ function finalizeCreatedView(optimisticId: string, created: { id: string }, deta
   batchUpdate(updatedViews, newActiveId);
 }
 
-export function createWalletView(name: string): void {
+export function createWalletView(name: string): Promise<void> {
   const trimmedName = validateCreateInput(name);
   const previousActiveId = walletViewStore.getActiveWalletViewId();
   const optimistic = addOptimisticWallet(trimmedName);
@@ -81,12 +85,16 @@ export function createWalletView(name: string): void {
   }
 
   const { client, username } = clientInfo;
-  client.createWalletView(username, { name: trimmedName, items: [], symbolGroups: [] })
+  return client.createWalletView(username, { name: trimmedName, items: [], symbolGroups: [] })
     .then((created) => client.getWalletView(username, created.id).then((detail) => ({ created, detail })))
     .then(({ created, detail }) => finalizeCreatedView(optimistic.id, created, detail))
-    .catch((error) => {
+    .catch((error: unknown) => {
       revertOptimisticCreate(optimistic.id, previousActiveId);
-      notifyWalletError("Failed to create wallet");
-      console.error("Failed to create wallet view", error);
+      Logger.error("Failed to create wallet view", {
+        tag: "wallet",
+        error: error instanceof Error ? error : new Error(String(error)),
+        data: { name: trimmedName },
+      });
+      throw buildWalletActionError(WalletErrorCode.CREATE_FAILED);
     });
 }

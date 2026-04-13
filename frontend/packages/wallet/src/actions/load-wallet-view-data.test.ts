@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { IdentityClient } from "@ion/identity-client";
 import { loadWalletViewData } from "./load-wallet-view-data";
+
+
 import { walletViewStore, resetWalletViewStore } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
 
@@ -66,7 +68,7 @@ describe("loadWalletViewData", () => {
       listWalletViews: vi.fn().mockRejectedValue(new Error("Network error")),
     });
     initializeWalletClient(client, "alice");
-    await loadWalletViewData();
+    await expect(loadWalletViewData()).rejects.toThrow("walletUi:loadWalletError");
     const views = walletViewStore.getWalletViews();
     expect(views[0]?.isLoading).toBe(false);
     consoleSpy.mockRestore();

@@ -48,4 +48,10 @@ export const walletUiDE: Record<keyof typeof walletUiEN, string> = {
   renameWalletError: "Wallet konnte nicht umbenannt werden",
   deleteWalletError: "Wallet konnte nicht gelöscht werden",
   loadWalletError: "Wallet-Daten konnten nicht geladen werden",
+  walletNameEmptyError: "Wallet-Name darf nicht leer sein",
+  walletNotFoundError: "Wallet nicht gefunden",
+  maxWalletsReachedError: "Maximale Anzahl an Wallets erreicht",
+  cannotDeleteMainWalletError: "Haupt-Wallet kann nicht gelöscht werden",
+  cannotDeleteLastWalletError: "Letzte Wallet kann nicht gelöscht werden",
+  unknownWalletError: "Etwas ist schiefgelaufen",
 };

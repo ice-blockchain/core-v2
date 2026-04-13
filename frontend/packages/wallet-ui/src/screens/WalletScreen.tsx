@@ -9,10 +9,8 @@ import { FriendsSection } from "../components/FriendsSection";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CoinsSection } from "../components/CoinsSection";
 import { useWalletScreenStyles } from "./useWalletScreenStyles";
-import { useWalletErrorNotifier } from "./use-wallet-error-notifier";
 
 export function WalletScreen() {
-  useWalletErrorNotifier();
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigation = useSheetNavigation();

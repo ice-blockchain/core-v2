@@ -1,6 +1,8 @@
 import { walletViewStore, setWalletViews, batchUpdate } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
-import { notifyWalletError } from "../stores/wallet-notification-config";
+import { WalletErrorCode } from "../errors";
+import { buildWalletActionError } from "../error-messages";
+import { Logger } from "@ion/diagnostics";
 import { convertWalletView } from "../converters/convert-wallet-view";
 import type { WalletView } from "../types";
 
@@ -49,9 +51,13 @@ export async function loadWalletViewData(): Promise<void> {
     );
 
     batchUpdate(walletViews, walletViews[0]!.id);
-  } catch (error) {
+  } catch (error: unknown) {
     setAllViewsLoading(false);
-    notifyWalletError("Failed to load wallet data");
-    console.error("Failed to load wallet view data", error);
+    Logger.error("Failed to load wallet view data", {
+      tag: "wallet",
+      error: error instanceof Error ? error : new Error(String(error)),
+      data: { username },
+    });
+    throw buildWalletActionError(WalletErrorCode.LOAD_FAILED);
   }
 }

@@ -46,4 +46,10 @@ export const walletUiEN = {
   renameWalletError: "Failed to rename wallet",
   deleteWalletError: "Failed to delete wallet",
   loadWalletError: "Failed to load wallet data",
+  walletNameEmptyError: "Wallet name cannot be empty",
+  walletNotFoundError: "Wallet not found",
+  maxWalletsReachedError: "Maximum number of wallets reached",
+  cannotDeleteMainWalletError: "Main wallet cannot be deleted",
+  cannotDeleteLastWalletError: "Last wallet cannot be deleted",
+  unknownWalletError: "Something went wrong",
 } as const;

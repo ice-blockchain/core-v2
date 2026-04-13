@@ -48,4 +48,10 @@ export const walletUiFR: Record<keyof typeof walletUiEN, string> = {
   renameWalletError: "Impossible de renommer le portefeuille",
   deleteWalletError: "Impossible de supprimer le portefeuille",
   loadWalletError: "Impossible de charger les données du portefeuille",
+  walletNameEmptyError: "Le nom du portefeuille ne peut pas être vide",
+  walletNotFoundError: "Portefeuille introuvable",
+  maxWalletsReachedError: "Nombre maximum de portefeuilles atteint",
+  cannotDeleteMainWalletError: "Le portefeuille principal ne peut pas être supprimé",
+  cannotDeleteLastWalletError: "Le dernier portefeuille ne peut pas être supprimé",
+  unknownWalletError: "Une erreur est survenue",
 };

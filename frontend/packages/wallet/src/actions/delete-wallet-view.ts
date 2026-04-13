@@ -4,7 +4,9 @@ import {
   batchUpdate,
 } from "../stores/wallet-view-store";
 import { getWalletClient } from "../stores/wallet-client-config";
-import { notifyWalletError } from "../stores/wallet-notification-config";
+import { WalletErrorCode } from "../errors";
+import { buildWalletActionError } from "../error-messages";
+import { Logger } from "@ion/diagnostics";
 import type { WalletView } from "../types";
 
 interface DeleteSnapshot {
@@ -40,23 +42,27 @@ function revertDelete(snapshot: DeleteSnapshot): void {
   batchUpdate(restoredViews, activeId);
 }
 
-export function deleteWalletView(walletId: string): void {
+export function deleteWalletView(walletId: string): Promise<void> {
   const current = walletViewStore.getWalletViews();
   const wallet = current.find((w) => w.id === walletId);
 
-  if (!wallet) throw new Error("Wallet not found");
-  if (wallet.isMain) throw new Error("Cannot delete the main wallet");
-  if (current.length <= 1) throw new Error("Cannot delete the last wallet");
+  if (!wallet) throw buildWalletActionError(WalletErrorCode.WALLET_NOT_FOUND);
+  if (wallet.isMain) throw buildWalletActionError(WalletErrorCode.CANNOT_DELETE_MAIN);
+  if (current.length <= 1) throw buildWalletActionError(WalletErrorCode.CANNOT_DELETE_LAST);
 
   const snapshot = captureAndRemove(walletId);
 
-  if (!wallet.serverId) return;
+  if (!wallet.serverId) return Promise.resolve();
 
   const { client, username } = getWalletClient();
-  client.deleteWalletView(username, wallet.serverId)
-    .catch((error) => {
+  return client.deleteWalletView(username, wallet.serverId)
+    .catch((error: unknown) => {
       revertDelete(snapshot);
-      notifyWalletError("Failed to delete wallet");
-      console.error("Failed to delete wallet view", error);
+      Logger.error("Failed to delete wallet view", {
+        tag: "wallet",
+        error: error instanceof Error ? error : new Error(String(error)),
+        data: { walletId },
+      });
+      throw buildWalletActionError(WalletErrorCode.DELETE_FAILED);
     });
 }

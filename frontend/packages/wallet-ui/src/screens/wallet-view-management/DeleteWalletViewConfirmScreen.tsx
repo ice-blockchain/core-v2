@@ -4,6 +4,7 @@ import { Button, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { deleteWalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
+import { showWalletError } from "../../show-wallet-error";
 import type { RouteProp } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
 import type { WalletViewSheetParamList } from "@ion/navigation";
@@ -15,10 +16,10 @@ function useDeleteHandler(walletId: string) {
   const walletViewNav = useWalletViewNavigation();
   return useCallback(() => {
     try {
-      deleteWalletView(walletId);
+      deleteWalletView(walletId).catch(showWalletError);
       walletViewNav.goToSwitcher();
     } catch (error) {
-      console.warn("[wallet-view] delete failed:", error instanceof Error ? error.message : error);
+      showWalletError(error);
     }
   }, [walletId, walletViewNav]);
 }

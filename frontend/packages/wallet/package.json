@@ -12,7 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@ion/identity-client": "workspace:*"
+    "@ion/diagnostics": "workspace:*",
+    "@ion/identity-client": "workspace:*",
+    "@ion/localization": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=19"

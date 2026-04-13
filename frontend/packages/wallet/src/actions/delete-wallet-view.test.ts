@@ -4,10 +4,6 @@ import { createWalletView } from "./create-wallet-view";
 import { walletViewStore, setWalletViews } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
 
-function flushPromises(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 function getSecondWalletId(): string {
   const views = walletViewStore.getWalletViews();
   const second = views.find((v) => !v.isMain);
@@ -49,7 +45,7 @@ describe("deleteWalletView", () => {
   it("throws when trying to delete the main wallet", () => {
     createWalletView("Second");
     expect(() => deleteWalletView("1")).toThrow(
-      "Cannot delete the main wallet",
+      "walletUi:cannotDeleteMainWalletError",
     );
   });
 
@@ -59,11 +55,11 @@ describe("deleteWalletView", () => {
     deleteWalletView(secondId);
     const store = walletViewStore.getWalletViews();
     expect(store).toHaveLength(1);
-    expect(() => deleteWalletView("1")).toThrow("Cannot delete the main wallet");
+    expect(() => deleteWalletView("1")).toThrow("walletUi:cannotDeleteMainWalletError");
   });
 
   it("throws when wallet is not found", () => {
-    expect(() => deleteWalletView("999")).toThrow("Wallet not found");
+    expect(() => deleteWalletView("999")).toThrow("walletUi:walletNotFoundError");
   });
 
   it("reverts on API failure", async () => {
@@ -81,9 +77,9 @@ describe("deleteWalletView", () => {
     setWalletViews(views.map((v) => (v.id === secondId ? { ...v, serverId: "srv-2" } : v)));
 
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    deleteWalletView(secondId);
+    const promise = deleteWalletView(secondId);
     expect(walletViewStore.getWalletViews()).toHaveLength(1);
-    await flushPromises();
+    await expect(promise).rejects.toThrow("walletUi:deleteWalletError");
     expect(walletViewStore.getWalletViews()).toHaveLength(2);
     consoleSpy.mockRestore();
   });

@@ -3,10 +3,6 @@ import { renameWalletView } from "./rename-wallet-view";
 import { walletViewStore, resetWalletViewStore, setWalletViews } from "../stores/wallet-view-store";
 import { initializeWalletClient, resetWalletClient } from "../stores/wallet-client-config";
 
-function flushPromises(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
-
 describe("renameWalletView", () => {
   beforeEach(() => {
     resetWalletClient();
@@ -32,9 +28,9 @@ describe("renameWalletView", () => {
     setWalletViews(views.map((v) => ({ ...v, serverId: "server-1" })));
 
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    renameWalletView("1", "New Name");
+    const promise = renameWalletView("1", "New Name");
     expect(walletViewStore.getWalletViews()[0]?.name).toBe("New Name");
-    await flushPromises();
+    await expect(promise).rejects.toThrow("walletUi:renameWalletError");
     expect(walletViewStore.getWalletViews()[0]?.name).toBe("ion.wallet");
     consoleSpy.mockRestore();
   });
@@ -49,10 +45,10 @@ describe("renameWalletView", () => {
   });
 
   it("throws when name is empty", () => {
-    expect(() => renameWalletView("1", "")).toThrow("Wallet name cannot be empty");
+    expect(() => renameWalletView("1", "")).toThrow("walletUi:walletNameEmptyError");
   });
 
   it("throws when wallet is not found", () => {
-    expect(() => renameWalletView("999", "New Name")).toThrow("Wallet not found");
+    expect(() => renameWalletView("999", "New Name")).toThrow("walletUi:walletNotFoundError");
   });
 });

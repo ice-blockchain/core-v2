@@ -5,3 +5,4 @@ export { CreateWalletViewScreen } from "./screens/wallet-view-management/CreateW
 export { EditWalletViewScreen } from "./screens/wallet-view-management/EditWalletViewScreen";
 export { DeleteWalletViewConfirmScreen } from "./screens/wallet-view-management/DeleteWalletViewConfirmScreen";
 export { walletUiTranslations, WALLET_UI_NAMESPACE } from "./translations";
+export { showWalletError } from "./show-wallet-error";
