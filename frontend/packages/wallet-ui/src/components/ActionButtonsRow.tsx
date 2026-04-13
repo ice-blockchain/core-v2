@@ -4,7 +4,11 @@ import { useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { ActionButton } from "./ActionButton";
 
-export function ActionButtonsRow() {
+interface ActionButtonsRowProps {
+  onBuyPress?: () => void;
+}
+
+export function ActionButtonsRow({ onBuyPress }: ActionButtonsRowProps) {
   const theme = useTheme();
 
   const rowStyle = useMemo(
@@ -14,7 +18,7 @@ export function ActionButtonsRow() {
 
   return (
     <View style={[styles.row, rowStyle]}>
-      <ActionButton iconName="wallet-buycrypto" label={translate("walletUi:buyAction")} filled />
+      <ActionButton iconName="wallet-buycrypto" label={translate("walletUi:buyAction")} filled {...(onBuyPress ? { onPress: onBuyPress } : {})} />
       <ActionButton iconName="button-qrcode" label={translate("walletUi:receiveAction")} />
       <ActionButton iconName="wallet-swap" label={translate("walletUi:swapAction")} />
       <ActionButton iconName="wallet-more" label={translate("walletUi:moreAction")} />

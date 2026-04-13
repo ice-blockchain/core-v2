@@ -121,6 +121,8 @@ export type { FeedFiltersMenuButtonProps, FeedCategory, FeedFilter } from "./com
 export { FullscreenPortalHost, FullscreenPortal } from "./components/fullscreen-portal";
 
 // Catalog
+export { BottomSnackBar } from "./components/BottomSnackBar";
+export type { BottomSnackBarProps } from "./components/BottomSnackBar";
 export { CatalogScreen } from "./catalog/CatalogScreen";
 
 // Tokens
