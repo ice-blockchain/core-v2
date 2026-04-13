@@ -1,0 +1,19 @@
+[package]
+name = "pulse-bench"
+version.workspace = true
+edition.workspace = true
+
+[[bench]]
+name = "storage"
+harness = false
+
+[dependencies]
+pulse-types = { workspace = true }
+pulse-auth = { workspace = true }
+pulse-graph = { workspace = true }
+pulse-kv = { workspace = true }
+pulse-shard = { workspace = true }
+pulse-signal = { workspace = true }
+tokio = { workspace = true }
+criterion = { workspace = true }
+tempfile = "3"
