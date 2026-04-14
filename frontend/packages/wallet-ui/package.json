@@ -15,7 +15,6 @@
     "@ion/diagnostics": "workspace:*",
     "@ion/localization": "workspace:*",
     "@ion/navigation": "workspace:*",
-    "@ion/network": "workspace:*",
     "@ion/ui": "workspace:*",
     "@ion/wallet": "workspace:*"
   },

@@ -1566,9 +1566,6 @@ importers:
       '@ion/navigation':
         specifier: workspace:*
         version: link:../navigation
-      '@ion/network':
-        specifier: workspace:*
-        version: link:../network
       '@ion/ui':
         specifier: workspace:*
         version: link:../ui
