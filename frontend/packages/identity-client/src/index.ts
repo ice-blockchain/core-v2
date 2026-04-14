@@ -42,7 +42,7 @@ export type {
 export type {
   Wallet, WalletSigningKey, WalletAsset, WalletNft,
   WalletHistoryItem, WalletTransferRequest, Requester, TransferRequest, TransferPriority,
-  WalletViewSummary, WalletViewDetail, WalletViewInput, WalletViewCoinRef, WalletViewCoin, SymbolGroupBalance,
+  WalletViewSummary, WalletViewDetail, WalletViewInput, WalletViewCoinRef, WalletViewCoin, WalletViewAggregationWallet, SymbolGroupBalance,
   EvmBroadcastRequest, GenerateSignatureRequest, GenerateSignatureResponse,
   EstimateFee, FeeLevel, CreateWalletInput, RestrictedRegionDetails,
   CallFunctionRequest, CallFunctionResponse, AbiFunction, AbiParam,

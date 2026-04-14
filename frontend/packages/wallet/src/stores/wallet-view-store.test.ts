@@ -14,6 +14,11 @@ describe("walletViewStore", () => {
       name: "ion.wallet",
       balance: "$0.00",
       isMain: true,
+      coinGroups: [],
+      isLoading: false,
+      serverId: null,
+      originalItems: [],
+      originalSymbolGroups: [],
     });
   });
 

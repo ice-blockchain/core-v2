@@ -41,6 +41,7 @@ import { ChevronUpIcon } from "./generated/ChevronUpIcon";
 import { ClockIcon } from "./generated/ClockIcon";
 import { CloseIcon } from "./generated/CloseIcon";
 import { CloudUploadIcon } from "./generated/CloudUploadIcon";
+import { CoinFallbackIcon } from "./generated/CoinFallbackIcon";
 import { DangerTriangleIcon } from "./generated/DangerTriangleIcon";
 import { DappCheckIcon } from "./generated/DappCheckIcon";
 import { EditLinkIcon } from "./generated/EditLinkIcon";
@@ -172,6 +173,7 @@ export const iconRegistry: Record<string, ComponentType<IconComponentProps>> = {
   "clock": ClockIcon,
   "close": CloseIcon,
   "cloud-upload": CloudUploadIcon,
+  "coin-fallback": CoinFallbackIcon,
   "danger_triangle": DangerTriangleIcon,
   "dapp-check": DappCheckIcon,
   "edit-link": EditLinkIcon,

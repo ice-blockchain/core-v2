@@ -4,6 +4,7 @@ import { Button, Icon, Text, TextField, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useWalletViews, renameWalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
+import { showWalletError } from "../../show-wallet-error";
 import type { RouteProp } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
 import type { WalletViewSheetParamList } from "@ion/navigation";
@@ -26,12 +27,10 @@ interface FormProps {
 function useRenameHandler(walletId: string, name: string) {
   const walletViewNav = useWalletViewNavigation();
   return useCallback(() => {
-    try {
-      renameWalletView(walletId, name);
-      walletViewNav.goBack();
-    } catch (error) {
-      console.warn("[wallet-view] rename failed:", error instanceof Error ? error.message : error);
-    }
+    renameWalletView(walletId, name).then((result) => {
+      if (result.outcome === "error") showWalletError(result.error);
+    });
+    walletViewNav.goBack();
   }, [walletId, name, walletViewNav]);
 }
 

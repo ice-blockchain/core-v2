@@ -4,6 +4,7 @@ import { useTheme } from "@ion/ui";
 import { createWalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
 import { WalletViewNameForm } from "../../components/WalletViewNameForm";
+import { showWalletError } from "../../show-wallet-error";
 
 export function CreateWalletViewScreen() {
   const [name, setName] = useState("");
@@ -14,13 +15,10 @@ export function CreateWalletViewScreen() {
 
   const handleSubmit = useCallback(() => {
     setIsSubmitting(true);
-    try {
-      createWalletView(name);
-      walletViewNav.goBack();
-    } catch (error) {
-      setIsSubmitting(false);
-      console.warn("[wallet-view] create failed:", error instanceof Error ? error.message : error);
-    }
+    createWalletView(name).then((result) => {
+      if (result.outcome === "error") showWalletError(result.error);
+    });
+    walletViewNav.goBack();
   }, [name, walletViewNav]);
 
   return (

@@ -4,6 +4,7 @@ import type { MediaViewerSource } from "@ion/media-viewer";
 import { SplashScreen as SplashScreenCore } from "@ion/splash-ui";
 import { useAppNavigation, Routes } from "@ion/navigation";
 import { Logger } from "@ion/diagnostics";
+import { loadWalletViewData, initializeWalletClient } from "@ion/wallet";
 import { identityClient } from "../identity-client";
 
 const resolvedAsset = Image.resolveAssetSource(
@@ -24,7 +25,12 @@ export function SplashScreen() {
   const navigateToTarget = useCallback(() => {
     if (hasNavigated.current) return;
     hasNavigated.current = true;
-    const isAuthenticated = identityClient.authStore.getSnapshot().length > 0;
+    const users = identityClient.authStore.getSnapshot();
+    const isAuthenticated = users.length > 0;
+    if (isAuthenticated) {
+      initializeWalletClient(identityClient, users[0]!);
+      loadWalletViewData();
+    }
     const target = isAuthenticated ? Routes.Main : Routes.GetStarted;
     navigation.reset({ index: 0, routes: [{ name: target }] });
   }, [navigation]);

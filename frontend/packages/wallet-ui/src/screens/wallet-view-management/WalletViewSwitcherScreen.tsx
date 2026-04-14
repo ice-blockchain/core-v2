@@ -3,26 +3,28 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon, Text, useTheme } from "@ion/ui";
 import { translate } from "@ion/localization";
 import { useWalletViews, useActiveWalletView, switchWalletView } from "@ion/wallet";
+import type { WalletView } from "@ion/wallet";
 import { useWalletViewNavigation } from "@ion/navigation";
 import { WalletViewListItem } from "../../components/WalletViewListItem";
+import { showWalletError } from "../../show-wallet-error";
+
+function useSwitchHandler(activeId: string) {
+  return useCallback(
+    (walletId: string) => {
+      if (walletId === activeId) return;
+      const result = switchWalletView(walletId);
+      if (result.outcome === "error") showWalletError(result.error);
+    },
+    [activeId],
+  );
+}
 
 export function WalletViewSwitcherScreen() {
   const theme = useTheme();
   const walletViewNav = useWalletViewNavigation();
   const walletViews = useWalletViews();
   const activeWallet = useActiveWalletView();
-
-  const handleWalletPress = useCallback(
-    (walletId: string) => {
-      if (walletId === activeWallet.id) return;
-      try {
-        switchWalletView(walletId);
-      } catch {
-        // wallet view not found — ignore
-      }
-    },
-    [activeWallet.id],
-  );
+  const handleWalletPress = useSwitchHandler(activeWallet.id);
 
   const containerStyle = useMemo(
     () => ({ gap: theme.spacing.lg, padding: theme.spacing.lg }),
@@ -42,7 +44,7 @@ export function WalletViewSwitcherScreen() {
 }
 
 interface WalletViewListProps {
-  walletViews: readonly { id: string; name: string; balance: string; isMain: boolean }[];
+  walletViews: readonly WalletView[];
   activeId: string;
   onPress: (walletId: string) => void;
 }

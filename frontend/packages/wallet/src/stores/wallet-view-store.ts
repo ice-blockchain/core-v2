@@ -1,11 +1,16 @@
-import type { WalletView, WalletViewStore } from "./types";
+import type { WalletView, WalletViewStore } from "../types";
 
 const listeners = new Set<() => void>();
 
-let walletViews: readonly WalletView[] = [
-  { id: "1", name: "ion.wallet", balance: "$0.00", isMain: true },
-];
+const DEFAULT_WALLET_VIEW: WalletView = {
+  id: "1", name: "ion.wallet", balance: "$0.00", isMain: true, coinGroups: [], isLoading: false, serverId: null, originalItems: [], originalSymbolGroups: [],
+};
 
+function createDefaultWalletView(): WalletView {
+  return { ...DEFAULT_WALLET_VIEW };
+}
+
+let walletViews: readonly WalletView[] = [createDefaultWalletView()];
 let activeWalletViewId = "1";
 let nextId = 2;
 
@@ -54,9 +59,7 @@ export function batchUpdate(
 
 // Reset store to initial state (for testing).
 export function resetWalletViewStore(): void {
-  walletViews = [
-    { id: "1", name: "ion.wallet", balance: "$0.00", isMain: true },
-  ];
+  walletViews = [createDefaultWalletView()];
   activeWalletViewId = "1";
   nextId = 2;
   emitChange();

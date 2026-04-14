@@ -23,6 +23,7 @@ import { chatTranslations } from '@ion/chat';
 import { userSearchTranslations } from '@ion/user-search-ui';
 import { mainShellTranslations } from '@ion/main-tabs-ui';
 import { CreatePostSheetScreen, MediaPickerSheetScreen, GalleryPermissionDeniedScreen, CameraPermissionDeniedScreen, CancelPostScreen, feedTranslations } from '@ion/feed-ui';
+import { loadWalletViewData, initializeWalletClient, resetWalletClient } from '@ion/wallet';
 import { walletUiTranslations, WalletViewSwitcherScreen, ManageWalletViewsScreen, CreateWalletViewScreen, EditWalletViewScreen, DeleteWalletViewConfirmScreen } from '@ion/wallet-ui';
 import { profileTranslations, SettingsSheetScreen } from '@ion/profile-ui';
 import { HomeScreen, homeTranslations } from '@ion/home-ui';
@@ -91,7 +92,12 @@ const authScreens = {
   Notifications: NotificationsScreen,
 };
 
-const authFlowStore = createAuthFlowStore({ identityClient, onAuthSuccess: () => {} });
+const handleAuthSuccess = (username: string) => {
+  resetWalletClient();
+  initializeWalletClient(identityClient, username);
+  loadWalletViewData();
+};
+const authFlowStore = createAuthFlowStore({ identityClient, onAuthSuccess: handleAuthSuccess });
 setAuthFlowStore(authFlowStore);
 
 function AppContent() {
@@ -100,7 +106,7 @@ function AppContent() {
   return (
     <NavigationContainer theme={navigationTheme}>
       <BottomSheetModalProvider>
-        <AuthActionsProvider store={authFlowStore} onAuthSuccess={() => {}}>
+        <AuthActionsProvider store={authFlowStore} onAuthSuccess={handleAuthSuccess}>
           <AppNavigator screens={screens} authScreens={authScreens} />
         </AuthActionsProvider>
       </BottomSheetModalProvider>

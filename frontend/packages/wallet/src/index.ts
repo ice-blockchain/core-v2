@@ -1,7 +1,11 @@
-export type { WalletView } from "./types";
-export { useWalletViews } from "./use-wallet-views";
-export { useActiveWalletView } from "./use-active-wallet-view";
-export { createWalletView, MAX_WALLET_VIEWS } from "./create-wallet-view";
-export { renameWalletView } from "./rename-wallet-view";
-export { deleteWalletView } from "./delete-wallet-view";
-export { switchWalletView } from "./switch-wallet-view";
+export type { WalletView, CoinsGroup, CoinWithBalance, CoinDisplayInfo } from "./types";
+export { useWalletViews } from "./hooks/use-wallet-views";
+export { useActiveWalletView } from "./hooks/use-active-wallet-view";
+export { createWalletView, MAX_WALLET_VIEWS } from "./actions/create-wallet-view";
+export { renameWalletView } from "./actions/rename-wallet-view";
+export { deleteWalletView } from "./actions/delete-wallet-view";
+export { switchWalletView } from "./actions/switch-wallet-view";
+export { loadWalletViewData } from "./actions/load-wallet-view-data";
+export { initializeWalletClient, resetWalletClient } from "./stores/wallet-client-config";
+export { WalletErrorCode } from "./errors";
+export type { WalletActionError, WalletActionResult } from "./errors";

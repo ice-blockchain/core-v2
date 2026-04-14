@@ -37,6 +37,7 @@ function buildViewsReadMethods(httpClient: HttpClient) {
       const response = await httpClient.get<WalletViewSummary[]>(buildViewsPath(userId), {
         headers: { 'X-Username': username },
       });
+      if (response.body === undefined) throw new Error('Empty response body from listWalletViews');
       return response.body;
     },
     async getWalletView(options: GetWalletViewOptions) {
@@ -44,6 +45,7 @@ function buildViewsReadMethods(httpClient: HttpClient) {
         headers: { 'X-Username': options.username },
         query: buildGetQuery(options.query),
       });
+      if (response.body === undefined) throw new Error('Empty response body from getWalletView');
       return { body: response.body, headers: response.headers };
     },
   };
@@ -56,6 +58,7 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
         headers: { 'X-Username': username },
         body: input,
       });
+      if (response.body === undefined) throw new Error('Empty response body from createWalletView');
       return response.body;
     },
     async updateWalletView(options: UpdateWalletViewOptions) {
@@ -63,20 +66,26 @@ function buildViewsWriteMethods(httpClient: HttpClient) {
         headers: { 'X-Username': options.username },
         body: options.input,
       });
+      if (response.body === undefined) throw new Error('Empty response body from updateWalletView');
       return response.body;
     },
-    async deleteWalletView(userId: string, walletViewId: string, username: string) {
-      try {
-        await httpClient.delete(buildViewPath(userId, walletViewId), { headers: { 'X-Username': username } });
-      } catch (error) {
-        if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {
-          Logger.warning('deleteWalletView returned unparseable response, treating as success', { data: { userId, walletViewId } });
-          return;
-        }
-        throw error;
-      }
-    },
+    deleteWalletView: (userId: string, walletViewId: string, username: string) =>
+      executeDeleteWalletView({ httpClient, userId, walletViewId, username }),
   };
+}
+
+interface DeleteOptions { httpClient: HttpClient; userId: string; walletViewId: string; username: string }
+
+async function executeDeleteWalletView({ httpClient, userId, walletViewId, username }: DeleteOptions): Promise<void> {
+  try {
+    await httpClient.delete(buildViewPath(userId, walletViewId), { headers: { 'X-Username': username } });
+  } catch (error) {
+    if (error instanceof NetworkError && error.code === 'PARSE_ERROR') {
+      Logger.warning('deleteWalletView returned unparseable response, treating as success', { data: { userId, walletViewId } });
+      return;
+    }
+    throw error;
+  }
 }
 
 export function createWalletViewsDataSource(httpClient: HttpClient): WalletViewsDataSource {
